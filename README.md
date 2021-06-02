@@ -5,7 +5,7 @@ Kinetic parameter estimation and statistical testing is compatible with any enri
 Currently, the only way to install the package is to:
   1. Clone the repository
   2. Navigate to the directory containing the cloned repository (not the repo directory itself)
-  3. Call (from R or R_studio) devtools::install("AnalyzeTLseq") then require(AnalyzeTLseq)
+  3. Call (from R or R_studio) devtools::install("DynamicSeq") then library(DynamicSeq)
 # Bug Catching
 Contact Isaac (isaac.vock@yale.edu or DM on Slack) with descriptions of bugs encountered or suggested improvements/functions. Thank you!
 # Current Functions Implemented
