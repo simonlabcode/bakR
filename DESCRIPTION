@@ -1,5 +1,5 @@
 Package: DynamicSeq
-Title: Making sure I can use Stan in an R package
+Title: Functions for processing and analyzing Nucleotide Recoding (e.g., TLseq) data
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Isaac",
