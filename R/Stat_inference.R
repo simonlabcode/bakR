@@ -16,7 +16,7 @@ StanFDR <- function(fit, pars, nconds, reps, FDR = 0.05, threshold = 0){
   nreps <- rep(reps, times=nconds)
 
   #Extract parameter of interest (can only do one at a time)
-  eff_summary <- summary(fit, pars = c("L2FC_kd"), probs = c(0.5))$summary
+  eff_summary <- rstan::summary(fit, pars = c(pars), probs = c(0.5))$summary
 
   #Pull out mean and standard deviation of parameter estimate
   eff_gauss <- eff_summary[, c("50%","mean", "sd")]
@@ -24,7 +24,6 @@ StanFDR <- function(fit, pars, nconds, reps, FDR = 0.05, threshold = 0){
 
   #Convert to data frame:
   eff_gauss <- as.data.frame(eff_gauss)
-
 
 
   #Calculate number of features (could presumably use FN from data_list)
@@ -43,13 +42,13 @@ StanFDR <- function(fit, pars, nconds, reps, FDR = 0.05, threshold = 0){
 
   #Calculate p-value assuming Gaussian z-stat
   for (i in 1:nrow(eff_gauss)){
-    if (mu_cutoff > 0){ #ROPE method
+    if (threshold > 0){ #ROPE method
       tstat <- eff_gauss$mean[i]/(eff_gauss$sd[i])
-      if(abs(eff_gauss$mean[i]) > mu_cutoff){
+      if(abs(eff_gauss$mean[i]) > threshold){
         if(eff_gauss$mean[i] > 0){
-          delta <- mu_cutoff/(eff_gauss$sd[i])
+          delta <- threshold/(eff_gauss$sd[i])
         }else{
-          delta <- -mu_cutoff/(eff_gauss$sd[i])
+          delta <- -threshold/(eff_gauss$sd[i])
         }
       }else{
         delta <- eff_gauss$mean[i]/(eff_gauss$sd[i])
@@ -59,10 +58,10 @@ StanFDR <- function(fit, pars, nconds, reps, FDR = 0.05, threshold = 0){
     }
     else{ #NHST-ish method
       if(nreps[pvals[i,3]] < 3){
-        Zscore <- (eff_gauss$mean[i])/(eff_gauss$sd[i] + pop_sd)
+        Zscore <- (eff_gauss$mean[i])/(eff_gauss$sd[i])
         pvals[i,1] <- (1 - stats::pnorm(abs(Zscore)))*2
       }else{
-        Zscore <- (eff_gauss$mean[i])/(eff_gauss$sd[i] + pop_sd/sqrt(nreps[pvals[i,3]]))
+        Zscore <- (eff_gauss$mean[i])/(eff_gauss$sd[i])
         pvals[i,1] <- (1 - stats::pnorm(abs(Zscore)))*2
       }
 
@@ -75,7 +74,7 @@ StanFDR <- function(fit, pars, nconds, reps, FDR = 0.05, threshold = 0){
   ngs <- ngs - sum(is.na(pvals_ordered[,1]))
   pvals_ordered <- pvals_ordered[!is.na(pvals_ordered[,1]),]
 
-
+  FDR_control <- FDR
   lf <- length(FDR_control)
 
   crit_val <- 1
@@ -133,10 +132,127 @@ StanFDR <- function(fit, pars, nconds, reps, FDR = 0.05, threshold = 0){
 
   volcano_df <- data.frame(p_adj, gene_id, condition_id, significance, L2FC_kd)
 
+  volcano_df <- volcano_df %>% dplyr::mutate(significance = ifelse(significance==1, ifelse(L2FC_kd> 0, "Destabilized", "Stabilized") ,"Not Significant") )
+
+  volcano_df <- volcano_df[order(volcano_df$condition_id, volcano_df$significance, volcano_df$p_adj), ]
+
   return(volcano_df)
 
 }
 
-FastFDR <- function(df, pars, FDR = 0.05, threshold = 0, Ho = 0){
+FastFDR <- function(effect_size, std_dev, nconds, reps, FDR = 0.05, threshold = 0){
 
+  nreps <- rep(reps, times=nconds)
+
+  #Calculate number of features (could presumably use FN from data_list)
+  ngs <- nrow(effect_size)/nconds
+
+  #Initialize pvalue matrix
+  #The first column stores the pvalue
+  #The second column stores the feature number ID
+  #The third column stores the experimental condition ID
+  #The fourth column stores the signifiance status
+  #The fifth column stores the effect size mean
+  pvals <- matrix(0, nrow=ngs*nconds, ncol=5)
+  pvals[,2] <- rep(seq(from=1, to=ngs), each=nconds)
+  pvals[,3] <- rep(seq(from=1, to=nconds), times=ngs)
+  pvals[,5] <- effect_size
+
+  #Calculate p-value assuming Gaussian z-stat
+  for (i in 1:nrow(eff_gauss)){
+    if (threshold > 0){ #ROPE method
+      tstat <- effect_size[i]/(std_dev[i])
+      if(abs(effect_size[i]) > threshold){
+        if(effect_size[i] > 0){
+          delta <- threshold/(std_dev[i])
+        }else{
+          delta <- -threshold/(std_dev[i])
+        }
+      }else{
+        delta <- effect_size[i]/(std_dev[i])
+      }
+      pvals[i,1] <- stats::pnorm(tstat + delta, lower.tail=ifelse(eff_gauss$mean[i] >0, FALSE, TRUE)) + stats::pnorm(tstat - delta, lower.tail=ifelse(eff_gauss$mean[i] >0, FALSE, TRUE))
+
+    }
+    else{ #NHST-ish method
+      if(nreps[pvals[i,3]] < 3){
+        Zscore <- (effect_size[i])/(std_dev[i])
+        pvals[i,1] <- (1 - stats::pnorm(abs(Zscore)))*2
+      }else{
+        Zscore <- (effect_size[i])/(std_dev[i])
+        pvals[i,1] <- (1 - stats::pnorm(abs(Zscore)))*2
+      }
+
+    }
+
+  }
+
+  #Order the p-values to prep for BH correction
+  pvals_ordered <- pvals[order(pvals[,1]),] #Order the p-values
+  ngs <- ngs - sum(is.na(pvals_ordered[,1]))
+  pvals_ordered <- pvals_ordered[!is.na(pvals_ordered[,1]),]
+
+  FDR_control <- FDR
+  lf <- length(FDR_control)
+
+  crit_val <- 1
+  Significant <- c()
+  Not_sig <- c()
+
+  ######BH SIGNIFICANCE CALLING######
+  for(k in 1:nconds){
+    test_pvals <- pvals_ordered[pvals_ordered[,3]==k,]
+    for(j in 1:lf){
+      for(i in 1:ngs){
+        if(test_pvals[i,1] > ((i/ngs)*FDR_control[j])){
+          crit_val <- i-1
+          break
+        }
+      }
+
+      if (crit_val == 1){
+        Significant <- c()
+        Not_sig <- seq(from=1, to = ngs)
+      } else {
+        Significant <- test_pvals[1:crit_val,2]
+        Not_sig <- test_pvals[(crit_val+1):ngs,2]
+      }
+
+    }
+    #If significant, value in 4th column is 1
+    pvals_ordered[(pvals_ordered[,3]==k) & (pvals_ordered[,2] %in% Significant),4] <- 1
+    #If not significant, value in 4th column is 0
+    pvals_ordered[(pvals_ordered[,3]==k) & (pvals_ordered[,2] %in% Not_sig),4] <- 0
+
+  }
+
+  #FDR adjust p-values
+  pvals_adj <- pvals_ordered
+  pvals_adj <- pvals_adj[order(pvals_adj[,3]),]
+  for(k in 1:nconds){
+    test_pvals <- pvals_ordered[pvals_ordered[,3]==k,1]
+    pvals_adj[((k-1)*ngs + 1): (ngs*k),1] <- test_pvals*ngs/seq(from=1, to=ngs, by=1)
+    for(i in 1:ngs){
+      if(i > 1){
+        if (pvals_adj[i + (k-1)*ngs,1] < pvals_adj[(i-1) + (k-1)*ngs,1]){
+          pvals_adj[i + (k-1)*ngs,1] <- pvals_adj[(i-1) + (k-1)*ngs,1]
+        }
+      }
+    }
+  }
+
+
+  p_adj <- pvals_adj[,1] #FDR adjusted p-values (also called q values)
+  gene_id <- pvals_adj[,2] #Feature/Gene ID number
+  condition_id <- pvals_adj[,3] #Experimental condition ID number
+  significance <- pvals_adj[,4] #Significance numerical indicator
+  L2FC_kd <- pvals_adj[,5] #Log effect size
+
+  volcano_df <- data.frame(p_adj, gene_id, condition_id, significance, L2FC_kd)
+
+  volcano_df <- volcano_df %>% dplyr::mutate(significance = ifelse(significance==1, ifelse(L2FC_kd> 0, "Destabilized", "Stabilized") ,"Not Significant") )
+
+  volcano_df <- volcano_df[order(volcano_df$condition_id, volcano_df$significance, volcano_df$p_adj), ]
+
+  return(volcano_df)
 }
