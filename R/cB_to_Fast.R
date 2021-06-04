@@ -113,7 +113,7 @@ fast_analysis <- function(df, boot_iter = 50){
 
   Old_data_summary <- Old_data %>%
     dplyr::group_by(reps, mut, fnum) %>%
-    dplyr::do(purrr::invoke_map_dfc(list(map_df),
+    dplyr::do(purrr::invoke_map_dfc(list(purrr::map_df),
                       list(list(dplyr::select(., weight_mut), sum),
                            list(dplyr::select(., n), sum))
     )
@@ -135,7 +135,7 @@ fast_analysis <- function(df, boot_iter = 50){
 
   New_data_summary <- New_data %>%
     dplyr::group_by(reps, mut, fnum) %>%
-    dplyr::do(purrr::invoke_map_dfc(list(map_df),
+    dplyr::do(purrr::invoke_map_dfc(list(purrr::map_df),
                       list(list(dplyr::select(., weight_mut), sum),
                            list(dplyr::select(., n), sum))
     )
