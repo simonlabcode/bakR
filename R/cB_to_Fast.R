@@ -89,7 +89,7 @@ cBtofast <- function(cB_raw,
 #'
 #' @param df Dataframe in form provided by cB_to_Fast
 #' @param boot_iter Number of times to resample for bootstrapping; default is 50
-#' @return Dataframe with fraction new and logit(fraction new) estimates and uncertainties for logit(fraction new)
+#' @return list with dataframe of replicate specific estimates as well as dataframe of pooled estimates
 #' @importFrom magrittr %>%
 #' @export
 fast_analysis <- function(df, boot_iter = 50){
@@ -240,6 +240,28 @@ fast_analysis <- function(df, boot_iter = 50){
 
 
   estimate_df <- data.frame(logit_fn, logit_fn_sd, fn_estimate, Replicate, Condition, Gene_ID)
-  return(estimate_df)
+
+  df_fn <- estimate_df[order(estimate_df$Gene_ID, estimate_df$Condition, estimate_df$Replicate),]
+
+  nreps <- max(df_fn$Replicate)
+
+  #Average over replicates
+  avg_df_fn <- df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
+    summarize(avg_logit_fn = mean(logit_fn),
+              sd_boot = mean(logit_fn_sd),
+              sd_logit_fn = sd(logit_fn))
+
+  #Calcualte population averages
+  sdp <- mean(avg_df_fn$sd_logit_fn)
+  theta_o <- mean(avg_df_fn$avg_logit_fn)
+
+  #Adjust average fn according to Bayesian normal model with known sd
+  avg_df_fn_bayes <- avg_df_fn %>%
+    mutate(avg_logit_fn = (avg_logit_fn*(nreps*(1/sd_boot)))/(nreps/sd_boot + sdp) + (theta_o*sdp)/(nreps/sd_boot + sdp) )
+
+
+  fn_list <- list(estimate_df, avg_df_fn_bayes, pmuts)
+
+  return(fn_list)
 
 }
