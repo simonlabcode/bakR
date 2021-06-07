@@ -30,7 +30,7 @@ StanFDR <- function(fit, pars = "L2FC_kd", FDR = 0.05, threshold = 0, TL = TRUE)
     MT_summary <- MT_summary[, c("50%","mean", "sd")]
 
     MT_df <- as.data.frame(MT_summary)
-    nconds <- nrow(MT_df)/ngs
+    nconds <- (nrow(MT_df)/ngs) - 1
 
     rm(MT_df)
 
@@ -40,11 +40,15 @@ StanFDR <- function(fit, pars = "L2FC_kd", FDR = 0.05, threshold = 0, TL = TRUE)
     R_summary <- R_summary[, c("50%","mean", "sd")]
 
     R_df <- as.data.frame(R_summary)
-    reps <- nrow(R_df)/(nconds*ngs)
+    reps <- nrow(R_df)/((nconds+1)*ngs)
 
     rm(R_df)
   }
 
+
+  print(reps)
+  print(nconds)
+  print(ngs)
 
 
   #Seems like I can get this from fit object; reps and nconds at least implied by fit output
@@ -60,9 +64,6 @@ StanFDR <- function(fit, pars = "L2FC_kd", FDR = 0.05, threshold = 0, TL = TRUE)
   #Convert to data frame:
   eff_gauss <- as.data.frame(eff_gauss)
 
-
-  #Calculate number of features (could presumably use FN from data_list)
-  ngs <- nrow(eff_gauss)/nconds
 
   #Initialize pvalue matrix
   #The first column stores the pvalue
