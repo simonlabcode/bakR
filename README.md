@@ -56,4 +56,4 @@ StanFDR(fit, pars="L2FC_kd", FDR = 0.05, threshold = 0, TL = TRUE)
   * FDR is FDR at which you want to control analysis; 0.05 is default
   * threshold is the null hypothesis magnitude; 0 is the default. If non-zero null is that magnitude is <= threshold
   * TL is a boolean indicator that denotes if fit object is from TL_stan. Eventually this function will be generalized
-  * to fit objects beyond those obtained from TL_stan, but for now it is only able to take TL_stan fit objects
+    to fit objects beyond those obtained from TL_stan, but for now it is only able to take TL_stan fit objects
