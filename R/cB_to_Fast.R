@@ -89,67 +89,81 @@ cBtofast <- function(cB_raw,
 #'
 #' @param df Dataframe in form provided by cB_to_Fast
 #' @param boot_iter Number of times to resample for bootstrapping; default is 50
+#' @param pnew Labeled read mutation rate; default of 0 means that model estimates rate from s4U fed data
+#' @param pold Unlabeled read mutation rate; default of 0 means that model estimates rate from no-s4U fed data
 #' @return list with dataframe of replicate specific estimates as well as dataframe of pooled estimates
 #' @importFrom magrittr %>%
 #' @export
-fast_analysis <- function(df, boot_iter = 50){
+fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0){
 
   logit <- function(x) log(x/(1-x))
   inv_logit <- function(x) exp(x)/(1+exp(x))
 
-  #Trim df and name columns
-
   #Old mutation rate estimation
-  Mut_data <- df[,1:9]
-  colnames(Mut_data) <- c("sample", "XF", "TC", "nT", "n", "fnum", "type", "mut", "reps")
 
-  Old_data <- Mut_data[Mut_data$type == 0, ]
+  #Trim df and name columns
+  if(pnew == 0){
+    Mut_data <- df[,1:9]
+    colnames(Mut_data) <- c("sample", "XF", "TC", "nT", "n", "fnum", "type", "mut", "reps")
 
-  Old_data$avg_mut <- Old_data$TC/Old_data$nT
-  Old_data$avg_mut[is.na(Old_data$avg_mut)] <- 0
-  Old_data$weight_mut <- Old_data$avg_mut*Old_data$n
+    #New Mutation rate Estimation
+    New_data <- Mut_data[Mut_data$type == 1, ]
 
-  #Old_data$n <- rep(1, times=nrow(Old_data))
+    New_data$avg_mut <- New_data$TC/New_data$nT
+    New_data$avg_mut[is.na(New_data$avg_mut)] <- 0
+    New_data$weight_mut <- New_data$avg_mut*New_data$n
 
-  Old_data_summary <- Old_data %>%
-    dplyr::group_by(reps, mut, fnum) %>%
-    dplyr::do(purrr::invoke_map_dfc(list(purrr::map_df),
-                      list(list(dplyr::select(., weight_mut), sum),
-                           list(dplyr::select(., n), sum))
-    )
-    )
-
-
-  Old_data_summary$avg_mut <- Old_data_summary$weight_mut/Old_data_summary$n
-
-  Old_data_ordered <- Old_data_summary[order(Old_data_summary$n, decreasing=TRUE), ]
-
-  Old_data_cutoff <- Old_data_ordered[Old_data_ordered$n > 100,]
-
-  #New Mutation rate Estimation
-  New_data <- Mut_data[Mut_data$type == 1, ]
-
-  New_data$avg_mut <- New_data$TC/New_data$nT
-  New_data$avg_mut[is.na(New_data$avg_mut)] <- 0
-  New_data$weight_mut <- New_data$avg_mut*New_data$n
-
-  New_data_summary <- New_data %>%
-    dplyr::group_by(reps, mut, fnum) %>%
-    dplyr::do(purrr::invoke_map_dfc(list(purrr::map_df),
-                      list(list(dplyr::select(., weight_mut), sum),
-                           list(dplyr::select(., n), sum))
-    )
-    )
+    New_data_summary <- New_data %>%
+      dplyr::group_by(reps, mut, fnum) %>%
+      dplyr::do(purrr::invoke_map_dfc(list(purrr::map_df),
+                                      list(list(dplyr::select(., weight_mut), sum),
+                                           list(dplyr::select(., n), sum))
+      )
+      )
 
 
-  New_data_summary$avg_mut <- New_data_summary$weight_mut/New_data_summary$n
+    New_data_summary$avg_mut <- New_data_summary$weight_mut/New_data_summary$n
 
-  New_data_ordered <- New_data_summary[order(New_data_summary$avg_mut, decreasing=TRUE), ]
+    New_data_ordered <- New_data_summary[order(New_data_summary$avg_mut, decreasing=TRUE), ]
 
-  New_data_cutoff <- New_data_ordered[New_data_ordered$n > 100,]
+    New_data_cutoff <- New_data_ordered[New_data_ordered$n > 100,]
 
-  pnew <- mean(New_data_cutoff$avg_mut[1:30])
-  pold <- mean(Old_data_ordered$avg_mut[1:30])
+    pnew <- mean(New_data_cutoff$avg_mut[1:30])
+
+  }
+
+  if(pold == 0){
+    #Old mutation rate estimation
+    Mut_data <- df[,1:9]
+    colnames(Mut_data) <- c("sample", "XF", "TC", "nT", "n", "fnum", "type", "mut", "reps")
+
+    Old_data <- Mut_data[Mut_data$type == 0, ]
+
+    Old_data$avg_mut <- Old_data$TC/Old_data$nT
+    Old_data$avg_mut[is.na(Old_data$avg_mut)] <- 0
+    Old_data$weight_mut <- Old_data$avg_mut*Old_data$n
+
+    #Old_data$n <- rep(1, times=nrow(Old_data))
+
+    Old_data_summary <- Old_data %>%
+      dplyr::group_by(reps, mut, fnum) %>%
+      dplyr::do(purrr::invoke_map_dfc(list(purrr::map_df),
+                                      list(list(dplyr::select(., weight_mut), sum),
+                                           list(dplyr::select(., n), sum))
+      )
+      )
+
+
+    Old_data_summary$avg_mut <- Old_data_summary$weight_mut/Old_data_summary$n
+
+    Old_data_ordered <- Old_data_summary[order(Old_data_summary$n, decreasing=TRUE), ]
+
+    Old_data_cutoff <- Old_data_ordered[Old_data_ordered$n > 100,]
+
+    pold <- mean(Old_data_ordered$avg_mut[1:30])
+
+  }
+
 
 
   pmuts <- c(pold, pnew)

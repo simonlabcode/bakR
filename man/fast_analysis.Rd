@@ -4,12 +4,16 @@
 \alias{fast_analysis}
 \title{This function efficiently analyzes data to provide fraction new estimates and uncertainties}
 \usage{
-fast_analysis(df, boot_iter = 50)
+fast_analysis(df, boot_iter = 50, pnew = 0, pold = 0)
 }
 \arguments{
 \item{df}{Dataframe in form provided by cB_to_Fast}
 
 \item{boot_iter}{Number of times to resample for bootstrapping; default is 50}
+
+\item{pnew}{Labeled read mutation rate; default of 0 means that model estimates rate from s4U fed data}
+
+\item{pold}{Unlabeled read mutation rate; default of 0 means that model estimates rate from no-s4U fed data}
 }
 \value{
 list with dataframe of replicate specific estimates as well as dataframe of pooled estimates
