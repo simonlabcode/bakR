@@ -12,7 +12,7 @@ fast_analysis(df, boot_iter = 50)
 \item{boot_iter}{Number of times to resample for bootstrapping; default is 50}
 }
 \value{
-Dataframe with fraction new and logit(fraction new) estimates and uncertainties for logit(fraction new)
+list with dataframe of replicate specific estimates as well as dataframe of pooled estimates
 }
 \description{
 This function efficiently analyzes data to provide fraction new estimates and uncertainties
