@@ -71,10 +71,11 @@ StanFDR <- function(fit, pars = "L2FC_kd", FDR = 0.05, threshold = 0, TL = TRUE)
   #The third column stores the experimental condition ID
   #The fourth column stores the signifiance status
   #The fifth column stores the effect size mean
-  pvals <- matrix(0, nrow=ngs*nconds, ncol=5)
+  pvals <- matrix(0, nrow=ngs*nconds, ncol=6)
   pvals[,2] <- rep(seq(from=1, to=ngs), each=nconds)
   pvals[,3] <- rep(seq(from=1, to=nconds), times=ngs)
   pvals[,5] <- eff_gauss$mean
+  pvals[,6] <- eff_gauss$sd
 
   #Calculate p-value assuming Gaussian z-stat
   for (i in 1:nrow(eff_gauss)){
@@ -160,8 +161,10 @@ StanFDR <- function(fit, pars = "L2FC_kd", FDR = 0.05, threshold = 0, TL = TRUE)
   condition_id <- pvals_adj[,3] #Experimental condition ID number
   significance <- pvals_adj[,4] #Significance numerical indicator
   L2FC_kd <- pvals_adj[,5] #Log effect size
+  pvals <- pvals_ordered[,1] #Unadjusted p-values
+  sd <- pvals_ordered[,6] #Uncertainty of each effect size
 
-  volcano_df <- data.frame(p_adj, gene_id, condition_id, significance, L2FC_kd)
+  volcano_df <- data.frame(p_adj, pvals, gene_id, condition_id, significance, L2FC_kd, sd)
 
   volcano_df <- volcano_df %>% dplyr::mutate(significance = ifelse(significance==1, ifelse(L2FC_kd> 0, "Destabilized", "Stabilized") ,"Not Significant") )
 
