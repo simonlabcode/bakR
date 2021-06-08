@@ -43,26 +43,40 @@ StanFDR <- function(fit, pars = "L2FC_kd", FDR = 0.05, threshold = 0, TL = TRUE)
     reps <- nrow(R_df)/((nconds+1)*ngs)
 
     rm(R_df)
+
+    #Seems like I can get this from fit object; reps and nconds at least implied by fit output
+    nreps <- rep(reps, times=nconds)
+
+    #Extract parameter of interest (can only do one at a time)
+    eff_summary <- rstan::summary(fit, pars = pars, probs = c(0.5))$summary
+
+    #Pull out mean and standard deviation of parameter estimate
+    eff_gauss <- eff_summary[, c("50%","mean", "sd")]
+
+
+    #Convert to data frame:
+    eff_gauss <- as.data.frame(eff_gauss)
+
+  } else{
+    reps <- readline(prompt = "Enter number of replicates: ")
+    nconds <- readline(prompt = "Enter number of experimental conditions: ")
+
+    #Seems like I can get this from fit object; reps and nconds at least implied by fit output
+    nreps <- rep(reps, times=nconds)
+
+
+    #Extract parameter of interest (can only do one at a time)
+    eff_summary <- rstan::summary(fit, pars = pars, probs = c(0.5))$summary
+
+    #Pull out mean and standard deviation of parameter estimate
+    eff_gauss <- eff_summary[, c("50%","mean", "sd")]
+
+
+    #Convert to data frame:
+    eff_gauss <- as.data.frame(eff_gauss)
+
+    ngs <- nrow(eff_gauss)/nconds
   }
-
-
-  print(reps)
-  print(nconds)
-  print(ngs)
-
-
-  #Seems like I can get this from fit object; reps and nconds at least implied by fit output
-  nreps <- rep(reps, times=nconds)
-
-  #Extract parameter of interest (can only do one at a time)
-  eff_summary <- rstan::summary(fit, pars = pars, probs = c(0.5))$summary
-
-  #Pull out mean and standard deviation of parameter estimate
-  eff_gauss <- eff_summary[, c("50%","mean", "sd")]
-
-
-  #Convert to data frame:
-  eff_gauss <- as.data.frame(eff_gauss)
 
 
   #Initialize pvalue matrix
