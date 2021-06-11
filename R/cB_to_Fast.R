@@ -192,8 +192,8 @@ fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0){
     for(j in 1:num_conds){
       for(k in 1:nreps){
         #Extract Relevant Data
-        TCs <- Mut_data$TC[(Mut_data$reps == k) & (Mut_data$mut == j) & (Mut_data$fnum == i)]
-        Us <- Mut_data$nT[(Mut_data$reps == k) & (Mut_data$mut == j) & (Mut_data$fnum == i)]
+        TCs <- rep(Mut_data$TC[(Mut_data$reps == k) & (Mut_data$mut == j) & (Mut_data$fnum == i)], times = Mut_data$n[(Mut_data$reps == k) & (Mut_data$mut == j) & (Mut_data$fnum == i)])
+        Us <- rep(Mut_data$nT[(Mut_data$reps == k) & (Mut_data$mut == j) & (Mut_data$fnum == i)], times = Mut_data$n[(Mut_data$reps == k) & (Mut_data$mut == j) & (Mut_data$fnum == i)])
 
         #Calculate newness likelihood for each gene
         pnews <- stats::dbinom(TCs, size=Us, prob=pnew)
