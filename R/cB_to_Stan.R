@@ -79,7 +79,8 @@ cBtoStan <- function(cB_raw,
 
   # Get reliable features:
   if(concat == TRUE){
-    keep <- c(FOI, DynamicSeq::reliableFeatures(cB = cB, c_list = c_list, high_p = keep_input[1], totcut = keep_input[2]))
+    reliables <- DynamicSeq::reliableFeatures(cB = cB, c_list = c_list, high_p = keep_input[1], totcut = keep_input[2])
+    keep <- c(FOI, reliables[!(reliables %in% FOI)])
   }else{
     keep <- FOI
   }
