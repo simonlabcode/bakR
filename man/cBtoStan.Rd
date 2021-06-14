@@ -6,7 +6,7 @@
 \usage{
 cBtoStan(
   cB_raw,
-  c_list,
+  samp_list,
   type_list,
   mut_list,
   rep_list,
@@ -19,7 +19,7 @@ cBtoStan(
 \arguments{
 \item{cB_raw}{cB file generated from TL-seq pipeline}
 
-\item{c_list}{vector of names of control (no s4U fed) samples}
+\item{samp_list}{vector of names of samples}
 
 \item{type_list}{vector with 1 entry per sample; 0 = no s4U, 1 = s4U fed}
 

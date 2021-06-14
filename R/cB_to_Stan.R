@@ -41,7 +41,7 @@ reliableFeatures <- function(cB,
 #'
 #' This function obtains the data list necessary to analyze TL-seq data with Stan.
 #' @param cB_raw cB file generated from TL-seq pipeline
-#' @param c_list vector of names of control (no s4U fed) samples
+#' @param samp_list vector of names of samples
 #' @param type_list vector with 1 entry per sample; 0 = no s4U, 1 = s4U fed
 #' @param mut_list vector with 1 entry per sample; 1 = WT, > 1 = different experimental conditions (e.g., KO of protein X)
 #' @param rep_list vector with 1 entry per sample that indexes replicate; 1 = 1st replicate, 2 = 2nd replicate, etc.
@@ -53,7 +53,7 @@ reliableFeatures <- function(cB,
 #' @importFrom magrittr %>%
 #' @export
 cBtoStan <- function(cB_raw,
-                       c_list,
+                       samp_list,
                        type_list,
                        mut_list,
                        rep_list,
@@ -64,7 +64,8 @@ cBtoStan <- function(cB_raw,
   cB <- cB_raw %>%
     dplyr::select(sample, XF, GF, TC, n, io)
 
-  samp_list <- unique(cB$sample)
+  c_list <- samp_list[type_list == 0]
+
   names(type_list) <- samp_list
   names(mut_list) <- samp_list
   names(rep_list) <- samp_list

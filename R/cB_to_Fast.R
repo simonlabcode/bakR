@@ -4,7 +4,7 @@
 #' This function processes the cB into a form necessary for the parameter estimation function
 #' that does not call Stan and is thus much more efficient and scalable.
 #' @param cB_raw cB file generated from TL-seq pipeline
-#' @param c_list vector of names of control (no s4U fed) samples
+#' @param samp_list vector of names of control samples
 #' @param type_list vector with 1 entry per sample; 0 = no s4U, 1 = s4U fed
 #' @param mut_list vector with 1 entry per sample; 1 = WT, > 1 = different experimental conditions (e.g., KO of protein X)
 #' @param rep_list vector with 1 entry per sample that indexes replicate; 1 = 1st replicate, 2 = 2nd replicate, etc.
@@ -16,7 +16,7 @@
 #' @return returns dataframe that can be passed to fast analysis
 #' @export
 cBtofast <- function(cB_raw,
-                     c_list,
+                     samp_list,
                      type_list,
                      mut_list,
                      rep_list,
@@ -28,7 +28,7 @@ cBtofast <- function(cB_raw,
   cB <- cB_raw %>%
     dplyr::select(sample, XF, GF, TC, n, io, nT)
 
-  samp_list <- unique(cB$sample)
+  c_list <- samp_list[type_list == 0]
 
   names(type_list) <- samp_list
   names(mut_list) <- samp_list
