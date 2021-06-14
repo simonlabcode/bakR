@@ -3,26 +3,27 @@
 #'
 #' This function processes the cB into a form necessary for the parameter estimation function
 #' that does not call Stan and is thus much more efficient and scalable.
-#' @param cB cB file generated from TL-seq pipeline
-#' @param samp_list vector of names of all samples
+#' @param cB_raw cB file generated from TL-seq pipeline
 #' @param c_list vector of names of control (no s4U fed) samples
 #' @param type_list vector with 1 entry per sample; 0 = no s4U, 1 = s4U fed
 #' @param mut_list vector with 1 entry per sample; 1 = WT, > 1 = different experimental conditions (e.g., KO of protein X)
 #' @param rep_list vector with 1 entry per sample that indexes replicate; 1 = 1st replicate, 2 = 2nd replicate, etc.
 #' @param tl single numerical value; s4U label time used in s4U fed samples
-#' @param nreps single numerical value; number of replicates (assumes same number of replicates for each mut_list index)
 #' @param keep_input two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff
+#' @param FOI Features of interest; character vector containing names of features to analyze
+#' @param concat Boolean; If TRUE, FOI is concatenated with output of reliableFeatures
 #' @importFrom magrittr %>%
 #' @return returns dataframe that can be passed to fast analysis
 #' @export
 cBtofast <- function(cB_raw,
-                       c_list,
-                       type_list,
-                       mut_list,
-                       rep_list,
-                       tl,
-                       nreps,
-                       keep_input = c(0.2, 50)){
+                     c_list,
+                     type_list,
+                     mut_list,
+                     rep_list,
+                     tl,
+                     keep_input=c(0.2, 50),
+                     FOI = c(),
+                     concat = TRUE){
 
   cB <- cB_raw %>%
     dplyr::select(sample, XF, GF, TC, n, io, nT)
@@ -33,6 +34,7 @@ cBtofast <- function(cB_raw,
   names(mut_list) <- samp_list
   names(rep_list) <- samp_list
 
+  nreps <- max(rep_list)
 
   # Helper function:
   getType <- function(s) type_list[paste(s)]
@@ -40,7 +42,11 @@ cBtofast <- function(cB_raw,
   getRep <- function(s) rep_list[paste(s)]
 
   # Get reliable features:
-  keep <- DynamicSeq::reliableFeatures(cB, c_list, high_p=keep_input[1], totcut = keep_input[2])
+  if(concat == TRUE){
+    keep <- c(FOI, DynamicSeq::reliableFeatures(cB = cB, c_list = c_list, high_p = keep_input[1], totcut = keep_input[2]))
+  }else{
+    keep <- FOI
+  }
 
   # Get only the desired features:
 

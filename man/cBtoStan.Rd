@@ -11,11 +11,14 @@ cBtoStan(
   mut_list,
   rep_list,
   tl,
-  nreps,
-  keep_input = c(0.2, 50)
+  keep_input = c(0.2, 50),
+  FOI = c(),
+  concat = TRUE
 )
 }
 \arguments{
+\item{cB_raw}{cB file generated from TL-seq pipeline}
+
 \item{c_list}{vector of names of control (no s4U fed) samples}
 
 \item{type_list}{vector with 1 entry per sample; 0 = no s4U, 1 = s4U fed}
@@ -26,11 +29,11 @@ cBtoStan(
 
 \item{tl}{single numerical value; s4U label time used in s4U fed samples}
 
-\item{nreps}{single numerical value; number of replicates (assumes same number of replicates for each mut_list index)}
-
 \item{keep_input}{two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff}
 
-\item{cB}{cB file generated from TL-seq pipeline}
+\item{FOI}{Features of interest; character vector containing names of features to analyze}
+
+\item{concat}{Boolean; If TRUE, FOI is concatenated with output of reliableFeatures}
 }
 \value{
 returns list which can be passed to Stan analyses
