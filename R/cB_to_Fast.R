@@ -6,7 +6,7 @@
 #' @param cB_raw cB file generated from TL-seq pipeline
 #' @param samp_list vector of names of control samples
 #' @param type_list vector with 1 entry per sample; 0 = no s4U, 1 = s4U fed
-#' @param mut_list vector with 1 entry per sample; 1 = WT, > 1 = different experimental conditions (e.g., KO of protein X)
+#' @param mut_list vector with 1 entry per sample; 1 = reference, > 1 = different experimental conditions (e.g., KO of protein X)
 #' @param rep_list vector with 1 entry per sample that indexes replicate; 1 = 1st replicate, 2 = 2nd replicate, etc.
 #' @param tl single numerical value; s4U label time used in s4U fed samples
 #' @param keep_input two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff
@@ -42,7 +42,7 @@ cBtofast <- function(cB_raw,
   getRep <- function(s) rep_list[paste(s)]
 
   # Get reliable features:
-  if(concat == TRUE){
+  if(concat == TRUE | is.null(FOI)){
     reliables <- DynamicSeq::reliableFeatures(cB = cB, c_list = c_list, high_p = keep_input[1], totcut = keep_input[2])
     keep <- c(FOI, reliables[!(reliables %in% FOI)])
   }else{

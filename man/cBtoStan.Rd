@@ -23,7 +23,7 @@ cBtoStan(
 
 \item{type_list}{vector with 1 entry per sample; 0 = no s4U, 1 = s4U fed}
 
-\item{mut_list}{vector with 1 entry per sample; 1 = WT, > 1 = different experimental conditions (e.g., KO of protein X)}
+\item{mut_list}{vector with 1 entry per sample; 1 = reference, > 1 = different experimental conditions (e.g., KO of protein X)}
 
 \item{rep_list}{vector with 1 entry per sample that indexes replicate; 1 = 1st replicate, 2 = 2nd replicate, etc.}
 
