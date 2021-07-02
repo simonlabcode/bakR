@@ -4,7 +4,14 @@
 \alias{fast_analysis}
 \title{This function efficiently analyzes data to provide fraction new estimates and uncertainties}
 \usage{
-fast_analysis(df, boot_iter = 50, pnew = 0, pold = 0)
+fast_analysis(
+  df,
+  boot_iter = 50,
+  pnew = 0,
+  pold = 0,
+  read_cut = 50,
+  features_cut = 10
+)
 }
 \arguments{
 \item{df}{Dataframe in form provided by cB_to_Fast}
@@ -14,6 +21,10 @@ fast_analysis(df, boot_iter = 50, pnew = 0, pold = 0)
 \item{pnew}{Labeled read mutation rate; default of 0 means that model estimates rate from s4U fed data}
 
 \item{pold}{Unlabeled read mutation rate; default of 0 means that model estimates rate from no-s4U fed data}
+
+\item{read_cut}{Minimum number of reads for a given feature-sample combo to be used for mut rate estimates}
+
+\item{features_cut}{Number of features to estimate sample specific mutation rate with}
 }
 \value{
 list with dataframe of replicate specific estimates as well as dataframe of pooled estimates

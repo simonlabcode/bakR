@@ -97,10 +97,12 @@ cBtofast <- function(cB_raw,
 #' @param boot_iter Number of times to resample for bootstrapping; default is 50
 #' @param pnew Labeled read mutation rate; default of 0 means that model estimates rate from s4U fed data
 #' @param pold Unlabeled read mutation rate; default of 0 means that model estimates rate from no-s4U fed data
+#' @param read_cut Minimum number of reads for a given feature-sample combo to be used for mut rate estimates
+#' @param features_cut Number of features to estimate sample specific mutation rate with
 #' @return list with dataframe of replicate specific estimates as well as dataframe of pooled estimates
 #' @importFrom magrittr %>%
 #' @export
-fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0){
+fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0, read_cut = 50, features_cut = 10){
 
   logit <- function(x) log(x/(1-x))
   inv_logit <- function(x) exp(x)/(1+exp(x))
@@ -109,36 +111,94 @@ fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0){
 
   #Trim df and name columns
   if(pnew == 0){
+    message("Estimating labeled mutation rate")
     Mut_data <- df[,1:9]
     colnames(Mut_data) <- c("sample", "XF", "TC", "nT", "n", "fnum", "type", "mut", "reps")
 
-    #New Mutation rate Estimation
+    ##New Mutation rate Estimation
+    # Extract only s4U labeled data to estimate s4U mut rate
     New_data <- Mut_data[Mut_data$type == 1, ]
 
+    # Calculate avg. mut rate at each row
     New_data$avg_mut <- New_data$TC/New_data$nT
-    New_data$avg_mut[is.na(New_data$avg_mut)] <- 0
+
+    # Remove rows with NAs
+    New_data[!is.na(New_data$avg_mut),]
+
+    # calculate total number of mutations
+    # which is the avg. for that row of dataframe times n
+    # the number of reads that had the identical average
     New_data$weight_mut <- New_data$avg_mut*New_data$n
 
+    # This is to estimate the total mutation rate for each gene in
+    # each replicate and each experimental condition
+      # Kind of slow and I wish I could speed it up, maybe using data.table?
     New_data_summary <- New_data %>%
-      dplyr::group_by(reps, mut, fnum) %>%
-      dplyr::do(purrr::invoke_map_dfc(list(purrr::map_df),
+      dplyr::group_by(reps, mut, fnum) %>% # group by gene, replicate ID, and experiment ID
+      dplyr::do(purrr::invoke_map_dfc(list(purrr::map_df), #
                                       list(list(dplyr::select(., weight_mut), sum),
                                            list(dplyr::select(., n), sum))
       )
       )
 
-
+    # Estimate avg. mutation rate for every gene-sample combo
     New_data_summary$avg_mut <- New_data_summary$weight_mut/New_data_summary$n
 
-    New_data_ordered <- New_data_summary[order(New_data_summary$avg_mut, decreasing=TRUE), ]
+    # Order datalist so that it's ordered by sample and then avg mutation rate
+    # Goal is to use the highest avg. mutation rates to estimate s4U mutation rate,
+    # assuming that highest mutation rates are from fast turnover, compeltely
+    # labeled transcripts
+    New_data_ordered <- New_data_summary[order(New_data_summary$mut, New_data_summary$reps, New_data_summary$avg_mut, decreasing=TRUE), ]
 
-    New_data_cutoff <- New_data_ordered[New_data_ordered$n > 100,]
+    ## This part has some magic numbers I should get rid of
+    ## or move to user input
 
-    pnew <- mean(New_data_cutoff$avg_mut[1:30])
+    New_data_cutoff <- New_data_ordered[New_data_ordered$n > read_cut,]
 
+    # Check to make sure that the number of features that made it past the
+    # read count filter is still more than the total number of features required for
+    # mutation rate estimate
+    check <- New_data_cutoff %>% ungroup() %>%
+      count(mut, reps, sort = TRUE)
+
+    if(sum(check$n < features_cut) > 0){
+      stop("Not enough features made it past the read cutoff filter in one sample; try decreasing read_cut or features_cut")
+    }else{
+      New_data_estimate <- New_data_cutoff %>% group_by(mut, reps) %>%
+        summarise(pnew = mean(avg_mut[1:features_cut]))
+      message(paste(c("Estimated pnews are: ", New_data_estimate$pnew), collapse = " "))
+    }
+
+
+  }else{ # Need to construct pmut dataframe from User input
+    if(length(pnew) == 1){
+      nMT <- max(df$mut)
+      nreps <- max(df$reps)
+      pnew_vect <- rep(pnew, times = (nMT*nreps))
+
+      rep_vect <- rep(seq(from = 1, to = nreps), times = nMT)
+
+      mut_vect <- rep(seq(from = 1, to = nMT), each = nreps)
+
+      New_data_estimate <- data.frame(mut_vect, rep_vect, pnew_vect)
+      colnames(New_data_estimate) <- c("mut", "reps", "pnew")
+
+    } else if( length(pnew) != (nMT*nreps) ){
+      stop("User inputted pnew is not of length 1 or of length equal to number of samples")
+    } else{
+      nMT <- max(df$mut)
+      nreps <- max(df$reps)
+      rep_vect <- rep(seq(from = 1, to = nreps), times = nMT)
+
+      mut_vect <- rep(seq(from = 1, to = nMT), each = nreps)
+      New_data_estimate <- data.frame(mut_vect, rep_vect, pnew_vect)
+      colnames(New_data_estimate) <- c("mut", "reps", "pnew")
+    }
   }
 
   if(pold == 0){
+    message("Estimating unlabeled mutation rate")
+
     #Old mutation rate estimation
     Mut_data <- df[,1:9]
     colnames(Mut_data) <- c("sample", "XF", "TC", "nT", "n", "fnum", "type", "mut", "reps")
@@ -162,17 +222,33 @@ fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0){
 
     Old_data_summary$avg_mut <- Old_data_summary$weight_mut/Old_data_summary$n
 
+    # Order datalist differenlty than for s4U mut rate estimation
+    # Difference is that every mutation is a backgroun mutation in these samples
+    # So we just want the highest confidence estimation, meaning we should only
+    # order by read counts
     Old_data_ordered <- Old_data_summary[order(Old_data_summary$n, decreasing=TRUE), ]
 
-    Old_data_cutoff <- Old_data_ordered[Old_data_ordered$n > 100,]
+    ## This part has some magic numbers I should get rid of
+    ## or move to user input
 
-    pold <- mean(Old_data_ordered$avg_mut[1:30])
+    Old_data_cutoff <- Old_data_ordered[Old_data_ordered$n > read_cut,]
+
+    # Check to make sure that the number of features that made it past the
+    # read count filter is still more than the total number of features required for
+    # mutation rate estimate
+    check <- nrow(Old_data_cutoff)
+
+    if(check < features_cut){
+      stop("Not enough features made it past the read cutoff filter in one sample; try decreasing read_cut or features_cut")
+    }else{
+      pold <- mean(Old_data_cutoff$avg_mut[1:features_cut])
+      message(paste(c("Estimated pold is: ", pold), collapse = " "))
+    }
 
   }
 
 
-
-  pmuts <- c(pold, pnew)
+  pmut_list <- list(New_data_estimate, pold)
 
   Mut_data <- df
 
@@ -193,11 +269,15 @@ fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0){
   fn_boot <- rep(0, times=resamps)
   std_dev <- fn_rep_est
 
-
+  message("Estimating fraction news and uncertainties")
   for(i in 1:ngene){
     for(j in 1:num_conds){
       for(k in 1:nreps){
         #Extract Relevant Data
+        pnew <- New_data_estimate$pnew[(New_data_estimate$mut == j) && (New_data_estimate$reps == k)]
+
+        pmuts <- c(pold, pnew)
+
         TCs <- rep(Mut_data$TC[(Mut_data$reps == k) & (Mut_data$mut == j) & (Mut_data$fnum == i)], times = Mut_data$n[(Mut_data$reps == k) & (Mut_data$mut == j) & (Mut_data$fnum == i)])
         Us <- rep(Mut_data$nT[(Mut_data$reps == k) & (Mut_data$mut == j) & (Mut_data$fnum == i)], times = Mut_data$n[(Mut_data$reps == k) & (Mut_data$mut == j) & (Mut_data$fnum == i)])
 
@@ -280,7 +360,7 @@ fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0){
     mutate(avg_logit_fn = (avg_logit_fn*(nreps*(1/sd_boot)))/(nreps/sd_boot + sdp) + (theta_o*sdp)/(nreps/sd_boot + sdp) )
 
 
-  fn_list <- list(estimate_df, avg_df_fn_bayes, pmuts)
+  fn_list <- list(estimate_df, avg_df_fn_bayes, pmuts_list)
 
   return(fn_list)
 
