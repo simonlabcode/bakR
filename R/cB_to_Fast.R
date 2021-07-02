@@ -102,7 +102,7 @@ cBtofast <- function(cB_raw,
 #' @return list with dataframe of replicate specific estimates as well as dataframe of pooled estimates
 #' @importFrom magrittr %>%
 #' @export
-fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0, read_cut = 50, features_cut = 10){
+fast_analysis <- function(df, boot_iter = 50, pnew = NULL, pold = NULL, read_cut = 50, features_cut = 10){
 
   logit <- function(x) log(x/(1-x))
   inv_logit <- function(x) exp(x)/(1+exp(x))
@@ -110,7 +110,7 @@ fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0, read_cut = 50,
   #Old mutation rate estimation
 
   #Trim df and name columns
-  if(pnew == 0){
+  if(is.null(pnew)){
     message("Estimating labeled mutation rate")
     Mut_data <- df[,1:9]
     colnames(Mut_data) <- c("sample", "XF", "TC", "nT", "n", "fnum", "type", "mut", "reps")
@@ -171,9 +171,10 @@ fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0, read_cut = 50,
 
 
   }else{ # Need to construct pmut dataframe from User input
+    nMT <- max(df$mut)
+    nreps <- max(df$reps)
     if(length(pnew) == 1){
-      nMT <- max(df$mut)
-      nreps <- max(df$reps)
+
       pnew_vect <- rep(pnew, times = (nMT*nreps))
 
       rep_vect <- rep(seq(from = 1, to = nreps), times = nMT)
@@ -186,17 +187,15 @@ fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0, read_cut = 50,
     } else if( length(pnew) != (nMT*nreps) ){
       stop("User inputted pnew is not of length 1 or of length equal to number of samples")
     } else{
-      nMT <- max(df$mut)
-      nreps <- max(df$reps)
       rep_vect <- rep(seq(from = 1, to = nreps), times = nMT)
 
       mut_vect <- rep(seq(from = 1, to = nMT), each = nreps)
-      New_data_estimate <- data.frame(mut_vect, rep_vect, pnew_vect)
+      New_data_estimate <- data.frame(mut_vect, rep_vect, pnew)
       colnames(New_data_estimate) <- c("mut", "reps", "pnew")
     }
   }
 
-  if(pold == 0){
+  if(is.null(pold)){
     message("Estimating unlabeled mutation rate")
 
     #Old mutation rate estimation
@@ -248,7 +247,7 @@ fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0, read_cut = 50,
   }
 
 
-  pmut_list <- list(New_data_estimate, pold)
+  pmuts_list <- list(New_data_estimate, pold)
 
   Mut_data <- df
 
@@ -274,7 +273,7 @@ fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0, read_cut = 50,
     for(j in 1:num_conds){
       for(k in 1:nreps){
         #Extract Relevant Data
-        pnew <- New_data_estimate$pnew[(New_data_estimate$mut == j) && (New_data_estimate$reps == k)]
+        pnew <- New_data_estimate$pnew[(New_data_estimate$mut == j) & (New_data_estimate$reps == k)]
 
         pmuts <- c(pold, pnew)
 
@@ -329,7 +328,6 @@ fast_analysis <- function(df, boot_iter = 50, pnew = 0, pold = 0, read_cut = 50,
 
   logit_fn_rep <- logit(fn_rep_est)
 
-  R <- rep(1:nreps, times=)
 
   logit_fn <- as.vector(logit_fn_rep)
   logit_fn_sd <- as.vector(std_dev)
