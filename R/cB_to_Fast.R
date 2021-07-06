@@ -315,6 +315,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   avg_df_fn_bayes <- avg_df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
     mutate(sd_post = sqrt((a_hyper*b_hyper + nreps*sd_logit_fn)/(a_hyper + nreps - 2))) %>%
     mutate(logit_fn_post = (avg_logit_fn*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2))) %>%
+    mutate(sd_post = sqrt(1/(nreps/(sd_post^2) + (1/sdp^2)))) %>%
     mutate(kdeg = -log(1 - inv_logit(logit_fn_post))) %>%
     mutate(kdeg_sd = sd_post*(exp(logit_fn_post)/((1 + exp(-logit_fn_post))^2))) %>%
     ungroup() %>%
@@ -324,24 +325,27 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     mutate(L2FC_kdeg = ifelse(Condition == 1, 0, log2(kdeg/kdeg[Condition == 1]))) %>%
     ungroup()
 
-  # Because I can't think of how to vectorize this yet, here's a for loop
-  #
-  # for(i in 1:ngene){
-  #   for(j in 1:num_conds){
-  #     effect_size[count] <- avg_df_fn_bayes$logit_fn_post[avg_df_fn_bayes$Condition == j] - avg_df_fn_bayes$logit_fn_post[avg_df_fn_bayes$Condition == 1]
-  #   }
-  # }
+  # Calcuate lfsr and lfdr using ashr package
+
+  effects <- avg_df_fn_bayes$effect_size[avg_df_fn_bayes$Condition > 1]
+  ses <- avg_df_fn_bayes$effect_std_error[avg_df_fn_bayes$Condition > 1]
+
+  Genes_effects <- avg_df_fn_bayes$Gene_ID[avg_df_fn_bayes$Condition > 1]
+  Condition_effects <- avg_df_fn_bayes$Condition[avg_df_fn_bayes$Condition > 1]
+
+  L2FC_kdegs <- avg_df_fn_bayes$L2FC_kdeg[avg_df_fn_bayes$Condition > 1]
+
+  fit <- ashr::ash(effects, ses)
+  lfsr <- fit$result$lfsr
+  lfdr <- fit$result$lfdr
+
+  Effect_sizes_df <- data.frame(Genes_effects, Condition_effects, L2FC_kdegs, effects, ses, lfsr, lfdr)
 
 
-  # L2FC_kdeg_df <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
-  #   mutate(L2FC_kdeg = log2(kdeg/kdeg[(Gene_ID == Gene_ID) & (Condition == 1)])) %>%
-  #   ungroup()
+  hyperpars <- c(sdp, theta_o, var_pop, var_of_var, a_hyper, b_hyper)
+  names(hyperpars) <- c("Mean Prior sd", "Mean prior mean", "Variance prior mean", "Variance prior variance", "Variance hyperparam a", "Variance hyperparam b")
 
-
-  hyperpars <- c(sdp, theta_o, a_hyper, b_hyper)
-  names(hyperpars) <- c("Mean Prior sd", "Mean prior mean", "Variance hyperparam a", "Variance hyperparam b")
-
-  fn_list <- list(estimate_df, avg_df_fn_bayes, pmuts_list, hyperpars)
+  fn_list <- list(estimate_df, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, hyperpars)
 
   return(fn_list)
 
