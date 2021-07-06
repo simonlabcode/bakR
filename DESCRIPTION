@@ -34,7 +34,8 @@ Imports:
     rstan,
     rstantools (>= 2.1.1),
     dplyr,
-    stats
+    stats,
+    RConics
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),

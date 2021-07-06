@@ -263,46 +263,24 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   MT_ID <- R_ID
   FN_ID <- R_ID
 
-  message("Estimating fraction news and uncertainties")
-  for(i in 1:ngene){
-    for(j in 1:num_conds){
-      for(k in 1:nreps){
-        #Extract Relevant Data
-        pnew <- New_data_estimate$pnew[(New_data_estimate$mut == j) & (New_data_estimate$reps == k)]
+  # Estimate fraction new in each replicate using binomial model
+  message("Estimating fraction labeled and uncertainty")
 
-        pmuts <- c(pold, pnew)
-
-        TCs <- rep(Mut_data$TC[(Mut_data$reps == k) & (Mut_data$mut == j) & (Mut_data$fnum == i)], times = Mut_data$n[(Mut_data$reps == k) & (Mut_data$mut == j) & (Mut_data$fnum == i)])
-        Us <- rep(Mut_data$nT[(Mut_data$reps == k) & (Mut_data$mut == j) & (Mut_data$fnum == i)], times = Mut_data$n[(Mut_data$reps == k) & (Mut_data$mut == j) & (Mut_data$fnum == i)])
-
-        #Calculate newness likelihood for each gene
-        pnews <- stats::dbinom(TCs, size=Us, prob=pnew)
-        polds <- stats::dbinom(TCs, size=Us, prob=pold)
-
-        new_reads <- sum(pnews/(pnews + polds))
-
-        L <- length(TCs)
-
-        fn_rep_est[i, j, k] <- new_reads/L
-
-
-
-        R_ID[i, j, k] <- k
-        FN_ID[i, j, k] <- i
-        MT_ID[i, j, k] <- j
-      }
-    }
-  }
-
+  Mut_data_est <- Mut_data %>% group_by(fnum, mut, reps, TC, nT) %>%
+    mutate(New_prob = stats::dbinom(TC, size=nT, prob=New_data_estimate$pnew[(New_data_estimate$mut == mut) & (New_data_estimate$reps == reps)])) %>%
+    mutate(Old_prob = stats::dbinom(TC, size = nT, prob = pold)) %>%
+    mutate(News = n*(New_prob/(New_prob + Old_prob))) %>% ungroup() %>%
+    group_by(fnum, mut, reps) %>%
+    summarise(Fn_rep_est = sum(News)/sum(n)) %>%
+    mutate(logit_fn_rep = logit(Fn_rep_est))
 
   logit_fn_rep <- logit(fn_rep_est)
 
-
-  logit_fn <- as.vector(logit_fn_rep)
-  fn_estimate <- as.vector(fn_rep_est)
-  Replicate <- as.vector(R_ID)
-  Condition <- as.vector(MT_ID)
-  Gene_ID <- as.vector(FN_ID)
+  logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
+  fn_estimate <- as.vector(Mut_data_est$Fn_rep_est)
+  Replicate <- as.vector(Mut_data_est$reps)
+  Condition <- as.vector(Mut_data_est$mut)
+  Gene_ID <- as.vector(Mut_data_est$fnum)
 
 
   estimate_df <- data.frame(logit_fn, fn_estimate, Replicate, Condition, Gene_ID)
@@ -317,18 +295,32 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
               sd_logit_fn = sd(logit_fn))
 
   #Calcualte population averages
-  sdp <- sd(avg_df_fn$avg_logit_fn)
-  theta_o <- mean(avg_df_fn$avg_logit_fn)
-
-  #Adjust average fn according to Bayesian normal model with known sd
-  # avg_df_fn_bayes <- avg_df_fn %>%
-  #   mutate(avg_logit_fn = (avg_logit_fn*(nreps*(1/(sd_boot^2))))/(nreps/(sd_boot^2) + (sdp^2)) + (theta_o*(sdp^2))/(nreps/(sd_boot^2) + (sdp^2)) ) %>%
+  sdp <- sd(avg_df_fn$avg_logit_fn) # Will be prior sd in regularization of mean
+  theta_o <- mean(avg_df_fn$avg_logit_fn) # Will be prior mean in regularization of mean
+  var_pop <- mean(avg_df_fn$sd_logit_fn^2) # Will be prior mean in regularization of sd
+  var_of_var <- var(avg_df_fn$sd_logit_fn^2) # Will be prior variance in regularization of sd
 
 
+  ## Regularize standard deviation estimate
+  # Estimate hyperpriors with method of moments
+  two_params <- 8*(var_pop^4)/var_of_var
+  b <- c(1, -(4 + 2*(var_pop^2)/var_of_var), two_params, two_params)
 
-  #fn_list <- list(estimate_df, avg_df_fn_bayes, pmuts_list)
+  roots <- RConics::cubic(b)
 
-  fn_list <- list(estimate_df, avg_df_fn, pmuts_list)
+  a_hyper <- roots[(roots > 2) & (!is.complex(roots))]
+  b_hyper <- (var_pop*(a_hyper - 2))/a_hyper
+
+  # Regularize estimates with Bayesian models and informed priors
+  avg_df_fn_bayes <- avg_df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
+    mutate(sd_post = sqrt((a_hyper*b_hyper + nreps*sd_logit_fn)/(a_hyper + nreps - 2))) %>%
+    mutate(logit_fn_post = (avg_logit_fn*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2)))
+
+
+  hyperpars <- c(sdp, theta_o, a_hyper, b_hyper)
+  names(hyperpars) <- c("Mean Prior sd", "Mean prior mean", "Variance hyperparam a", "Variance hyperparam b")
+
+  fn_list <- list(estimate_df, avg_df_fn_bayes, pmuts_list, hyperpars)
 
   return(fn_list)
 
