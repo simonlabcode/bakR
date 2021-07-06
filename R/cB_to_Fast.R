@@ -122,7 +122,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     New_data$avg_mut <- New_data$TC/New_data$nT
 
     # Remove rows with NAs
-    New_data[!is.na(New_data$avg_mut),]
+    New_data <- New_data[!is.na(New_data$avg_mut),]
 
     # calculate total number of mutations
     # which is the avg. for that row of dataframe times n
@@ -132,16 +132,16 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     # This is to estimate the total mutation rate for each gene in
     # each replicate and each experimental condition
       # Kind of slow and I wish I could speed it up, maybe using data.table?
+    # New_data_summary <- New_data %>%
+    #   dplyr::group_by(reps, mut, fnum) %>% # group by gene, replicate ID, and experiment ID
+    #   dplyr::do(purrr::invoke_map_dfc(list(purrr::map_df), #
+    #                                   list(list(dplyr::select(., weight_mut), sum),
+    #                                        list(dplyr::select(., n), sum))
+    #   )
+    #   )
     New_data_summary <- New_data %>%
       dplyr::group_by(reps, mut, fnum) %>% # group by gene, replicate ID, and experiment ID
-      dplyr::do(purrr::invoke_map_dfc(list(purrr::map_df), #
-                                      list(list(dplyr::select(., weight_mut), sum),
-                                           list(dplyr::select(., n), sum))
-      )
-      )
-
-    # Estimate avg. mutation rate for every gene-sample combo
-    New_data_summary$avg_mut <- New_data_summary$weight_mut/New_data_summary$n
+      dplyr::summarise(avg_mut = sum(weight_mut)/sum(n), n = sum(n))
 
     # Order datalist so that it's ordered by sample and then avg mutation rate
     # Goal is to use the highest avg. mutation rates to estimate s4U mutation rate,
@@ -204,21 +204,17 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     Old_data <- Mut_data[Mut_data$type == 0, ]
 
     Old_data$avg_mut <- Old_data$TC/Old_data$nT
-    Old_data$avg_mut[is.na(Old_data$avg_mut)] <- 0
+
+    # Remove rows with NAs
+    Old_data <- Old_data[!is.na(Old_data$avg_mut),]
+
     Old_data$weight_mut <- Old_data$avg_mut*Old_data$n
 
     #Old_data$n <- rep(1, times=nrow(Old_data))
 
     Old_data_summary <- Old_data %>%
-      dplyr::group_by(reps, mut, fnum) %>%
-      dplyr::do(purrr::invoke_map_dfc(list(purrr::map_df),
-                                      list(list(dplyr::select(., weight_mut), sum),
-                                           list(dplyr::select(., n), sum))
-      )
-      )
-
-
-    Old_data_summary$avg_mut <- Old_data_summary$weight_mut/Old_data_summary$n
+      dplyr::group_by(reps, mut, fnum) %>% # group by gene, replicate ID, and experiment ID
+      dplyr::summarise(avg_mut = sum(weight_mut)/sum(n), n = sum(n))
 
     # Order datalist differenlty than for s4U mut rate estimation
     # Difference is that every mutation is a backgroun mutation in these samples
@@ -335,7 +331,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
   L2FC_kdegs <- avg_df_fn_bayes$L2FC_kdeg[avg_df_fn_bayes$Condition > 1]
 
-  fit <- ashr::ash(effects, ses)
+  fit <- ashr::ash(effects, ses, method = "fdr")
   lfsr <- fit$result$lfsr
   lfdr <- fit$result$lfdr
 
@@ -346,6 +342,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   names(hyperpars) <- c("Mean Prior sd", "Mean prior mean", "Variance prior mean", "Variance prior variance", "Variance hyperparam a", "Variance hyperparam b")
 
   fn_list <- list(estimate_df, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, hyperpars)
+
+  names(fn_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates", "Hyperparams")
 
   return(fn_list)
 
