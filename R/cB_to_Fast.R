@@ -314,7 +314,28 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   # Regularize estimates with Bayesian models and informed priors
   avg_df_fn_bayes <- avg_df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
     mutate(sd_post = sqrt((a_hyper*b_hyper + nreps*sd_logit_fn)/(a_hyper + nreps - 2))) %>%
-    mutate(logit_fn_post = (avg_logit_fn*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2)))
+    mutate(logit_fn_post = (avg_logit_fn*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2))) %>%
+    mutate(kdeg = -log(1 - inv_logit(logit_fn_post))) %>%
+    mutate(kdeg_sd = sd_post*(exp(logit_fn_post)/((1 + exp(-logit_fn_post))^2))) %>%
+    ungroup() %>%
+    group_by(Gene_ID) %>%
+    mutate(effect_size = logit_fn_post - logit_fn_post[Condition == 1]) %>%
+    mutate(effect_std_error = ifelse(Condition == 1, sd_post, mean(sd_post))) %>%
+    mutate(L2FC_kdeg = ifelse(Condition == 1, 0, log2(kdeg/kdeg[Condition == 1]))) %>%
+    ungroup()
+
+  # Because I can't think of how to vectorize this yet, here's a for loop
+  #
+  # for(i in 1:ngene){
+  #   for(j in 1:num_conds){
+  #     effect_size[count] <- avg_df_fn_bayes$logit_fn_post[avg_df_fn_bayes$Condition == j] - avg_df_fn_bayes$logit_fn_post[avg_df_fn_bayes$Condition == 1]
+  #   }
+  # }
+
+
+  # L2FC_kdeg_df <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
+  #   mutate(L2FC_kdeg = log2(kdeg/kdeg[(Gene_ID == Gene_ID) & (Condition == 1)])) %>%
+  #   ungroup()
 
 
   hyperpars <- c(sdp, theta_o, a_hyper, b_hyper)
