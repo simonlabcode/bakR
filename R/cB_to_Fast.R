@@ -94,7 +94,6 @@ cBtofast <- function(cB_raw,
 #' This function efficiently analyzes data to provide fraction new estimates and uncertainties
 #'
 #' @param df Dataframe in form provided by cB_to_Fast
-#' @param boot_iter Number of times to resample for bootstrapping; default is 50
 #' @param pnew Labeled read mutation rate; default of 0 means that model estimates rate from s4U fed data
 #' @param pold Unlabeled read mutation rate; default of 0 means that model estimates rate from no-s4U fed data
 #' @param read_cut Minimum number of reads for a given feature-sample combo to be used for mut rate estimates
@@ -102,7 +101,7 @@ cBtofast <- function(cB_raw,
 #' @return list with dataframe of replicate specific estimates as well as dataframe of pooled estimates
 #' @importFrom magrittr %>%
 #' @export
-fast_analysis <- function(df, boot_iter = 50, pnew = NULL, pold = NULL, read_cut = 50, features_cut = 10){
+fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_cut = 10){
 
   logit <- function(x) log(x/(1-x))
   inv_logit <- function(x) exp(x)/(1+exp(x))
@@ -264,10 +263,6 @@ fast_analysis <- function(df, boot_iter = 50, pnew = NULL, pold = NULL, read_cut
   MT_ID <- R_ID
   FN_ID <- R_ID
 
-  resamps <- boot_iter
-  fn_boot <- rep(0, times=resamps)
-  std_dev <- fn_rep_est
-
   message("Estimating fraction news and uncertainties")
   for(i in 1:ngene){
     for(j in 1:num_conds){
@@ -292,32 +287,6 @@ fast_analysis <- function(df, boot_iter = 50, pnew = NULL, pold = NULL, read_cut
 
 
 
-
-        #Bootstrapping
-        for(l in 1:resamps){
-          #Simulate TimeLapse data with fn_est and estimate mut rates
-          TCs <- rep(0, times=L)
-          Us <- TCs
-          Us <- stats::rbinom(n=L, size=200, prob=0.25)
-          new_ID <- purrr::rbernoulli(n=L, p=fn_rep_est[i,j,k]) + 1
-
-          TCs <- stats::rbinom(n=L, size=Us, prob=pmuts[new_ID])
-
-          pnews <- stats::dbinom(TCs, size=Us, prob=pnew)
-          polds <- stats::dbinom(TCs, size=Us, prob=pold)
-
-          new_reads <- sum(pnews/(pnews + polds))
-
-          fn_boot[l] <- new_reads/L
-
-          if(fn_boot[l] == 1){
-            fn_boot[l] <- 1 - 1/(length(TCs) + 1)
-          }else if(fn_boot[l] == 0){
-            fn_boot[l] <- 1/(length(TCs) + 1)
-          }
-        }
-        #Standard deviations of bootstrapped estimates
-        std_dev[i, j, k] <- stats::sd(logit(fn_boot))
         R_ID[i, j, k] <- k
         FN_ID[i, j, k] <- i
         MT_ID[i, j, k] <- j
@@ -330,14 +299,13 @@ fast_analysis <- function(df, boot_iter = 50, pnew = NULL, pold = NULL, read_cut
 
 
   logit_fn <- as.vector(logit_fn_rep)
-  logit_fn_sd <- as.vector(std_dev)
   fn_estimate <- as.vector(fn_rep_est)
   Replicate <- as.vector(R_ID)
   Condition <- as.vector(MT_ID)
   Gene_ID <- as.vector(FN_ID)
 
 
-  estimate_df <- data.frame(logit_fn, logit_fn_sd, fn_estimate, Replicate, Condition, Gene_ID)
+  estimate_df <- data.frame(logit_fn, fn_estimate, Replicate, Condition, Gene_ID)
 
   df_fn <- estimate_df[order(estimate_df$Gene_ID, estimate_df$Condition, estimate_df$Replicate),]
 
@@ -346,19 +314,21 @@ fast_analysis <- function(df, boot_iter = 50, pnew = NULL, pold = NULL, read_cut
   #Average over replicates
   avg_df_fn <- df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
     summarize(avg_logit_fn = mean(logit_fn),
-              sd_boot = mean(logit_fn_sd),
               sd_logit_fn = sd(logit_fn))
 
   #Calcualte population averages
-  sdp <- mean(avg_df_fn$sd_logit_fn)
+  sdp <- sd(avg_df_fn$avg_logit_fn)
   theta_o <- mean(avg_df_fn$avg_logit_fn)
 
   #Adjust average fn according to Bayesian normal model with known sd
-  avg_df_fn_bayes <- avg_df_fn %>%
-    mutate(avg_logit_fn = (avg_logit_fn*(nreps*(1/sd_boot)))/(nreps/sd_boot + sdp) + (theta_o*sdp)/(nreps/sd_boot + sdp) )
+  # avg_df_fn_bayes <- avg_df_fn %>%
+  #   mutate(avg_logit_fn = (avg_logit_fn*(nreps*(1/(sd_boot^2))))/(nreps/(sd_boot^2) + (sdp^2)) + (theta_o*(sdp^2))/(nreps/(sd_boot^2) + (sdp^2)) ) %>%
 
 
-  fn_list <- list(estimate_df, avg_df_fn_bayes, pmuts_list)
+
+  #fn_list <- list(estimate_df, avg_df_fn_bayes, pmuts_list)
+
+  fn_list <- list(estimate_df, avg_df_fn, pmuts_list)
 
   return(fn_list)
 
