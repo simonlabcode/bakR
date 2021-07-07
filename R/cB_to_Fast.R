@@ -26,7 +26,7 @@ cBtofast <- function(cB_raw,
                      concat = TRUE){
 
   cB <- cB_raw %>%
-    dplyr::select(sample, XF, GF, TC, n, io, nT)
+    dplyr::select(sample, XF, TC, n, nT)
 
   c_list <- samp_list[type_list == 0]
 
