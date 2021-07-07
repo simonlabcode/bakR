@@ -8,7 +8,7 @@ Currently, the only way to install the package is to:
   3. Call (from R or R_studio) devtools::install("DynamicSeq") then library(DynamicSeq)
   
 If trying to run on the cluster, installation should be done through an interactive R session. The steps are as follows:
-  1. Clone the repository to your ruddle account (or use Globus to transfer the locally cloned copy)
+  1. Clone the repository to your ruddle account (or use Globus to transfer the locally cloned copy) and navigate to directory housing repo
   2. Make a new directory to house installed packages (this prevents errors during installation due to permissions):
     
     
