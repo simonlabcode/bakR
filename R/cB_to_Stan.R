@@ -36,7 +36,8 @@ reliableFeatures <- function(cB,
   return(y)
 }
 
-
+# I should give them an option about the name of the column they want to sort by
+# I could even give users an option to specify column names or order
 #' Extract data for Stan analysis from cB
 #'
 #' This function obtains the data list necessary to analyze TL-seq data with Stan.
@@ -62,7 +63,7 @@ cBtoStan <- function(cB_raw,
                        FOI = c(),
                        concat = TRUE){
   cB <- cB_raw %>%
-    dplyr::select(sample, XF, GF, TC, n, io)
+    dplyr::select(sample, XF, TC, n, nT)
 
   c_list <- samp_list[type_list == 0]
 
@@ -157,7 +158,8 @@ cBtoStan <- function(cB_raw,
     R = R,
     nrep = nreps,
     num_obs = num_obs,
-    tl = tl
+    tl = tl,
+    sdf = sdf
   )
 
   return(data_list)

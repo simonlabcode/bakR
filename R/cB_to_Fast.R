@@ -263,12 +263,17 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   message("Estimating fraction labeled and uncertainty")
 
   Mut_data_est <- Mut_data %>% group_by(fnum, mut, reps, TC, nT) %>%
-    mutate(New_prob = stats::dbinom(TC, size=nT, prob=New_data_estimate$pnew[(New_data_estimate$mut == mut) & (New_data_estimate$reps == reps)])) %>%
+    mutate(pnew_est = New_data_estimate$pnew[(New_data_estimate$mut == mut) & (New_data_estimate$reps == reps)]) %>%
+    # mutate(avg_mut = TC/nT) %>%
+    # #mutate(prior_new = ifelse(avg_mut >= (pnew_est - 0.01), 0.99, (avg_mut + 0.01)/pnew_est )) %>%
+    # mutate(prior_new = 0.9)%>%
+    mutate(New_prob = stats::dbinom(TC, size=nT, prob=pnew_est)) %>%
     mutate(Old_prob = stats::dbinom(TC, size = nT, prob = pold)) %>%
     mutate(News = n*(New_prob/(New_prob + Old_prob))) %>% ungroup() %>%
     group_by(fnum, mut, reps) %>%
     summarise(Fn_rep_est = sum(News)/sum(n)) %>%
-    mutate(logit_fn_rep = logit(Fn_rep_est))
+    mutate(logit_fn_rep = ifelse(Fn_rep_est == 1, logit(0.999), ifelse(Fn_rep_est == 0, logit(0.001), logit(Fn_rep_est))))
+
 
   logit_fn_rep <- logit(fn_rep_est)
 
@@ -285,14 +290,26 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
   nreps <- max(df_fn$Replicate)
 
-  #Average over replicates
+  #Average over replicates and estimate hyperparameters
   avg_df_fn <- df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
     summarize(avg_logit_fn = mean(logit_fn),
-              sd_logit_fn = sd(logit_fn))
+              sd_logit_fn = sd(logit_fn)) %>% ungroup() %>%
+    group_by(Condition) %>%
+    mutate(sdp = sd(avg_logit_fn)) %>%
+    mutate(theta_o = mean(avg_logit_fn)) %>%
+    # mutate(var_pop = mean(sd_logit_fn^2)) %>%
+    # mutate(var_of_var = var(sd_logit_fn^2)) %>%
+    # mutate(two_params = 8*(var_pop^4)/var_of_var) %>%
+    # mutate(roots = RConics::cubic(c(1, -(4 + 2*(var_pop^2)/var_of_var), two_params, two_params))) %>%
+    # mutate(a_hyper = roots[(roots > 2) & (!is.complex(roots))]) %>%
+    # mutate(b_hyper = (var_pop*(a_hyper - 2))/a_hyper) %>%
+    ungroup()
 
   #Calcualte population averages
-  sdp <- sd(avg_df_fn$avg_logit_fn) # Will be prior sd in regularization of mean
-  theta_o <- mean(avg_df_fn$avg_logit_fn) # Will be prior mean in regularization of mean
+  # What I need to do is calculate these parameters for each Condition
+  #sdp <- sd(avg_df_fn$avg_logit_fn) # Will be prior sd in regularization of mean
+  #theta_o <- mean(avg_df_fn$avg_logit_fn) # Will be prior mean in regularization of mean
+
   var_pop <- mean(avg_df_fn$sd_logit_fn^2) # Will be prior mean in regularization of sd
   var_of_var <- var(avg_df_fn$sd_logit_fn^2) # Will be prior variance in regularization of sd
 
@@ -307,6 +324,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   a_hyper <- roots[(roots > 2) & (!is.complex(roots))]
   b_hyper <- (var_pop*(a_hyper - 2))/a_hyper
 
+
   # Regularize estimates with Bayesian models and informed priors
   avg_df_fn_bayes <- avg_df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
     mutate(sd_post = sqrt((a_hyper*b_hyper + nreps*sd_logit_fn)/(a_hyper + nreps - 2))) %>%
@@ -317,7 +335,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     ungroup() %>%
     group_by(Gene_ID) %>%
     mutate(effect_size = logit_fn_post - logit_fn_post[Condition == 1]) %>%
-    mutate(effect_std_error = ifelse(Condition == 1, sd_post, mean(sd_post))) %>%
+    mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
     mutate(L2FC_kdeg = ifelse(Condition == 1, 0, log2(kdeg/kdeg[Condition == 1]))) %>%
     ungroup()
 
@@ -338,12 +356,13 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   Effect_sizes_df <- data.frame(Genes_effects, Condition_effects, L2FC_kdegs, effects, ses, lfsr, lfdr)
 
 
-  hyperpars <- c(sdp, theta_o, var_pop, var_of_var, a_hyper, b_hyper)
-  names(hyperpars) <- c("Mean Prior sd", "Mean prior mean", "Variance prior mean", "Variance prior variance", "Variance hyperparam a", "Variance hyperparam b")
+  #hyperpars <- c(sdp, theta_o, var_pop, var_of_var, a_hyper, b_hyper)
+  #names(hyperpars) <- c("Mean Prior sd", "Mean prior mean", "Variance prior mean", "Variance prior variance", "Variance hyperparam a", "Variance hyperparam b")
 
-  fn_list <- list(estimate_df, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, hyperpars)
+  #fn_list <- list(estimate_df, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, hyperpars)
+  fn_list <- list(estimate_df, avg_df_fn_bayes, Effect_sizes_df, pmuts_list)
 
-  names(fn_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates", "Hyperparams")
+  names(fn_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates")
 
   return(fn_list)
 
