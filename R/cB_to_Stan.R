@@ -48,18 +48,22 @@ reliableFeatures <- function(cB,
 #' @param rep_list vector with 1 entry per sample that indexes replicate; 1 = 1st replicate, 2 = 2nd replicate, etc.
 #' @param tl single numerical value; s4U label time used in s4U fed samples
 #' @param keep_input two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff
+#' @param Stan Boolean; if TRUE, then data_list that can be passed to Stan is curated
+#' @param Fast Boolean; if TRUE, then dataframe that can be passed to fast_analysis() is curated
 #' @param FOI Features of interest; character vector containing names of features to analyze
 #' @param concat Boolean; If TRUE, FOI is concatenated with output of reliableFeatures
 #' @return returns list which can be passed to Stan analyses
 #' @importFrom magrittr %>%
 #' @export
-cBtoStan <- function(cB_raw,
+cBprocess <- function(cB_raw,
                        samp_list,
                        type_list,
                        mut_list,
                        rep_list,
                        tl,
                        keep_input=c(0.2, 50),
+                       Stan = TRUE,
+                       Fast = FALSE,
                        FOI = c(),
                        concat = TRUE){
   cB <- cB_raw %>%
@@ -87,80 +91,133 @@ cBtoStan <- function(cB_raw,
   }
 
   # Get only the desired features:
-
-  ranked_features_df  <- cB %>%
-    dplyr::ungroup() %>%
-    dplyr::filter(XF %in% keep) %>%
-    dplyr::group_by(XF) %>%
-    dplyr::summarize(n = sum(n)) %>%
-    dplyr::mutate(fnum = order(-n)) %>%
-    dplyr::arrange(fnum) %>%
-    dplyr::select(XF, fnum)
-
-
-  sdf <- cB %>%
-    dplyr::ungroup() %>%
-    dplyr::group_by(sample, XF, TC) %>%
-    dplyr::summarise(n = sum(n)) %>%
-    dplyr::right_join(ranked_features_df, by = 'XF')
-
-  ##### Run Stan model ---------
-
-  d = sdf
-  slist = samp_list
-  tlist = type_list
-  mlist = mut_list
-  rlist = rep_list
-  kp = keep
+  if(Stan){
+    ranked_features_df  <- cB %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(XF %in% keep) %>%
+      dplyr::group_by(XF) %>%
+      dplyr::summarize(n = sum(n)) %>%
+      dplyr::mutate(fnum = order(-n)) %>%
+      dplyr::arrange(fnum) %>%
+      dplyr::select(XF, fnum)
 
 
-  df <- d %>%
-    dplyr::ungroup() %>%
-    dplyr::filter(sample %in% slist)
+    sdf <- cB %>%
+      dplyr::ungroup() %>%
+      dplyr::group_by(sample, XF, TC) %>%
+      dplyr::summarise(n = sum(n)) %>%
+      dplyr::right_join(ranked_features_df, by = 'XF')
 
-  df$type <- paste(df$sample) %>% purrr::map_dbl(function(x) getType(x))
-  df$type <- as.integer(df$type)
+    ##### Run Stan model ---------
 
-  df$mut <- paste(df$sample) %>% purrr::map_dbl(function(x) getMut(x))
-  df$mut <- as.integer(df$mut)
-
-  df$reps <- paste(df$sample) %>% purrr::map_dbl(function(x) getRep(x))
-  df$reps <- as.integer(df$reps)
-
-
-  df <- df  %>%
-    dplyr::group_by(XF, fnum, type, mut, TC, reps) %>%
-    dplyr::summarise(n = sum(n)) %>%
-    dplyr::ungroup() %>%
-    dplyr::group_by(fnum) %>%
-    dplyr::arrange(type, .by_group = TRUE)
+    d = sdf
+    slist = samp_list
+    tlist = type_list
+    mlist = mut_list
+    rlist = rep_list
+    kp = keep
 
 
-  FE = df$fnum
-  NE <- dim(df)[1]
-  NF <- length(kp)
-  TP <- df$type
-  MT <- df$mut
-  nMT <- length(unique(MT))
-  R <- df$reps
+    df <- d %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(sample %in% slist)
 
-  num_mut <- df$TC # Number of mutations
-  num_obs <- df$n # Number of times observed
+    df$type <- paste(df$sample) %>% purrr::map_dbl(function(x) getType(x))
+    df$type <- as.integer(df$type)
 
-  data_list <- list(
-    NE = NE, #Number of reads
-    NF = NF, # Number of gene
-    TP = TP, # Flag the control sample EV_0
-    FE = FE, # gene
-    num_mut = num_mut,
-    MT = MT,
-    nMT = nMT,
-    R = R,
-    nrep = nreps,
-    num_obs = num_obs,
-    tl = tl,
-    sdf = sdf
-  )
+    df$mut <- paste(df$sample) %>% purrr::map_dbl(function(x) getMut(x))
+    df$mut <- as.integer(df$mut)
 
-  return(data_list)
+    df$reps <- paste(df$sample) %>% purrr::map_dbl(function(x) getRep(x))
+    df$reps <- as.integer(df$reps)
+
+
+    df <- df  %>%
+      dplyr::group_by(XF, fnum, type, mut, TC, reps) %>%
+      dplyr::summarise(n = sum(n)) %>%
+      dplyr::ungroup() %>%
+      dplyr::group_by(fnum) %>%
+      dplyr::arrange(type, .by_group = TRUE)
+
+
+    FE = df$fnum
+    NE <- dim(df)[1]
+    NF <- length(kp)
+    TP <- df$type
+    MT <- df$mut
+    nMT <- length(unique(MT))
+    R <- df$reps
+
+    num_mut <- df$TC # Number of mutations
+    num_obs <- df$n # Number of times observed
+
+    data_list <- list(
+      NE = NE, #Number of reads
+      NF = NF, # Number of gene
+      TP = TP, # Flag the control sample EV_0
+      FE = FE, # gene
+      num_mut = num_mut,
+      MT = MT,
+      nMT = nMT,
+      R = R,
+      nrep = nreps,
+      num_obs = num_obs,
+      tl = tl,
+      sdf = sdf
+    )
+
+  }
+
+  if(Fast){
+
+    ranked_features_df  <- cB %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(XF %in% keep) %>%
+      dplyr::group_by(XF) %>%
+      dplyr::summarize(n = sum(n)) %>%
+      dplyr::mutate(fnum = order(-n)) %>%
+      dplyr::arrange(fnum) %>%
+      dplyr::select(XF, fnum)
+
+
+    sdf <- cB %>%
+      dplyr::ungroup() %>%
+      dplyr::group_by(sample, XF, TC, nT) %>%
+      dplyr::summarise(n = sum(n)) %>%
+      dplyr::right_join(ranked_features_df, by = 'XF')
+
+    d = sdf
+    slist = samp_list
+    tlist = type_list
+    mlist = mut_list
+    rlist = rep_list
+    kp = keep
+
+
+    df <- d %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(sample %in% slist)
+
+    df$type <- paste(df$sample) %>% purrr::map_dbl(function(x) getType(x))
+    df$type <- as.integer(df$type)
+
+    df$mut <- paste(df$sample) %>% purrr::map_dbl(function(x) getMut(x))
+    df$mut <- as.integer(df$mut)
+
+    df$reps <- paste(df$sample) %>% purrr::map_dbl(function(x) getRep(x))
+    df$reps <- as.integer(df$reps)
+
+
+  }
+
+  if(Stan & Fast){
+    out <- list(data_list, df)
+    names(out) <- c("Stan_data", "fast_df")
+  }else if(!Stan){
+    out <- df
+  }else{
+    out <- data_list
+  }
+
+  return(out)
 }

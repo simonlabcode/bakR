@@ -2,7 +2,7 @@
 
 export(StanFDR)
 export(TL_stan)
-export(cBtoStan)
+export(cBprocess)
 export(cBtofast)
 export(fast_analysis)
 export(lm_stan)
