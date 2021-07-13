@@ -131,14 +131,6 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
     # This is to estimate the total mutation rate for each gene in
     # each replicate and each experimental condition
-      # Kind of slow and I wish I could speed it up, maybe using data.table?
-    # New_data_summary <- New_data %>%
-    #   dplyr::group_by(reps, mut, fnum) %>% # group by gene, replicate ID, and experiment ID
-    #   dplyr::do(purrr::invoke_map_dfc(list(purrr::map_df), #
-    #                                   list(list(dplyr::select(., weight_mut), sum),
-    #                                        list(dplyr::select(., n), sum))
-    #   )
-    #   )
     New_data_summary <- New_data %>%
       dplyr::group_by(reps, mut, fnum) %>% # group by gene, replicate ID, and experiment ID
       dplyr::summarise(avg_mut = sum(weight_mut)/sum(n), n = sum(n))
@@ -216,8 +208,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
       dplyr::group_by(reps, mut, fnum) %>% # group by gene, replicate ID, and experiment ID
       dplyr::summarise(avg_mut = sum(weight_mut)/sum(n), n = sum(n))
 
-    # Order datalist differenlty than for s4U mut rate estimation
-    # Difference is that every mutation is a backgroun mutation in these samples
+    # Order data differently than for s4U mut rate estimation
+    # Difference is that every mutation is a background mutation in these samples
     # So we just want the highest confidence estimation, meaning we should only
     # order by read counts
     Old_data_ordered <- Old_data_summary[order(Old_data_summary$n, decreasing=TRUE), ]
