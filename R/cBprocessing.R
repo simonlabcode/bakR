@@ -71,6 +71,8 @@ cBprocess <- function(cB_raw,
 
   c_list <- samp_list[type_list == 0]
 
+  s4U_list <- samp_list[type_list == 1]
+
   names(type_list) <- samp_list
   names(mut_list) <- samp_list
   names(rep_list) <- samp_list
@@ -90,17 +92,31 @@ cBprocess <- function(cB_raw,
     keep <- FOI
   }
 
-  # Get only the desired features:
-  if(Stan){
-    ranked_features_df  <- cB %>%
-      dplyr::ungroup() %>%
-      dplyr::filter(XF %in% keep) %>%
-      dplyr::group_by(XF) %>%
-      dplyr::summarize(n = sum(n)) %>%
-      dplyr::mutate(fnum = order(-n)) %>%
-      dplyr::arrange(fnum) %>%
-      dplyr::select(XF, fnum)
 
+
+
+  # This df is created in both cases
+  ranked_features_df  <- cB %>%
+    dplyr::ungroup() %>%
+    dplyr::filter(XF %in% keep) %>%
+    dplyr::group_by(XF) %>%
+    dplyr::summarize(n = sum(n)) %>%
+    dplyr::mutate(fnum = order(-n)) %>%
+    dplyr::arrange(fnum) %>%
+    dplyr::select(XF, fnum)
+
+
+  # Create count dataframe
+  N_obs <- cB %>%
+    dplyr::ungroup() %>%
+    dplyr::filter(XF %in% keep) %>%
+    dplyr::filter(sample %in% s4U_list) %>%
+    dplyr::group_by(XF, sample) %>%
+    dplyr::summarise(n = sum(n)) %>%
+    dplyr::right_join(ranked_features_df, by = 'XF') %>% ungroup()
+
+
+  if(Stan){
 
     sdf <- cB %>%
       dplyr::ungroup() %>%
@@ -169,16 +185,6 @@ cBprocess <- function(cB_raw,
   }
 
   if(Fast){
-
-    ranked_features_df  <- cB %>%
-      dplyr::ungroup() %>%
-      dplyr::filter(XF %in% keep) %>%
-      dplyr::group_by(XF) %>%
-      dplyr::summarize(n = sum(n)) %>%
-      dplyr::mutate(fnum = order(-n)) %>%
-      dplyr::arrange(fnum) %>%
-      dplyr::select(XF, fnum)
-
 
     sdf <- cB %>%
       dplyr::ungroup() %>%
