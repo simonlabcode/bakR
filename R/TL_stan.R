@@ -9,17 +9,10 @@
 TL_stan <- function(data_list, keep_fit = FALSE, ...) {
   fit <- rstan::sampling(stanmodels$Replicates, data = data_list, ...)
 
-  # Extract alpha to get number of genes
-  genes_summary <- rstan::summary(fit, pars = "alpha", probs = c(0.5))$summary
+  # Get number of features from data
+  ngs <- data_list$NF
 
-  genes_summary <- genes_summary[, c("50%","mean", "sd")]
-
-  genes_df <- as.data.frame(genes_summary)
-  ngs <- nrow(genes_df)
-
-  rm(genes_df)
-
-  # Extract kdeg to get number of conditions
+  # Extract kdeg to get number of conditions (could get from nMT but need kdeg df anyway)
   MT_summary <- rstan::summary(fit, pars = "kd", probs = c(0.5))$summary
 
   MT_summary <- MT_summary[, c("50%","mean", "sd")]
@@ -29,14 +22,7 @@ TL_stan <- function(data_list, keep_fit = FALSE, ...) {
 
 
   #Extract frac_new to get number of replicates
-  R_summary <- rstan::summary(fit, pars = "frac_new", probs = c(0.5))$summary
-
-  R_summary <- R_summary[, c("50%","mean", "sd")]
-
-  R_df <- as.data.frame(R_summary)
-  reps <- nrow(R_df)/((nconds+1)*ngs)
-
-  rm(R_df)
+  reps <- data_list$nrep
 
   nreps <- rep(reps, times=nconds)
 
