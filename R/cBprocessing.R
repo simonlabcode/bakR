@@ -107,13 +107,14 @@ cBprocess <- function(cB_raw,
 
 
   # Create count dataframe
-  N_obs <- cB %>%
+  Counts_df <- cB %>%
     dplyr::ungroup() %>%
     dplyr::filter(XF %in% keep) %>%
     dplyr::filter(sample %in% s4U_list) %>%
     dplyr::group_by(XF, sample) %>%
     dplyr::summarise(n = sum(n)) %>%
     dplyr::right_join(ranked_features_df, by = 'XF') %>% ungroup()
+
 
 
   if(Stan){
@@ -217,12 +218,14 @@ cBprocess <- function(cB_raw,
   }
 
   if(Stan & Fast){
-    out <- list(data_list, df)
-    names(out) <- c("Stan_data", "fast_df")
+    out <- list(data_list, df, Counts_df)
+    names(out) <- c("Stan_data", "Fast_df")
   }else if(!Stan){
-    out <- df
+    out <- list(df, Counts_df)
+    names(out) <- c("Fast_df", "Counts_df")
   }else{
-    out <- data_list
+    out <- list(data_list, Counts_df)
+    names(out) <- c("Stan_data", "Counts_df")
   }
 
   return(out)
