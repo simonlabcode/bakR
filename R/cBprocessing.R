@@ -115,7 +115,43 @@ cBprocess <- function(cB_raw,
     dplyr::summarise(n = sum(n)) %>%
     dplyr::right_join(ranked_features_df, by = 'XF') %>% ungroup()
 
+  ## U content estimation
+  sdf_U <- cB %>%
+    dplyr::ungroup() %>%
+    dplyr::group_by(sample, XF, TC, nT) %>%
+    dplyr::summarise(n = sum(n)) %>%
+    dplyr::right_join(ranked_features_df, by = 'XF') %>%
+    ungroup()
 
+  slist = samp_list
+  tlist = type_list
+  mlist = mut_list
+  rlist = rep_list
+  kp = keep
+
+  df_U <- sdf_U %>%
+    dplyr::ungroup() %>%
+    dplyr::filter(sample %in% slist)
+
+  df_U$type <- paste(df_U$sample) %>% purrr::map_dbl(function(x) getType(x))
+  df_U$type <- as.integer(df_U$type)
+
+  df_U$mut <- paste(df_U$sample) %>% purrr::map_dbl(function(x) getMut(x))
+  df_U$mut <- as.integer(df_U$mut)
+
+  df_U$reps <- paste(df_U$sample) %>% purrr::map_dbl(function(x) getRep(x))
+  df_U$reps <- as.integer(df_U$reps)
+
+  df_global_U <- df_U[df_U$type == 1, ] %>% group_by(reps, mut) %>%
+    summarise(tot_avg_Us = sum(nT*n)/sum(n)) %>% ungroup()
+
+  df_feature_U <- df_U[df_U$type == 1, ] %>% group_by(reps, mut, fnum) %>%
+    summarise(feature_avg_Us = sum(nT*n)/sum(n)) %>% ungroup()
+
+  df_U_tot <- merge(df_global_U, df_feature_U, by = c("mut", "reps"))
+
+  df_U_tot <- df_U_tot %>% mutate(U_factor = log(feature_avg_Us/tot_avg_Us)) %>%
+    select(mut, reps, fnum, U_factor)
 
   if(Stan){
 
@@ -123,16 +159,11 @@ cBprocess <- function(cB_raw,
       dplyr::ungroup() %>%
       dplyr::group_by(sample, XF, TC) %>%
       dplyr::summarise(n = sum(n)) %>%
-      dplyr::right_join(ranked_features_df, by = 'XF')
+      dplyr::right_join(ranked_features_df, by = 'XF') %>% ungroup()
 
     ##### Run Stan model ---------
 
     d = sdf
-    slist = samp_list
-    tlist = type_list
-    mlist = mut_list
-    rlist = rep_list
-    kp = keep
 
 
     df <- d %>%
@@ -157,6 +188,9 @@ cBprocess <- function(cB_raw,
       dplyr::arrange(type, .by_group = TRUE)
 
 
+    df <- merge(df, df_U_tot, by = c("fnum", "mut", "reps"))
+    df <- df[order(df$fnum, df$mut, df$reps), ]
+
     FE = df$fnum
     NE <- dim(df)[1]
     NF <- length(kp)
@@ -180,48 +214,18 @@ cBprocess <- function(cB_raw,
       nrep = nreps,
       num_obs = num_obs,
       tl = tl,
+      U_cont = df$U_factor,
       sdf = sdf
     )
 
   }
 
-  if(Fast){
-
-    sdf <- cB %>%
-      dplyr::ungroup() %>%
-      dplyr::group_by(sample, XF, TC, nT) %>%
-      dplyr::summarise(n = sum(n)) %>%
-      dplyr::right_join(ranked_features_df, by = 'XF')
-
-    d = sdf
-    slist = samp_list
-    tlist = type_list
-    mlist = mut_list
-    rlist = rep_list
-    kp = keep
-
-
-    df <- d %>%
-      dplyr::ungroup() %>%
-      dplyr::filter(sample %in% slist)
-
-    df$type <- paste(df$sample) %>% purrr::map_dbl(function(x) getType(x))
-    df$type <- as.integer(df$type)
-
-    df$mut <- paste(df$sample) %>% purrr::map_dbl(function(x) getMut(x))
-    df$mut <- as.integer(df$mut)
-
-    df$reps <- paste(df$sample) %>% purrr::map_dbl(function(x) getRep(x))
-    df$reps <- as.integer(df$reps)
-
-
-  }
 
   if(Stan & Fast){
-    out <- list(data_list, df, Counts_df)
+    out <- list(data_list, df_U, Counts_df)
     names(out) <- c("Stan_data", "Fast_df", "Counts_df")
   }else if(!Stan){
-    out <- list(df, Counts_df)
+    out <- list(df_U, Counts_df)
     names(out) <- c("Fast_df", "Counts_df")
   }else{
     out <- list(data_list, Counts_df)
