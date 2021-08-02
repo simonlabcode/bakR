@@ -33,7 +33,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_Replicates");
-    reader.add_event(132, 130, "end", "model_Replicates");
+    reader.add_event(113, 111, "end", "model_Replicates");
     return reader;
 }
 #include <stan_meta_header.hpp>
@@ -49,6 +49,7 @@ private:
         std::vector<int> num_mut;
         std::vector<int> num_obs;
         std::vector<int> R;
+        std::vector<double> U_cont;
         int nrep;
         double tl;
 public:
@@ -119,7 +120,7 @@ public:
             vals_i__ = context__.vals_i("nMT");
             pos__ = 0;
             nMT = vals_i__[pos__++];
-            current_statement_begin__ = 8;
+            current_statement_begin__ = 7;
             validate_non_negative_index("FE", "NE", NE);
             context__.validate_dims("data initialization", "FE", "int", context__.to_vec(NE));
             FE = std::vector<int>(NE, int(0));
@@ -129,7 +130,7 @@ public:
             for (size_t k_0__ = 0; k_0__ < FE_k_0_max__; ++k_0__) {
                 FE[k_0__] = vals_i__[pos__++];
             }
-            current_statement_begin__ = 9;
+            current_statement_begin__ = 8;
             validate_non_negative_index("num_mut", "NE", NE);
             context__.validate_dims("data initialization", "num_mut", "int", context__.to_vec(NE));
             num_mut = std::vector<int>(NE, int(0));
@@ -139,7 +140,7 @@ public:
             for (size_t k_0__ = 0; k_0__ < num_mut_k_0_max__; ++k_0__) {
                 num_mut[k_0__] = vals_i__[pos__++];
             }
-            current_statement_begin__ = 10;
+            current_statement_begin__ = 9;
             validate_non_negative_index("num_obs", "NE", NE);
             context__.validate_dims("data initialization", "num_obs", "int", context__.to_vec(NE));
             num_obs = std::vector<int>(NE, int(0));
@@ -149,7 +150,7 @@ public:
             for (size_t k_0__ = 0; k_0__ < num_obs_k_0_max__; ++k_0__) {
                 num_obs[k_0__] = vals_i__[pos__++];
             }
-            current_statement_begin__ = 11;
+            current_statement_begin__ = 10;
             validate_non_negative_index("R", "NE", NE);
             context__.validate_dims("data initialization", "R", "int", context__.to_vec(NE));
             R = std::vector<int>(NE, int(0));
@@ -158,6 +159,16 @@ public:
             size_t R_k_0_max__ = NE;
             for (size_t k_0__ = 0; k_0__ < R_k_0_max__; ++k_0__) {
                 R[k_0__] = vals_i__[pos__++];
+            }
+            current_statement_begin__ = 11;
+            validate_non_negative_index("U_cont", "NE", NE);
+            context__.validate_dims("data initialization", "U_cont", "double", context__.to_vec(NE));
+            U_cont = std::vector<double>(NE, double(0));
+            vals_r__ = context__.vals_r("U_cont");
+            pos__ = 0;
+            size_t U_cont_k_0_max__ = NE;
+            for (size_t k_0__ = 0; k_0__ < U_cont_k_0_max__; ++k_0__) {
+                U_cont[k_0__] = vals_r__[pos__++];
             }
             current_statement_begin__ = 12;
             context__.validate_dims("data initialization", "nrep", "int", context__.to_vec());
@@ -178,44 +189,37 @@ public:
             num_params_r__ = 0U;
             param_ranges_i__.clear();
             current_statement_begin__ = 17;
-            num_params_r__ += 1;
+            validate_non_negative_index("alpha", "NF", NF);
+            num_params_r__ += NF;
             current_statement_begin__ = 18;
             num_params_r__ += 1;
             current_statement_begin__ = 19;
-            validate_non_negative_index("z_o", "NF", NF);
-            num_params_r__ += NF;
+            num_params_r__ += 1;
             current_statement_begin__ = 20;
-            num_params_r__ += 1;
-            current_statement_begin__ = 21;
-            num_params_r__ += 1;
-            current_statement_begin__ = 23;
-            validate_non_negative_index("z_TL", "nMT", nMT);
-            validate_non_negative_index("z_TL", "NF", NF);
-            num_params_r__ += (nMT * NF);
-            current_statement_begin__ = 24;
-            validate_non_negative_index("alpha", "NF", NF);
-            num_params_r__ += NF;
-            current_statement_begin__ = 25;
-            num_params_r__ += 1;
-            current_statement_begin__ = 26;
-            num_params_r__ += 1;
-            current_statement_begin__ = 27;
             validate_non_negative_index("log_sig_e", "(nMT - 1)", (nMT - 1));
             num_params_r__ += (nMT - 1);
-            current_statement_begin__ = 28;
+            current_statement_begin__ = 21;
             validate_non_negative_index("mu_e", "(nMT - 1)", (nMT - 1));
             num_params_r__ += (nMT - 1);
-            current_statement_begin__ = 29;
+            current_statement_begin__ = 22;
             validate_non_negative_index("z_e", "(nMT - 1)", (nMT - 1));
             validate_non_negative_index("z_e", "NF", NF);
             num_params_r__ += ((nMT - 1) * NF);
-            current_statement_begin__ = 31;
+            current_statement_begin__ = 23;
             validate_non_negative_index("z_fn", "NF", NF);
             validate_non_negative_index("z_fn", "nMT", nMT);
             validate_non_negative_index("z_fn", "nrep", nrep);
             num_params_r__ += (((1 * NF) * nMT) * nrep);
-            current_statement_begin__ = 32;
+            current_statement_begin__ = 24;
             num_params_r__ += 1;
+            current_statement_begin__ = 25;
+            validate_non_negative_index("TL_lambda_eff", "nrep", nrep);
+            validate_non_negative_index("TL_lambda_eff", "nMT", nMT);
+            num_params_r__ += (nrep * nMT);
+            current_statement_begin__ = 26;
+            validate_non_negative_index("log_lambda_o", "nrep", nrep);
+            validate_non_negative_index("log_lambda_o", "nMT", nMT);
+            num_params_r__ += (nrep * nMT);
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
             // Next line prevents compiler griping about no return
@@ -234,99 +238,6 @@ public:
         std::vector<double> vals_r__;
         std::vector<int> vals_i__;
         current_statement_begin__ = 17;
-        if (!(context__.contains_r("log_lambda_o_m")))
-            stan::lang::rethrow_located(std::runtime_error(std::string("Variable log_lambda_o_m missing")), current_statement_begin__, prog_reader__());
-        vals_r__ = context__.vals_r("log_lambda_o_m");
-        pos__ = 0U;
-        context__.validate_dims("parameter initialization", "log_lambda_o_m", "double", context__.to_vec());
-        double log_lambda_o_m(0);
-        log_lambda_o_m = vals_r__[pos__++];
-        try {
-            writer__.scalar_unconstrain(log_lambda_o_m);
-        } catch (const std::exception& e) {
-            stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable log_lambda_o_m: ") + e.what()), current_statement_begin__, prog_reader__());
-        }
-        current_statement_begin__ = 18;
-        if (!(context__.contains_r("log_lambda_o_sd")))
-            stan::lang::rethrow_located(std::runtime_error(std::string("Variable log_lambda_o_sd missing")), current_statement_begin__, prog_reader__());
-        vals_r__ = context__.vals_r("log_lambda_o_sd");
-        pos__ = 0U;
-        context__.validate_dims("parameter initialization", "log_lambda_o_sd", "double", context__.to_vec());
-        double log_lambda_o_sd(0);
-        log_lambda_o_sd = vals_r__[pos__++];
-        try {
-            writer__.scalar_unconstrain(log_lambda_o_sd);
-        } catch (const std::exception& e) {
-            stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable log_lambda_o_sd: ") + e.what()), current_statement_begin__, prog_reader__());
-        }
-        current_statement_begin__ = 19;
-        if (!(context__.contains_r("z_o")))
-            stan::lang::rethrow_located(std::runtime_error(std::string("Variable z_o missing")), current_statement_begin__, prog_reader__());
-        vals_r__ = context__.vals_r("z_o");
-        pos__ = 0U;
-        validate_non_negative_index("z_o", "NF", NF);
-        context__.validate_dims("parameter initialization", "z_o", "vector_d", context__.to_vec(NF));
-        Eigen::Matrix<double, Eigen::Dynamic, 1> z_o(NF);
-        size_t z_o_j_1_max__ = NF;
-        for (size_t j_1__ = 0; j_1__ < z_o_j_1_max__; ++j_1__) {
-            z_o(j_1__) = vals_r__[pos__++];
-        }
-        try {
-            writer__.vector_unconstrain(z_o);
-        } catch (const std::exception& e) {
-            stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable z_o: ") + e.what()), current_statement_begin__, prog_reader__());
-        }
-        current_statement_begin__ = 20;
-        if (!(context__.contains_r("log_mu_TL")))
-            stan::lang::rethrow_located(std::runtime_error(std::string("Variable log_mu_TL missing")), current_statement_begin__, prog_reader__());
-        vals_r__ = context__.vals_r("log_mu_TL");
-        pos__ = 0U;
-        context__.validate_dims("parameter initialization", "log_mu_TL", "double", context__.to_vec());
-        double log_mu_TL(0);
-        log_mu_TL = vals_r__[pos__++];
-        try {
-            writer__.scalar_unconstrain(log_mu_TL);
-        } catch (const std::exception& e) {
-            stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable log_mu_TL: ") + e.what()), current_statement_begin__, prog_reader__());
-        }
-        current_statement_begin__ = 21;
-        if (!(context__.contains_r("log_sig_TL")))
-            stan::lang::rethrow_located(std::runtime_error(std::string("Variable log_sig_TL missing")), current_statement_begin__, prog_reader__());
-        vals_r__ = context__.vals_r("log_sig_TL");
-        pos__ = 0U;
-        context__.validate_dims("parameter initialization", "log_sig_TL", "double", context__.to_vec());
-        double log_sig_TL(0);
-        log_sig_TL = vals_r__[pos__++];
-        try {
-            writer__.scalar_unconstrain(log_sig_TL);
-        } catch (const std::exception& e) {
-            stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable log_sig_TL: ") + e.what()), current_statement_begin__, prog_reader__());
-        }
-        current_statement_begin__ = 23;
-        if (!(context__.contains_r("z_TL")))
-            stan::lang::rethrow_located(std::runtime_error(std::string("Variable z_TL missing")), current_statement_begin__, prog_reader__());
-        vals_r__ = context__.vals_r("z_TL");
-        pos__ = 0U;
-        validate_non_negative_index("z_TL", "nMT", nMT);
-        validate_non_negative_index("z_TL", "NF", NF);
-        context__.validate_dims("parameter initialization", "z_TL", "vector_d", context__.to_vec(NF,nMT));
-        std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > z_TL(NF, Eigen::Matrix<double, Eigen::Dynamic, 1>(nMT));
-        size_t z_TL_j_1_max__ = nMT;
-        size_t z_TL_k_0_max__ = NF;
-        for (size_t j_1__ = 0; j_1__ < z_TL_j_1_max__; ++j_1__) {
-            for (size_t k_0__ = 0; k_0__ < z_TL_k_0_max__; ++k_0__) {
-                z_TL[k_0__](j_1__) = vals_r__[pos__++];
-            }
-        }
-        size_t z_TL_i_0_max__ = NF;
-        for (size_t i_0__ = 0; i_0__ < z_TL_i_0_max__; ++i_0__) {
-            try {
-                writer__.vector_unconstrain(z_TL[i_0__]);
-            } catch (const std::exception& e) {
-                stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable z_TL: ") + e.what()), current_statement_begin__, prog_reader__());
-            }
-        }
-        current_statement_begin__ = 24;
         if (!(context__.contains_r("alpha")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable alpha missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("alpha");
@@ -343,7 +254,7 @@ public:
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable alpha: ") + e.what()), current_statement_begin__, prog_reader__());
         }
-        current_statement_begin__ = 25;
+        current_statement_begin__ = 18;
         if (!(context__.contains_r("mu_fn")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable mu_fn missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("mu_fn");
@@ -356,7 +267,7 @@ public:
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable mu_fn: ") + e.what()), current_statement_begin__, prog_reader__());
         }
-        current_statement_begin__ = 26;
+        current_statement_begin__ = 19;
         if (!(context__.contains_r("log_sig_fn")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable log_sig_fn missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("log_sig_fn");
@@ -369,7 +280,7 @@ public:
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable log_sig_fn: ") + e.what()), current_statement_begin__, prog_reader__());
         }
-        current_statement_begin__ = 27;
+        current_statement_begin__ = 20;
         if (!(context__.contains_r("log_sig_e")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable log_sig_e missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("log_sig_e");
@@ -386,7 +297,7 @@ public:
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable log_sig_e: ") + e.what()), current_statement_begin__, prog_reader__());
         }
-        current_statement_begin__ = 28;
+        current_statement_begin__ = 21;
         if (!(context__.contains_r("mu_e")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable mu_e missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("mu_e");
@@ -403,7 +314,7 @@ public:
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable mu_e: ") + e.what()), current_statement_begin__, prog_reader__());
         }
-        current_statement_begin__ = 29;
+        current_statement_begin__ = 22;
         if (!(context__.contains_r("z_e")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable z_e missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("z_e");
@@ -427,7 +338,7 @@ public:
                 stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable z_e: ") + e.what()), current_statement_begin__, prog_reader__());
             }
         }
-        current_statement_begin__ = 31;
+        current_statement_begin__ = 23;
         if (!(context__.contains_r("z_fn")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable z_fn missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("z_fn");
@@ -461,7 +372,7 @@ public:
                 }
             }
         }
-        current_statement_begin__ = 32;
+        current_statement_begin__ = 24;
         if (!(context__.contains_r("log_sd_r_mu")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable log_sd_r_mu missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("log_sd_r_mu");
@@ -473,6 +384,54 @@ public:
             writer__.scalar_unconstrain(log_sd_r_mu);
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable log_sd_r_mu: ") + e.what()), current_statement_begin__, prog_reader__());
+        }
+        current_statement_begin__ = 25;
+        if (!(context__.contains_r("TL_lambda_eff")))
+            stan::lang::rethrow_located(std::runtime_error(std::string("Variable TL_lambda_eff missing")), current_statement_begin__, prog_reader__());
+        vals_r__ = context__.vals_r("TL_lambda_eff");
+        pos__ = 0U;
+        validate_non_negative_index("TL_lambda_eff", "nrep", nrep);
+        validate_non_negative_index("TL_lambda_eff", "nMT", nMT);
+        context__.validate_dims("parameter initialization", "TL_lambda_eff", "vector_d", context__.to_vec(nMT,nrep));
+        std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > TL_lambda_eff(nMT, Eigen::Matrix<double, Eigen::Dynamic, 1>(nrep));
+        size_t TL_lambda_eff_j_1_max__ = nrep;
+        size_t TL_lambda_eff_k_0_max__ = nMT;
+        for (size_t j_1__ = 0; j_1__ < TL_lambda_eff_j_1_max__; ++j_1__) {
+            for (size_t k_0__ = 0; k_0__ < TL_lambda_eff_k_0_max__; ++k_0__) {
+                TL_lambda_eff[k_0__](j_1__) = vals_r__[pos__++];
+            }
+        }
+        size_t TL_lambda_eff_i_0_max__ = nMT;
+        for (size_t i_0__ = 0; i_0__ < TL_lambda_eff_i_0_max__; ++i_0__) {
+            try {
+                writer__.vector_lb_unconstrain(0, TL_lambda_eff[i_0__]);
+            } catch (const std::exception& e) {
+                stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable TL_lambda_eff: ") + e.what()), current_statement_begin__, prog_reader__());
+            }
+        }
+        current_statement_begin__ = 26;
+        if (!(context__.contains_r("log_lambda_o")))
+            stan::lang::rethrow_located(std::runtime_error(std::string("Variable log_lambda_o missing")), current_statement_begin__, prog_reader__());
+        vals_r__ = context__.vals_r("log_lambda_o");
+        pos__ = 0U;
+        validate_non_negative_index("log_lambda_o", "nrep", nrep);
+        validate_non_negative_index("log_lambda_o", "nMT", nMT);
+        context__.validate_dims("parameter initialization", "log_lambda_o", "vector_d", context__.to_vec(nMT,nrep));
+        std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > log_lambda_o(nMT, Eigen::Matrix<double, Eigen::Dynamic, 1>(nrep));
+        size_t log_lambda_o_j_1_max__ = nrep;
+        size_t log_lambda_o_k_0_max__ = nMT;
+        for (size_t j_1__ = 0; j_1__ < log_lambda_o_j_1_max__; ++j_1__) {
+            for (size_t k_0__ = 0; k_0__ < log_lambda_o_k_0_max__; ++k_0__) {
+                log_lambda_o[k_0__](j_1__) = vals_r__[pos__++];
+            }
+        }
+        size_t log_lambda_o_i_0_max__ = nMT;
+        for (size_t i_0__ = 0; i_0__ < log_lambda_o_i_0_max__; ++i_0__) {
+            try {
+                writer__.vector_unconstrain(log_lambda_o[i_0__]);
+            } catch (const std::exception& e) {
+                stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable log_lambda_o: ") + e.what()), current_statement_begin__, prog_reader__());
+            }
         }
         params_r__ = writer__.data_r();
         params_i__ = writer__.data_i();
@@ -500,86 +459,41 @@ public:
             stan::io::reader<local_scalar_t__> in__(params_r__, params_i__);
             // model parameters
             current_statement_begin__ = 17;
-            local_scalar_t__ log_lambda_o_m;
-            (void) log_lambda_o_m;  // dummy to suppress unused var warning
-            if (jacobian__)
-                log_lambda_o_m = in__.scalar_constrain(lp__);
-            else
-                log_lambda_o_m = in__.scalar_constrain();
-            current_statement_begin__ = 18;
-            local_scalar_t__ log_lambda_o_sd;
-            (void) log_lambda_o_sd;  // dummy to suppress unused var warning
-            if (jacobian__)
-                log_lambda_o_sd = in__.scalar_constrain(lp__);
-            else
-                log_lambda_o_sd = in__.scalar_constrain();
-            current_statement_begin__ = 19;
-            Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> z_o;
-            (void) z_o;  // dummy to suppress unused var warning
-            if (jacobian__)
-                z_o = in__.vector_constrain(NF, lp__);
-            else
-                z_o = in__.vector_constrain(NF);
-            current_statement_begin__ = 20;
-            local_scalar_t__ log_mu_TL;
-            (void) log_mu_TL;  // dummy to suppress unused var warning
-            if (jacobian__)
-                log_mu_TL = in__.scalar_constrain(lp__);
-            else
-                log_mu_TL = in__.scalar_constrain();
-            current_statement_begin__ = 21;
-            local_scalar_t__ log_sig_TL;
-            (void) log_sig_TL;  // dummy to suppress unused var warning
-            if (jacobian__)
-                log_sig_TL = in__.scalar_constrain(lp__);
-            else
-                log_sig_TL = in__.scalar_constrain();
-            current_statement_begin__ = 23;
-            std::vector<Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> > z_TL;
-            size_t z_TL_d_0_max__ = NF;
-            z_TL.reserve(z_TL_d_0_max__);
-            for (size_t d_0__ = 0; d_0__ < z_TL_d_0_max__; ++d_0__) {
-                if (jacobian__)
-                    z_TL.push_back(in__.vector_constrain(nMT, lp__));
-                else
-                    z_TL.push_back(in__.vector_constrain(nMT));
-            }
-            current_statement_begin__ = 24;
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> alpha;
             (void) alpha;  // dummy to suppress unused var warning
             if (jacobian__)
                 alpha = in__.vector_constrain(NF, lp__);
             else
                 alpha = in__.vector_constrain(NF);
-            current_statement_begin__ = 25;
+            current_statement_begin__ = 18;
             local_scalar_t__ mu_fn;
             (void) mu_fn;  // dummy to suppress unused var warning
             if (jacobian__)
                 mu_fn = in__.scalar_constrain(lp__);
             else
                 mu_fn = in__.scalar_constrain();
-            current_statement_begin__ = 26;
+            current_statement_begin__ = 19;
             local_scalar_t__ log_sig_fn;
             (void) log_sig_fn;  // dummy to suppress unused var warning
             if (jacobian__)
                 log_sig_fn = in__.scalar_constrain(lp__);
             else
                 log_sig_fn = in__.scalar_constrain();
-            current_statement_begin__ = 27;
+            current_statement_begin__ = 20;
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> log_sig_e;
             (void) log_sig_e;  // dummy to suppress unused var warning
             if (jacobian__)
                 log_sig_e = in__.vector_constrain((nMT - 1), lp__);
             else
                 log_sig_e = in__.vector_constrain((nMT - 1));
-            current_statement_begin__ = 28;
+            current_statement_begin__ = 21;
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> mu_e;
             (void) mu_e;  // dummy to suppress unused var warning
             if (jacobian__)
                 mu_e = in__.vector_constrain((nMT - 1), lp__);
             else
                 mu_e = in__.vector_constrain((nMT - 1));
-            current_statement_begin__ = 29;
+            current_statement_begin__ = 22;
             std::vector<Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> > z_e;
             size_t z_e_d_0_max__ = NF;
             z_e.reserve(z_e_d_0_max__);
@@ -589,7 +503,7 @@ public:
                 else
                     z_e.push_back(in__.vector_constrain((nMT - 1)));
             }
-            current_statement_begin__ = 31;
+            current_statement_begin__ = 23;
             std::vector<std::vector<std::vector<local_scalar_t__> > > z_fn;
             size_t z_fn_d_0_max__ = NF;
             size_t z_fn_d_1_max__ = nMT;
@@ -607,136 +521,117 @@ public:
                     }
                 }
             }
-            current_statement_begin__ = 32;
+            current_statement_begin__ = 24;
             local_scalar_t__ log_sd_r_mu;
             (void) log_sd_r_mu;  // dummy to suppress unused var warning
             if (jacobian__)
                 log_sd_r_mu = in__.scalar_constrain(lp__);
             else
                 log_sd_r_mu = in__.scalar_constrain();
+            current_statement_begin__ = 25;
+            std::vector<Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> > TL_lambda_eff;
+            size_t TL_lambda_eff_d_0_max__ = nMT;
+            TL_lambda_eff.reserve(TL_lambda_eff_d_0_max__);
+            for (size_t d_0__ = 0; d_0__ < TL_lambda_eff_d_0_max__; ++d_0__) {
+                if (jacobian__)
+                    TL_lambda_eff.push_back(in__.vector_lb_constrain(0, nrep, lp__));
+                else
+                    TL_lambda_eff.push_back(in__.vector_lb_constrain(0, nrep));
+            }
+            current_statement_begin__ = 26;
+            std::vector<Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> > log_lambda_o;
+            size_t log_lambda_o_d_0_max__ = nMT;
+            log_lambda_o.reserve(log_lambda_o_d_0_max__);
+            for (size_t d_0__ = 0; d_0__ < log_lambda_o_d_0_max__; ++d_0__) {
+                if (jacobian__)
+                    log_lambda_o.push_back(in__.vector_constrain(nrep, lp__));
+                else
+                    log_lambda_o.push_back(in__.vector_constrain(nrep));
+            }
             // transformed parameters
-            current_statement_begin__ = 37;
+            current_statement_begin__ = 30;
             validate_non_negative_index("frac_new", "NF", NF);
             validate_non_negative_index("frac_new", "nMT", nMT);
             validate_non_negative_index("frac_new", "nrep", nrep);
             std::vector<std::vector<std::vector<local_scalar_t__> > > frac_new(NF, std::vector<std::vector<local_scalar_t__> >(nMT, std::vector<local_scalar_t__>(nrep, local_scalar_t__(0))));
             stan::math::initialize(frac_new, DUMMY_VAR__);
             stan::math::fill(frac_new, DUMMY_VAR__);
-            current_statement_begin__ = 38;
+            current_statement_begin__ = 31;
             validate_non_negative_index("mu_rep_logit_fn", "NF", NF);
             validate_non_negative_index("mu_rep_logit_fn", "nMT", nMT);
             validate_non_negative_index("mu_rep_logit_fn", "nrep", nrep);
             std::vector<std::vector<std::vector<local_scalar_t__> > > mu_rep_logit_fn(NF, std::vector<std::vector<local_scalar_t__> >(nMT, std::vector<local_scalar_t__>(nrep, local_scalar_t__(0))));
             stan::math::initialize(mu_rep_logit_fn, DUMMY_VAR__);
             stan::math::fill(mu_rep_logit_fn, DUMMY_VAR__);
-            current_statement_begin__ = 39;
-            validate_non_negative_index("log_lambda_o", "NF", NF);
-            Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> log_lambda_o(NF);
-            stan::math::initialize(log_lambda_o, DUMMY_VAR__);
-            stan::math::fill(log_lambda_o, DUMMY_VAR__);
-            current_statement_begin__ = 40;
+            current_statement_begin__ = 32;
+            validate_non_negative_index("log_lambda_n", "nrep", nrep);
             validate_non_negative_index("log_lambda_n", "nMT", nMT);
-            validate_non_negative_index("log_lambda_n", "NF", NF);
-            std::vector<Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> > log_lambda_n(NF, Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1>(nMT));
+            std::vector<Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> > log_lambda_n(nMT, Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1>(nrep));
             stan::math::initialize(log_lambda_n, DUMMY_VAR__);
             stan::math::fill(log_lambda_n, DUMMY_VAR__);
-            current_statement_begin__ = 41;
+            current_statement_begin__ = 33;
             validate_non_negative_index("eff", "(nMT - 1)", (nMT - 1));
             validate_non_negative_index("eff", "NF", NF);
             std::vector<Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> > eff(NF, Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1>((nMT - 1)));
             stan::math::initialize(eff, DUMMY_VAR__);
             stan::math::fill(eff, DUMMY_VAR__);
-            current_statement_begin__ = 42;
-            local_scalar_t__ lambda_o_sd;
-            (void) lambda_o_sd;  // dummy to suppress unused var warning
-            stan::math::initialize(lambda_o_sd, DUMMY_VAR__);
-            stan::math::fill(lambda_o_sd, DUMMY_VAR__);
-            stan::math::assign(lambda_o_sd,stan::math::exp(log_lambda_o_sd));
-            current_statement_begin__ = 43;
+            current_statement_begin__ = 34;
             local_scalar_t__ sig_fn;
             (void) sig_fn;  // dummy to suppress unused var warning
             stan::math::initialize(sig_fn, DUMMY_VAR__);
             stan::math::fill(sig_fn, DUMMY_VAR__);
             stan::math::assign(sig_fn,stan::math::exp(log_sig_fn));
-            current_statement_begin__ = 44;
+            current_statement_begin__ = 35;
             local_scalar_t__ sd_r_mu;
             (void) sd_r_mu;  // dummy to suppress unused var warning
             stan::math::initialize(sd_r_mu, DUMMY_VAR__);
             stan::math::fill(sd_r_mu, DUMMY_VAR__);
             stan::math::assign(sd_r_mu,stan::math::exp(log_sd_r_mu));
-            current_statement_begin__ = 45;
-            local_scalar_t__ mu_TL;
-            (void) mu_TL;  // dummy to suppress unused var warning
-            stan::math::initialize(mu_TL, DUMMY_VAR__);
-            stan::math::fill(mu_TL, DUMMY_VAR__);
-            stan::math::assign(mu_TL,stan::math::exp(log_mu_TL));
-            current_statement_begin__ = 46;
+            current_statement_begin__ = 36;
             validate_non_negative_index("sig_e", "(nMT - 1)", (nMT - 1));
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> sig_e((nMT - 1));
             stan::math::initialize(sig_e, DUMMY_VAR__);
             stan::math::fill(sig_e, DUMMY_VAR__);
             stan::math::assign(sig_e,stan::math::exp(log_sig_e));
-            current_statement_begin__ = 47;
-            local_scalar_t__ sig_TL;
-            (void) sig_TL;  // dummy to suppress unused var warning
-            stan::math::initialize(sig_TL, DUMMY_VAR__);
-            stan::math::fill(sig_TL, DUMMY_VAR__);
-            stan::math::assign(sig_TL,stan::math::exp(log_sig_TL));
-            current_statement_begin__ = 48;
-            validate_non_negative_index("TL_lambda_eff", "nMT", nMT);
-            validate_non_negative_index("TL_lambda_eff", "NF", NF);
-            std::vector<Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> > TL_lambda_eff(NF, Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1>(nMT));
-            stan::math::initialize(TL_lambda_eff, DUMMY_VAR__);
-            stan::math::fill(TL_lambda_eff, DUMMY_VAR__);
             // transformed parameters block statements
-            current_statement_begin__ = 51;
+            current_statement_begin__ = 38;
             for (int i = 1; i <= NF; ++i) {
-                current_statement_begin__ = 52;
-                stan::model::assign(log_lambda_o, 
-                            stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
-                            (log_lambda_o_m + (get_base1(z_o, i, "z_o", 1) * lambda_o_sd)), 
-                            "assigning variable log_lambda_o");
-                current_statement_begin__ = 53;
+                current_statement_begin__ = 39;
                 for (int j = 1; j <= nMT; ++j) {
-                    current_statement_begin__ = 54;
-                    stan::model::assign(TL_lambda_eff, 
-                                stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::nil_index_list())), 
-                                stan::math::exp((log_mu_TL + (get_base1(get_base1(z_TL, i, "z_TL", 1), j, "z_TL", 2) * sig_TL))), 
-                                "assigning variable TL_lambda_eff");
-                    current_statement_begin__ = 55;
-                    stan::model::assign(log_lambda_n, 
-                                stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::nil_index_list())), 
-                                stan::math::log((stan::math::exp(get_base1(log_lambda_o, i, "log_lambda_o", 1)) + get_base1(get_base1(TL_lambda_eff, i, "TL_lambda_eff", 1), j, "TL_lambda_eff", 2))), 
-                                "assigning variable log_lambda_n");
-                    current_statement_begin__ = 56;
+                    current_statement_begin__ = 40;
                     if (as_bool(logical_gt(j, 1))) {
-                        current_statement_begin__ = 57;
+                        current_statement_begin__ = 41;
                         stan::model::assign(eff, 
                                     stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni((j - 1)), stan::model::nil_index_list())), 
                                     (get_base1(mu_e, (j - 1), "mu_e", 1) + (get_base1(get_base1(z_e, i, "z_e", 1), (j - 1), "z_e", 2) * get_base1(sig_e, (j - 1), "sig_e", 1))), 
                                     "assigning variable eff");
                     }
-                    current_statement_begin__ = 59;
+                    current_statement_begin__ = 43;
                     for (int k = 1; k <= nrep; ++k) {
-                        current_statement_begin__ = 60;
+                        current_statement_begin__ = 44;
+                        stan::model::assign(log_lambda_n, 
+                                    stan::model::cons_list(stan::model::index_uni(j), stan::model::cons_list(stan::model::index_uni(k), stan::model::nil_index_list())), 
+                                    (get_base1(get_base1(log_lambda_o, j, "log_lambda_o", 1), k, "log_lambda_o", 2) + get_base1(get_base1(TL_lambda_eff, j, "TL_lambda_eff", 1), k, "TL_lambda_eff", 2)), 
+                                    "assigning variable log_lambda_n");
+                        current_statement_begin__ = 45;
                         if (as_bool(logical_eq(j, 1))) {
-                            current_statement_begin__ = 61;
+                            current_statement_begin__ = 46;
                             stan::model::assign(mu_rep_logit_fn, 
                                         stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::cons_list(stan::model::index_uni(k), stan::model::nil_index_list()))), 
                                         (get_base1(alpha, i, "alpha", 1) + (get_base1(get_base1(get_base1(z_fn, i, "z_fn", 1), j, "z_fn", 2), k, "z_fn", 3) * sd_r_mu)), 
                                         "assigning variable mu_rep_logit_fn");
-                            current_statement_begin__ = 62;
+                            current_statement_begin__ = 47;
                             stan::model::assign(frac_new, 
                                         stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::cons_list(stan::model::index_uni(k), stan::model::nil_index_list()))), 
                                         inv_logit(get_base1(get_base1(get_base1(mu_rep_logit_fn, i, "mu_rep_logit_fn", 1), j, "mu_rep_logit_fn", 2), k, "mu_rep_logit_fn", 3)), 
                                         "assigning variable frac_new");
                         } else {
-                            current_statement_begin__ = 64;
+                            current_statement_begin__ = 49;
                             stan::model::assign(mu_rep_logit_fn, 
                                         stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::cons_list(stan::model::index_uni(k), stan::model::nil_index_list()))), 
                                         ((get_base1(alpha, i, "alpha", 1) + get_base1(get_base1(eff, i, "eff", 1), (j - 1), "eff", 2)) + (get_base1(get_base1(get_base1(z_fn, i, "z_fn", 1), j, "z_fn", 2), k, "z_fn", 3) * sd_r_mu)), 
                                         "assigning variable mu_rep_logit_fn");
-                            current_statement_begin__ = 65;
+                            current_statement_begin__ = 50;
                             stan::model::assign(frac_new, 
                                         stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::cons_list(stan::model::index_uni(k), stan::model::nil_index_list()))), 
                                         inv_logit(get_base1(get_base1(get_base1(mu_rep_logit_fn, i, "mu_rep_logit_fn", 1), j, "mu_rep_logit_fn", 2), k, "mu_rep_logit_fn", 3)), 
@@ -748,7 +643,7 @@ public:
             // validate transformed parameters
             const char* function__ = "validate transformed params";
             (void) function__;  // dummy to suppress unused var warning
-            current_statement_begin__ = 37;
+            current_statement_begin__ = 30;
             size_t frac_new_k_0_max__ = NF;
             size_t frac_new_k_1_max__ = nMT;
             size_t frac_new_k_2_max__ = nrep;
@@ -763,7 +658,7 @@ public:
                     }
                 }
             }
-            current_statement_begin__ = 38;
+            current_statement_begin__ = 31;
             size_t mu_rep_logit_fn_k_0_max__ = NF;
             size_t mu_rep_logit_fn_k_1_max__ = nMT;
             size_t mu_rep_logit_fn_k_2_max__ = nrep;
@@ -778,18 +673,9 @@ public:
                     }
                 }
             }
-            current_statement_begin__ = 39;
-            size_t log_lambda_o_j_1_max__ = NF;
-            for (size_t j_1__ = 0; j_1__ < log_lambda_o_j_1_max__; ++j_1__) {
-                if (stan::math::is_uninitialized(log_lambda_o(j_1__))) {
-                    std::stringstream msg__;
-                    msg__ << "Undefined transformed parameter: log_lambda_o" << "(" << j_1__ << ")";
-                    stan::lang::rethrow_located(std::runtime_error(std::string("Error initializing variable log_lambda_o: ") + msg__.str()), current_statement_begin__, prog_reader__());
-                }
-            }
-            current_statement_begin__ = 40;
-            size_t log_lambda_n_k_0_max__ = NF;
-            size_t log_lambda_n_j_1_max__ = nMT;
+            current_statement_begin__ = 32;
+            size_t log_lambda_n_k_0_max__ = nMT;
+            size_t log_lambda_n_j_1_max__ = nrep;
             for (size_t k_0__ = 0; k_0__ < log_lambda_n_k_0_max__; ++k_0__) {
                 for (size_t j_1__ = 0; j_1__ < log_lambda_n_j_1_max__; ++j_1__) {
                     if (stan::math::is_uninitialized(log_lambda_n[k_0__](j_1__))) {
@@ -799,7 +685,7 @@ public:
                     }
                 }
             }
-            current_statement_begin__ = 41;
+            current_statement_begin__ = 33;
             size_t eff_k_0_max__ = NF;
             size_t eff_j_1_max__ = (nMT - 1);
             for (size_t k_0__ = 0; k_0__ < eff_k_0_max__; ++k_0__) {
@@ -811,31 +697,19 @@ public:
                     }
                 }
             }
-            current_statement_begin__ = 42;
-            if (stan::math::is_uninitialized(lambda_o_sd)) {
-                std::stringstream msg__;
-                msg__ << "Undefined transformed parameter: lambda_o_sd";
-                stan::lang::rethrow_located(std::runtime_error(std::string("Error initializing variable lambda_o_sd: ") + msg__.str()), current_statement_begin__, prog_reader__());
-            }
-            current_statement_begin__ = 43;
+            current_statement_begin__ = 34;
             if (stan::math::is_uninitialized(sig_fn)) {
                 std::stringstream msg__;
                 msg__ << "Undefined transformed parameter: sig_fn";
                 stan::lang::rethrow_located(std::runtime_error(std::string("Error initializing variable sig_fn: ") + msg__.str()), current_statement_begin__, prog_reader__());
             }
-            current_statement_begin__ = 44;
+            current_statement_begin__ = 35;
             if (stan::math::is_uninitialized(sd_r_mu)) {
                 std::stringstream msg__;
                 msg__ << "Undefined transformed parameter: sd_r_mu";
                 stan::lang::rethrow_located(std::runtime_error(std::string("Error initializing variable sd_r_mu: ") + msg__.str()), current_statement_begin__, prog_reader__());
             }
-            current_statement_begin__ = 45;
-            if (stan::math::is_uninitialized(mu_TL)) {
-                std::stringstream msg__;
-                msg__ << "Undefined transformed parameter: mu_TL";
-                stan::lang::rethrow_located(std::runtime_error(std::string("Error initializing variable mu_TL: ") + msg__.str()), current_statement_begin__, prog_reader__());
-            }
-            current_statement_begin__ = 46;
+            current_statement_begin__ = 36;
             size_t sig_e_j_1_max__ = (nMT - 1);
             for (size_t j_1__ = 0; j_1__ < sig_e_j_1_max__; ++j_1__) {
                 if (stan::math::is_uninitialized(sig_e(j_1__))) {
@@ -844,66 +718,43 @@ public:
                     stan::lang::rethrow_located(std::runtime_error(std::string("Error initializing variable sig_e: ") + msg__.str()), current_statement_begin__, prog_reader__());
                 }
             }
-            current_statement_begin__ = 47;
-            if (stan::math::is_uninitialized(sig_TL)) {
-                std::stringstream msg__;
-                msg__ << "Undefined transformed parameter: sig_TL";
-                stan::lang::rethrow_located(std::runtime_error(std::string("Error initializing variable sig_TL: ") + msg__.str()), current_statement_begin__, prog_reader__());
-            }
-            current_statement_begin__ = 48;
-            size_t TL_lambda_eff_k_0_max__ = NF;
-            size_t TL_lambda_eff_j_1_max__ = nMT;
-            for (size_t k_0__ = 0; k_0__ < TL_lambda_eff_k_0_max__; ++k_0__) {
-                for (size_t j_1__ = 0; j_1__ < TL_lambda_eff_j_1_max__; ++j_1__) {
-                    if (stan::math::is_uninitialized(TL_lambda_eff[k_0__](j_1__))) {
-                        std::stringstream msg__;
-                        msg__ << "Undefined transformed parameter: TL_lambda_eff" << "[" << k_0__ << "]" << "(" << j_1__ << ")";
-                        stan::lang::rethrow_located(std::runtime_error(std::string("Error initializing variable TL_lambda_eff: ") + msg__.str()), current_statement_begin__, prog_reader__());
-                    }
-                }
-            }
             // model body
-            current_statement_begin__ = 76;
-            lp_accum__.add(normal_log<propto__>(log_lambda_o_m, -(3.5), 0.5));
-            current_statement_begin__ = 77;
-            lp_accum__.add(normal_log<propto__>(log_lambda_o_sd, -(1), 1));
-            current_statement_begin__ = 79;
-            lp_accum__.add(normal_log<propto__>(z_o, 0, 1));
-            current_statement_begin__ = 81;
-            lp_accum__.add(normal_log<propto__>(log_mu_TL, -(1), 0.3));
-            current_statement_begin__ = 82;
-            lp_accum__.add(normal_log<propto__>(log_sig_TL, -(1), 1));
-            current_statement_begin__ = 84;
+            current_statement_begin__ = 61;
+            for (int m = 1; m <= nMT; ++m) {
+                current_statement_begin__ = 62;
+                lp_accum__.add(lognormal_log<propto__>(get_base1(TL_lambda_eff, m, "TL_lambda_eff", 1), -(1), 0.5));
+                current_statement_begin__ = 63;
+                lp_accum__.add(normal_log<propto__>(get_base1(log_lambda_o, m, "log_lambda_o", 1), -(3.5), 0.5));
+            }
+            current_statement_begin__ = 66;
             lp_accum__.add(normal_log<propto__>(mu_fn, 0, 1.5));
-            current_statement_begin__ = 85;
+            current_statement_begin__ = 67;
             lp_accum__.add(normal_log<propto__>(log_sig_fn, -(1), 1));
-            current_statement_begin__ = 86;
+            current_statement_begin__ = 68;
             lp_accum__.add(normal_log<propto__>(alpha, mu_fn, sig_fn));
-            current_statement_begin__ = 87;
+            current_statement_begin__ = 69;
             lp_accum__.add(normal_log<propto__>(log_sig_e, -(1), 1));
-            current_statement_begin__ = 88;
+            current_statement_begin__ = 70;
             lp_accum__.add(normal_log<propto__>(mu_e, 0, 1));
-            current_statement_begin__ = 89;
+            current_statement_begin__ = 71;
             lp_accum__.add(normal_log<propto__>(log_sd_r_mu, -(1), 1));
-            current_statement_begin__ = 91;
+            current_statement_begin__ = 73;
             for (int i = 1; i <= NF; ++i) {
-                current_statement_begin__ = 93;
+                current_statement_begin__ = 75;
                 lp_accum__.add(normal_log<propto__>(get_base1(z_e, i, "z_e", 1), 0, 1));
-                current_statement_begin__ = 94;
-                lp_accum__.add(normal_log<propto__>(get_base1(z_TL, i, "z_TL", 1), 0, 1));
-                current_statement_begin__ = 96;
+                current_statement_begin__ = 77;
                 for (int j = 1; j <= nMT; ++j) {
-                    current_statement_begin__ = 98;
+                    current_statement_begin__ = 79;
                     for (int k = 1; k <= nrep; ++k) {
-                        current_statement_begin__ = 99;
+                        current_statement_begin__ = 80;
                         lp_accum__.add(normal_log<propto__>(get_base1(get_base1(get_base1(z_fn, i, "z_fn", 1), j, "z_fn", 2), k, "z_fn", 3), 0, 1));
                     }
                 }
             }
-            current_statement_begin__ = 105;
+            current_statement_begin__ = 86;
             for (int i = 1; i <= NE; ++i) {
-                current_statement_begin__ = 106;
-                lp_accum__.add((get_base1(num_obs, i, "num_obs", 1) * log_mix((get_base1(TP, i, "TP", 1) * get_base1(get_base1(get_base1(frac_new, get_base1(FE, i, "FE", 1), "frac_new", 1), get_base1(MT, i, "MT", 1), "frac_new", 2), get_base1(R, i, "R", 1), "frac_new", 3)), poisson_log_log(get_base1(num_mut, i, "num_mut", 1), get_base1(get_base1(log_lambda_n, get_base1(FE, i, "FE", 1), "log_lambda_n", 1), get_base1(MT, i, "MT", 1), "log_lambda_n", 2)), poisson_log_log(get_base1(num_mut, i, "num_mut", 1), get_base1(log_lambda_o, get_base1(FE, i, "FE", 1), "log_lambda_o", 1)))));
+                current_statement_begin__ = 87;
+                lp_accum__.add((get_base1(num_obs, i, "num_obs", 1) * log_mix((get_base1(TP, i, "TP", 1) * get_base1(get_base1(get_base1(frac_new, get_base1(FE, i, "FE", 1), "frac_new", 1), get_base1(MT, i, "MT", 1), "frac_new", 2), get_base1(R, i, "R", 1), "frac_new", 3)), poisson_log_log(get_base1(num_mut, i, "num_mut", 1), (get_base1(U_cont, i, "U_cont", 1) + get_base1(get_base1(log_lambda_n, get_base1(MT, i, "MT", 1), "log_lambda_n", 1), get_base1(R, i, "R", 1), "log_lambda_n", 2))), poisson_log_log(get_base1(num_mut, i, "num_mut", 1), (get_base1(U_cont, i, "U_cont", 1) + get_base1(get_base1(log_lambda_o, get_base1(MT, i, "MT", 1), "log_lambda_o", 1), get_base1(R, i, "R", 1), "log_lambda_o", 2))))));
             }
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -925,12 +776,6 @@ public:
     }
     void get_param_names(std::vector<std::string>& names__) const {
         names__.resize(0);
-        names__.push_back("log_lambda_o_m");
-        names__.push_back("log_lambda_o_sd");
-        names__.push_back("z_o");
-        names__.push_back("log_mu_TL");
-        names__.push_back("log_sig_TL");
-        names__.push_back("z_TL");
         names__.push_back("alpha");
         names__.push_back("mu_fn");
         names__.push_back("log_sig_fn");
@@ -939,18 +784,15 @@ public:
         names__.push_back("z_e");
         names__.push_back("z_fn");
         names__.push_back("log_sd_r_mu");
+        names__.push_back("TL_lambda_eff");
+        names__.push_back("log_lambda_o");
         names__.push_back("frac_new");
         names__.push_back("mu_rep_logit_fn");
-        names__.push_back("log_lambda_o");
         names__.push_back("log_lambda_n");
         names__.push_back("eff");
-        names__.push_back("lambda_o_sd");
         names__.push_back("sig_fn");
         names__.push_back("sd_r_mu");
-        names__.push_back("mu_TL");
         names__.push_back("sig_e");
-        names__.push_back("sig_TL");
-        names__.push_back("TL_lambda_eff");
         names__.push_back("kd");
         names__.push_back("L2FC_kd");
     }
@@ -958,21 +800,6 @@ public:
         dimss__.resize(0);
         std::vector<size_t> dims__;
         dims__.resize(0);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
-        dims__.push_back(NF);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
-        dims__.push_back(NF);
-        dims__.push_back(nMT);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
         dims__.push_back(NF);
         dimss__.push_back(dims__);
         dims__.resize(0);
@@ -997,7 +824,10 @@ public:
         dims__.resize(0);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(NF);
+        dims__.push_back(nMT);
+        dims__.push_back(nrep);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
         dims__.push_back(nMT);
         dims__.push_back(nrep);
         dimss__.push_back(dims__);
@@ -1008,10 +838,12 @@ public:
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(NF);
+        dims__.push_back(nMT);
+        dims__.push_back(nrep);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(NF);
         dims__.push_back(nMT);
+        dims__.push_back(nrep);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(NF);
@@ -1022,17 +854,7 @@ public:
         dims__.resize(0);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
         dims__.push_back((nMT - 1));
-        dimss__.push_back(dims__);
-        dims__.resize(0);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
-        dims__.push_back(NF);
-        dims__.push_back(nMT);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(NF);
@@ -1057,32 +879,6 @@ public:
         static const char* function__ = "model_Replicates_namespace::write_array";
         (void) function__;  // dummy to suppress unused var warning
         // read-transform, write parameters
-        double log_lambda_o_m = in__.scalar_constrain();
-        vars__.push_back(log_lambda_o_m);
-        double log_lambda_o_sd = in__.scalar_constrain();
-        vars__.push_back(log_lambda_o_sd);
-        Eigen::Matrix<double, Eigen::Dynamic, 1> z_o = in__.vector_constrain(NF);
-        size_t z_o_j_1_max__ = NF;
-        for (size_t j_1__ = 0; j_1__ < z_o_j_1_max__; ++j_1__) {
-            vars__.push_back(z_o(j_1__));
-        }
-        double log_mu_TL = in__.scalar_constrain();
-        vars__.push_back(log_mu_TL);
-        double log_sig_TL = in__.scalar_constrain();
-        vars__.push_back(log_sig_TL);
-        std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > z_TL;
-        size_t z_TL_d_0_max__ = NF;
-        z_TL.reserve(z_TL_d_0_max__);
-        for (size_t d_0__ = 0; d_0__ < z_TL_d_0_max__; ++d_0__) {
-            z_TL.push_back(in__.vector_constrain(nMT));
-        }
-        size_t z_TL_j_1_max__ = nMT;
-        size_t z_TL_k_0_max__ = NF;
-        for (size_t j_1__ = 0; j_1__ < z_TL_j_1_max__; ++j_1__) {
-            for (size_t k_0__ = 0; k_0__ < z_TL_k_0_max__; ++k_0__) {
-                vars__.push_back(z_TL[k_0__](j_1__));
-            }
-        }
         Eigen::Matrix<double, Eigen::Dynamic, 1> alpha = in__.vector_constrain(NF);
         size_t alpha_j_1_max__ = NF;
         for (size_t j_1__ = 0; j_1__ < alpha_j_1_max__; ++j_1__) {
@@ -1141,6 +937,32 @@ public:
         }
         double log_sd_r_mu = in__.scalar_constrain();
         vars__.push_back(log_sd_r_mu);
+        std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > TL_lambda_eff;
+        size_t TL_lambda_eff_d_0_max__ = nMT;
+        TL_lambda_eff.reserve(TL_lambda_eff_d_0_max__);
+        for (size_t d_0__ = 0; d_0__ < TL_lambda_eff_d_0_max__; ++d_0__) {
+            TL_lambda_eff.push_back(in__.vector_lb_constrain(0, nrep));
+        }
+        size_t TL_lambda_eff_j_1_max__ = nrep;
+        size_t TL_lambda_eff_k_0_max__ = nMT;
+        for (size_t j_1__ = 0; j_1__ < TL_lambda_eff_j_1_max__; ++j_1__) {
+            for (size_t k_0__ = 0; k_0__ < TL_lambda_eff_k_0_max__; ++k_0__) {
+                vars__.push_back(TL_lambda_eff[k_0__](j_1__));
+            }
+        }
+        std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > log_lambda_o;
+        size_t log_lambda_o_d_0_max__ = nMT;
+        log_lambda_o.reserve(log_lambda_o_d_0_max__);
+        for (size_t d_0__ = 0; d_0__ < log_lambda_o_d_0_max__; ++d_0__) {
+            log_lambda_o.push_back(in__.vector_constrain(nrep));
+        }
+        size_t log_lambda_o_j_1_max__ = nrep;
+        size_t log_lambda_o_k_0_max__ = nMT;
+        for (size_t j_1__ = 0; j_1__ < log_lambda_o_j_1_max__; ++j_1__) {
+            for (size_t k_0__ = 0; k_0__ < log_lambda_o_k_0_max__; ++k_0__) {
+                vars__.push_back(log_lambda_o[k_0__](j_1__));
+            }
+        }
         double lp__ = 0.0;
         (void) lp__;  // dummy to suppress unused var warning
         stan::math::accumulator<double> lp_accum__;
@@ -1149,128 +971,89 @@ public:
         if (!include_tparams__ && !include_gqs__) return;
         try {
             // declare and define transformed parameters
-            current_statement_begin__ = 37;
+            current_statement_begin__ = 30;
             validate_non_negative_index("frac_new", "NF", NF);
             validate_non_negative_index("frac_new", "nMT", nMT);
             validate_non_negative_index("frac_new", "nrep", nrep);
             std::vector<std::vector<std::vector<double> > > frac_new(NF, std::vector<std::vector<double> >(nMT, std::vector<double>(nrep, double(0))));
             stan::math::initialize(frac_new, DUMMY_VAR__);
             stan::math::fill(frac_new, DUMMY_VAR__);
-            current_statement_begin__ = 38;
+            current_statement_begin__ = 31;
             validate_non_negative_index("mu_rep_logit_fn", "NF", NF);
             validate_non_negative_index("mu_rep_logit_fn", "nMT", nMT);
             validate_non_negative_index("mu_rep_logit_fn", "nrep", nrep);
             std::vector<std::vector<std::vector<double> > > mu_rep_logit_fn(NF, std::vector<std::vector<double> >(nMT, std::vector<double>(nrep, double(0))));
             stan::math::initialize(mu_rep_logit_fn, DUMMY_VAR__);
             stan::math::fill(mu_rep_logit_fn, DUMMY_VAR__);
-            current_statement_begin__ = 39;
-            validate_non_negative_index("log_lambda_o", "NF", NF);
-            Eigen::Matrix<double, Eigen::Dynamic, 1> log_lambda_o(NF);
-            stan::math::initialize(log_lambda_o, DUMMY_VAR__);
-            stan::math::fill(log_lambda_o, DUMMY_VAR__);
-            current_statement_begin__ = 40;
+            current_statement_begin__ = 32;
+            validate_non_negative_index("log_lambda_n", "nrep", nrep);
             validate_non_negative_index("log_lambda_n", "nMT", nMT);
-            validate_non_negative_index("log_lambda_n", "NF", NF);
-            std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > log_lambda_n(NF, Eigen::Matrix<double, Eigen::Dynamic, 1>(nMT));
+            std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > log_lambda_n(nMT, Eigen::Matrix<double, Eigen::Dynamic, 1>(nrep));
             stan::math::initialize(log_lambda_n, DUMMY_VAR__);
             stan::math::fill(log_lambda_n, DUMMY_VAR__);
-            current_statement_begin__ = 41;
+            current_statement_begin__ = 33;
             validate_non_negative_index("eff", "(nMT - 1)", (nMT - 1));
             validate_non_negative_index("eff", "NF", NF);
             std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > eff(NF, Eigen::Matrix<double, Eigen::Dynamic, 1>((nMT - 1)));
             stan::math::initialize(eff, DUMMY_VAR__);
             stan::math::fill(eff, DUMMY_VAR__);
-            current_statement_begin__ = 42;
-            double lambda_o_sd;
-            (void) lambda_o_sd;  // dummy to suppress unused var warning
-            stan::math::initialize(lambda_o_sd, DUMMY_VAR__);
-            stan::math::fill(lambda_o_sd, DUMMY_VAR__);
-            stan::math::assign(lambda_o_sd,stan::math::exp(log_lambda_o_sd));
-            current_statement_begin__ = 43;
+            current_statement_begin__ = 34;
             double sig_fn;
             (void) sig_fn;  // dummy to suppress unused var warning
             stan::math::initialize(sig_fn, DUMMY_VAR__);
             stan::math::fill(sig_fn, DUMMY_VAR__);
             stan::math::assign(sig_fn,stan::math::exp(log_sig_fn));
-            current_statement_begin__ = 44;
+            current_statement_begin__ = 35;
             double sd_r_mu;
             (void) sd_r_mu;  // dummy to suppress unused var warning
             stan::math::initialize(sd_r_mu, DUMMY_VAR__);
             stan::math::fill(sd_r_mu, DUMMY_VAR__);
             stan::math::assign(sd_r_mu,stan::math::exp(log_sd_r_mu));
-            current_statement_begin__ = 45;
-            double mu_TL;
-            (void) mu_TL;  // dummy to suppress unused var warning
-            stan::math::initialize(mu_TL, DUMMY_VAR__);
-            stan::math::fill(mu_TL, DUMMY_VAR__);
-            stan::math::assign(mu_TL,stan::math::exp(log_mu_TL));
-            current_statement_begin__ = 46;
+            current_statement_begin__ = 36;
             validate_non_negative_index("sig_e", "(nMT - 1)", (nMT - 1));
             Eigen::Matrix<double, Eigen::Dynamic, 1> sig_e((nMT - 1));
             stan::math::initialize(sig_e, DUMMY_VAR__);
             stan::math::fill(sig_e, DUMMY_VAR__);
             stan::math::assign(sig_e,stan::math::exp(log_sig_e));
-            current_statement_begin__ = 47;
-            double sig_TL;
-            (void) sig_TL;  // dummy to suppress unused var warning
-            stan::math::initialize(sig_TL, DUMMY_VAR__);
-            stan::math::fill(sig_TL, DUMMY_VAR__);
-            stan::math::assign(sig_TL,stan::math::exp(log_sig_TL));
-            current_statement_begin__ = 48;
-            validate_non_negative_index("TL_lambda_eff", "nMT", nMT);
-            validate_non_negative_index("TL_lambda_eff", "NF", NF);
-            std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > TL_lambda_eff(NF, Eigen::Matrix<double, Eigen::Dynamic, 1>(nMT));
-            stan::math::initialize(TL_lambda_eff, DUMMY_VAR__);
-            stan::math::fill(TL_lambda_eff, DUMMY_VAR__);
             // do transformed parameters statements
-            current_statement_begin__ = 51;
+            current_statement_begin__ = 38;
             for (int i = 1; i <= NF; ++i) {
-                current_statement_begin__ = 52;
-                stan::model::assign(log_lambda_o, 
-                            stan::model::cons_list(stan::model::index_uni(i), stan::model::nil_index_list()), 
-                            (log_lambda_o_m + (get_base1(z_o, i, "z_o", 1) * lambda_o_sd)), 
-                            "assigning variable log_lambda_o");
-                current_statement_begin__ = 53;
+                current_statement_begin__ = 39;
                 for (int j = 1; j <= nMT; ++j) {
-                    current_statement_begin__ = 54;
-                    stan::model::assign(TL_lambda_eff, 
-                                stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::nil_index_list())), 
-                                stan::math::exp((log_mu_TL + (get_base1(get_base1(z_TL, i, "z_TL", 1), j, "z_TL", 2) * sig_TL))), 
-                                "assigning variable TL_lambda_eff");
-                    current_statement_begin__ = 55;
-                    stan::model::assign(log_lambda_n, 
-                                stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::nil_index_list())), 
-                                stan::math::log((stan::math::exp(get_base1(log_lambda_o, i, "log_lambda_o", 1)) + get_base1(get_base1(TL_lambda_eff, i, "TL_lambda_eff", 1), j, "TL_lambda_eff", 2))), 
-                                "assigning variable log_lambda_n");
-                    current_statement_begin__ = 56;
+                    current_statement_begin__ = 40;
                     if (as_bool(logical_gt(j, 1))) {
-                        current_statement_begin__ = 57;
+                        current_statement_begin__ = 41;
                         stan::model::assign(eff, 
                                     stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni((j - 1)), stan::model::nil_index_list())), 
                                     (get_base1(mu_e, (j - 1), "mu_e", 1) + (get_base1(get_base1(z_e, i, "z_e", 1), (j - 1), "z_e", 2) * get_base1(sig_e, (j - 1), "sig_e", 1))), 
                                     "assigning variable eff");
                     }
-                    current_statement_begin__ = 59;
+                    current_statement_begin__ = 43;
                     for (int k = 1; k <= nrep; ++k) {
-                        current_statement_begin__ = 60;
+                        current_statement_begin__ = 44;
+                        stan::model::assign(log_lambda_n, 
+                                    stan::model::cons_list(stan::model::index_uni(j), stan::model::cons_list(stan::model::index_uni(k), stan::model::nil_index_list())), 
+                                    (get_base1(get_base1(log_lambda_o, j, "log_lambda_o", 1), k, "log_lambda_o", 2) + get_base1(get_base1(TL_lambda_eff, j, "TL_lambda_eff", 1), k, "TL_lambda_eff", 2)), 
+                                    "assigning variable log_lambda_n");
+                        current_statement_begin__ = 45;
                         if (as_bool(logical_eq(j, 1))) {
-                            current_statement_begin__ = 61;
+                            current_statement_begin__ = 46;
                             stan::model::assign(mu_rep_logit_fn, 
                                         stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::cons_list(stan::model::index_uni(k), stan::model::nil_index_list()))), 
                                         (get_base1(alpha, i, "alpha", 1) + (get_base1(get_base1(get_base1(z_fn, i, "z_fn", 1), j, "z_fn", 2), k, "z_fn", 3) * sd_r_mu)), 
                                         "assigning variable mu_rep_logit_fn");
-                            current_statement_begin__ = 62;
+                            current_statement_begin__ = 47;
                             stan::model::assign(frac_new, 
                                         stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::cons_list(stan::model::index_uni(k), stan::model::nil_index_list()))), 
                                         inv_logit(get_base1(get_base1(get_base1(mu_rep_logit_fn, i, "mu_rep_logit_fn", 1), j, "mu_rep_logit_fn", 2), k, "mu_rep_logit_fn", 3)), 
                                         "assigning variable frac_new");
                         } else {
-                            current_statement_begin__ = 64;
+                            current_statement_begin__ = 49;
                             stan::model::assign(mu_rep_logit_fn, 
                                         stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::cons_list(stan::model::index_uni(k), stan::model::nil_index_list()))), 
                                         ((get_base1(alpha, i, "alpha", 1) + get_base1(get_base1(eff, i, "eff", 1), (j - 1), "eff", 2)) + (get_base1(get_base1(get_base1(z_fn, i, "z_fn", 1), j, "z_fn", 2), k, "z_fn", 3) * sd_r_mu)), 
                                         "assigning variable mu_rep_logit_fn");
-                            current_statement_begin__ = 65;
+                            current_statement_begin__ = 50;
                             stan::model::assign(frac_new, 
                                         stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::cons_list(stan::model::index_uni(k), stan::model::nil_index_list()))), 
                                         inv_logit(get_base1(get_base1(get_base1(mu_rep_logit_fn, i, "mu_rep_logit_fn", 1), j, "mu_rep_logit_fn", 2), k, "mu_rep_logit_fn", 3)), 
@@ -1305,12 +1088,8 @@ public:
                         }
                     }
                 }
-                size_t log_lambda_o_j_1_max__ = NF;
-                for (size_t j_1__ = 0; j_1__ < log_lambda_o_j_1_max__; ++j_1__) {
-                    vars__.push_back(log_lambda_o(j_1__));
-                }
-                size_t log_lambda_n_j_1_max__ = nMT;
-                size_t log_lambda_n_k_0_max__ = NF;
+                size_t log_lambda_n_j_1_max__ = nrep;
+                size_t log_lambda_n_k_0_max__ = nMT;
                 for (size_t j_1__ = 0; j_1__ < log_lambda_n_j_1_max__; ++j_1__) {
                     for (size_t k_0__ = 0; k_0__ < log_lambda_n_k_0_max__; ++k_0__) {
                         vars__.push_back(log_lambda_n[k_0__](j_1__));
@@ -1323,60 +1102,50 @@ public:
                         vars__.push_back(eff[k_0__](j_1__));
                     }
                 }
-                vars__.push_back(lambda_o_sd);
                 vars__.push_back(sig_fn);
                 vars__.push_back(sd_r_mu);
-                vars__.push_back(mu_TL);
                 size_t sig_e_j_1_max__ = (nMT - 1);
                 for (size_t j_1__ = 0; j_1__ < sig_e_j_1_max__; ++j_1__) {
                     vars__.push_back(sig_e(j_1__));
                 }
-                vars__.push_back(sig_TL);
-                size_t TL_lambda_eff_j_1_max__ = nMT;
-                size_t TL_lambda_eff_k_0_max__ = NF;
-                for (size_t j_1__ = 0; j_1__ < TL_lambda_eff_j_1_max__; ++j_1__) {
-                    for (size_t k_0__ = 0; k_0__ < TL_lambda_eff_k_0_max__; ++k_0__) {
-                        vars__.push_back(TL_lambda_eff[k_0__](j_1__));
-                    }
-                }
             }
             if (!include_gqs__) return;
             // declare and define generated quantities
-            current_statement_begin__ = 114;
+            current_statement_begin__ = 95;
             validate_non_negative_index("kd", "nMT", nMT);
             validate_non_negative_index("kd", "NF", NF);
             std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > kd(NF, Eigen::Matrix<double, Eigen::Dynamic, 1>(nMT));
             stan::math::initialize(kd, DUMMY_VAR__);
             stan::math::fill(kd, DUMMY_VAR__);
-            current_statement_begin__ = 115;
+            current_statement_begin__ = 96;
             validate_non_negative_index("L2FC_kd", "(nMT - 1)", (nMT - 1));
             validate_non_negative_index("L2FC_kd", "NF", NF);
             std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > L2FC_kd(NF, Eigen::Matrix<double, Eigen::Dynamic, 1>((nMT - 1)));
             stan::math::initialize(L2FC_kd, DUMMY_VAR__);
             stan::math::fill(L2FC_kd, DUMMY_VAR__);
             // generated quantities statements
-            current_statement_begin__ = 117;
+            current_statement_begin__ = 98;
             for (int i = 1; i <= NF; ++i) {
-                current_statement_begin__ = 118;
+                current_statement_begin__ = 99;
                 for (int j = 1; j <= nMT; ++j) {
-                    current_statement_begin__ = 119;
+                    current_statement_begin__ = 100;
                     if (as_bool(logical_eq(j, 1))) {
-                        current_statement_begin__ = 120;
+                        current_statement_begin__ = 101;
                         stan::model::assign(kd, 
                                     stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::nil_index_list())), 
                                     (-(stan::math::log((1 - inv_logit(get_base1(alpha, i, "alpha", 1))))) / tl), 
                                     "assigning variable kd");
                     } else {
-                        current_statement_begin__ = 122;
+                        current_statement_begin__ = 103;
                         stan::model::assign(kd, 
                                     stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::nil_index_list())), 
                                     (-(stan::math::log((1 - inv_logit((get_base1(alpha, i, "alpha", 1) + get_base1(get_base1(eff, i, "eff", 1), (j - 1), "eff", 2)))))) / tl), 
                                     "assigning variable kd");
                     }
                 }
-                current_statement_begin__ = 125;
+                current_statement_begin__ = 106;
                 for (int k = 1; k <= (nMT - 1); ++k) {
-                    current_statement_begin__ = 126;
+                    current_statement_begin__ = 107;
                     stan::model::assign(L2FC_kd, 
                                 stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(k), stan::model::nil_index_list())), 
                                 stan::math::log2((get_base1(get_base1(kd, i, "kd", 1), (k + 1), "kd", 2) / get_base1(get_base1(kd, i, "kd", 1), 1, "kd", 2))), 
@@ -1384,7 +1153,7 @@ public:
                 }
             }
             // validate, write generated quantities
-            current_statement_begin__ = 114;
+            current_statement_begin__ = 95;
             size_t kd_j_1_max__ = nMT;
             size_t kd_k_0_max__ = NF;
             for (size_t j_1__ = 0; j_1__ < kd_j_1_max__; ++j_1__) {
@@ -1392,7 +1161,7 @@ public:
                     vars__.push_back(kd[k_0__](j_1__));
                 }
             }
-            current_statement_begin__ = 115;
+            current_statement_begin__ = 96;
             size_t L2FC_kd_j_1_max__ = (nMT - 1);
             size_t L2FC_kd_k_0_max__ = NF;
             for (size_t j_1__ = 0; j_1__ < L2FC_kd_j_1_max__; ++j_1__) {
@@ -1430,33 +1199,6 @@ public:
                                  bool include_tparams__ = true,
                                  bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "log_lambda_o_m";
-        param_names__.push_back(param_name_stream__.str());
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "log_lambda_o_sd";
-        param_names__.push_back(param_name_stream__.str());
-        size_t z_o_j_1_max__ = NF;
-        for (size_t j_1__ = 0; j_1__ < z_o_j_1_max__; ++j_1__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "z_o" << '.' << j_1__ + 1;
-            param_names__.push_back(param_name_stream__.str());
-        }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "log_mu_TL";
-        param_names__.push_back(param_name_stream__.str());
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "log_sig_TL";
-        param_names__.push_back(param_name_stream__.str());
-        size_t z_TL_j_1_max__ = nMT;
-        size_t z_TL_k_0_max__ = NF;
-        for (size_t j_1__ = 0; j_1__ < z_TL_j_1_max__; ++j_1__) {
-            for (size_t k_0__ = 0; k_0__ < z_TL_k_0_max__; ++k_0__) {
-                param_name_stream__.str(std::string());
-                param_name_stream__ << "z_TL" << '.' << k_0__ + 1 << '.' << j_1__ + 1;
-                param_names__.push_back(param_name_stream__.str());
-            }
-        }
         size_t alpha_j_1_max__ = NF;
         for (size_t j_1__ = 0; j_1__ < alpha_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
@@ -1505,6 +1247,24 @@ public:
         param_name_stream__.str(std::string());
         param_name_stream__ << "log_sd_r_mu";
         param_names__.push_back(param_name_stream__.str());
+        size_t TL_lambda_eff_j_1_max__ = nrep;
+        size_t TL_lambda_eff_k_0_max__ = nMT;
+        for (size_t j_1__ = 0; j_1__ < TL_lambda_eff_j_1_max__; ++j_1__) {
+            for (size_t k_0__ = 0; k_0__ < TL_lambda_eff_k_0_max__; ++k_0__) {
+                param_name_stream__.str(std::string());
+                param_name_stream__ << "TL_lambda_eff" << '.' << k_0__ + 1 << '.' << j_1__ + 1;
+                param_names__.push_back(param_name_stream__.str());
+            }
+        }
+        size_t log_lambda_o_j_1_max__ = nrep;
+        size_t log_lambda_o_k_0_max__ = nMT;
+        for (size_t j_1__ = 0; j_1__ < log_lambda_o_j_1_max__; ++j_1__) {
+            for (size_t k_0__ = 0; k_0__ < log_lambda_o_k_0_max__; ++k_0__) {
+                param_name_stream__.str(std::string());
+                param_name_stream__ << "log_lambda_o" << '.' << k_0__ + 1 << '.' << j_1__ + 1;
+                param_names__.push_back(param_name_stream__.str());
+            }
+        }
         if (!include_gqs__ && !include_tparams__) return;
         if (include_tparams__) {
             size_t frac_new_k_0_max__ = NF;
@@ -1531,14 +1291,8 @@ public:
                     }
                 }
             }
-            size_t log_lambda_o_j_1_max__ = NF;
-            for (size_t j_1__ = 0; j_1__ < log_lambda_o_j_1_max__; ++j_1__) {
-                param_name_stream__.str(std::string());
-                param_name_stream__ << "log_lambda_o" << '.' << j_1__ + 1;
-                param_names__.push_back(param_name_stream__.str());
-            }
-            size_t log_lambda_n_j_1_max__ = nMT;
-            size_t log_lambda_n_k_0_max__ = NF;
+            size_t log_lambda_n_j_1_max__ = nrep;
+            size_t log_lambda_n_k_0_max__ = nMT;
             for (size_t j_1__ = 0; j_1__ < log_lambda_n_j_1_max__; ++j_1__) {
                 for (size_t k_0__ = 0; k_0__ < log_lambda_n_k_0_max__; ++k_0__) {
                     param_name_stream__.str(std::string());
@@ -1556,34 +1310,16 @@ public:
                 }
             }
             param_name_stream__.str(std::string());
-            param_name_stream__ << "lambda_o_sd";
-            param_names__.push_back(param_name_stream__.str());
-            param_name_stream__.str(std::string());
             param_name_stream__ << "sig_fn";
             param_names__.push_back(param_name_stream__.str());
             param_name_stream__.str(std::string());
             param_name_stream__ << "sd_r_mu";
-            param_names__.push_back(param_name_stream__.str());
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "mu_TL";
             param_names__.push_back(param_name_stream__.str());
             size_t sig_e_j_1_max__ = (nMT - 1);
             for (size_t j_1__ = 0; j_1__ < sig_e_j_1_max__; ++j_1__) {
                 param_name_stream__.str(std::string());
                 param_name_stream__ << "sig_e" << '.' << j_1__ + 1;
                 param_names__.push_back(param_name_stream__.str());
-            }
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "sig_TL";
-            param_names__.push_back(param_name_stream__.str());
-            size_t TL_lambda_eff_j_1_max__ = nMT;
-            size_t TL_lambda_eff_k_0_max__ = NF;
-            for (size_t j_1__ = 0; j_1__ < TL_lambda_eff_j_1_max__; ++j_1__) {
-                for (size_t k_0__ = 0; k_0__ < TL_lambda_eff_k_0_max__; ++k_0__) {
-                    param_name_stream__.str(std::string());
-                    param_name_stream__ << "TL_lambda_eff" << '.' << k_0__ + 1 << '.' << j_1__ + 1;
-                    param_names__.push_back(param_name_stream__.str());
-                }
             }
         }
         if (!include_gqs__) return;
@@ -1610,33 +1346,6 @@ public:
                                    bool include_tparams__ = true,
                                    bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "log_lambda_o_m";
-        param_names__.push_back(param_name_stream__.str());
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "log_lambda_o_sd";
-        param_names__.push_back(param_name_stream__.str());
-        size_t z_o_j_1_max__ = NF;
-        for (size_t j_1__ = 0; j_1__ < z_o_j_1_max__; ++j_1__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "z_o" << '.' << j_1__ + 1;
-            param_names__.push_back(param_name_stream__.str());
-        }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "log_mu_TL";
-        param_names__.push_back(param_name_stream__.str());
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "log_sig_TL";
-        param_names__.push_back(param_name_stream__.str());
-        size_t z_TL_j_1_max__ = nMT;
-        size_t z_TL_k_0_max__ = NF;
-        for (size_t j_1__ = 0; j_1__ < z_TL_j_1_max__; ++j_1__) {
-            for (size_t k_0__ = 0; k_0__ < z_TL_k_0_max__; ++k_0__) {
-                param_name_stream__.str(std::string());
-                param_name_stream__ << "z_TL" << '.' << k_0__ + 1 << '.' << j_1__ + 1;
-                param_names__.push_back(param_name_stream__.str());
-            }
-        }
         size_t alpha_j_1_max__ = NF;
         for (size_t j_1__ = 0; j_1__ < alpha_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
@@ -1685,6 +1394,24 @@ public:
         param_name_stream__.str(std::string());
         param_name_stream__ << "log_sd_r_mu";
         param_names__.push_back(param_name_stream__.str());
+        size_t TL_lambda_eff_j_1_max__ = nrep;
+        size_t TL_lambda_eff_k_0_max__ = nMT;
+        for (size_t j_1__ = 0; j_1__ < TL_lambda_eff_j_1_max__; ++j_1__) {
+            for (size_t k_0__ = 0; k_0__ < TL_lambda_eff_k_0_max__; ++k_0__) {
+                param_name_stream__.str(std::string());
+                param_name_stream__ << "TL_lambda_eff" << '.' << k_0__ + 1 << '.' << j_1__ + 1;
+                param_names__.push_back(param_name_stream__.str());
+            }
+        }
+        size_t log_lambda_o_j_1_max__ = nrep;
+        size_t log_lambda_o_k_0_max__ = nMT;
+        for (size_t j_1__ = 0; j_1__ < log_lambda_o_j_1_max__; ++j_1__) {
+            for (size_t k_0__ = 0; k_0__ < log_lambda_o_k_0_max__; ++k_0__) {
+                param_name_stream__.str(std::string());
+                param_name_stream__ << "log_lambda_o" << '.' << k_0__ + 1 << '.' << j_1__ + 1;
+                param_names__.push_back(param_name_stream__.str());
+            }
+        }
         if (!include_gqs__ && !include_tparams__) return;
         if (include_tparams__) {
             size_t frac_new_k_0_max__ = NF;
@@ -1711,14 +1438,8 @@ public:
                     }
                 }
             }
-            size_t log_lambda_o_j_1_max__ = NF;
-            for (size_t j_1__ = 0; j_1__ < log_lambda_o_j_1_max__; ++j_1__) {
-                param_name_stream__.str(std::string());
-                param_name_stream__ << "log_lambda_o" << '.' << j_1__ + 1;
-                param_names__.push_back(param_name_stream__.str());
-            }
-            size_t log_lambda_n_j_1_max__ = nMT;
-            size_t log_lambda_n_k_0_max__ = NF;
+            size_t log_lambda_n_j_1_max__ = nrep;
+            size_t log_lambda_n_k_0_max__ = nMT;
             for (size_t j_1__ = 0; j_1__ < log_lambda_n_j_1_max__; ++j_1__) {
                 for (size_t k_0__ = 0; k_0__ < log_lambda_n_k_0_max__; ++k_0__) {
                     param_name_stream__.str(std::string());
@@ -1736,34 +1457,16 @@ public:
                 }
             }
             param_name_stream__.str(std::string());
-            param_name_stream__ << "lambda_o_sd";
-            param_names__.push_back(param_name_stream__.str());
-            param_name_stream__.str(std::string());
             param_name_stream__ << "sig_fn";
             param_names__.push_back(param_name_stream__.str());
             param_name_stream__.str(std::string());
             param_name_stream__ << "sd_r_mu";
-            param_names__.push_back(param_name_stream__.str());
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "mu_TL";
             param_names__.push_back(param_name_stream__.str());
             size_t sig_e_j_1_max__ = (nMT - 1);
             for (size_t j_1__ = 0; j_1__ < sig_e_j_1_max__; ++j_1__) {
                 param_name_stream__.str(std::string());
                 param_name_stream__ << "sig_e" << '.' << j_1__ + 1;
                 param_names__.push_back(param_name_stream__.str());
-            }
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "sig_TL";
-            param_names__.push_back(param_name_stream__.str());
-            size_t TL_lambda_eff_j_1_max__ = nMT;
-            size_t TL_lambda_eff_k_0_max__ = NF;
-            for (size_t j_1__ = 0; j_1__ < TL_lambda_eff_j_1_max__; ++j_1__) {
-                for (size_t k_0__ = 0; k_0__ < TL_lambda_eff_k_0_max__; ++k_0__) {
-                    param_name_stream__.str(std::string());
-                    param_name_stream__ << "TL_lambda_eff" << '.' << k_0__ + 1 << '.' << j_1__ + 1;
-                    param_names__.push_back(param_name_stream__.str());
-                }
             }
         }
         if (!include_gqs__) return;
