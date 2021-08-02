@@ -8,44 +8,40 @@ data {
   int num_mut[NE]; //  mutations in each entry
   int num_obs[NE]; // number of times its observed
   int R[NE]; //Replicate ID
-  real U_cont[NE];
-  int nrep;
-  real tl;
+  real U_cont[NE]; // Feature specific log-fold difference in U content
+  int nrep;  // Number of replicates
+  real tl;   // Label time
 }
 
 parameters {
-  //vector<lower=0>[nMT] TL_lambda_eff[NF];
-  vector[NF] alpha;
-  real mu_fn;
-  real log_sig_fn;
-  vector[nMT-1] log_sig_e;
-  vector[nMT-1] mu_e;
-  vector[nMT-1] z_e [NF];
-  //real mu_rep_logit_fn[NF, nMT, nrep]; // Inferred fraction new of obs reads on native scale.
-  real z_fn[NF, nMT, nrep];
-  real log_sd_r_mu;
-  vector<lower=0>[nrep] TL_lambda_eff[nMT];
-  vector[nrep] log_lambda_o[nMT];
-  //real<lower=0> sd_rep[NF, nMT];
+  vector[NF] alpha;  // Reference sample mean logit(fn)
+  real mu_fn;        // Global mean fn
+  real log_sig_fn;   // Global variation in fn
+  vector[nMT-1] log_sig_e;   // Global variation in effect sizes (change in logit(fn))
+  vector[nMT-1] mu_e;        // Global effect size mean
+  vector[nMT-1] z_e [NF];    // Effect size non-centered parameterization z-score
+  real z_fn[NF, nMT, nrep];  // Fn non-centered parameterization z-score
+  real log_sd_r_mu;          // Log replicate variability
+  vector<lower=0>[nrep] TL_lambda_eff[nMT];   // s4U induced increase in mutation rate
+  vector[nrep] log_lambda_o[nMT];  // Background mutation rate
 }
 
 transformed parameters {
-  real frac_new[NF, nMT, nrep];
-  real mu_rep_logit_fn[NF, nMT, nrep]; // Inferred fraction new of obs reads on native scale.
-  vector[nrep] log_lambda_n[nMT]; // Inferred s4U-induced muatation rate per read
-  vector[nMT-1] eff[NF]; //  Parameter for fraction new of observed reads
-  real sig_fn = exp(log_sig_fn);
-  real sd_r_mu = exp(log_sd_r_mu);
-  vector[nMT-1] sig_e = exp(log_sig_e);
+  real frac_new[NF, nMT, nrep];   // Fraction new (fn) of obs reads on native scale.
+  real mu_rep_logit_fn[NF, nMT, nrep]; // Fn on logit scale
+  vector[nrep] log_lambda_n[nMT]; // Mutation rate of s4U labelled reads
+  vector[nMT-1] eff[NF];           // Effect size (change in logit(fn) w.r.t. reference sample)
+  real sig_fn = exp(log_sig_fn);   // Replicate variability
+  real sd_r_mu = exp(log_sd_r_mu); //
+  vector[nMT-1] sig_e = exp(log_sig_e);  // Global variability in effect size
 
-  // Left here if needed for non-centered parameterization:
     for (i in 1:NF) {
       for(j in 1:nMT){
         if(j > 1){
           eff[i, j-1] = mu_e[j-1] + z_e[i,j-1]*sig_e[j-1];
         }
         for(k in 1:nrep){
-          log_lambda_n[j,k] = log_lambda_o[j,k] + TL_lambda_eff[i,j];
+          log_lambda_n[j,k] = log_lambda_o[j,k] + TL_lambda_eff[j, k];
           if(j == 1){
             mu_rep_logit_fn[i, j, k] = alpha[i] + z_fn[i,j,k]*sd_r_mu;
             frac_new[i, j, k] = inv_logit(mu_rep_logit_fn[i,j, k]);
