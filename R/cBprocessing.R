@@ -219,7 +219,7 @@ cBprocess <- function(cB_raw,
 
   if(Stan & Fast){
     out <- list(data_list, df, Counts_df)
-    names(out) <- c("Stan_data", "Fast_df")
+    names(out) <- c("Stan_data", "Fast_df", "Counts_df")
   }else if(!Stan){
     out <- list(df, Counts_df)
     names(out) <- c("Fast_df", "Counts_df")

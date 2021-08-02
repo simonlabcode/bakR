@@ -36,7 +36,8 @@ Imports:
     dplyr,
     stats,
     RConics,
-    ashr
+    ashr,
+    magrittr
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),
