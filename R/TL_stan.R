@@ -1,5 +1,21 @@
 #' Bayesian hierarchical mixture model with Stan for TL-seq data analysis
 #'
+#' \code{TL_stan} analyzes nucleotide recoding sequencing data with a fully
+#' Bayesian hierarchical model implemented in the PPL Stan.
+#'
+#' Details of the model can be found in Vock et al. 2021. In short, mutations
+#' are modeled as coming from a Poisson distribution with rate parameter
+#' adjusted by the empirical U-content of each feature analyzed. Features
+#' represent whatever the user defined them to be when constructing the
+#' DynamicSeq data object. Typical feature categories are genes, exons, etc.
+#' Multiple test adjusted significance values are also calculated for all
+#' parameters quantifying changes in degradation and synthesis rate constants.
+#' Local false-discovery rates and false sign rates (lfdr and lfsr,
+#' respectively) are provided for each feature and each experimental condition.
+#' Kinetic parameter changes are calcualted with respect to the user defined
+#' reference sample, but additional comparisons can be made downstream (see
+#' vignette for details).
+#'
 #' @export
 #' @param data_list list to pass to Stan of form given by cBtoStan
 #' @param keep_fit if TRUE, Stan fit object is included in output; typically large file so default FALSE.
