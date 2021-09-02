@@ -88,6 +88,7 @@ TL_stan <- function(data_list, keep_fit = FALSE, ...) {
   colnames(Effects_df) <- c("Feature ID", "Exp. ID", "L2FC(kdeg)", "L2FC(kdeg) sd", "Effect", "Se", "lfsr", "lfdr")
   colnames(Kdeg_df) <- c("Feature ID", "Exp. ID", "kdeg", "kdeg_sd")
 
+
   if(keep_fit == FALSE){
     out <- list(Effects_df, Kdeg_df)
     names(out) <- c("Effects_df", "Kdeg_df")

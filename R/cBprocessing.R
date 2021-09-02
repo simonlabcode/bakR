@@ -101,7 +101,7 @@ cBprocess <- function(cB_raw,
     dplyr::filter(XF %in% keep) %>%
     dplyr::group_by(XF) %>%
     dplyr::summarize(n = sum(n)) %>%
-    dplyr::mutate(fnum = order(-n)) %>%
+    dplyr::mutate(fnum = order(XF)) %>%
     dplyr::arrange(fnum) %>%
     dplyr::select(XF, fnum)
 
