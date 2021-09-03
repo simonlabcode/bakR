@@ -149,13 +149,13 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     # Check to make sure that the number of features that made it past the
     # read count filter is still more than the total number of features required for
     # mutation rate estimate
-    check <- New_data_cutoff %>% ungroup() %>%
-      count(mut, reps, sort = TRUE)
+    check <- New_data_cutoff %>% dplyr::ungroup() %>%
+      dplyr::count(mut, reps, sort = TRUE)
 
     if(sum(check$n < features_cut) > 0){
       stop("Not enough features made it past the read cutoff filter in one sample; try decreasing read_cut or features_cut")
     }else{
-      New_data_estimate <- New_data_cutoff %>% group_by(mut, reps) %>%
+      New_data_estimate <- New_data_cutoff %>% dplyr::group_by(mut, reps) %>%
         summarise(pnew = mean(avg_mut[1:features_cut]))
       message(paste(c("Estimated pnews are: ", New_data_estimate$pnew), collapse = " "))
     }
@@ -254,7 +254,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   # Estimate fraction new in each replicate using binomial model
   message("Estimating fraction labeled and uncertainty")
 
-  Mut_data_est <- Mut_data %>% group_by(fnum, mut, reps, TC, nT) %>%
+  Mut_data_est <- Mut_data %>% dplyr::group_by(fnum, mut, reps, TC, nT) %>%
     mutate(pnew_est = New_data_estimate$pnew[(New_data_estimate$mut == mut) & (New_data_estimate$reps == reps)]) %>%
     # mutate(avg_mut = TC/nT) %>%
     # #mutate(prior_new = ifelse(avg_mut >= (pnew_est - 0.01), 0.99, (avg_mut + 0.01)/pnew_est )) %>%
@@ -284,18 +284,18 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
   #Average over replicates and estimate hyperparameters
   avg_df_fn <- df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
-    summarize(avg_logit_fn = mean(logit_fn),
-              sd_logit_fn = sd(logit_fn)) %>% ungroup() %>%
-    group_by(Condition) %>%
-    mutate(sdp = sd(avg_logit_fn)) %>%
-    mutate(theta_o = mean(avg_logit_fn)) %>%
+    dplyr::summarize(avg_logit_fn = mean(logit_fn),
+              sd_logit_fn = sd(logit_fn)) %>% dplyr::ungroup() %>%
+    dplyr::group_by(Condition) %>%
+    dplyr::mutate(sdp = sd(avg_logit_fn)) %>%
+    dplyr::mutate(theta_o = mean(avg_logit_fn)) %>%
     # mutate(var_pop = mean(sd_logit_fn^2)) %>%
     # mutate(var_of_var = var(sd_logit_fn^2)) %>%
     # mutate(two_params = 8*(var_pop^4)/var_of_var) %>%
     # mutate(roots = RConics::cubic(c(1, -(4 + 2*(var_pop^2)/var_of_var), two_params, two_params))) %>%
     # mutate(a_hyper = roots[(roots > 2) & (!is.complex(roots))]) %>%
     # mutate(b_hyper = (var_pop*(a_hyper - 2))/a_hyper) %>%
-    ungroup()
+    dplyr::ungroup()
 
   #Calcualte population averages
   # What I need to do is calculate these parameters for each Condition
@@ -319,17 +319,17 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
   # Regularize estimates with Bayesian models and informed priors
   avg_df_fn_bayes <- avg_df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
-    mutate(sd_post = sqrt((a_hyper*b_hyper + nreps*sd_logit_fn)/(a_hyper + nreps - 2))) %>%
-    mutate(logit_fn_post = (avg_logit_fn*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2))) %>%
-    mutate(sd_post = sqrt(1/(nreps/(sd_post^2) + (1/sdp^2)))) %>%
-    mutate(kdeg = -log(1 - inv_logit(logit_fn_post))) %>%
-    mutate(kdeg_sd = sd_post*(exp(logit_fn_post)/((1 + exp(-logit_fn_post))^2))) %>%
-    ungroup() %>%
-    group_by(Gene_ID) %>%
-    mutate(effect_size = logit_fn_post - logit_fn_post[Condition == 1]) %>%
-    mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
-    mutate(L2FC_kdeg = ifelse(Condition == 1, 0, log2(kdeg/kdeg[Condition == 1]))) %>%
-    ungroup()
+    dplyr::mutate(sd_post = sqrt((a_hyper*b_hyper + nreps*sd_logit_fn)/(a_hyper + nreps - 2))) %>%
+    dplyr::mutate(logit_fn_post = (avg_logit_fn*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2))) %>%
+    dplyr::mutate(sd_post = sqrt(1/(nreps/(sd_post^2) + (1/sdp^2)))) %>%
+    dplyr::mutate(kdeg = -log(1 - inv_logit(logit_fn_post))) %>%
+    dplyr::mutate(kdeg_sd = sd_post*(exp(logit_fn_post)/((1 + exp(-logit_fn_post))^2))) %>%
+    dplyr::ungroup() %>%
+    dplyr::group_by(Gene_ID) %>%
+    dplyr::mutate(effect_size = logit_fn_post - logit_fn_post[Condition == 1]) %>%
+    dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
+    dplyr::mutate(L2FC_kdeg = ifelse(Condition == 1, 0, log2(kdeg/kdeg[Condition == 1]))) %>%
+    dplyr::ungroup()
 
   # Calcuate lfsr and lfdr using ashr package
 
