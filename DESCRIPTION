@@ -38,7 +38,8 @@ Imports:
     RConics,
     ashr,
     magrittr,
-    DESeq2
+    DESeq2,
+    Hmisc
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),

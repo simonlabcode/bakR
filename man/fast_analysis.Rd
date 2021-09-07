@@ -4,7 +4,14 @@
 \alias{fast_analysis}
 \title{This function efficiently analyzes data to provide fraction new estimates and uncertainties}
 \usage{
-fast_analysis(df, pnew = NULL, pold = NULL, read_cut = 50, features_cut = 10)
+fast_analysis(
+  df,
+  pnew = NULL,
+  pold = NULL,
+  read_cut = 50,
+  features_cut = 10,
+  nbin = NULL
+)
 }
 \arguments{
 \item{df}{Dataframe in form provided by cB_to_Fast}
