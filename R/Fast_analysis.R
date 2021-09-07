@@ -329,12 +329,17 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     dplyr::mutate(effect_size = logit_fn_post - logit_fn_post[Condition == 1]) %>%
     dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
     dplyr::mutate(L2FC_kdeg = ifelse(Condition == 1, 0, log2(kdeg/kdeg[Condition == 1]))) %>%
+    dplyr::mutate(pval = pt(-abs(effect_size/effect_std_error), df = 2*nreps - 2 + 2*a_hyper)) %>%
+    dplyr::mutate(padj = stats::p.adjust(pval, method = "BH")) %>%
     dplyr::ungroup()
 
   # Calcuate lfsr and lfdr using ashr package
 
   effects <- avg_df_fn_bayes$effect_size[avg_df_fn_bayes$Condition > 1]
   ses <- avg_df_fn_bayes$effect_std_error[avg_df_fn_bayes$Condition > 1]
+
+  pval <- avg_df_fn_bayes$pval
+  padj <- avg_df_fn_bayes$padj
 
   Genes_effects <- avg_df_fn_bayes$Gene_ID[avg_df_fn_bayes$Condition > 1]
   Condition_effects <- avg_df_fn_bayes$Condition[avg_df_fn_bayes$Condition > 1]
@@ -343,18 +348,17 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
   fit <- ashr::ash(effects, ses, method = "fdr")
   lfsr <- fit$result$lfsr
-  lfdr <- fit$result$lfdr
 
-  Effect_sizes_df <- data.frame(Genes_effects, Condition_effects, L2FC_kdegs, effects, ses, lfsr, lfdr)
+  Effect_sizes_df <- data.frame(Genes_effects, Condition_effects, L2FC_kdegs, effects, ses, lfsr, pval, padj)
 
 
   #hyperpars <- c(sdp, theta_o, var_pop, var_of_var, a_hyper, b_hyper)
   #names(hyperpars) <- c("Mean Prior sd", "Mean prior mean", "Variance prior mean", "Variance prior variance", "Variance hyperparam a", "Variance hyperparam b")
 
   #fn_list <- list(estimate_df, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, hyperpars)
-  fn_list <- list(estimate_df, avg_df_fn_bayes, Effect_sizes_df, pmuts_list)
+  fn_list <- list(estimate_df, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, c(a = a_hyper, b = b_hyper))
 
-  names(fn_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates")
+  names(fn_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates", "Hyper_Parameters")
 
   return(fn_list)
 
