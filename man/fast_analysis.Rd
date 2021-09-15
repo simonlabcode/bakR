@@ -10,7 +10,8 @@ fast_analysis(
   pold = NULL,
   read_cut = 50,
   features_cut = 10,
-  nbin = NULL
+  nbin = NULL,
+  prior_weight = 2
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ fast_analysis(
 \item{read_cut}{Minimum number of reads for a given feature-sample combo to be used for mut rate estimates}
 
 \item{features_cut}{Number of features to estimate sample specific mutation rate with}
+
+\item{prior_weight}{Determines extent to which logit(fn) variance is regularized to the mean-variance regression line}
 }
 \value{
 list with dataframe of replicate specific estimates as well as dataframe of pooled estimates

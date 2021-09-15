@@ -98,10 +98,11 @@ cBtofast <- function(cB_raw,
 #' @param pold Unlabeled read mutation rate; default of 0 means that model estimates rate from no-s4U fed data
 #' @param read_cut Minimum number of reads for a given feature-sample combo to be used for mut rate estimates
 #' @param features_cut Number of features to estimate sample specific mutation rate with
+#' @param prior_weight Determines extent to which logit(fn) variance is regularized to the mean-variance regression line
 #' @return list with dataframe of replicate specific estimates as well as dataframe of pooled estimates
 #' @importFrom magrittr %>%
 #' @export
-fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_cut = 10, nbin = NULL){
+fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_cut = 10, nbin = NULL, prior_weight = 2){
 
   logit <- function(x) log(x/(1-x))
   inv_logit <- function(x) exp(x)/(1+exp(x))
@@ -156,7 +157,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
       stop("Not enough features made it past the read cutoff filter in one sample; try decreasing read_cut or features_cut")
     }else{
       New_data_estimate <- New_data_cutoff %>% dplyr::group_by(mut, reps) %>%
-        summarise(pnew = mean(avg_mut[1:features_cut]))
+        dplyr::summarise(pnew = mean(avg_mut[1:features_cut]))
       message(paste(c("Estimated pnews are: ", New_data_estimate$pnew), collapse = " "))
     }
 
@@ -252,7 +253,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   FN_ID <- R_ID
 
   # Estimate fraction new in each replicate using binomial model
-  message("Estimating fraction labeled and uncertainty")
+  message("Estimating fraction labeled")
 
   Mut_data_est <- Mut_data %>% dplyr::group_by(fnum, mut, reps, TC, nT) %>%
     dplyr::mutate(pnew_est = New_data_estimate$pnew[(New_data_estimate$mut == mut) & (New_data_estimate$reps == reps)]) %>%
@@ -261,12 +262,33 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     # mutate(prior_new = 0.9)%>%
     dplyr::mutate(New_prob = stats::dbinom(TC, size=nT, prob=pnew_est)) %>%
     dplyr::mutate(Old_prob = stats::dbinom(TC, size = nT, prob = pold)) %>%
-    dplyr::mutate(News = n*(New_prob/(New_prob + Old_prob))) %>% ungroup() %>%
+    dplyr::mutate(News = n*(New_prob/(New_prob + Old_prob))) %>%
+    dplyr::ungroup() %>%
     dplyr::group_by(fnum, mut, reps) %>%
     dplyr::summarise(nreads = sum(n), Fn_rep_est = sum(News)/nreads) %>%
     dplyr::mutate(logit_fn_rep = ifelse(Fn_rep_est == 1, logit(0.999), ifelse(Fn_rep_est == 0, logit(0.001), logit(Fn_rep_est)))) %>%
     dplyr::ungroup()
 
+  message("Estimating per replicate uncertainties")
+
+  ## Estimate Fisher Info and uncertainties
+  Mut_data <- Mut_data %>% dplyr::group_by(fnum, mut, reps, TC, nT) %>%
+    dplyr::mutate(pnew_est = New_data_estimate$pnew[(New_data_estimate$mut == mut) & (New_data_estimate$reps == reps)]) %>%
+    dplyr::mutate(Exp_l_fn = exp(Mut_data_est$logit_fn_rep[(Mut_data_est$mut == mut) & (Mut_data_est$reps == reps) & (Mut_data_est$fnum == fnum)])) %>%
+    dplyr::mutate(fn = inv_logit(Mut_data_est$logit_fn_rep[(Mut_data_est$mut == mut) & (Mut_data_est$reps == reps) & (Mut_data_est$fnum == fnum)])) %>%
+    dplyr::mutate(Fisher_fn_num = ((pnew_est*TC)^TC)*exp(-pnew_est*TC) - ((pold*TC)^TC)*exp(-pold*TC) ) %>%
+    dplyr::mutate(Fisher_fn_den = fn*Fisher_fn_num + ((pold*TC)^TC)*exp(-pold*TC)) %>%
+    dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew_est/pold)^TC)*exp(-TC*(pnew_est - pold)) - 1 )) %>%
+    dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
+    dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
+    dplyr::ungroup() %>%
+    dplyr::group_by(fnum, mut, reps) %>%
+    dplyr::summarise(Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
+                     Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
+    dplyr::mutate(Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit), Fn_se = 1/sqrt(tot_n*Fisher_fn))
+
+  Mut_data_est$logit_fn_se = Mut_data$Logit_fn_se
+  Mut_data_est$fn_se = Mut_data$Fn_se
 
   ## Now affiliate each fnum, mut with a bin Id based on read counts,
   ## bin data by bin_ID and average log10(reads) and log(sd(logit_fn))
@@ -275,8 +297,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     nbin <- max(c(round(ngene*num_conds*nreps/100), 10))
   }
 
+  message("Estimating mean-variance relationship")
+
   Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-    dplyr::summarise(nreads = sum(nreads),fn_sd_log = log(sd(logit_fn_rep))) %>%
+    dplyr::summarise(nreads = sum(nreads),fn_sd_log = log(sqrt(1/sum(1/(sd(logit_fn_rep)^2 + Logit_fn_se^2 ) ) ) )) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID) %>%
     dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(fn_sd_log))
@@ -290,6 +314,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
   logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
   fn_estimate <- as.vector(Mut_data_est$Fn_rep_est)
+  fn_se <- as.vector(Mut_data_est$fn_se)
+  logit_fn_se <- as.vector(Mut_data_est$logit_fn_se)
   Replicate <- as.vector(Mut_data_est$reps)
   Condition <- as.vector(Mut_data_est$mut)
   Gene_ID <- as.vector(Mut_data_est$fnum)
@@ -297,16 +323,18 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
   rm(Mut_data_est)
 
-  df_fn <- data.frame(logit_fn, fn_estimate, Replicate, Condition, Gene_ID, nreads)
+  df_fn <- data.frame(logit_fn, logit_fn_se, fn_estimate, fn_se, Replicate, Condition, Gene_ID, nreads)
 
   df_fn <- df_fn[order(df_fn$Gene_ID, df_fn$Condition, df_fn$Replicate),]
 
   nreps <- max(df_fn$Replicate)
 
+  message("Averaging replicate data and regularizing estimates")
+
   #Average over replicates and estimate hyperparameters
   avg_df_fn_bayes <- df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
-    dplyr::summarize(avg_logit_fn = mean(logit_fn),
-              sd_logit_fn = sd(logit_fn),
+    dplyr::summarize(avg_logit_fn = stats::weighted.mean(logit_fn, 1/logit_fn_se),
+              sd_logit_fn = sqrt(1/sum(1/(sd(logit_fn)^2 + logit_fn_se^2 ) ) ),
               nreads = sum(nreads)) %>% dplyr::ungroup() %>%
     dplyr::group_by(Condition) %>%
     dplyr::mutate(sdp = sd(avg_logit_fn)) %>%
@@ -344,10 +372,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   b_hyper <- (var_pop*(a_hyper - 2))/a_hyper
 
 
-  # Regularize estimates with Bayesian models and informed priors
+  # Regularize estimates with Bayesian models and empirically informed priors
   avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
     #dplyr::mutate(sd_post = sqrt((a_hyper*b_hyper + nreps*sd_logit_fn)/(a_hyper + nreps - 2))) %>%
-    dplyr::mutate(sd_post = exp( (log(sd_logit_fn)*nreps + 2*(h_int + h_slope*log10(nreads)))/(nreps + 2) )) %>%
+    dplyr::mutate(sd_post = exp( (log(sd_logit_fn)*nreps + prior_weight*(h_int + h_slope*log10(nreads)))/(nreps + prior_weight) )) %>%
     dplyr::mutate(logit_fn_post = (avg_logit_fn*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2))) %>%
     dplyr::mutate(sd_post = sqrt(1/(nreps/(sd_post^2) + (1/sdp^2)))) %>%
     dplyr::mutate(kdeg = -log(1 - inv_logit(logit_fn_post))) %>%
@@ -361,6 +389,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     dplyr::ungroup()
 
   # Calcuate lfsr using ashr package
+
+  message("Assessing statistical significance")
 
   effects <- avg_df_fn_bayes$effect_size[avg_df_fn_bayes$Condition > 1]
   ses <- avg_df_fn_bayes$effect_std_error[avg_df_fn_bayes$Condition > 1]

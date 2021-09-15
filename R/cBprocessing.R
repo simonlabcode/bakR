@@ -113,7 +113,7 @@ cBprocess <- function(cB_raw,
     dplyr::filter(sample %in% s4U_list) %>%
     dplyr::group_by(XF, sample) %>%
     dplyr::summarise(n = sum(n)) %>%
-    dplyr::right_join(ranked_features_df, by = 'XF') %>% ungroup()
+    dplyr::right_join(ranked_features_df, by = 'XF') %>% dplyr::ungroup()
 
   ## U content estimation
   sdf_U <- cB %>%
@@ -121,7 +121,7 @@ cBprocess <- function(cB_raw,
     dplyr::group_by(sample, XF, TC, nT) %>%
     dplyr::summarise(n = sum(n)) %>%
     dplyr::right_join(ranked_features_df, by = 'XF') %>%
-    ungroup()
+    dplyr::ungroup()
 
   slist = samp_list
   tlist = type_list
@@ -142,16 +142,16 @@ cBprocess <- function(cB_raw,
   df_U$reps <- paste(df_U$sample) %>% purrr::map_dbl(function(x) getRep(x))
   df_U$reps <- as.integer(df_U$reps)
 
-  df_global_U <- df_U[df_U$type == 1, ] %>% group_by(reps, mut) %>%
-    summarise(tot_avg_Us = sum(nT*n)/sum(n)) %>% ungroup()
+  df_global_U <- df_U[df_U$type == 1, ] %>% dplyr::group_by(reps, mut) %>%
+    dplyr::summarise(tot_avg_Us = sum(nT*n)/sum(n)) %>% dplyr::ungroup()
 
-  df_feature_U <- df_U[df_U$type == 1, ] %>% group_by(reps, mut, fnum) %>%
-    summarise(feature_avg_Us = sum(nT*n)/sum(n)) %>% ungroup()
+  df_feature_U <- df_U[df_U$type == 1, ] %>% dplyr::group_by(reps, mut, fnum) %>%
+    dplyr::summarise(feature_avg_Us = sum(nT*n)/sum(n)) %>% dplyr::ungroup()
 
   df_U_tot <- merge(df_global_U, df_feature_U, by = c("mut", "reps"))
 
-  df_U_tot <- df_U_tot %>% mutate(U_factor = log(feature_avg_Us/tot_avg_Us)) %>%
-    select(mut, reps, fnum, U_factor)
+  df_U_tot <- df_U_tot %>% dplyr::mutate(U_factor = log(feature_avg_Us/tot_avg_Us)) %>%
+    dplyr::select(mut, reps, fnum, U_factor)
 
   if(Stan){
 
@@ -159,7 +159,7 @@ cBprocess <- function(cB_raw,
       dplyr::ungroup() %>%
       dplyr::group_by(sample, XF, TC) %>%
       dplyr::summarise(n = sum(n)) %>%
-      dplyr::right_join(ranked_features_df, by = 'XF') %>% ungroup()
+      dplyr::right_join(ranked_features_df, by = 'XF') %>% dplyr::ungroup()
 
     ##### Run Stan model ---------
 
