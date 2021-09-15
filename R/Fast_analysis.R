@@ -275,20 +275,20 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   Mut_data <- Mut_data %>% dplyr::group_by(fnum, mut, reps, TC, nT) %>%
     dplyr::mutate(pnew_est = New_data_estimate$pnew[(New_data_estimate$mut == mut) & (New_data_estimate$reps == reps)]) %>%
     dplyr::mutate(Exp_l_fn = exp(Mut_data_est$logit_fn_rep[(Mut_data_est$mut == mut) & (Mut_data_est$reps == reps) & (Mut_data_est$fnum == fnum)])) %>%
-    dplyr::mutate(fn = inv_logit(Mut_data_est$logit_fn_rep[(Mut_data_est$mut == mut) & (Mut_data_est$reps == reps) & (Mut_data_est$fnum == fnum)])) %>%
-    dplyr::mutate(Fisher_fn_num = ((pnew_est*TC)^TC)*exp(-pnew_est*TC) - ((pold*TC)^TC)*exp(-pold*TC) ) %>%
-    dplyr::mutate(Fisher_fn_den = fn*Fisher_fn_num + ((pold*TC)^TC)*exp(-pold*TC)) %>%
-    dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew_est/pold)^TC)*exp(-TC*(pnew_est - pold)) - 1 )) %>%
+    # dplyr::mutate(fn = inv_logit(Mut_data_est$logit_fn_rep[(Mut_data_est$mut == mut) & (Mut_data_est$reps == reps) & (Mut_data_est$fnum == fnum)])) %>%
+    # dplyr::mutate(Fisher_fn_num = ((pnew_est*nT)^TC)*exp(-pnew_est*nT) - ((pold*nT)^TC)*exp(-pold*nT) ) %>%
+    # dplyr::mutate(Fisher_fn_den = fn*Fisher_fn_num + ((pold*nT)^TC)*exp(-pold*nT)) %>%
+    dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew_est/pold)^TC)*exp(-nT*(pnew_est - pold)) - 1 )) %>%
     dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
     dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
     dplyr::ungroup() %>%
     dplyr::group_by(fnum, mut, reps) %>%
-    dplyr::summarise(Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
-                     Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
-    dplyr::mutate(Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit), Fn_se = 1/sqrt(tot_n*Fisher_fn))
+    dplyr::summarise(Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n)) %>% #,
+                     #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
+    dplyr::mutate(Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) #, Fn_se = 1/sqrt(tot_n*Fisher_fn))
 
   Mut_data_est$logit_fn_se = Mut_data$Logit_fn_se
-  Mut_data_est$fn_se = Mut_data$Fn_se
+  # Mut_data_est$fn_se = Mut_data$Fn_se
 
   ## Now affiliate each fnum, mut with a bin Id based on read counts,
   ## bin data by bin_ID and average log10(reads) and log(sd(logit_fn))
@@ -314,7 +314,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
   logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
   fn_estimate <- as.vector(Mut_data_est$Fn_rep_est)
-  fn_se <- as.vector(Mut_data_est$fn_se)
+  # fn_se <- as.vector(Mut_data_est$fn_se)
   logit_fn_se <- as.vector(Mut_data_est$logit_fn_se)
   Replicate <- as.vector(Mut_data_est$reps)
   Condition <- as.vector(Mut_data_est$mut)
@@ -323,7 +323,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
   rm(Mut_data_est)
 
-  df_fn <- data.frame(logit_fn, logit_fn_se, fn_estimate, fn_se, Replicate, Condition, Gene_ID, nreads)
+  df_fn <- data.frame(logit_fn, logit_fn_se, fn_estimate, Replicate, Condition, Gene_ID, nreads)
 
   df_fn <- df_fn[order(df_fn$Gene_ID, df_fn$Condition, df_fn$Replicate),]
 
