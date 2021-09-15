@@ -255,12 +255,13 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   # Estimate fraction new in each replicate using binomial model
   message("Estimating fraction labeled")
 
+  Mut_data <- merge(Mut_data, New_data_estimate, by = c("mut", "reps"))
+
   Mut_data_est <- Mut_data %>% dplyr::group_by(fnum, mut, reps, TC, nT) %>%
-    dplyr::mutate(pnew_est = New_data_estimate$pnew[(New_data_estimate$mut == mut) & (New_data_estimate$reps == reps)]) %>%
     # mutate(avg_mut = TC/nT) %>%
     # #mutate(prior_new = ifelse(avg_mut >= (pnew_est - 0.01), 0.99, (avg_mut + 0.01)/pnew_est )) %>%
     # mutate(prior_new = 0.9)%>%
-    dplyr::mutate(New_prob = stats::dbinom(TC, size=nT, prob=pnew_est)) %>%
+    dplyr::mutate(New_prob = stats::dbinom(TC, size=nT, prob=pnew)) %>%
     dplyr::mutate(Old_prob = stats::dbinom(TC, size = nT, prob = pold)) %>%
     dplyr::mutate(News = n*(New_prob/(New_prob + Old_prob))) %>%
     dplyr::ungroup() %>%
@@ -271,21 +272,24 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
   message("Estimating per replicate uncertainties")
 
+  Mut_data <- merge(Mut_data, Mut_data_est[, c("logit_fn_rep", "fnum", "mut", "reps")], by = c("fnum", "mut", "reps"))
+
   ## Estimate Fisher Info and uncertainties
   ## Could make more efficient by summarizing over nT info and using U_content to adjust pnew*avg_U
-  Mut_data <- Mut_data %>% dplyr::group_by(fnum, mut, reps, TC, nT) %>%
-    dplyr::mutate(pnew_est = New_data_estimate$pnew[(New_data_estimate$mut == mut) & (New_data_estimate$reps == reps)]) %>%
-    dplyr::mutate(Exp_l_fn = exp(Mut_data_est$logit_fn_rep[(Mut_data_est$mut == mut) & (Mut_data_est$reps == reps) & (Mut_data_est$fnum == fnum)])) %>%
+  Mut_data <- Mut_data %>% ungroup() %>%
+    dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep) %>%
+    dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
+    dplyr::mutate(Exp_l_fn = exp(logit_fn_rep)) %>%
     # dplyr::mutate(fn = inv_logit(Mut_data_est$logit_fn_rep[(Mut_data_est$mut == mut) & (Mut_data_est$reps == reps) & (Mut_data_est$fnum == fnum)])) %>%
     # dplyr::mutate(Fisher_fn_num = ((pnew_est*nT)^TC)*exp(-pnew_est*nT) - ((pold*nT)^TC)*exp(-pold*nT) ) %>%
     # dplyr::mutate(Fisher_fn_den = fn*Fisher_fn_num + ((pold*nT)^TC)*exp(-pold*nT)) %>%
-    dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew_est/pold)^TC)*exp(-nT*(pnew_est - pold)) - 1 )) %>%
+    dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
     dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
     dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
     dplyr::ungroup() %>%
     dplyr::group_by(fnum, mut, reps) %>%
     dplyr::summarise(Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n), tot_n = sum(n)) %>% #,
-                     #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
+    #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
     dplyr::mutate(Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) #, Fn_se = 1/sqrt(tot_n*Fisher_fn))
 
   Mut_data_est$logit_fn_se = Mut_data$Logit_fn_se
