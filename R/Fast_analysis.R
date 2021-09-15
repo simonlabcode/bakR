@@ -272,6 +272,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   message("Estimating per replicate uncertainties")
 
   ## Estimate Fisher Info and uncertainties
+  ## Could make more efficient by summarizing over nT info and using U_content to adjust pnew*avg_U
   Mut_data <- Mut_data %>% dplyr::group_by(fnum, mut, reps, TC, nT) %>%
     dplyr::mutate(pnew_est = New_data_estimate$pnew[(New_data_estimate$mut == mut) & (New_data_estimate$reps == reps)]) %>%
     dplyr::mutate(Exp_l_fn = exp(Mut_data_est$logit_fn_rep[(Mut_data_est$mut == mut) & (Mut_data_est$reps == reps) & (Mut_data_est$fnum == fnum)])) %>%
@@ -283,7 +284,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
     dplyr::ungroup() %>%
     dplyr::group_by(fnum, mut, reps) %>%
-    dplyr::summarise(Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n)) %>% #,
+    dplyr::summarise(Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n), tot_n = sum(n)) %>% #,
                      #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
     dplyr::mutate(Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) #, Fn_se = 1/sqrt(tot_n*Fisher_fn))
 
@@ -300,7 +301,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   message("Estimating mean-variance relationship")
 
   Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-    dplyr::summarise(nreads = sum(nreads),fn_sd_log = log(sqrt(1/sum(1/(sd(logit_fn_rep)^2 + Logit_fn_se^2 ) ) ) )) %>%
+    dplyr::summarise(nreads = sum(nreads),fn_sd_log = log(sqrt(1/sum(1/(sd(logit_fn_rep)^2 + logit_fn_se^2 ) ) ) )) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID) %>%
     dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(fn_sd_log))
@@ -385,7 +386,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     dplyr::mutate(effect_size = logit_fn_post - logit_fn_post[Condition == 1]) %>%
     dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
     dplyr::mutate(L2FC_kdeg = ifelse(Condition == 1, 0, log2(kdeg/kdeg[Condition == 1]))) %>%
-    dplyr::mutate(pval = pt(-abs(effect_size/effect_std_error), df = 2*nreps - 2 + a_hyper)) %>%
+    dplyr::mutate(pval = 2*pt(-abs(effect_size/effect_std_error), df = 2*nreps - 2 + a_hyper)) %>%
     dplyr::ungroup()
 
   # Calcuate lfsr using ashr package
