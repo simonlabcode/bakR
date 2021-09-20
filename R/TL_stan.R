@@ -97,5 +97,7 @@ TL_stan <- function(data_list, keep_fit = FALSE, ...) {
     names(out) <- c("Effects_df", "Kdeg_df", "Stan_fit")
   }
 
+  class(out) <- "HMCFit"
+
   return(out)
 }

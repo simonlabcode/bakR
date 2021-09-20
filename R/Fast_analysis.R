@@ -422,6 +422,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
   names(fast_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates", "Hyper_Parameters", "Mean_Variance_lm")
 
+  class(fast_list) <- "FastFit"
+
   return(fast_list)
 
 }
