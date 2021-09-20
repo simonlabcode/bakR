@@ -53,52 +53,53 @@ validate_DynamicSeqData <- function(obj){
       all of which should be integer data.",
       call. = FALSE
     )
-  }else if(sum(purrr::map_dbl(unclass(cB), is.integer)) > 3){
-    stop(
-      "There are more than 3 columns of cB containing integer data. Remove
-      unnecessary columns (i.e., those that do not correspond to the number of
-      mutations (TC), numbers of Ts in a read (nT), and number of identical
-      observations (n).",
-      call. = FALSE
-    )
-  }
+  }#else if(sum(purrr::map_dbl(unclass(cB), is.integer)) > 3){
+  #   stop(
+  #     "There are more than 3 columns of cB containing integer data. Remove
+  #     unnecessary columns (i.e., those that do not correspond to the number of
+  #     mutations (TC), numbers of Ts in a read (nT), and number of identical
+  #     observations (n).",
+  #     call. = FALSE
+  #   )
+  # }
 
-  ## Check number of columns of CB
-  if(ncol(cB) < 5){
-    stop(
-      "There are less than 5 columns in cB. cB should contain 5 columns,
-      one corresponding to gene names (XF), one to sample names (sample),
-      one to number of T to C mutations (TC), one to number of Ts in read (nT),
-      and one to the number of identical observations (n).",
-      call. = FALSE
-    )
-  }else if(ncol(cB) > 5){
-    stop(
-      "There are more than 5 columns in cB. cB should contain 5 columns,
-      one corresponding to gene names (XF), one to sample names (sample),
-      one to number of T to C mutations (TC), one to number of Ts in read (nT),
-      and one to the number of identical observations (n).",
-      call. = FALSE
-    )
-  }
-
-  ## Check number of columns of cB
-
-  if(ncol(metadf) < 2){
-    stop(
-      "There are less than 2 columns in metadf. Metadf should contain 2 columns,
-      one corresponding to numerical IDs of experimental conditions for each sample
-      (Exp_ID) and one corresponding to s4U label times (tl; 0 if an unlabeled control)",
-      call. = FALSE
-    )
-  }else if(ncol(metadf) > 2){
-    stop(
-      "There are more than 2 columns in metadf. Metadf should contain 2 columns,
-      one corresponding to numerical IDs of experimental conditions for each sample
-      (Exp_ID) and one corresponding to s4U label times (tl; 0 if an unlabeled control)",
-      call. = FALSE
-    )
-  }
+  ## Think I want to ditch checking if there are unnecessary columns
+  # ## Check number of columns of CB
+  # if(ncol(cB) < 5){
+  #   stop(
+  #     "There are less than 5 columns in cB. cB should contain 5 columns,
+  #     one corresponding to gene names (XF), one to sample names (sample),
+  #     one to number of T to C mutations (TC), one to number of Ts in read (nT),
+  #     and one to the number of identical observations (n).",
+  #     call. = FALSE
+  #   )
+  # }else if(ncol(cB) > 5){
+  #   stop(
+  #     "There are more than 5 columns in cB. cB should contain 5 columns,
+  #     one corresponding to gene names (XF), one to sample names (sample),
+  #     one to number of T to C mutations (TC), one to number of Ts in read (nT),
+  #     and one to the number of identical observations (n).",
+  #     call. = FALSE
+  #   )
+  # }
+  #
+  # ## Check number of columns of metadf
+  #
+  # if(ncol(metadf) < 2){
+  #   stop(
+  #     "There are less than 2 columns in metadf. Metadf should contain 2 columns,
+  #     one corresponding to numerical IDs of experimental conditions for each sample
+  #     (Exp_ID) and one corresponding to s4U label times (tl; 0 if an unlabeled control)",
+  #     call. = FALSE
+  #   )
+  # }else if(ncol(metadf) > 2){
+  #   stop(
+  #     "There are more than 2 columns in metadf. Metadf should contain 2 columns,
+  #     one corresponding to numerical IDs of experimental conditions for each sample
+  #     (Exp_ID) and one corresponding to s4U label times (tl; 0 if an unlabeled control)",
+  #     call. = FALSE
+  #   )
+  # }
 
   ## Check that all data in metadf is numerical
 
@@ -187,11 +188,11 @@ DynamicSeqData <- function(cB, metadf){
   cB_cols <- c("XF", "sample", "TC", "nT", "n")
   meta_cols <- c("tl", "Exp_ID")
 
-  if(!(all(colnames(cB) %in% cB_cols) & all(cB_cols %in% colnames(cB)))){
+  if(!all(cB_cols %in% colnames(cB))){
     colnames(cB) <- cB_cols
   }
 
-  if(!(all(colnames(metadf) %in% cB_cols) & all(cB_cols %in% colnames(cB)))){
+  if(!all(meta_cols %in% colnames(metadf))){
     colnames(metadf) <- meta_cols
   }
 
