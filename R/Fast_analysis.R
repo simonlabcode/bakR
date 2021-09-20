@@ -158,7 +158,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     }else{
       New_data_estimate <- New_data_cutoff %>% dplyr::group_by(mut, reps) %>%
         dplyr::summarise(pnew = mean(avg_mut[1:features_cut]))
-      message(paste(c("Estimated pnews are: ", New_data_estimate$pnew), collapse = " "))
+      message(paste0(c("Estimated pnews for each sample are:", capture.output(New_data_estimate)), collapse = "\n"))
     }
 
 
