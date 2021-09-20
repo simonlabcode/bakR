@@ -26,19 +26,18 @@ TL_stan <- function(data_list, keep_fit = FALSE, ...) {
   fit <- rstan::sampling(stanmodels$Replicates, data = data_list, ...)
 
   # Get number of features from data
-  ngs <- data_list$NF
+  ngs <- data_list$Stan_data$NF
 
   # Extract kdeg to get number of conditions (could get from nMT but need kdeg df anyway)
   MT_summary <- rstan::summary(fit, pars = "kd", probs = c(0.5))$summary
 
   MT_summary <- MT_summary[, c("50%","mean", "sd")]
 
-  MT_df <- as.data.frame(MT_summary)
-  nconds <- (nrow(MT_df)/ngs) - 1
+  nconds <- data_list$Stan_data$nMT - 1
 
 
   #Extract frac_new to get number of replicates
-  reps <- data_list$nrep
+  reps <- data_list$Stan_data$nrep
 
   nreps <- rep(reps, times=nconds)
 
