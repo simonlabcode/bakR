@@ -4,23 +4,25 @@
 #' This function identifies all features (e.g., transcripts, exons, etc.) for which the mutation rate
 #' is below a set threshold in the control (no s4U) sample and which have more reads than a set threshold
 #' in at least one control sample
-#' @param cB cB.rds file from pipeline
-#' @param c_list vector of names of control (no s4U fed) samples
+#' @param obj Object of class DynamicSeqData
 #' @param high_p highest mutation rate accepted in control samples
 #' @param totcut readcount cutoff
 #' @importFrom magrittr %>%
 #' @return list of gene names that passed reliability filter
 #' @export
-reliableFeatures <- function(cB,
-                             c_list,
+reliableFeatures <- function(obj,
                              high_p = 0.2,
                              totcut = 1000){
 
-  y <- cB %>%
+  cB <- obj$cB
+  nsamps <- length(unique(cB$sample))
+
+
+  y <- obj$cB %>%
     dplyr::ungroup() %>%
-    dplyr::filter(sample %in% c_list,
+    dplyr::filter(sample %in% unique(sample),
                   !grepl('__', XF)) %>%
-    dplyr::mutate(totTC = TC*n) %>%
+    dplyr::mutate(totTC = TC*n*ifelse(obj$metadf[sample, "tl"]==0, 1, 0) ) %>%
     dplyr::group_by(sample, XF) %>%
     dplyr::summarize(tot_mut = sum(totTC),
                      totcounts = sum(n)) %>%
@@ -29,7 +31,7 @@ reliableFeatures <- function(cB,
     dplyr::ungroup( ) %>%
     dplyr::group_by(XF) %>%
     dplyr::summarize(counts = dplyr::n()) %>%
-    dplyr::filter(counts == length(c_list)) %>%
+    dplyr::filter(counts == nsamps) %>%
     dplyr::select(XF) %>%
     unlist() %>%
     unique()
@@ -41,12 +43,7 @@ reliableFeatures <- function(cB,
 #' Extract data for Stan analysis from cB
 #'
 #' This function obtains the data list necessary to analyze TL-seq data with Stan.
-#' @param cB_raw cB file generated from TL-seq pipeline
-#' @param samp_list vector of names of samples
-#' @param type_list vector with 1 entry per sample; 0 = no s4U, 1 = s4U fed
-#' @param mut_list vector with 1 entry per sample; 1 = reference, > 1 = different experimental conditions (e.g., KO of protein X)
-#' @param rep_list vector with 1 entry per sample that indexes replicate; 1 = 1st replicate, 2 = 2nd replicate, etc.
-#' @param tl single numerical value; s4U label time used in s4U fed samples
+#' @param obj An object of class DynamicSeqData
 #' @param keep_input two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff
 #' @param Stan Boolean; if TRUE, then data_list that can be passed to Stan is curated
 #' @param Fast Boolean; if TRUE, then dataframe that can be passed to fast_analysis() is curated
@@ -55,23 +52,26 @@ reliableFeatures <- function(cB,
 #' @return returns list which can be passed to Stan analyses
 #' @importFrom magrittr %>%
 #' @export
-cBprocess <- function(cB_raw,
-                       samp_list,
-                       type_list,
-                       mut_list,
-                       rep_list,
-                       tl,
+cBprocess <- function(obj,
                        keep_input=c(0.2, 50),
                        Stan = TRUE,
                        Fast = FALSE,
                        FOI = c(),
                        concat = TRUE){
-  cB <- cB_raw %>%
-    dplyr::select(sample, XF, TC, n, nT)
+  cB <- obj$cB
+  metadf <- obj$metadf
 
-  c_list <- samp_list[type_list == 0]
+  samp_list <-unique(cB$sample)
 
-  s4U_list <- samp_list[type_list == 1]
+  c_list <- rownames(metadf[metadf$tl == 0,])
+
+  s4U_list <- samp_list[!(samp_list %in% c_list)]
+
+  type_list <- ifelse(metadf[samp_list, "tl"] == 0, 0, 1)
+  mut_list <- metadf[samp_list, "Exp_ID"]
+  rep_list <- metadf[samp_list,] %>% dplyr::group_by(tl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup() %>% dplyr::select(r_id)
+  rep_list <- rep_list$r_id
+
 
   names(type_list) <- samp_list
   names(mut_list) <- samp_list
@@ -86,7 +86,7 @@ cBprocess <- function(cB_raw,
 
   # Get reliable features:
   if(concat == TRUE | is.null(FOI)){
-    reliables <- DynamicSeq::reliableFeatures(cB = cB, c_list = c_list, high_p = keep_input[1], totcut = keep_input[2])
+    reliables <- DynamicSeq::reliableFeatures(obj, high_p = keep_input[1], totcut = keep_input[2])
     keep <- c(FOI, reliables[!(reliables %in% FOI)])
   }else{
     keep <- FOI
@@ -153,6 +153,7 @@ cBprocess <- function(cB_raw,
   df_U_tot <- df_U_tot %>% dplyr::mutate(U_factor = log(feature_avg_Us/tot_avg_Us)) %>%
     dplyr::select(mut, reps, fnum, U_factor)
 
+
   if(Stan){
 
     sdf <- cB %>%
@@ -202,6 +203,8 @@ cBprocess <- function(cB_raw,
     num_mut <- df$TC # Number of mutations
     num_obs <- df$n # Number of times observed
 
+    # Will have to change to make Stan models compatible
+    # with a vector or matrix of tls
     data_list <- list(
       NE = NE, #Number of reads
       NF = NF, # Number of gene
@@ -213,7 +216,7 @@ cBprocess <- function(cB_raw,
       R = R,
       nrep = nreps,
       num_obs = num_obs,
-      tl = tl,
+      tl = unique(metadf$tl[metadf$tl > 0])[1],
       U_cont = df$U_factor,
       sdf = sdf
     )
