@@ -11,7 +11,10 @@ fast_analysis(
   read_cut = 50,
   features_cut = 10,
   nbin = NULL,
-  prior_weight = 2
+  prior_weight = 2,
+  MLE = TRUE,
+  lower = -7,
+  upper = 7
 )
 }
 \arguments{
@@ -26,6 +29,12 @@ fast_analysis(
 \item{features_cut}{Number of features to estimate sample specific mutation rate with}
 
 \item{prior_weight}{Determines extent to which logit(fn) variance is regularized to the mean-variance regression line}
+
+\item{MLE}{Logical; if TRUE then replicate logit(fn) is estimated using maximum likelihood; if FALSE more conservative Bayesian hypothesis testing is used}
+
+\item{lower}{Lower bound for MLE with L-BFGS-B algorithm}
+
+\item{upper}{Upper bound for MLE with L-BFGS-B algorithm}
 }
 \value{
 list with dataframe of replicate specific estimates as well as dataframe of pooled estimates

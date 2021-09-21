@@ -99,10 +99,13 @@ cBtofast <- function(cB_raw,
 #' @param read_cut Minimum number of reads for a given feature-sample combo to be used for mut rate estimates
 #' @param features_cut Number of features to estimate sample specific mutation rate with
 #' @param prior_weight Determines extent to which logit(fn) variance is regularized to the mean-variance regression line
+#' @param MLE Logical; if TRUE then replicate logit(fn) is estimated using maximum likelihood; if FALSE more conservative Bayesian hypothesis testing is used
+#' @param lower Lower bound for MLE with L-BFGS-B algorithm
+#' @param upper Upper bound for MLE with L-BFGS-B algorithm
 #' @return list with dataframe of replicate specific estimates as well as dataframe of pooled estimates
 #' @importFrom magrittr %>%
 #' @export
-fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_cut = 10, nbin = NULL, prior_weight = 2){
+fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_cut = 10, nbin = NULL, prior_weight = 2, MLE = TRUE, lower = -7, upper = 7, se_max = 2.5){
 
   logit <- function(x) log(x/(1-x))
   inv_logit <- function(x) exp(x)/(1+exp(x))
@@ -260,18 +263,69 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
   Mut_data <- merge(Mut_data, New_data_estimate, by = c("mut", "reps"))
 
-  Mut_data_est <- Mut_data %>% dplyr::group_by(fnum, mut, reps, TC, nT) %>%
-    # mutate(avg_mut = TC/nT) %>%
-    # #mutate(prior_new = ifelse(avg_mut >= (pnew_est - 0.01), 0.99, (avg_mut + 0.01)/pnew_est )) %>%
-    # mutate(prior_new = 0.9)%>%
-    dplyr::mutate(New_prob = stats::dbinom(TC, size=nT, prob=pnew)) %>%
-    dplyr::mutate(Old_prob = stats::dbinom(TC, size = nT, prob = pold)) %>%
-    dplyr::mutate(News = n*(New_prob/(New_prob + Old_prob))) %>%
-    dplyr::ungroup() %>%
-    dplyr::group_by(fnum, mut, reps) %>%
-    dplyr::summarise(nreads = sum(n), Fn_rep_est = sum(News)/nreads) %>%
-    dplyr::mutate(logit_fn_rep = ifelse(Fn_rep_est == 1, logit(0.999), ifelse(Fn_rep_est == 0, logit(0.001), logit(Fn_rep_est)))) %>%
-    dplyr::ungroup()
+
+  Mut_data <- merge(Mut_data, Count_data, by = c("fnum", "mut", "reps"))
+
+  if(!MLE){
+    # Bayesian Hypothesis Testing Method
+    Mut_data_est <- Mut_data %>% dplyr::group_by(fnum, mut, reps, TC, nT) %>%
+      # mutate(avg_mut = TC/nT) %>%
+      # #mutate(prior_new = ifelse(avg_mut >= (pnew_est - 0.01), 0.99, (avg_mut + 0.01)/pnew_est )) %>%
+      # mutate(prior_new = 0.9)%>%
+      dplyr::mutate(New_prob = stats::dbinom(TC, size=nT, prob=pnew)) %>%
+      dplyr::mutate(Old_prob = stats::dbinom(TC, size = nT, prob = pold)) %>%
+      dplyr::mutate(News = n*(New_prob/(New_prob + Old_prob))) %>%
+      dplyr::ungroup() %>%
+      dplyr::group_by(fnum, mut, reps) %>%
+      dplyr::summarise(nreads = sum(n), Fn_rep_est = sum(News)/nreads) %>%
+      dplyr::mutate(logit_fn_rep = ifelse(Fn_rep_est == 1, logit(0.999), ifelse(Fn_rep_est == 0, logit(0.001), logit(Fn_rep_est)))) %>%
+      dplyr::ungroup()
+  }else{
+    # MLE
+    mixed_lik <- function(lam_n, lam_o, TC, n, logit_fn){
+      logl <- sum(n*log(inv_logit(logit_fn)*(lam_n^TC)*exp(-lam_n) + (1-inv_logit(logit_fn))*(lam_o^TC)*exp(-lam_o) ))
+      return(-logl)
+    }
+
+    Mut_data_est <- Mut_data %>% ungroup() %>% dplyr::mutate(lam_n = pnew*nT, lam_o = pold*nT) %>%
+      dplyr::group_by(fnum, mut, reps, TC) %>%
+      dplyr::summarise(lam_n = sum(lam_n*n)/sum(n), lam_o = sum(lam_o*n)/sum(n),
+                       n = sum(n), .group = "keep") %>%
+      dplyr::ungroup() %>%
+      dplyr::group_by(fnum, mut, reps) %>%
+      dplyr::summarise(logit_fn_rep = optim(0.5, mixed_lik, TC = TC, n = n, lam_n = lam_n, lam_o = lam_o, method = "L-BFGS-B", lower = lower, upper = upper)$par, nreads =sum(n), .groups = "keep") %>%
+      dplyr::mutate(logit_fn_rep = ifelse(logit_fn_rep == lower, runif(1, lower-0.2, lower), ifelse(logit_fn_rep == upper, runif(1, upper, upper+0.2), logit_fn_rep))) %>%
+      dplyr::mutate(Fn_rep_est = inv_logit(logit_fn_rep)) %>%
+      dplyr::ungroup()
+  }
+
+
+
+
+
+  ## Proportion matching strategy; has unreasonably high variance unfortunately...
+  # ## Add total read count information to Mut_data
+  # Count_data <- Mut_data %>% dplyr::group_by(fnum, mut, reps) %>%
+  #   dplyr::summarise(ntot = sum(n)) %>% ungroup()
+
+
+  # Mut_data_est <- Mut_data %>% ungroup() %>% dplyr::mutate(lam_n = pnew*nT, lam_o = pold*nT) %>%
+  #   dplyr::group_by(fnum, mut, reps, TC) %>%
+  #   dplyr::summarise(lam_n = sum(lam_n*n)/sum(n), lam_o = sum(lam_o*n)/sum(n),
+  #                    prop = sum(n)/mean(ntot), TC_reads = sum(n), .group = "keep") %>%
+  #   # mutate(avg_mut = TC/nT) %>%
+  #   # #mutate(prior_new = ifelse(avg_mut >= (pnew_est - 0.01), 0.99, (avg_mut + 0.01)/pnew_est )) %>%
+  #   # mutate(prior_new = 0.9)%>%
+  #   dplyr::mutate(New_prob = stats::dpois(TC, lambda = lam_n)) %>%
+  #   dplyr::mutate(Old_prob = stats::dpois(TC, lambda = lam_o)) %>%
+  #   dplyr::mutate(Fn_prelim = (prop - Old_prob)/(New_prob - Old_prob)) %>%
+  #   dplyr::ungroup() %>%
+  #   dplyr::group_by(fnum, mut, reps) %>%
+  #   dplyr::summarise(Fn_prelim = weighted.mean(Fn_prelim, w = TC_reads), nreads = sum(TC_reads), .groups = "keep") %>%
+  #   dplyr::mutate(Fn_rep_est = ifelse(Fn_prelim >= 1, 0.999, ifelse(Fn_prelim <= 0, 0.001, Fn_prelim))) %>%
+  #   dplyr::mutate(logit_fn_rep = logit(Fn_rep_est)) %>%
+  #   dplyr::ungroup()
+
 
   message("Estimating per replicate uncertainties")
 
@@ -293,7 +347,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     dplyr::group_by(fnum, mut, reps) %>%
     dplyr::summarise(Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n), tot_n = sum(n)) %>% #,
     #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
-    dplyr::mutate(Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) #, Fn_se = 1/sqrt(tot_n*Fisher_fn))
+    dplyr::mutate(Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
+    dplyr::mutate(Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
 
   Mut_data_est$logit_fn_se = Mut_data$Logit_fn_se
   # Mut_data_est$fn_se = Mut_data$Fn_se
