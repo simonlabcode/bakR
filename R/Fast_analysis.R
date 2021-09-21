@@ -245,6 +245,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   num_conds <- max(Mut_data$mut)
   nreps <- max(Mut_data$reps)
 
+  sample_lookup <- Mut_data[, c("sample", "mut", "reps")] %>% dplyr::distinct()
+  feature_lookup <- Mut_data[,c("fnum", "XF")] %>% dplyr::distinct()
+
   fn_rep_est <- rep(0, times=ngene*num_conds*nreps)
   dim(fn_rep_est) <- c(ngene, num_conds, nreps)
 
@@ -412,6 +415,19 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   lfsr <- fit$result$lfsr
 
   Effect_sizes_df <- data.frame(Genes_effects, Condition_effects, L2FC_kdegs, effects, ses, lfsr, pval, padj)
+
+  # Add sample information to output
+  df_fn <- merge(df_fn, sample_lookup, by.x = c("Condition", "Replicate"), by.y = c("mut", "reps"))
+
+  # Add feature name information to output
+  df_fn <- merge(df_fn, feature_lookup, by.x = "Gene_ID", by.y = "fnum")
+  avg_df_fn_bayes <- merge(avg_df_fn_bayes, feature_lookup, by.x = "Gene_ID", by.y = "fnum")
+  Effect_sizes_df <- merge(Effect_sizes_df, feature_lookup, by.x = "Genes_effects", by.y = "fnum")
+
+  # Order output
+  df_fn <- df_fn[order(df_fn$Gene_ID, df_fn$Condition, df_fn$Replicate),]
+  avg_df_fn_bayes <- avg_df_fn_bayes[order(avg_df_fn_bayes$Gene_ID, avg_df_fn_bayes$Condition),]
+  Effect_sizes_df <- Effect_sizes_df[order(Effect_sizes_df$Genes_effects, Effect_sizes_df$Condition_effects),]
 
 
   #hyperpars <- c(sdp, theta_o, var_pop, var_of_var, a_hyper, b_hyper)
