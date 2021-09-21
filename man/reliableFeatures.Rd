@@ -4,12 +4,10 @@
 \alias{reliableFeatures}
 \title{Identify features (e.g., transcripts) with high quality data}
 \usage{
-reliableFeatures(cB, c_list, high_p = 0.2, totcut = 1000)
+reliableFeatures(obj, high_p = 0.2, totcut = 1000)
 }
 \arguments{
-\item{cB}{cB.rds file from pipeline}
-
-\item{c_list}{vector of names of control (no s4U fed) samples}
+\item{obj}{Object of class DynamicSeqData}
 
 \item{high_p}{highest mutation rate accepted in control samples}
 

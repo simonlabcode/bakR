@@ -39,7 +39,8 @@ Imports:
     ashr,
     magrittr,
     DESeq2,
-    Hmisc
+    Hmisc,
+    ggplot2
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),

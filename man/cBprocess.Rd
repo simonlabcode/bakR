@@ -5,12 +5,7 @@
 \title{Extract data for Stan analysis from cB}
 \usage{
 cBprocess(
-  cB_raw,
-  samp_list,
-  type_list,
-  mut_list,
-  rep_list,
-  tl,
+  obj,
   keep_input = c(0.2, 50),
   Stan = TRUE,
   Fast = FALSE,
@@ -19,17 +14,7 @@ cBprocess(
 )
 }
 \arguments{
-\item{cB_raw}{cB file generated from TL-seq pipeline}
-
-\item{samp_list}{vector of names of samples}
-
-\item{type_list}{vector with 1 entry per sample; 0 = no s4U, 1 = s4U fed}
-
-\item{mut_list}{vector with 1 entry per sample; 1 = reference, > 1 = different experimental conditions (e.g., KO of protein X)}
-
-\item{rep_list}{vector with 1 entry per sample that indexes replicate; 1 = 1st replicate, 2 = 2nd replicate, etc.}
-
-\item{tl}{single numerical value; s4U label time used in s4U fed samples}
+\item{obj}{An object of class DynamicSeqData}
 
 \item{keep_input}{two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff}
 
