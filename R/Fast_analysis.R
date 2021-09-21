@@ -264,8 +264,6 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   Mut_data <- merge(Mut_data, New_data_estimate, by = c("mut", "reps"))
 
 
-  Mut_data <- merge(Mut_data, Count_data, by = c("fnum", "mut", "reps"))
-
   if(!MLE){
     # Bayesian Hypothesis Testing Method
     Mut_data_est <- Mut_data %>% dplyr::group_by(fnum, mut, reps, TC, nT) %>%

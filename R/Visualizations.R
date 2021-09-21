@@ -39,7 +39,7 @@ plotVolcano.FastFit <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE,
   L2FC_df$Condition_effects <- as.factor(L2FC_df$Condition_effects)
 
   if(is.null(Exps)){
-    Exps <- 2:max(L2FC_df$Condition_effects)
+    Exps <- 2:max(as.integer(L2FC_df$Condition_effects))
   }
 
   if(Exp_shape){
