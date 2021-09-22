@@ -189,6 +189,7 @@ cBprocess <- function(obj,
       dplyr::arrange(type, .by_group = TRUE)
 
 
+
     df <- merge(df, df_U_tot, by = c("fnum", "mut", "reps"))
     df <- df[order(df$fnum, df$mut, df$reps), ]
 
@@ -202,6 +203,20 @@ cBprocess <- function(obj,
 
     num_mut <- df$TC # Number of mutations
     num_obs <- df$n # Number of times observed
+
+    ## Calculate Avg. Read Counts
+    Avg_Counts <- df %>% dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(Avg_Reads = sum(n)/nreps) %>% dplyr::ungroup()
+
+    Avg_Reads <- matrix(0, ncol = nMT, nrow = NF)
+
+    for(f in 1:NF){
+      for(i in 1:nMT){
+        Avg_Reads[f,i] <- (mean(log10(Avg_Counts$Avg_Reads[(Avg_Counts$mut == i) & (Avg_Counts$fnum == f)])) - mean(log10(Avg_Counts$Avg_Reads[Avg_Counts$mut == i])))/sd(log10(Avg_Counts$Avg_Reads[Avg_Counts$mut == i]))
+      }
+    }
+
+
 
     # Will have to change to make Stan models compatible
     # with a vector or matrix of tls
@@ -218,6 +233,7 @@ cBprocess <- function(obj,
       num_obs = num_obs,
       tl = unique(metadf$tl[metadf$tl > 0])[1],
       U_cont = df$U_factor,
+      Avg_Reads = Avg_Reads,
       sdf = sdf
     )
 
