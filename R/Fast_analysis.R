@@ -91,13 +91,16 @@ cBtofast <- function(cB_raw,
   return(df)
 }
 
-#' This function efficiently analyzes data to provide fraction new estimates and uncertainties
+#' Efficiently analyze nucleotide recoding data
+#'
+#' \code{fast_analysis} analyzed
 #'
 #' @param df Dataframe in form provided by cB_to_Fast
 #' @param pnew Labeled read mutation rate; default of 0 means that model estimates rate from s4U fed data
 #' @param pold Unlabeled read mutation rate; default of 0 means that model estimates rate from no-s4U fed data
 #' @param read_cut Minimum number of reads for a given feature-sample combo to be used for mut rate estimates
 #' @param features_cut Number of features to estimate sample specific mutation rate with
+#' @param nbin Number of bins for mean-variance relationship estimation. If NULL, max of 10 or (number of logit(fn) estimates)/100 is used
 #' @param prior_weight Determines extent to which logit(fn) variance is regularized to the mean-variance regression line
 #' @param MLE Logical; if TRUE then replicate logit(fn) is estimated using maximum likelihood; if FALSE more conservative Bayesian hypothesis testing is used
 #' @param lower Lower bound for MLE with L-BFGS-B algorithm

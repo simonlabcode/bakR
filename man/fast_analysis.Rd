@@ -2,7 +2,7 @@
 % Please edit documentation in R/Fast_analysis.R
 \name{fast_analysis}
 \alias{fast_analysis}
-\title{This function efficiently analyzes data to provide fraction new estimates and uncertainties}
+\title{Efficiently analyze nucleotide recoding data}
 \usage{
 fast_analysis(
   df,
@@ -14,7 +14,8 @@ fast_analysis(
   prior_weight = 2,
   MLE = TRUE,
   lower = -7,
-  upper = 7
+  upper = 7,
+  se_max = 2.5
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ fast_analysis(
 
 \item{features_cut}{Number of features to estimate sample specific mutation rate with}
 
+\item{nbin}{Number of bins for mean-variance relationship estimation. If NULL, max of 10 or (number of logit(fn) estimates)/100 is used}
+
 \item{prior_weight}{Determines extent to which logit(fn) variance is regularized to the mean-variance regression line}
 
 \item{MLE}{Logical; if TRUE then replicate logit(fn) is estimated using maximum likelihood; if FALSE more conservative Bayesian hypothesis testing is used}
@@ -40,5 +43,5 @@ fast_analysis(
 list with dataframe of replicate specific estimates as well as dataframe of pooled estimates
 }
 \description{
-This function efficiently analyzes data to provide fraction new estimates and uncertainties
+\code{fast_analysis} analyzed
 }
