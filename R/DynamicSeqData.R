@@ -80,7 +80,8 @@ validate_DynamicSeqData <- function(obj){
   if(sum(purrr::map_dbl(unclass(metadf), is.integer)) < 1){
     stop(
       "No columns in metadf contain strictly integer data. The column containing numerical IDs
-      for experimental conditions (Exp_ID) should be strictly integer data.",
+      for experimental conditions (Exp_ID) should be strictly integer data. If Exp_ID is correctly
+      defined, try casting the column to an int with as.integer().",
       call. = FALSE
     )
   }
@@ -110,7 +111,7 @@ validate_DynamicSeqData <- function(obj){
         in each read and thus should be >= 0."
       )
     }
-  }else if(sum(cB[,3] < 1) > 0){
+  }else if(sum(cB[,3] < 0) > 0){
     stop(
       "3rd column of cB contains values < 0. This column should tally the number of mutations
         in each read and thus should be >= 0."
@@ -125,7 +126,7 @@ validate_DynamicSeqData <- function(obj){
         in each read and thus should be >= 0."
       )
     }
-  }else if(sum(cB[,4] < 1) > 0){
+  }else if(sum(cB[,4] < 0) > 0){
     stop(
       "4th column of cB contains values < 0. This column should tally the number of Ts (Us in RNA)
         in each read and thus should be >= 0."
