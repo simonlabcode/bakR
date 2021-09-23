@@ -53,15 +53,7 @@ validate_DynamicSeqData <- function(obj){
       all of which should be integer data.",
       call. = FALSE
     )
-  }#else if(sum(purrr::map_dbl(unclass(cB), is.integer)) > 3){
-  #   stop(
-  #     "There are more than 3 columns of cB containing integer data. Remove
-  #     unnecessary columns (i.e., those that do not correspond to the number of
-  #     mutations (TC), numbers of Ts in a read (nT), and number of identical
-  #     observations (n).",
-  #     call. = FALSE
-  #   )
-  # }
+  }
 
 
   ## Check that all data in metadf is numerical

@@ -41,13 +41,13 @@ plotVolcano.FastFit <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE,
   }
 
   if(Exp_shape){
-    ggplot2::ggplot(L2FC_df[L2FC_df$Condition_effects %in% Exps, ], aes(x = L2FC_kdegs,y = -log10(padj), color = conclusion,  shape = as.factor(Condition_effects))) +
+    ggplot2::ggplot(L2FC_df[L2FC_df$Condition_effects %in% Exps, ], ggplot2::aes(x = L2FC_kdegs,y = -log10(padj), color = conclusion,  shape = as.factor(Condition_effects))) +
       ggplot2::geom_point(size = 1.5) +
       ggplot2::theme_classic() +
       ggplot2::xlab("L2FC(kdeg)") +
       ggplot2::ylab("-log10(padj)")
   }else{
-    ggplot2::ggplot(L2FC_df[L2FC_df$Condition_effects %in% Exps, ], aes(x = L2FC_kdegs,y = -log10(padj), color = conclusion )) +
+    ggplot2::ggplot(L2FC_df[L2FC_df$Condition_effects %in% Exps, ], ggplot2::aes(x = L2FC_kdegs,y = -log10(padj), color = conclusion )) +
       ggplot2::geom_point(size = 1.5) +
       ggplot2::theme_classic() +
       ggplot2::xlab("L2FC(kdeg)") +
@@ -108,7 +108,7 @@ FnPCA.FastFit <- function(obj, ...){
 
   ### Plot
 
-  (g_pca <- ggplot2::ggplot(fn_pca_df, aes(x = PC1, y = PC2, color = Exp_ID)) +
+  (g_pca <- ggplot2::ggplot(fn_pca_df, ggplot2::aes(x = PC1, y = PC2, color = Exp_ID)) +
     ggplot2::geom_point(size = 3) +
     ggplot2::xlab(paste0("PC1 (", fn_prop_var[1]*100, "% of Var.)")) +
     ggplot2::ylab(paste0("PC2 (", fn_prop_var[2]*100, "% of Var.)")))

@@ -115,8 +115,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   #Trim df and name columns
   if(is.null(pnew)){
     message("Estimating labeled mutation rate")
-    Mut_data <- df[,1:9]
-    colnames(Mut_data) <- c("sample", "XF", "TC", "nT", "n", "fnum", "type", "mut", "reps")
+    Mut_data <- df
 
     ##New Mutation rate Estimation
     # Extract only s4U labeled data to estimate s4U mut rate
@@ -194,8 +193,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     message("Estimating unlabeled mutation rate")
 
     #Old mutation rate estimation
-    Mut_data <- df[,1:9]
-    colnames(Mut_data) <- c("sample", "XF", "TC", "nT", "n", "fnum", "type", "mut", "reps")
+    Mut_data <- df
 
     Old_data <- Mut_data[Mut_data$type == 0, ]
 
@@ -251,13 +249,6 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   sample_lookup <- Mut_data[, c("sample", "mut", "reps")] %>% dplyr::distinct()
   feature_lookup <- Mut_data[,c("fnum", "XF")] %>% dplyr::distinct()
 
-  fn_rep_est <- rep(0, times=ngene*num_conds*nreps)
-  dim(fn_rep_est) <- c(ngene, num_conds, nreps)
-
-  R_ID <- fn_rep_est
-  MT_ID <- R_ID
-  FN_ID <- R_ID
-
   # Estimate fraction new in each replicate using binomial model
   message("Estimating fraction labeled")
 
@@ -299,32 +290,6 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
 
 
-
-
-  ## Proportion matching strategy; has unreasonably high variance unfortunately...
-  # ## Add total read count information to Mut_data
-  # Count_data <- Mut_data %>% dplyr::group_by(fnum, mut, reps) %>%
-  #   dplyr::summarise(ntot = sum(n)) %>% ungroup()
-
-
-  # Mut_data_est <- Mut_data %>% ungroup() %>% dplyr::mutate(lam_n = pnew*nT, lam_o = pold*nT) %>%
-  #   dplyr::group_by(fnum, mut, reps, TC) %>%
-  #   dplyr::summarise(lam_n = sum(lam_n*n)/sum(n), lam_o = sum(lam_o*n)/sum(n),
-  #                    prop = sum(n)/mean(ntot), TC_reads = sum(n), .group = "keep") %>%
-  #   # mutate(avg_mut = TC/nT) %>%
-  #   # #mutate(prior_new = ifelse(avg_mut >= (pnew_est - 0.01), 0.99, (avg_mut + 0.01)/pnew_est )) %>%
-  #   # mutate(prior_new = 0.9)%>%
-  #   dplyr::mutate(New_prob = stats::dpois(TC, lambda = lam_n)) %>%
-  #   dplyr::mutate(Old_prob = stats::dpois(TC, lambda = lam_o)) %>%
-  #   dplyr::mutate(Fn_prelim = (prop - Old_prob)/(New_prob - Old_prob)) %>%
-  #   dplyr::ungroup() %>%
-  #   dplyr::group_by(fnum, mut, reps) %>%
-  #   dplyr::summarise(Fn_prelim = weighted.mean(Fn_prelim, w = TC_reads), nreads = sum(TC_reads), .groups = "keep") %>%
-  #   dplyr::mutate(Fn_rep_est = ifelse(Fn_prelim >= 1, 0.999, ifelse(Fn_prelim <= 0, 0.001, Fn_prelim))) %>%
-  #   dplyr::mutate(logit_fn_rep = logit(Fn_rep_est)) %>%
-  #   dplyr::ungroup()
-
-
   message("Estimating per replicate uncertainties")
 
   Mut_data <- merge(Mut_data, Mut_data_est[, c("logit_fn_rep", "fnum", "mut", "reps")], by = c("fnum", "mut", "reps"))
@@ -348,7 +313,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
     dplyr::mutate(Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
     dplyr::mutate(Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
 
-  Mut_data_est$logit_fn_se = Mut_data$Logit_fn_se
+  Mut_data_est$logit_fn_se <- Mut_data$Logit_fn_se
   # Mut_data_est$fn_se = Mut_data$Fn_se
 
   ## Now affiliate each fnum, mut with a bin Id based on read counts,
@@ -385,6 +350,15 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
   rm(Mut_data_est)
 
   df_fn <- data.frame(logit_fn, logit_fn_se, fn_estimate, Replicate, Condition, Gene_ID, nreads)
+
+  # Remove vectors no longer of use
+  rm(logit_fn)
+  rm(fn_estimate)
+  rm(logit_fn_se)
+  rm(Replicate)
+  rm(Condition)
+  rm(Gene_ID)
+  rm(nreads)
 
   df_fn <- df_fn[order(df_fn$Gene_ID, df_fn$Condition, df_fn$Replicate),]
 
