@@ -43,5 +43,10 @@ fast_analysis(
 list with dataframe of replicate specific estimates as well as dataframe of pooled estimates
 }
 \description{
-\code{fast_analysis} analyzed
+\code{fast_analysis} analyzes nucleotide recoding data using either maximum likelihood estimation with the L-BFGS-B algorithm
+implemented by \code{stats::optim} or a more conservative Bayesian hypothesis testing strategy. Output includes fraction new
+estimates for individual estimates as well as fraction news and effect sizes (L2FC(kdeg)s and changes in logit(fraction new))
+averaged across replicate data. Averaging takes into account uncertainties estimated using the Fisher Information and estimates
+are reguarlized using analytical results of fully Bayesian models. The result is that fraction news are shrunk towards population means
+and that uncertainties are shrunk towards a mean-variance trend estimated as part of the analysis.
 }
