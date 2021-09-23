@@ -33,7 +33,7 @@ validate_DynamicSeqData <- function(obj){
       )
     }
   }else{
-    if(!(all(rownames(metadf) %in% unique(cB[,2])) & all(unique(cB$sample) %in% rownames(metadf)))){
+    if(!(all(rownames(metadf) %in% unique(cB[,2])) & all(unique(cB[,2]) %in% rownames(metadf)))){
       stop(
         "Row names of metadf are not same as unique(cB[,2]).
         Make sure 2nd column of cB contains sample names and
@@ -189,11 +189,15 @@ DynamicSeqData <- function(cB, metadf){
   meta_cols <- c("tl", "Exp_ID")
 
   if(!all(cB_cols %in% colnames(cB))){
-    colnames(cB) <- cB_cols
+    colnames(cB)[1:5] <- cB_cols
+    warning("Renamed first 5 columns of cB to XF, sample, TC, nT, and n.
+    If this does not reflect the content of those columns, properly rearrange cB columns and rerun DynamicSeqData().")
   }
 
   if(!all(meta_cols %in% colnames(metadf))){
-    colnames(metadf) <- meta_cols
+    colnames(metadf)[1:2] <- meta_cols
+    warning("Renamed first 2 columns of metadf to tl and Exp_ID.
+    If this does not reflect the content of those columns, properly rearrange metadf columns and rerun DynamicSeqData().")
   }
 
   validate_DynamicSeqData(new_DynamicSeqData(cB, metadf))

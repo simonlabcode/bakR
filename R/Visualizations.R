@@ -36,14 +36,12 @@ plotVolcano.FastFit <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE,
   ## Add significance ID
   L2FC_df <- L2FC_df %>% dplyr::mutate(conclusion = ifelse(padj < FDR, ifelse(L2FC_kdegs < 0, "Stabilized", "Destabilized"), "Not Sig."))
 
-  L2FC_df$Condition_effects <- as.factor(L2FC_df$Condition_effects)
-
   if(is.null(Exps)){
     Exps <- 2:max(as.integer(L2FC_df$Condition_effects))
   }
 
   if(Exp_shape){
-    ggplot2::ggplot(L2FC_df[L2FC_df$Condition_effects %in% Exps, ], aes(x = L2FC_kdegs,y = -log10(padj), color = conclusion,  shape = Condition_effects)) +
+    ggplot2::ggplot(L2FC_df[L2FC_df$Condition_effects %in% Exps, ], aes(x = L2FC_kdegs,y = -log10(padj), color = conclusion,  shape = as.factor(Condition_effects))) +
       ggplot2::geom_point(size = 1.5) +
       ggplot2::theme_classic() +
       ggplot2::xlab("L2FC(kdeg)") +
