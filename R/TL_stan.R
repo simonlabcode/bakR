@@ -23,7 +23,7 @@
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #'
 TL_stan <- function(data_list, keep_fit = FALSE, ...) {
-  fit <- rstan::sampling(stanmodels$Replicates, data = data_list, ...)
+  fit <- rstan::sampling(stanmodels$Heterosked, data = data_list, ...)
 
   # Get number of features from data
   ngs <- data_list$Stan_data$NF
