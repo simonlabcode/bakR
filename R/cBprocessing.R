@@ -86,6 +86,8 @@ cBprocess <- function(obj,
 
   # Get reliable features:
   if(concat == TRUE | is.null(FOI)){
+    message("Finding reliable Features")
+
     reliables <- DynamicSeq::reliableFeatures(obj, high_p = keep_input[1], totcut = keep_input[2])
     keep <- c(FOI, reliables[!(reliables %in% FOI)])
   }else{
@@ -94,6 +96,7 @@ cBprocess <- function(obj,
 
 
 
+  message("Filtering out unwanted or unreliable features")
 
   # This df is created in both cases
   ranked_features_df  <- cB %>%
@@ -106,6 +109,7 @@ cBprocess <- function(obj,
     dplyr::select(XF, fnum)
 
 
+  message("Processing data...")
   # Create count dataframe
   Counts_df <- cB %>%
     dplyr::ungroup() %>%

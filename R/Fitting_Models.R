@@ -63,7 +63,7 @@
 #' @param ... Arguments passed to either \code{fast_analysis} (if a DynamicSeqData object)
 #' or \code{TL_Stan} and \code{Hybrid_fit} (if a DynamicSeqFit object)
 #' @return DynamicSeqFit object with results from statistical modeling and data processing
-DynamicSeqFit <- function(obj, StanFit, HybridFit,
+DynamicSeqFit <- function(obj, StanFit = TRUE, HybridFit = FALSE,
                           keep_input = c(0.2, 50),
                           Stan_prep = TRUE,
                           Fast_prep = TRUE,
@@ -85,17 +85,27 @@ DynamicSeqFit <- function(obj, StanFit, HybridFit,
     Fit_lists <- list(Fast_Fit = fast_list,
                         Data_lists = data_list)
 
-
+    class(Fit_lists) <- "DynamicSeqFit"
+    return(Fit_lists)
 
   }else if(class(obj) == "DynamicSeqFit"){
 
-    warning("Haven't got to this part of the code yet...")
+    if(StanFit){
+
+      Stan_list <- DynamicSeq::TL_stan(obj$Data_lists$Stan_data, ...)
+
+      obj$Stan_Fit = Stan_list
+
+    }else if(HybridFit){
+      warning("Haven't got to this part of the code yet")
+    }
+
+    return(obj)
 
   }else{
     stop("obj is not of class DynamicSeqData or DynamicSeqFit")
   }
 
-  class(Fit_lists) <- "DynamicSeqFit"
-  return(Fit_lists)
+
 
 }
