@@ -55,57 +55,47 @@
 #' @param HybridFit Logical; if TRUE, then a Fully Bayesian Hierarchical model is run using
 #' estimates for the fraction new and fraction new uncertainty obtained via the efficient
 #' statistical model.
-#' @param FastRefit Logical; if TRUE, then the efficient statistical model that does not
-#' use Stan in the backend will be reran even if results from a previous run are present
-#' in the DynamicSeqData object.
-#' @param ... Arguments passed to \code{cBprocess}, \code{fast_analysis}, \code{TL_stan}, or \code{Hybrid_fit}.
-#' See the documentation for these functions to learn what arguments are possible and their
-#' default values
+#' @param keep_input two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff
+#' @param Stan_prep Boolean; if TRUE, then data_list that can be passed to Stan is curated
+#' @param Fast_prep Boolean; if TRUE, then dataframe that can be passed to fast_analysis() is curated
+#' @param FOI Features of interest; character vector containing names of features to analyze
+#' @param concat Boolean; If TRUE, FOI is concatenated with output of reliableFeatures
+#' @param ... Arguments passed to either \code{fast_analysis} (if a DynamicSeqData object)
+#' or \code{TL_Stan} and \code{Hybrid_fit} (if a DynamicSeqFit object)
 #' @return DynamicSeqFit object with results from statistical modeling and data processing
-DynamicSeqFit <- function(obj, StanFit, HybridFit, FastRefit, ...){
+DynamicSeqFit <- function(obj, StanFit, HybridFit,
+                          keep_input = c(0.2, 50),
+                          Stan_prep = TRUE,
+                          Fast_prep = TRUE,
+                          FOI = c(),
+                          concat = TRUE,
+                          ...){
 
   if(class(obj) == "DynamicSeqData"){
-    data_list <- DynamicSeq::cBprocess(obj, ...)
+
+    data_list <- DynamicSeq::cBprocess(obj, keep_input = keep_input,
+                                       Stan = Stan_prep,
+                                       Fast = Fast_prep,
+                                       FOI = FOI,
+                                       concat = concat)
 
     fast_list <- DynamicSeq::fast_analysis(data_list$Fast_df, ...)
 
-    if(StanFit){
 
-      Stan_list <- DynamicSeq::TL_stan(data_list$Stan_data)
-
-    }
-
-    if(HybridFit){
-
-      Hybrid_list <- DynamicSeq::Hybrid_Fit(data_list, fast_list)
-
-    }
-
-    if(all(c(StanFit, HybridFit))){
-      Fit_lists <- list(Fast_Fit = fast_list,
-                        Stan_Fit = Stan_list,
-                        Hybrid_Fit = Hybrid_list,
+    Fit_lists <- list(Fast_Fit = fast_list,
                         Data_lists = data_list)
-    }else if(StanFit){
-      Fit_lists <- list(Fast_Fit = fast_list,
-                        Stan_Fit = Stan_list,
-                        Data_lists = data_list)
-    }else if (HybridFit){
-      Fit_lists <- list(Fast_Fit = fast_list,
-                        Hybrid_Fit = Hybrid_list,
-                        Data_lists = data_list)
-    }else{
-      Fit_lists <- list(Fast_Fit = fast_list,
-                        Data_lists = data_list)
-    }
+
 
 
   }else if(class(obj) == "DynamicSeqFit"){
 
+    warning("Haven't got to this part of the code yet...")
 
   }else{
     stop("obj is not of class DynamicSeqData or DynamicSeqFit")
   }
 
+  class(Fit_lists) <- "DynamicSeqFit"
+  return(Fit_lists)
 
 }

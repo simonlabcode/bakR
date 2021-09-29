@@ -4,24 +4,39 @@
 \alias{DynamicSeqFit}
 \title{Estimating kinetic parameters from nucleotide recoding data}
 \usage{
-DynamicSeqFit(obj, Stan, Hybrid, Fast, ...)
+DynamicSeqFit(
+  obj,
+  StanFit,
+  HybridFit,
+  keep_input = c(0.2, 50),
+  Stan_prep = TRUE,
+  Fast_prep = TRUE,
+  FOI = c(),
+  concat = TRUE,
+  ...
+)
 }
 \arguments{
 \item{obj}{DynamicSeqData object produced by \code{DynamicSeqData} or a DynamicSeqFit object produced by \code{DynamicFit}}
 
-\item{Stan}{Logical; if TRUE, then Fully Bayesian Hierarchical model is implemented}
+\item{StanFit}{Logical; if TRUE, then Fully Bayesian Hierarchical model is implemented}
 
-\item{Hybrid}{Logical; if TRUE, then a Fully Bayesian Hierarchical model is run using
+\item{HybridFit}{Logical; if TRUE, then a Fully Bayesian Hierarchical model is run using
 estimates for the fraction new and fraction new uncertainty obtained via the efficient
 statistical model.}
 
-\item{Fast}{Logical; if TRUE, then the efficient statistical model that does not
-use Stan in the backend will be reran even if results from a previous run are present
-in the DynamicSeqData object.}
+\item{keep_input}{two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff}
 
-\item{...}{Arguments passed to \code{cBprocess}, \code{fast_analysis}, \code{TL_stan}, or \code{Hybrid_fit}.
-See the documentation for these functions to learn what arguments are possible and their
-default values}
+\item{Stan_prep}{Boolean; if TRUE, then data_list that can be passed to Stan is curated}
+
+\item{Fast_prep}{Boolean; if TRUE, then dataframe that can be passed to fast_analysis() is curated}
+
+\item{FOI}{Features of interest; character vector containing names of features to analyze}
+
+\item{concat}{Boolean; If TRUE, FOI is concatenated with output of reliableFeatures}
+
+\item{...}{Arguments passed to either \code{fast_analysis} (if a DynamicSeqData object)
+or \code{TL_Stan} and \code{Hybrid_fit} (if a DynamicSeqFit object)}
 }
 \value{
 DynamicSeqFit object with results from statistical modeling and data processing
@@ -71,4 +86,10 @@ condition to regularize variance estimates using a hierarchical linear regressio
 \code{Hybrid_fit} requires fraction new estimates from \code{fast_analysis}, \code{TL_Stan} implements a U-content exposure
 adjusted Poisson model to estimate fraction news while also using hierarchical modeling to partially pool information across
 replicates and the entire dataset.
+
+Since \code{fast_analysis} relies on -s4U control data to estimate background mutation rates, user inputted mutation rate
+estimates will have to be provided if such a control is not present. If the -s4U control is absent and no mutation rate
+estimate is inputted, a non-hierarchical (if Stan = FALSE) or the fully hierarchical (if Stan = TRUE, implemented by \code{TL_Stan})
+model will first be run on the data to estimate mutation rates, and these mutation rates as well as the fraction news and uncertainties
+estimated in each replicate by these models will be passed to \code{fast_analysis}.
 }
