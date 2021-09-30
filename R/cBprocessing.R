@@ -131,6 +131,9 @@ cBprocess <- function(obj,
   tlist = type_list
   mlist = mut_list
   rlist = rep_list
+
+
+
   kp = keep
 
   df_U <- sdf_U %>%
@@ -146,6 +149,9 @@ cBprocess <- function(obj,
   df_U$reps <- paste(df_U$sample) %>% purrr::map_dbl(function(x) getRep(x))
   df_U$reps <- as.integer(df_U$reps)
 
+  sample_lookup <- df_U[df_U$type == 1, c("sample", "mut", "reps")] %>% dplyr::distinct()
+
+
   df_global_U <- df_U[df_U$type == 1, ] %>% dplyr::group_by(reps, mut) %>%
     dplyr::summarise(tot_avg_Us = sum(nT*n)/sum(n)) %>% dplyr::ungroup()
 
@@ -156,7 +162,6 @@ cBprocess <- function(obj,
 
   df_U_tot <- df_U_tot %>% dplyr::mutate(U_factor = log(feature_avg_Us/tot_avg_Us)) %>%
     dplyr::select(mut, reps, fnum, U_factor)
-
 
   if(Stan){
 
@@ -238,7 +243,8 @@ cBprocess <- function(obj,
       tl = unique(metadf$tl[metadf$tl > 0])[1],
       U_cont = df$U_factor,
       Avg_Reads = Avg_Reads,
-      sdf = sdf
+      sdf = sdf,
+      sample_lookup = sample_lookup
     )
 
   }

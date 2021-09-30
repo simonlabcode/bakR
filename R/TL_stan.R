@@ -44,6 +44,15 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FAL
   }
 
 
+  fn_summary <- rstan::summary(fit, pars = "mu_rep_logit_fn", probs = c(0.5))$summary
+
+  fn_summary <- fn_summary[, c("50%","mean", "sd")]
+
+  fn_summary <- as.data.frame(fn_summary)
+
+  colnames(fn_summary) <- c("median", "logit_fn", "sd")
+
+
   # Get number of features from data
   ngs <- data_list$NF
 
@@ -91,10 +100,16 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FAL
   L2FC_kdeg <- L2FC_df$mean # L2FC(kdeg) vector
   L2FC_kdeg_sd <- L2FC_df$sd # L2FC(kdeg) sd vector
 
-  # # Perform statistical significance analysis
-  # fit_stat <- ashr::ash(Effect, Se, method = "fdr")
-  # lfsr <- fit_stat$result$lfsr
-  # lfdr <- fit_stat$result$lfdr
+  rm(eff_gauss)
+
+  # Fn dataframe setup
+  F_ID_fn <- rep(1:ngs, each = (nconds+1)*nreps)
+  Exp_ID_fn <- rep(rep(1:(nconds+1), each = nreps), times = ngs)
+  R_ID_fn <- rep(1:nreps, times = (nconds+1)*ngs)
+  logit_fn <- fn_summary$logit_fn
+  fn_se <- fn_summary$sd
+
+  rm(fn_summary)
 
   # Kdeg dataframe setup
   F_ID_kd <- rep(seq(from=1, to=ngs), each=(nconds+1))
@@ -102,23 +117,29 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FAL
   kdeg <- MT_summary$mean # kdeg vector
   kdeg_sd <- MT_summary$sd # kdeg sd vector
 
+  rm(MT_summary)
+
   Effects_df <- data.frame(F_ID, Exp_ID, L2FC_kdeg, L2FC_kdeg_sd, Effect, Se)
   Kdeg_df <- data.frame(F_ID_kd, Exp_ID_kd, kdeg, kdeg_sd)
+  Fn_df <- data.frame(F_ID_fn, Exp_ID_fn, R_ID_fn, logit_fn, fn_se)
 
-  colnames(Effects_df) <- c("Feature ID", "Exp. ID", "L2FC(kdeg)", "L2FC(kdeg) sd", "Effect", "Se")
-  colnames(Kdeg_df) <- c("Feature ID", "Exp. ID", "kdeg", "kdeg_sd")
+  colnames(Effects_df) <- c("Genes_effects", "Condition_effects", "L2FC_kdegs", "L2FC_kd_sds", "effects", "ses")
+  colnames(Kdeg_df) <- c("Feature_ID", "Exp_ID", "kdeg", "kdeg_sd")
+  colnames(Fn_df) <- c("Gene_ID", "Condition", "Replicate", "logit_fn", "logit_fn_se")
 
+  Fn_df <- merge(Fn_df, data_list$sample_lookup, by.x = c("Condition", "Replicate"), by.y = c("mut", "reps"))
+
+  Fn_df <- Fn_df[order(Fn_df$Gene_ID, Fn_df$Condition, Fn_df$Replicate),]
 
   if(keep_fit == FALSE){
     fit_summary <- as.data.frame(rstan::summary(fit)$summary)
-    out <- list(Effects_df, Kdeg_df, fit_summary)
-    names(out) <- c("Effects_df", "Kdeg_df", "Fit_Summary")
+    out <- list(Effects_df, Kdeg_df, Fn_df, fit_summary)
+    names(out) <- c("Effects_df", "Kdeg_df", "Fn_Estimates","Fit_Summary")
   }else{
     out <- list(Effects_df, Kdeg_df, fit)
-    names(out) <- c("Effects_df", "Kdeg_df", "Stan_fit")
+    names(out) <- c("Effects_df", "Kdeg_df", "Fn_Estimates","Stan_fit")
   }
 
-  class(out) <- "HMCFit"
 
   return(out)
 }
