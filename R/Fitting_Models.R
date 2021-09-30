@@ -94,9 +94,19 @@ DynamicSeqFit <- function(obj, StanFit = TRUE, HybridFit = FALSE,
 
       Stan_list <- DynamicSeq::TL_stan(obj$Data_lists$Stan_data, ...)
 
-      obj$Stan_Fit = Stan_list
+      Effects <- Stan_list$Effects_df
 
-    }else if(HybridFit){
+      ## Calculate p-value using moderated t-test
+      dfs <- 2*max(obj$Fast_Fit$Fn_Estimates$Replicate) - 2 + obj$Fast_Fit$Hyper_Parameters$a
+
+      Effects <- Effects %>% dplyr::mutate(padj = 2*stats::pt(-abs(Effect/Se), df = dfs))
+
+      Stan_list$Effects_df <- Effects
+
+      obj$Stan_Fit <- Stan_list
+
+    }
+    if(HybridFit){
       warning("Haven't got to this part of the code yet")
     }
 

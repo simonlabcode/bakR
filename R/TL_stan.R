@@ -70,10 +70,10 @@ TL_stan <- function(data_list, keep_fit = FALSE, ...) {
   L2FC_kdeg <- L2FC_df$mean # L2FC(kdeg) vector
   L2FC_kdeg_sd <- L2FC_df$sd # L2FC(kdeg) sd vector
 
-  # Perform statistical significance analysis
-  fit_stat <- ashr::ash(Effect, Se, method = "fdr")
-  lfsr <- fit_stat$result$lfsr
-  lfdr <- fit_stat$result$lfdr
+  # # Perform statistical significance analysis
+  # fit_stat <- ashr::ash(Effect, Se, method = "fdr")
+  # lfsr <- fit_stat$result$lfsr
+  # lfdr <- fit_stat$result$lfdr
 
   # Kdeg dataframe setup
   F_ID_kd <- rep(seq(from=1, to=ngs), each=(nconds+1))
