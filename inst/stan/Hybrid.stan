@@ -25,7 +25,7 @@ parameters {
   real log_sig_fn;
   vector[nMT-1] log_sig_e;
   vector[nMT-1] mu_e;
-  vector[nMT-1] z_e [NF];
+  //vector[nMT-1] z_e [NF];
   //real mu_rep_logit_fn[NF, nMT, nrep]; // Inferred fraction new of obs reads on native scale.
   real z_fn[NF, nMT, nrep];
   vector<lower=0>[nMT] a;
@@ -33,11 +33,12 @@ parameters {
   vector<lower=0>[nMT] sd_rep;
   vector[nMT] z_rep [NF];
   //vector<lower=0>[nMT] sd_r_mu[NF];
+  vector[nMT-1] eff[NF]; //  Parameter for fraction new of observed reads
 }
 
 transformed parameters {
   real mu_rep_logit_fn[NF, nMT, nrep]; // Inferred fraction new of obs reads on native scale.
-  vector[nMT-1] eff[NF]; //  Parameter for fraction new of observed reads
+  //vector[nMT-1] eff[NF]; //  Parameter for fraction new of observed reads
   real<lower=0> sig_fn = exp(log_sig_fn);
   vector<lower=0>[nMT-1] sig_e = exp(log_sig_e);
   vector<lower=0>[nMT] sd_r_mu[NF];
@@ -49,9 +50,9 @@ transformed parameters {
           //sd_mean[i,j] = -a[j]*Avg_Reads[i,j] + b[j];
           sd_r_mu[i,j] = exp(-a[j]*Avg_Reads[i,j] + b[j] + sd_rep[j]*z_rep[i,j]);
 
-          if(j > 1){
-             eff[i, j-1] = mu_e[j-1] + z_e[i,j-1]*sig_e[j-1];
-          }
+          // if(j > 1){
+          //    eff[i, j-1] = mu_e[j-1] + z_e[i,j-1]*sig_e[j-1];
+          // }
           for(k in 1:nrep){
             if(j == 1){
                mu_rep_logit_fn[i, j, k] = alpha[i] + z_fn[i,j,k]*sd_r_mu[i,j];
@@ -79,10 +80,14 @@ model {
 
   for (i in 1:NF) {
     //eff[i] ~ normal(mu_e, sig_e);
-    z_e[i] ~ normal(0, 1);
+    //z_e[i] ~ normal(0, 1);
     z_rep[i] ~ normal(0,1);
     for(j in 1:nMT){
      //sd_r_mu[i] ~ lognormal(sd_mean[i,j], sd_rep[j]);
+
+     if(j > 1){
+       eff[i, j-1] ~ normal(mu_e[j-1], sig_e[j-1]);
+     }
 
      for(k in 1:nrep){
       z_fn[i, j, k] ~ normal(0, 1);
@@ -121,4 +126,5 @@ model {
  }
 
  }
+
 

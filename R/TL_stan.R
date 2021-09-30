@@ -23,32 +23,42 @@
 #' @param ... Arguments passed to `rstan::sampling` (e.g. iter, chains).
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #'
-TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...) {
+TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FALSE, ...) {
 
-  if(Hybrid_Fit){
-    fit <- rstan::sampling(stanmodels$Hybrid, data = data_list, ...)
+  if(Pooled){
 
-  }else if(data_list$nrep < 5){
-    fit <- rstan::sampling(stanmodels$Pooled_Heterosked, data = data_list, ...)
+    if(Hybrid_Fit){
+      fit <- rstan::sampling(stanmodels$Hybrid_Pooled, data = data_list, ...)
+
+    }else{
+      fit <- rstan::sampling(stanmodels$Heterosked_Pooled, data = data_list, ...)
+
+    }
 
   }else{
-    fit <- rstan::sampling(stanmodels$Heterosked, data = data_list, ...)
-
+    if(Hybrid_Fit){
+      fit <- rstan::sampling(stanmodels$Hybrid, data = data_list, ...)
+    }else{
+      fit <- rstan::sampling(stanmodels$Heterosked, data = data_list, ...)
+    }
   }
 
+
   # Get number of features from data
-  ngs <- data_list$Stan_data$NF
+  ngs <- data_list$NF
 
   # Extract kdeg to get number of conditions (could get from nMT but need kdeg df anyway)
   MT_summary <- rstan::summary(fit, pars = "kd", probs = c(0.5))$summary
 
   MT_summary <- MT_summary[, c("50%","mean", "sd")]
 
-  nconds <- data_list$Stan_data$nMT - 1
+  MT_summary <- as.data.frame(MT_summary)
+
+  nconds <- data_list$nMT - 1
 
 
   #Extract frac_new to get number of replicates
-  reps <- data_list$Stan_data$nrep
+  reps <- data_list$nrep
 
   nreps <- rep(reps, times=nconds)
 
@@ -89,19 +99,20 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...) {
   # Kdeg dataframe setup
   F_ID_kd <- rep(seq(from=1, to=ngs), each=(nconds+1))
   Exp_ID_kd <- rep(seq(from=1, to=(nconds+1)), times=ngs)
-  kdeg <- MT_df$mean # kdeg vector
-  kdeg_sd <- MT_df$sd # kdeg sd vector
+  kdeg <- MT_summary$mean # kdeg vector
+  kdeg_sd <- MT_summary$sd # kdeg sd vector
 
-  Effects_df <- data.frame(F_ID, Exp_ID, L2FC_kdeg, L2FC_kdeg_sd, Effect, Se, lfsr, lfdr)
+  Effects_df <- data.frame(F_ID, Exp_ID, L2FC_kdeg, L2FC_kdeg_sd, Effect, Se)
   Kdeg_df <- data.frame(F_ID_kd, Exp_ID_kd, kdeg, kdeg_sd)
 
-  colnames(Effects_df) <- c("Feature ID", "Exp. ID", "L2FC(kdeg)", "L2FC(kdeg) sd", "Effect", "Se", "lfsr", "lfdr")
+  colnames(Effects_df) <- c("Feature ID", "Exp. ID", "L2FC(kdeg)", "L2FC(kdeg) sd", "Effect", "Se")
   colnames(Kdeg_df) <- c("Feature ID", "Exp. ID", "kdeg", "kdeg_sd")
 
 
   if(keep_fit == FALSE){
-    out <- list(Effects_df, Kdeg_df)
-    names(out) <- c("Effects_df", "Kdeg_df")
+    fit_summary <- as.data.frame(rstan::summary(fit)$summary)
+    out <- list(Effects_df, Kdeg_df, fit_summary)
+    names(out) <- c("Effects_df", "Kdeg_df", "Fit_Summary")
   }else{
     out <- list(Effects_df, Kdeg_df, fit)
     names(out) <- c("Effects_df", "Kdeg_df", "Stan_fit")

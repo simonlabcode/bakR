@@ -4,7 +4,7 @@
 \alias{TL_stan}
 \title{Bayesian hierarchical mixture model with Stan for TL-seq data analysis}
 \usage{
-TL_stan(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...)
+TL_stan(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FALSE, ...)
 }
 \arguments{
 \item{data_list}{list to pass to Stan of form given by cBtoStan}

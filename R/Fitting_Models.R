@@ -97,7 +97,7 @@ DynamicSeqFit <- function(obj, StanFit = TRUE, HybridFit = FALSE,
       Effects <- Stan_list$Effects_df
 
       ## Calculate p-value using moderated t-test
-      dfs <- 2*max(obj$Fast_Fit$Fn_Estimates$Replicate) - 2 + obj$Fast_Fit$Hyper_Parameters$a
+      dfs <- 2*max(obj$Fast_Fit$Fn_Estimates$Replicate) - 2 + as.numeric(obj$Fast_Fit$Hyper_Parameters[1])
 
       Effects <- Effects %>% dplyr::mutate(padj = 2*stats::pt(-abs(Effect/Se), df = dfs))
 
@@ -133,7 +133,7 @@ DynamicSeqFit <- function(obj, StanFit = TRUE, HybridFit = FALSE,
       Effects <- Stan_list$Effects_df
 
       ## Calculate p-value using moderated t-test
-      dfs <- 2*max(obj$Fast_Fit$Fn_Estimates$Replicate) - 2 + obj$Fast_Fit$Hyper_Parameters$a
+      dfs <- 2*max(obj$Fast_Fit$Fn_Estimates$Replicate) - 2 + as.numeric(obj$Fast_Fit$Hyper_Parameters[1])
 
       Effects <- Effects %>% dplyr::mutate(padj = 2*stats::pt(-abs(Effect/Se), df = dfs))
 
