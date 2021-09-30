@@ -72,6 +72,7 @@ cBprocess <- function(obj,
   rep_list <- metadf[samp_list,] %>% dplyr::group_by(tl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup() %>% dplyr::select(r_id)
   rep_list <- rep_list$r_id
 
+  metadf <- metadf[samp_list, ] %>% dplyr::group_by(tl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup()
 
   names(type_list) <- samp_list
   names(mut_list) <- samp_list
@@ -219,10 +220,17 @@ cBprocess <- function(obj,
 
     Avg_Reads <- matrix(0, ncol = nMT, nrow = NF)
 
+    tls <-rep(0, times = nMT)
+
     for(f in 1:NF){
       for(i in 1:nMT){
         Avg_Reads[f,i] <- (mean(log10(Avg_Counts$Avg_Reads[(Avg_Counts$mut == i) & (Avg_Counts$fnum == f)])) - mean(log10(Avg_Counts$Avg_Reads[Avg_Counts$mut == i])))/sd(log10(Avg_Counts$Avg_Reads[Avg_Counts$mut == i]))
+
       }
+    }
+
+    for(m in 1:nMT){
+      tls[m] <- unique(metadf$tl[(metadf$Exp_ID == m) & (metadf$tl != 0)])
     }
 
 
@@ -240,7 +248,7 @@ cBprocess <- function(obj,
       R = R,
       nrep = nreps,
       num_obs = num_obs,
-      tl = unique(metadf$tl[metadf$tl > 0])[1],
+      tl = tls,
       U_cont = df$U_factor,
       Avg_Reads = Avg_Reads,
       sdf = sdf,
