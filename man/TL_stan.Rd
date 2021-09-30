@@ -4,10 +4,12 @@
 \alias{TL_stan}
 \title{Bayesian hierarchical mixture model with Stan for TL-seq data analysis}
 \usage{
-TL_stan(data_list, keep_fit = FALSE, ...)
+TL_stan(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...)
 }
 \arguments{
 \item{data_list}{list to pass to Stan of form given by cBtoStan}
+
+\item{Hybrid_Fit}{if TRUE, Hybrid Stan model that takes as data output of fast_analysis is run.}
 
 \item{keep_fit}{if TRUE, Stan fit object is included in output; typically large file so default FALSE.}
 

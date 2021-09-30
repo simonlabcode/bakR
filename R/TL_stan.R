@@ -18,12 +18,23 @@
 #'
 #' @export
 #' @param data_list list to pass to Stan of form given by cBtoStan
+#' @param Hybrid_Fit if TRUE, Hybrid Stan model that takes as data output of fast_analysis is run.
 #' @param keep_fit if TRUE, Stan fit object is included in output; typically large file so default FALSE.
 #' @param ... Arguments passed to `rstan::sampling` (e.g. iter, chains).
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #'
-TL_stan <- function(data_list, keep_fit = FALSE, ...) {
-  fit <- rstan::sampling(stanmodels$Heterosked, data = data_list, ...)
+TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...) {
+
+  if(Hybrid_Fit){
+    fit <- rstan::sampling(stanmodels$Hybrid, data = data_list, ...)
+
+  }else if(data_list$nrep < 5){
+    fit <- rstan::sampling(stanmodels$Pooled_Heterosked, data = data_list, ...)
+
+  }else{
+    fit <- rstan::sampling(stanmodels$Heterosked, data = data_list, ...)
+
+  }
 
   # Get number of features from data
   ngs <- data_list$Stan_data$NF
