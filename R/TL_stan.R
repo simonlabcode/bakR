@@ -76,8 +76,6 @@
 #'   \item L2FC_kdegs; L2FC(kdeg) estimate
 #'   \item effects; Change in logit(fraction) new comparing reference and experimental sample(s)
 #'   \item ses; Uncertainty in effect size
-#'   \item padj; p-value obtained from moderated t-test and effectively adjusted for multiple testing due to the
-#'   hierarchical model structure
 #'   \item XF; Original feature name
 #'  }
 #'  \item Kdeg_df; dataframe with estimates of the kdeg (RNA degradation rate constant) for each feature, averaged across replicate data.
@@ -87,6 +85,7 @@
 #'   \item Exp_ID; Numerical ID for experimental condition
 #'   \item kdeg; Degradation rate constant posterior mean
 #'   \item kdeg_sd; Degradation rate constant posterior standard deviation
+#'   \item XF; Original feature name
 #'  }
 #'  \item Fn_Estimates; dataframe with estimates of the logit(fraction new) for each feature in each replicate.
 #'  The columns of this dataframe are:
@@ -97,6 +96,7 @@
 #'   \item logit_fn; Logit(fraction new) posterior mean
 #'   \item logit_fn_se; Logit(fraction new) posterior standard deviation
 #'   \item sample; Sample name
+#'   \item XF; Original feature name
 #'  }
 #'  \item Fit_Summary; only outputted if keep_fit == FALSE. Summary of Stan fit object with each row corresponding to a particular
 #'  parameter. All posterior point descriptions are descriptions of the marginal posterior distribution for the parameter in that row.
@@ -228,6 +228,15 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FAL
   Fn_df <- merge(Fn_df, data_list$sample_lookup, by.x = c("Condition", "Replicate"), by.y = c("mut", "reps"))
 
   Fn_df <- Fn_df[order(Fn_df$Gene_ID, Fn_df$Condition, Fn_df$Replicate),]
+
+  ## Add original gene name info
+  sdf <- data_list$sdf[,c("XF", "fnum")] %>% dplyr::distinct()
+
+  Fn_df <- merge(Fn_df, sdf, by.x = c("Gene_ID"), by.y = "fnum")
+
+  Kdeg_df <- merge(Kdeg_df, sdf, by.x = c("Feature_ID"), by.y = "fnum")
+
+  Effects_df <- merge(Effects_df, sdf, by.x = c("Genes_effects"), by.y = "fnum")
 
   if(keep_fit == FALSE){
     fit_summary <- as.data.frame(rstan::summary(fit)$summary)

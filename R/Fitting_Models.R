@@ -126,7 +126,8 @@ DynamicSeqFit <- function(obj, StanFit = TRUE, HybridFit = FALSE,
         nMT = max(Rep_Fn$Condition),
         R = Rep_Fn$Replicate,
         nrep = max(Rep_Fn$Replicate),
-        sample_lookup = obj$Data_lists$Stan_data$sample_lookup
+        sample_lookup = obj$Data_lists$Stan_data$sample_lookup,
+        sdf = obj$Data_lists$Stan_data$sdf
       )
 
       rm(Rep_Fn)
