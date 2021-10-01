@@ -1,40 +1,60 @@
-# I can add match.arg and a string input denoting if user wants output to be for
 #' Identify features (e.g., transcripts) with high quality data
 #'
 #' This function identifies all features (e.g., transcripts, exons, etc.) for which the mutation rate
 #' is below a set threshold in the control (no s4U) sample and which have more reads than a set threshold
-#' in at least one control sample
+#' in all samples.
+#'
 #' @param obj Object of class DynamicSeqData
 #' @param high_p highest mutation rate accepted in control samples
 #' @param totcut readcount cutoff
 #' @importFrom magrittr %>%
-#' @return list of gene names that passed reliability filter
+#' @return vector of gene names that passed reliability filter
 #' @export
 reliableFeatures <- function(obj,
                              high_p = 0.2,
-                             totcut = 1000){
+                             totcut = 50){
 
   cB <- obj$cB
   nsamps <- length(unique(cB$sample))
 
 
-  y <- obj$cB %>%
-    dplyr::ungroup() %>%
-    dplyr::filter(sample %in% unique(sample),
-                  !grepl('__', XF)) %>%
-    dplyr::mutate(totTC = TC*n*ifelse(obj$metadf[sample, "tl"]==0, 1, 0) ) %>%
-    dplyr::group_by(sample, XF) %>%
-    dplyr::summarize(tot_mut = sum(totTC),
-                     totcounts = sum(n)) %>%
-    dplyr::filter(totcounts >= totcut) %>%
-    dplyr::filter(tot_mut/totcounts < high_p) %>%
-    dplyr::ungroup( ) %>%
-    dplyr::group_by(XF) %>%
-    dplyr::summarize(counts = dplyr::n()) %>%
-    dplyr::filter(counts == nsamps) %>%
-    dplyr::select(XF) %>%
-    unlist() %>%
-    unique()
+
+  if(sum(obj$metadf$tl == 0) > 0){
+    y <- obj$cB %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(sample %in% unique(sample),
+                    !grepl('__', XF)) %>%
+      dplyr::mutate(totTC = TC*n*ifelse(obj$metadf[sample, "tl"]==0, 1, 0) ) %>%
+      dplyr::group_by(sample, XF) %>%
+      dplyr::summarize(tot_mut = sum(totTC),
+                       totcounts = sum(n)) %>%
+      dplyr::filter(totcounts >= totcut) %>%
+      dplyr::filter(tot_mut/totcounts < high_p) %>%
+      dplyr::ungroup( ) %>%
+      dplyr::group_by(XF) %>%
+      dplyr::summarize(counts = dplyr::n()) %>%
+      dplyr::filter(counts == nsamps) %>%
+      dplyr::select(XF) %>%
+      unlist() %>%
+      unique()
+  }else{
+    y <- obj$cB %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(sample %in% unique(sample),
+                    !grepl('__', XF)) %>%
+      dplyr::group_by(sample, XF) %>%
+      dplyr::summarize(totcounts = sum(n)) %>%
+      dplyr::filter(totcounts >= totcut) %>%
+      dplyr::ungroup( ) %>%
+      dplyr::group_by(XF) %>%
+      dplyr::summarize(counts = dplyr::n()) %>%
+      dplyr::filter(counts == nsamps) %>%
+      dplyr::select(XF) %>%
+      unlist() %>%
+      unique()
+  }
+
+
   return(y)
 }
 

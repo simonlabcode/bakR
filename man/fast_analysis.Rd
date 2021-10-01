@@ -8,6 +8,7 @@ fast_analysis(
   df,
   pnew = NULL,
   pold = NULL,
+  no_ctl = FALSE,
   read_cut = 50,
   features_cut = 10,
   nbin = NULL,
@@ -24,6 +25,8 @@ fast_analysis(
 \item{pnew}{Labeled read mutation rate; default of 0 means that model estimates rate from s4U fed data}
 
 \item{pold}{Unlabeled read mutation rate; default of 0 means that model estimates rate from no-s4U fed data}
+
+\item{no_ctl}{Logical; if TRUE, then -s4U control is not used for background mutation rate estimation}
 
 \item{read_cut}{Minimum number of reads for a given feature-sample combo to be used for mut rate estimates}
 

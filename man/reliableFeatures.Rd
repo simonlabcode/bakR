@@ -4,7 +4,7 @@
 \alias{reliableFeatures}
 \title{Identify features (e.g., transcripts) with high quality data}
 \usage{
-reliableFeatures(obj, high_p = 0.2, totcut = 1000)
+reliableFeatures(obj, high_p = 0.2, totcut = 50)
 }
 \arguments{
 \item{obj}{Object of class DynamicSeqData}
@@ -14,10 +14,10 @@ reliableFeatures(obj, high_p = 0.2, totcut = 1000)
 \item{totcut}{readcount cutoff}
 }
 \value{
-list of gene names that passed reliability filter
+vector of gene names that passed reliability filter
 }
 \description{
 This function identifies all features (e.g., transcripts, exons, etc.) for which the mutation rate
 is below a set threshold in the control (no s4U) sample and which have more reads than a set threshold
-in at least one control sample
+in all samples.
 }
