@@ -61,7 +61,13 @@
 #' @param concat Logical; If TRUE, FOI is concatenated with output of reliableFeatures
 #' @param ... Arguments passed to either \code{fast_analysis} (if a DynamicSeqData object)
 #' or \code{TL_Stan} and \code{Hybrid_fit} (if a DynamicSeqFit object)
-#' @return DynamicSeqFit object with results from statistical modeling and data processing
+#' @return DynamicSeqFit object with results from statistical modeling and data processing. Objects possibly included are:
+#' \itemize{
+#'  \item Fast_Fit; Always will be present. Output of \code{fast_analysis}
+#'  \item Hybrid_Fit; Only present if HybridFit = TRUE. Output of \code{TL_stan}
+#'  \item Stan_Fit; Only present if StanFit = TRUE. Output of \code{TL_stan}
+#'  \item Data_lists; Always will be present. Output of \code{cBprocess} with Fast and Stan == TRUE
+#' }
 #' @export
 DynamicSeqFit <- function(obj, StanFit = TRUE, HybridFit = FALSE,
                           keep_input = c(0.2, 50),

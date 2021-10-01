@@ -90,7 +90,7 @@
 #'  \item Fn_Estimates; dataframe with estimates of the logit(fraction new) for each feature in each replicate.
 #'  The columns of this dataframe are:
 #'  \itemize{
-#'   \item Condition; Numerical ID for expeirmental condition (Exp_ID from metadf)
+#'   \item Condition; Numerical ID for experimental condition (Exp_ID from metadf)
 #'   \item Replicate; Numerical ID for replicate
 #'   \item Gene_ID; Numerical ID for feature
 #'   \item logit_fn; Logit(fraction new) posterior mean

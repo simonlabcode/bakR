@@ -32,8 +32,6 @@ dataframe are:
 \item L2FC_kdegs; L2FC(kdeg) estimate
 \item effects; Change in logit(fraction) new comparing reference and experimental sample(s)
 \item ses; Uncertainty in effect size
-\item padj; p-value obtained from moderated t-test and effectively adjusted for multiple testing due to the
-hierarchical model structure
 \item XF; Original feature name
 }
 \item Kdeg_df; dataframe with estimates of the kdeg (RNA degradation rate constant) for each feature, averaged across replicate data.
@@ -43,16 +41,18 @@ The columns of this dataframe are:
 \item Exp_ID; Numerical ID for experimental condition
 \item kdeg; Degradation rate constant posterior mean
 \item kdeg_sd; Degradation rate constant posterior standard deviation
+\item XF; Original feature name
 }
 \item Fn_Estimates; dataframe with estimates of the logit(fraction new) for each feature in each replicate.
 The columns of this dataframe are:
 \itemize{
-\item Condition; Numerical ID for expeirmental condition (Exp_ID from metadf)
+\item Condition; Numerical ID for experimental condition (Exp_ID from metadf)
 \item Replicate; Numerical ID for replicate
 \item Gene_ID; Numerical ID for feature
 \item logit_fn; Logit(fraction new) posterior mean
 \item logit_fn_se; Logit(fraction new) posterior standard deviation
 \item sample; Sample name
+\item XF; Original feature name
 }
 \item Fit_Summary; only outputted if keep_fit == FALSE. Summary of Stan fit object with each row corresponding to a particular
 parameter. All posterior point descriptions are descriptions of the marginal posterior distribution for the parameter in that row.

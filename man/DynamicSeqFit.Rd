@@ -40,7 +40,13 @@ statistical model.}
 or \code{TL_Stan} and \code{Hybrid_fit} (if a DynamicSeqFit object)}
 }
 \value{
-DynamicSeqFit object with results from statistical modeling and data processing
+DynamicSeqFit object with results from statistical modeling and data processing. Objects possibly included are:
+\itemize{
+\item Fast_Fit; Always will be present. Output of \code{fast_analysis}
+\item Hybrid_Fit; Only present if HybridFit = TRUE. Output of \code{TL_stan}
+\item Stan_Fit; Only present if StanFit = TRUE. Output of \code{TL_stan}
+\item Data_lists; Always will be present. Output of \code{cBprocess} with Fast and Stan == TRUE
+}
 }
 \description{
 \code{DynamicFit} analyzes nucleotide recoding data to estimate

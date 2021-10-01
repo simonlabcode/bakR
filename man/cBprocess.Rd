@@ -2,13 +2,13 @@
 % Please edit documentation in R/cBprocessing.R
 \name{cBprocess}
 \alias{cBprocess}
-\title{Extract data for Stan analysis from cB}
+\title{Curate data in DynamicSeqData object for statistical modeling}
 \usage{
 cBprocess(
   obj,
   keep_input = c(0.2, 50),
   Stan = TRUE,
-  Fast = FALSE,
+  Fast = TRUE,
   FOI = c(),
   concat = TRUE
 )
@@ -27,8 +27,46 @@ cBprocess(
 \item{concat}{Boolean; If TRUE, FOI is concatenated with output of reliableFeatures}
 }
 \value{
-returns list which can be passed to Stan analyses
+returns list of objects that can be passed to \code{TL_stan} and/or \code{fast_analysis}. Those objects are:
+\itemize{
+\item Stan_data; list that can be passed to \code{TL_stan} with Hybrid_Fit = FALSE. Consistents of metadata as well as data that
+Stan will analyze. Data to be analyzed consists of equal length vectors. The contents of Stan_data are:
+\itemize{
+\item NE; Number of datapoints for Stan to analyze (NE = Number of Elements)
+\item NF; Number of features in dataset
+\item TP; Numerical indicator of s4U feed (0 = no s4U feed, 1 = s4U fed)
+\item FE; Numerical indicator of feature
+\item num_mut; Number of U-to-C mutations observed in a particular set of reads
+\item MT; Numerical indicator of experimental condition (Exp_ID from metadf)
+\item nMT; Number of experimental conditions
+\item R; Numerical indicator of replicate
+\item nrep; Number of replicates (analysis requires same number of replicates of all conditions)
+\item num_obs; Number of reads with identical data (number of mutations, feature of origin, and sample of origin)
+\item tl; Vector of label times for each experimental condition
+\item U_cont; Log2-fold-difference in U-content for a feature in a sample relative to average U-content for that sample
+\item Avg_Reads; Standardized log10(average read counts) for a particular feature in a particular condition, averaged over
+replicates
+\item sdf; Dataframe that maps numerical feature ID to original feature name. Also has read depth information
+\item sample_lookup; Lookup table relating MT and R to the original sample name
+}
+\item Fast_df; A data frame that can be passed to \code{fast_analysis}. The contents of Fast_df are:
+\itemize{
+\item sample; Original sample name
+\item XF; Original feature name
+\item TC; Number of T to C mutations
+\item nT; Number of Ts in read
+\item n; Number of identical observations
+\item fnum; Numerical indicator of feature
+\item type; Numerical indicator of s4U feed (0 = no s4U feed, 1 = s4U fed)
+\item mut; Numerical indicator of experimental condition (Exp_ID from metadf)
+\item reps; Numerical indicator of replicate
+}
+\item Count_Matrix; A matrix with read count information. Each column represents a sample and each row represents a feature.
+Each entry is the raw number of read counts mapping to a particular feature in a particular sample. Column names are the corresponding
+sample names and row names are the corresponding feature names.
+}
 }
 \description{
-This function obtains the data list necessary to analyze TL-seq data with Stan.
+This function obtains the data structures necessary to analyze nucleotide recoding sequencing data with any of the
+statistical models implemented by \code{DynamicSeqFit}.
 }
