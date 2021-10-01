@@ -2,7 +2,7 @@
 #'
 #' This function identifies all features (e.g., transcripts, exons, etc.) for which the mutation rate
 #' is below a set threshold in the control (no s4U) sample and which have more reads than a set threshold
-#' in all samples.
+#' in all samples. If there is no -s4U sample, then only the read count cutoff is considered.
 #'
 #' @param obj Object of class DynamicSeqData
 #' @param high_p highest mutation rate accepted in control samples
@@ -58,11 +58,10 @@ reliableFeatures <- function(obj,
   return(y)
 }
 
-# I should give them an option about the name of the column they want to sort by
-# I could even give users an option to specify column names or order
-#' Extract data for Stan analysis from cB
+#' Curate data in DynamicSeqData object for statistical modeling
 #'
 #' This function obtains the data list necessary to analyze TL-seq data with Stan.
+#'
 #' @param obj An object of class DynamicSeqData
 #' @param keep_input two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff
 #' @param Stan Boolean; if TRUE, then data_list that can be passed to Stan is curated
