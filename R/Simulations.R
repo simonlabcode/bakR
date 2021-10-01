@@ -10,7 +10,7 @@
 #' changes in logit(fraction new) are pulled from.
 #' @param eff_mean Effect size mean; mean of normal distribution from which non-zero changes in logit(fraction new) are pulled from.
 #' Note, setting this to 0 does not mean that some of the significant effect sizes will be 0, as any exact integer is impossible
-#' to draw from a continuous random nubmer generator. Setting this to 0 just means that there is symmetric stabilization and destabilization
+#' to draw from a continuous random number generator. Setting this to 0 just means that there is symmetric stabilization and destabilization
 #' @param tl s4U label feed time
 #' @param p_new s4U induced mutation rate. Can be a vector of length num_conds
 #' @param p_old background mutation rate
