@@ -21,7 +21,61 @@ is done if Pooled is FALSE).}
 \item{...}{Arguments passed to \code{rstan::sampling} (e.g. iter, chains).}
 }
 \value{
-An object of class \code{stanfit} returned by \code{rstan::sampling}
+A list of objects:
+\itemize{
+\item Effects_df; dataframe with estimates of the effect size (change in logit(fn)) comparing each experimental condition to the
+reference sample for each feature. This dataframe also includes p-values obtained from a moderated t-test. The columns of this
+dataframe are:
+\itemize{
+\item Genes_effects; Numerical ID of feature
+\item Condition_effects; Numerical ID for experimental condition (Exp_ID from metadf)
+\item L2FC_kdegs; L2FC(kdeg) estimate
+\item effects; Change in logit(fraction) new comparing reference and experimental sample(s)
+\item ses; Uncertainty in effect size
+\item padj; p-value obtained from moderated t-test and effectively adjusted for multiple testing due to the
+hierarchical model structure
+\item XF; Original feature name
+}
+\item Kdeg_df; dataframe with estimates of the kdeg (RNA degradation rate constant) for each feature, averaged across replicate data.
+The columns of this dataframe are:
+\itemize{
+\item Feature_ID; Numerical ID of feature
+\item Exp_ID; Numerical ID for experimental condition
+\item kdeg; Degradation rate constant posterior mean
+\item kdeg_sd; Degradation rate constant posterior standard deviation
+}
+\item Fn_Estimates; dataframe with estimates of the logit(fraction new) for each feature in each replicate.
+The columns of this dataframe are:
+\itemize{
+\item Condition; Numerical ID for expeirmental condition (Exp_ID from metadf)
+\item Replicate; Numerical ID for replicate
+\item Gene_ID; Numerical ID for feature
+\item logit_fn; Logit(fraction new) posterior mean
+\item logit_fn_se; Logit(fraction new) posterior standard deviation
+\item sample; Sample name
+}
+\item Fit_Summary; only outputted if keep_fit == FALSE. Summary of Stan fit object with each row corresponding to a particular
+parameter. All posterior point descriptions are descriptions of the marginal posterior distribution for the parameter in that row.
+For example, the posterior mean is the average value for the parameter when averaging over all other parameter values.
+The columns of this dataframe are:
+\itemize{
+\item mean; Posterior mean for the parameter given by the row name
+\item se_mean; Standard error of the posterior mean; essentially how confident the model is that what it estimates to be the
+posterior mean is what the posterior mean actually is. This will depend on the number of chains run on the number of iterations
+each chain is run for.
+\item sd; Posterior standard deviation
+\item 2.5\%; 2.5th percentile of the posterior distribution. 2.5\% of the posterior mass is below this point
+\item 25\%; 25th percentile of the posterior distribution
+\item 50\%; 50th percentile of the posterior distribution
+\item 75\%; 75th percentile of the posterior distribution
+\item 97.5\%; 97.5th percentile of the posterior distribution
+\item n_eff; Effective sample size. The larger this is the better, though it should preferably be around the total number of
+iterations (iter x chains). Small values of this could represent poor model convergence
+\item Rhat; Describes how well separate Markov chains mixed. This is preferably as close to 1 as possible, and values higher
+than 1 could represent poor model convergence
+}
+\item Stan_Fit; only outputted if keep_fit == TRUE. This is the full Stan fit object, an R6 object of class \code{stanfit}
+}
 }
 \description{
 \code{TL_stan} analyzes nucleotide recoding sequencing data with a fully

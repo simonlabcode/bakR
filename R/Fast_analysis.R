@@ -100,6 +100,61 @@ cBtofast <- function(cB_raw,
 #' are regularized using analytical results of fully Bayesian models. The result is that fraction news are shrunk towards population means
 #' and that uncertainties are shrunk towards a mean-variance trend estimated as part of the analysis.
 #'
+#' Unless the user supplies estimates for pnew and pold, the first step of \code{fast_analysis} is to estimate the background
+#' and s4U induced mutation rates. The former is best performed with a -s4U control sample, that is, a normal RNA-seq sample
+#' that lacks a -s4U feed or TimeLapse chemistry conversion of s4U to a C analog. If this sample is missing, both background and
+#' s4U induced mutation rates are estimated from the s4U fed samples. For the s4U mutation rate, features with sufficient read depth,
+#' as defined by the \code{read_cut} parameter, and the highest mutation rates are assumed to be completely labeled. Thus, the
+#' average mutation rates in these features is taken as the estimate of the s4U induced mutation rate in that sample. s4U induced mutation
+#' rates are estimated on a per-sample basis as there is often much more variability in these mutation rates than in the background
+#' mutation rates.
+#'
+#' If a -s4U control is included, the background mutation rate is estimated using all features in the control sample(s) with read depths
+#' greater than \code{read_cut}. The average mutation rate among these features is taken as the estimated background mutation rate,
+#' and that background is assumed to be constant for all samples. If a -s4U control is missing, then a strategy similar to that used
+#' to estimate s4U induced mutation rates is used. In this case, the lowest mutation rate features with sufficient read depths are used,
+#' and there average mutation rate is the background mutation rate estimate, as these features are assumed to be almost entirely unlabeled.
+#'
+#' Once mutation rates are estimated, fraction news for each feature in each sample are estimated. The default approach utilized is MLE
+#' using the L-BFGS-B algorithm implemented in \code{stats::optim}. The assumed likelihood function is derived from a Poisson mixture
+#' model with rates adjusted according to each feature's empirical U-content (the average number of Us present in sequencing reads mapping
+#' to that feature in a particular sample). An alternative model is a more conservative Bayesian hypothesis testing model with an uninformative
+#' labeled vs. unlabeled prior. The Bayesian hypothesis testing model estimates the posterior probability that a set of reads with equivalent mutation
+#' and U content are labeled using a binomial likelihood and a prior of 1/2 labeled and 1/2 unlabeled. For example, if the background
+#' mutation rate is 0.001 and the s4U induced mutation rate is 0.1, then reads with 1 mutation in 25 Us have a posterior probability of being
+#' labeled of 0.891. If there are 15 such reads, then 15 x 0.891 (or 13.365) of those reads are called labeled and 15 x (1 - 0.891)
+#' (or 1.635) are called unlabeled. The estimated fraction new is then the number of reads called labeled divided by the total number
+#' of reads. This approach biases fraction new estimates towards 0.5 and is thus a more conservative estimate of the fraction new
+#' in each sample, as it is very skeptical of extreme fraction new values. This approach avoids some of the numerical instabilities
+#' of MLE strategies and can thus be favorable if running into problems performing the MLE fit.
+#'
+#' Once fraction news are estimated, the uncertainty in the fraction new is estimated using the Fisher Information. In the limit of
+#' large datasets, the variance of the MLE is inversely related to the Fisher Information evaluated at the MLE. Mixture models are
+#' typically singular, meaning that the Fisher information matrix is not positive definite and asymptotic results for the variance
+#' do not necessarily hold. This can be understood as arising due to nothing stopping the model from estimating a background mutation
+#' rate of 0. As the mutation rates are estimated a priori and fixed to be > 0, these problems are eliminated. In addition, when assessing
+#' the uncertainty of replicate fraction new estimates, the size of the dataset is the raw number of sequencing reads that map to a
+#' particular feature. This number is often large (>100) which increases the validity of invoking asymptotics.
+#'
+#' With fraction news and their uncertainties estimated, replicate estimates are pooled and regularized. There are two key steps in this
+#' downstream analysis. 1st, the uncertainty for each feature is used to extrapolate a linear log(uncertainty) vs. log10(read depth) trend,
+#' and uncertainties for individual features are shrunk towards the regression line. The uncertainty for each feature is a combination of the
+#' Fisher Information asymptotic uncertainty as well as the amount of variability seen between estimates. Regularization of uncertainty
+#' estimates is performed using the analytic results of a Normal distribution likelihood with known mean and unknown variance and conjugate
+#' priors. The prior parameters are estimated from the regression and amount of variability about the regression line. The strength of
+#' regularization can be tuned by adjusting the \code{prior_weight} parameter, with larger numbers yielding stronger shrinkage towards
+#' the regression line. The 2nd step is to regularize the average fraction new estimates. This is done using the analytic results of a
+#' Normal distribution likelihood model with unknown mean and known variance and conjugate priors. The prior parameters are estimated from the
+#' population wide fraction new distribution (using its mean and standard deviation as the mean and standard deviation of the normal prior).
+#' In the 1st step, the known mean is assumed to be the average fraction new, averaged across replicates and weighted by the number of reads
+#' mapping to the feature in each replicate. In the 2nd step, the known variance is assumed to be that obtained following regularization
+#' of the uncertainty estimates
+#'
+#' Effect sizes (changes in fraction new) are obtained as the difference in logit(fraction new) means between the reference and experimental
+#' sample(s), and the logit(fraction new)s are assumed to be independent so that the variance of the effect size is the sum of the
+#' logit(fraction new) variances. P-values assessing the significance of the effect size are obtained using a moderated t-test with number
+#' of degrees of freedom determined from the uncertainty regression hyperparameters and are adjusted for multiple testing using the Benjamini-
+#' Hochberg procedure to control false discovery rates (FDRs).
 #'
 #'
 #' @param df Dataframe in form provided by cB_to_Fast
@@ -112,7 +167,58 @@ cBtofast <- function(cB_raw,
 #' @param MLE Logical; if TRUE then replicate logit(fn) is estimated using maximum likelihood; if FALSE more conservative Bayesian hypothesis testing is used
 #' @param lower Lower bound for MLE with L-BFGS-B algorithm
 #' @param upper Upper bound for MLE with L-BFGS-B algorithm
-#' @return list with dataframe of replicate specific estimates as well as dataframe of pooled estimates
+#' @return List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
+#' \itemize{
+#'  \item Fn_Estimates; dataframe with estimates for the fraction new and fraction new uncertainty for each feature in each replicate.
+#'  The columns of this dataframe are:
+#'  \itemize{
+#'   \item Gene_ID; Numerical ID of feature
+#'   \item Condition; Numerical ID for experimental condition (Exp_ID from metadf)
+#'   \item Replicate; Numerical ID for replicate
+#'   \item logit_fn; logit(fraction new) estimate, unregularized
+#'   \item logit_fn_se; logit(fraction new) uncertainty, unregularized and obtained from Fisher Information
+#'   \item fn_estimate; fraction new estimate (inverse logit of logit_fn)
+#'   \item nreads; Number of reads mapping to the feature in the sample for which the estimates were obtained
+#'   \item sample; Sample name
+#'   \item XF; Original feature name
+#'  }
+#'  \item Regularized_ests; dataframe with average fraction new and kdeg estimates, averaged across the replicates and regularized
+#'  using priors informed by the entire dataset. The columns of this dataframe are:
+#'  \itemize{
+#'   \item Gene_ID; Numerical ID of feature
+#'   \item Condition; Numerical ID for experimental condition (Exp_ID from metadf)
+#'   \item avg_logit_fn; Weighted average of logit(fn) from each replicate, weighted by sample and feature-specific read depth
+#'   \item sd_logit_fn; Variability of the logit(fn) estimates, estimated using minimum MSE variance estimator
+#'   \item nreads; Total number of reads mapping to the feature in that condition
+#'   \item sdp; Prior standard deviation for fraction new estimate regularization
+#'   \item theta_o; Prior mean for fraction new estimate regularization
+#'   \item sd_post; Posterior uncertainty
+#'   \item logit_fn_post; Posterior logit(fraction new)
+#'   \item kdeg; average kdeg estimate
+#'   \item kdeg_sd; kdeg uncertainty
+#'   \item XF; Original feature name
+#'  }
+#'  \item Effects_df; dataframe with estimates of the effect size (change in logit(fn)) comparing each experimental condition to the
+#'  reference sample for each feature. This dataframe also includes p-values obtained from a moderated t-test. The columns of this
+#'  dataframe are:
+#'  \itemize{
+#'   \item Genes_effects; Numerical ID of feature
+#'   \item Condition_effects; Numerical ID for experimental condition (Exp_ID from metadf)
+#'   \item L2FC_kdeg; L2FC(kdeg) estimate
+#'   \item effects; Change in logit(fraction) new comparing reference and experimental sample(s)
+#'   \item ses; Uncertainty in effect size
+#'   \item pval; P-value obtained using effect_size, effect_std_error, and a moderated t-test
+#'   \item padj; pval adjusted for multiple testing using Benjamini-Hochberg procedure
+#'   \item XF; Original feature name
+#'  }
+#'  \item Mut_rates; list of two elements. The 1st element is a dataframe of s4U induced mutation rate estimates, where the mut column
+#'  represents the experimental ID and the rep column represents the replicate ID. The 2nd element is the single background mutation
+#'  rate estimate used
+#'  \item Hyper_Parameters; vector of two elements, named a and b. These are the hyperparameters estimated from the uncertainties for each
+#'  feature, and represent the two parameters of a Scaled Inverse Chi-Square distribution. Importantly, a is the number of additional
+#'  degrees of freedom provided by the sharing of uncertainty information across the dataset, to be used in the moderated t-test.
+#'  \item Mean_Variance_lm; a linear model object obtained from the uncertainty vs. read count regression model.
+#' }
 #' @importFrom magrittr %>%
 #' @export
 fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_cut = 10, nbin = NULL, prior_weight = 2, MLE = TRUE, lower = -7, upper = 7, se_max = 2.5){
@@ -448,10 +554,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
   L2FC_kdegs <- avg_df_fn_bayes$L2FC_kdeg[avg_df_fn_bayes$Condition > 1]
 
-  fit <- ashr::ash(effects, ses, method = "fdr")
-  lfsr <- fit$result$lfsr
-
-  Effect_sizes_df <- data.frame(Genes_effects, Condition_effects, L2FC_kdegs, effects, ses, lfsr, pval, padj)
+  Effect_sizes_df <- data.frame(Genes_effects, Condition_effects, L2FC_kdegs, effects, ses, pval, padj)
 
   # Add sample information to output
   df_fn <- merge(df_fn, sample_lookup, by.x = c("Condition", "Replicate"), by.y = c("mut", "reps"))
@@ -469,6 +572,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, read_cut = 50, features_
 
   #hyperpars <- c(sdp, theta_o, var_pop, var_of_var, a_hyper, b_hyper)
   #names(hyperpars) <- c("Mean Prior sd", "Mean prior mean", "Variance prior mean", "Variance prior variance", "Variance hyperparam a", "Variance hyperparam b")
+
+  avg_df_fn_bayes <- avg_df_fn_bayes[,c("Gene_ID", "Condition", "avg_logit_fn", "sd_logit_fn", "nreads", "sdp", "theta_o", "sd_post",
+                                        "logit_fn_post", "kdeg", "kdeg_sd", "XF")]
 
   #fast_list <- list(estimate_df, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, hyperpars)
   fast_list <- list(df_fn, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, c(a = a_hyper, b = b_hyper), heterosked_lm)

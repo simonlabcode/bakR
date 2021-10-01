@@ -75,7 +75,7 @@ provided by the user to perform maximum likelihood estimation (MLE) of the fract
 replicate of nucleotide recoding data provided. Uncertainties for each replicate's estimate are approximated using
 asymptotic results involving the Fisher Information and assuming known mutation rates. Replicate data
 is pooled using an approximation to hierarchical modeling that relies on analytic solutions to simple Bayesian models.
-Linear regression is used to estimate the relationship between read depths and replicate variabiltiy for uncertainty
+Linear regression is used to estimate the relationship between read depths and replicate variability for uncertainty
 estimation regularization, again performed using analytic solutions to Bayesian models.
 
 \code{Hybrid_fit} takes as input estimates of the logit(fraction new) and uncertainty provided by \code{fast_analysis}.
