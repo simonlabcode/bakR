@@ -493,7 +493,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
   message("Estimating mean-variance relationship")
 
   Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-    dplyr::summarise(nreads = sum(nreads),fn_sd_log = log(sqrt(1/sum(1/((sd(logit_fn_rep)^2)*((nreps-1)/(nreps+1)) + logit_fn_se^2 ) ) ) )) %>%
+    dplyr::summarise(nreads = sum(nreads),fn_sd_log = log(sqrt(1/sum(1/((sd(logit_fn_rep)^2) + logit_fn_se^2 ) ) ) )) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID) %>%
     dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(fn_sd_log))
@@ -536,7 +536,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
   #Average over replicates and estimate hyperparameters
   avg_df_fn_bayes <- df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
     dplyr::summarize(avg_logit_fn = stats::weighted.mean(logit_fn, 1/logit_fn_se),
-              sd_logit_fn = sqrt(1/sum(1/((sd(logit_fn)^2)*((nreps-1)/(nreps+1)) + logit_fn_se^2 ) ) ),
+              sd_logit_fn = sqrt(1/sum(1/((sd(logit_fn)^2) + logit_fn_se^2 ) ) ),
               nreads = sum(nreads)) %>% dplyr::ungroup() %>%
     dplyr::group_by(Condition) %>%
     dplyr::mutate(sdp = sd(avg_logit_fn)) %>%

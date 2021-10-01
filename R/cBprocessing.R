@@ -80,7 +80,7 @@ cBprocess <- function(obj,
   cB <- obj$cB
   metadf <- obj$metadf
 
-  samp_list <-unique(cB$sample)
+  samp_list <- unique(cB$sample)
 
   c_list <- rownames(metadf[metadf$tl == 0,])
 
@@ -130,14 +130,27 @@ cBprocess <- function(obj,
 
 
   message("Processing data...")
+
   # Create count dataframe
   Counts_df <- cB %>%
     dplyr::ungroup() %>%
     dplyr::filter(XF %in% keep) %>%
-    dplyr::filter(sample %in% s4U_list) %>%
     dplyr::group_by(XF, sample) %>%
     dplyr::summarise(n = sum(n)) %>%
     dplyr::right_join(ranked_features_df, by = 'XF') %>% dplyr::ungroup()
+
+
+  # Make count matrix
+  Cnt_mat <- matrix(0, ncol = length(samp_list), nrow = length(unique(Counts_df$XF)))
+
+  for(s in seq_along(samp_list)){
+    Cnt_mat[,s] <- Counts_df$n[Counts_df$sample == samp_list[s]]
+  }
+
+  rownames(Cnt_mat) <- Counts_df$XF[Counts_df$sample == samp_list[1]]
+  colnames(Cnt_mat) <- samp_list
+
+  rm(Counts_df)
 
   ## U content estimation
   sdf_U <- cB %>%
@@ -278,14 +291,14 @@ cBprocess <- function(obj,
 
 
   if(Stan & Fast){
-    out <- list(data_list, df_U, Counts_df)
-    names(out) <- c("Stan_data", "Fast_df", "Counts_df")
+    out <- list(data_list, df_U, Cnt_mat)
+    names(out) <- c("Stan_data", "Fast_df", "Count_Matrix")
   }else if(!Stan){
-    out <- list(df_U, Counts_df)
-    names(out) <- c("Fast_df", "Counts_df")
+    out <- list(df_U, Cnt_mat)
+    names(out) <- c("Fast_df", "Count_Matrix")
   }else{
-    out <- list(data_list, Counts_df)
-    names(out) <- c("Stan_data", "Counts_df")
+    out <- list(data_list, Cnt_mat)
+    names(out) <- c("Stan_data", "Count_Matrix")
   }
 
   return(out)
