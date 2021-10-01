@@ -1,0 +1,313 @@
+
+#' Simulating Nucleotide Recoding Data
+#'
+#' Function to simulate a DynamicSeqData object according to a heteroskedastic beta-binomial model
+#' of the fraction new.
+#' @param ngene Number of genes to simulate data for
+#' @param num_conds Number of experimental conditions (including the reference condition) to simulate
+#' @param nreps Number of replicates to simulate
+#' @param eff_sd Effect size; more specifically, the standard deviation of the normal distribution from which non-zero
+#' changes in logit(fraction new) are pulled from.
+#' @param eff_mean Effect size mean; mean of normal distribution from which non-zero changes in logit(fraction new) are pulled from.
+#' Note, setting this to 0 does not mean that some of the significant effect sizes will be 0, as any exact integer is impossible
+#' to draw from a continuous random nubmer generator. Setting this to 0 just means that there is symmetric stabilization and destabilization
+#' @param tl s4U label feed time
+#' @param p_new s4U induced mutation rate. Can be a vector of length num_conds
+#' @param p_old background mutation rate
+#' @param read_lengths Total read length for each sequencing read (e.g., 200 means PE100 reads)
+#' @param p_do Rate at which s4U containing reads are lost due to dropout; must be between 0 and 1
+#' @param noise_deg_a Slope of trend relating log10(standardized read counts) to log(replicate variability)
+#' @param noise_deg_b Intercept of trend relating log10(standardized read counts) to log(replicate variability)
+#' @param noise_synth Homoskedastic variability of L2FC(ksyn)
+#' @param low_L2FC_ks Most negative L2FC(ksyn) that can be simulated
+#' @param high_L2FC_ks Most positive L2FC(ksyn) that can be simulated
+#' @param num_kd_DE Vector where each element represents the number of genes that show a significant change in stability relative
+#' to the reference. 1st entry must be 0 by definition (since relative to the reference the reference sample is unchanged)
+#' @param num_ks_DE Same as num_kd_DE but for significant changes in synthesis rates.
+#' @param scale_factor Factor relating RNA concentration (in arbitrary units) to average number of read counts
+#' @param sim_read_counts Logical; if TRUE, read counts are simulated as coming from a heterodisperse negative binomial distribution
+#' @param nread Number of reads simulated if sim_read_counts is FALSE
+#' @export
+#'
+sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, eff_mean = 0,
+                               tl = 1, p_new = 0.05, p_old = 0.001, read_lengths = 200,
+                               p_do = 0, noise_deg_a = -0.3, noise_deg_b = -1.5, noise_synth = 0.1,
+                               low_L2FC_ks = -1, high_L2FC_ks = 1,
+                               num_kd_DE = c(0, rep(round(ngene/2), times = num_conds-1)),
+                               num_ks_DE = rep(0, times = num_conds),
+                               scale_factor = 100,
+                               sim_read_counts = TRUE,
+                               nreads = 50){
+
+  if(length(p_new) ==1){
+    p_new <- rep(p_new, times=num_conds)
+  }
+
+  if(length(p_old) == 1){
+    p_old <- rep(p_old, times=num_conds)
+  }
+
+  if(length(read_lengths) == 1){
+    read_lengths <- rep(read_lengths, times=num_conds)
+  }
+
+  if(length(p_do) == 1){
+    p_do <- rep(p_do, times=num_conds)
+  }
+
+  # Define helper functions:
+  logit <- function(x) log(x/(1-x))
+  inv_logit <- function(x) exp(x)/(1+exp(x))
+
+  #Initialize matrices
+  fn <- rep(0, times=ngene*nreps*num_conds)
+  dim(fn) <- c(ngene, num_conds, nreps)
+
+  Counts <- fn
+
+
+  kd <- fn
+  ks <- fn
+
+
+  #Initialize vectors of mean values for each gene and condition
+  fn_mean <- inv_logit(rnorm(n=ngene, mean=0, sd=1.5))
+  kd_mean <- -log(1-fn_mean)/tl
+  ks_mean <- rexp(n=ngene, rate=1/(kd_mean*5))
+
+  effect_mean <- rep(0, times = ngene*num_conds)
+  dim(effect_mean) <- c(ngene, num_conds)
+  L2FC_ks_mean <- effect_mean
+  L2FC_kd_mean <- effect_mean
+
+  for(i in 1:ngene){
+
+    #Make sure the user didn't input the wrong
+    #number of significant genes
+    if (i == 1 ){
+      if (length(num_kd_DE) > num_conds){
+        print("num_kd_DE has too many elements")
+        break
+      } else if (length(num_kd_DE) < num_conds){
+        print("num_kd_DE has too few elements")
+        break
+      }
+
+      if (length(num_ks_DE) > num_conds){
+        print("num_ks_DE has too many elements")
+        break
+      } else if (length(num_ks_DE) < num_conds){
+        print("num_ks_DE has too few elements")
+        break
+      }
+    }
+
+    for(j in 1:num_conds){
+      if(j == 1){
+        effect_mean[i,1] <- 0
+        L2FC_ks_mean[i,1] <- 0
+      }else{
+        if(i < (ngene-num_kd_DE[j] + 1)){
+          effect_mean[i,j] <- 0
+        }else{
+          effect_mean[i,j] <- stats::rnorm(n=1, mean=eff_mean, sd=eff_sd)
+        }
+        if(i < (ngene-num_ks_DE[j] + 1)){
+          L2FC_ks_mean[i,j] <- 0
+        }else{
+          if (runif(1) < 0.5){
+            L2FC_ks_mean[i,j] <- stats::runif(n=1, min=low_L2FC_ks, max=high_L2FC_ks)
+          }else{
+            L2FC_ks_mean[i,j] <- stats::runif(n=1, min=-high_L2FC_ks, max=-low_L2FC_ks)
+          }
+
+        }
+      }
+    }
+  }
+
+  L2FC_kd_mean <- log2(log(1 - inv_logit(fn_mean + effect_mean))/log(1- inv_logit(fn_mean)))
+
+
+  #Simulate read counts
+  if (sim_read_counts == TRUE){
+    L2FC_tot_mean <- L2FC_ks_mean - L2FC_kd_mean
+    RNA_conc <- (ks_mean*2^(L2FC_ks_mean))/(kd_mean*2^(L2FC_kd_mean))
+    a1 <- 5
+    a0 <- 0.01
+
+    for(i in 1:ngene){
+      for(j in 1:num_conds){
+        for(k in 1:nreps){
+          Counts[i, j, k] <- stats::rnbinom(n=1, size=1/((a1/(scale_factor*RNA_conc[i,j])) + a0), mu = scale_factor*RNA_conc[i,j])
+          #Counts[i, j, k] <- rpois(n=1, lambda = scale_factor*RNA_conc[i,j,k])
+
+          if(Counts[i, j, k] < 5){
+            Counts[i, j, k] <- Counts[i, j, k] + stats::rpois(n=1, lambda = 2) + 1
+          }
+        }
+      }
+    }
+  } else{
+    if(sim_from_data == FALSE){
+      Counts <- rep(nreads, times= ngene*num_conds*nreps)
+      dim(Counts) <- c(ngene, num_conds, nreps)
+    }
+
+  }
+
+  #SIMULATE L2FC OF DEG AND SYNTH RATE CONSTANTS; REPLICATE VARIABILITY SIMULATED
+  for(i in 1:ngene){
+    for(j in 1:num_conds){
+      for(k in 1:nreps){
+        standard_RNA <- (log10(RNA_conc[i,j]*scale_factor) - mean(log10(RNA_conc[,j]*scale_factor)))/stats::sd(log10(RNA_conc[,j]*scale_factor))
+        fn[i, j, k] <- inv_logit(rnorm(1, mean=(logit(fn_mean[i]) + effect_mean[i,j]), sd = exp(noise_deg_a*log10(RNA_conc[i,j]*scale_factor) + noise_deg_b )))
+        ks[i,j,k] <- exp(stats::rnorm(1, mean=log((2^L2FC_ks_mean[i,j])*ks_mean[i]), sd=noise_synth))
+      }
+    }
+  }
+
+  kd <- -log(1 - fn)/tl
+
+
+
+  l <- ngene
+
+  p_do <- matrix(rep(0, times = num_conds*nreps), nrow = nreps, ncol = num_conds)
+  fn_real <- fn
+
+  for(j in 1:num_conds){
+    for(k in 1:nreps){
+      fn_real[,j,k] <- (fn[,j,k]*(1-p_do[k,j]))/(1 - p_do[k,j]*(1 - fn[,j,k]))
+      Counts[,j,k] <- Counts[,j,k] - Counts[,j,k]*fn[,j,k]*p_do[k,j]
+    }
+  }
+
+
+  # This is one very huge function
+  # It simulates TL-seq data, recording the number of TC mutations in each read, which is informed
+  # by whatever the fraction new for the particular transcript is
+  simulateData <- function(nmir = l,   # num of genes
+                           fn_s4U = fn_real,   # fraction of s4U reads made after label introduction in non-heatshocked sample
+                           #fn_s4U2 = fn_hs, # fraction of s4U reads made after label introduction in heatshocked sample
+                           p_new_real_tc = p_new,                   # TC mutation rate in fed cells
+                           p_old_real_tc = p_old,                  # TC mutation rate in unfed cells
+                           read_length = read_lengths,
+                           nreads = Counts, # per transript per sample
+                           nsamp = (nreps*num_conds) + num_conds,
+                           ctl = c(rep(1, times=nreps*num_conds), rep(0, times=num_conds)),   # cntl = 0 is no feed, cntl = 1 is feed
+                           mt = c(rep(1:num_conds, each=nreps),seq(from=1,to=num_conds,by=1)),
+                           replicate = c(rep(seq(from=1, to=nreps), times=num_conds), rep(1, times=num_conds))
+                           #Could just generalize this, which is what next line does, repeating 1 for all but the last sample
+                           #ctl = c(rep(1, times = nsamp-1),0) #assumes nsamp is odd, think it has to be
+  ){
+
+
+
+    # Start generating a vector with data
+    sample_data <- vector('list', length = nsamp)
+    for (s in 1:nsamp){
+      mir_data <- vector('list', length = nmir)
+      for (mir in 1:nmir){ #mir is feature number index, should change to gene or something
+
+        r <- replicate[s] #Replicate number index
+        MT <- mt[s]       #Experimental sample index
+        readsize = read_length[mt[s]]
+
+        mir_pold_tc <- p_old[mt[s]]
+        mir_pnew_tc <- p_new[mt[s]]
+
+        #Simulate which reads are labeled
+        newreads_tc <- purrr::rbernoulli(nreads[mir, MT, r], p = fn_s4U[mir, MT, r])# vector of reads, T/F is s4U labeled
+
+        #Simulate the nubmer of Us in each read
+        nu <- stats::rbinom(n = nreads[mir,MT,r], size = readsize, prob = 0.25)
+
+        #Number of reads that are new
+        newreads_tc <- sum(newreads_tc)
+
+        #Generate number of mutations for new and old reads
+        if (!ctl[s]){ #If no s4U added, only old
+          nmut_tc <- stats::rbinom(n = nreads[mir,MT,r], size=nu, prob = mir_pold_tc)
+        }else {
+          nmut_tc_new <- stats::rbinom(n=newreads_tc, size=nu[1:newreads_tc], prob=mir_pnew_tc)
+          nmut_tc_old <- stats::rbinom(n=(nreads[mir, MT, r]-newreads_tc), size = nu[(newreads_tc+1):nreads[mir, MT, r]], prob=mir_pold_tc)
+          nmut_tc <- c(nmut_tc_new, nmut_tc_old)
+        }
+
+
+        #Now make it look kind of like a cB file
+        # use mirMut for each gene, cntl is if cntl or not, x is # of new reads
+        df <- dplyr::tibble(S = rep(s, times = nreads[mir, MT, r]),  #starting to generate something that looks like a cB file
+                     TP = rep(ctl[s], times = nreads[mir, MT, r]),
+                     R = rep(r, times=nreads[mir, MT, r]),
+                     MIR = rep(mir, times = nreads[mir, MT, r]), # same as XF or fnum, so just feature number
+                     TC = nmut_tc,
+                     MT = rep(mt[s], times=nreads[mir, MT, r]),
+                     num_us = nu)
+        #rep_data[[r]] <- df
+
+        #rep_data <- bind_rows(rep_data)
+        mir_data[[mir]] <- df
+      }
+      mir_data <- dplyr::bind_rows(mir_data)
+      sample_data[[s]] <- mir_data
+    }
+    sample_data <- dplyr::bind_rows(sample_data)
+    sim_df <- list(nmir = nmir,
+                   fn_s4U = fn_s4U,
+                   p_new_real_tc = p_new_real_tc,
+                   p_old_real_tc = p_old_real_tc,
+                   nreads = nreads, # per miR per sample
+                   nsamp = nsamp,
+                   ctl = ctl,
+                   mir_pnew_tc = mir_pnew_tc,
+                   mir_pold_tc = mir_pold_tc,
+                   sample_data = sample_data
+    )
+    return(sim_df)   # return a list of all the things we should know.
+  }
+
+  sim_df_1 <- simulateData()
+
+  # Extract simulated cB and summarise data
+  cB_sim_1 <- sim_df_1$sample_data
+  cB_sim_1 <- cB_sim_1 %>% dplyr::group_by(S, TP, R, MIR, TC, MT, num_us) %>%
+    dplyr::tally()
+
+
+  rm(sim_df_1)
+
+  # Define XF column
+  cB_sim_1$XF <- cB_sim_1$MIR
+
+
+  samp_list <- unique(cB_sim_1$S)
+
+  type_list <- rep(0, times=length(samp_list))
+  mut_list <- rep(0, times = length(samp_list))
+  rep_list <- rep(0, times = length(samp_list))
+  tl <- 1
+  count <- 1
+  for(i in samp_list){
+    type_list[count] <- unique(cB_sim_1$TP[cB_sim_1$S == i])
+    rep_list[count] <- unique(cB_sim_1$R[cB_sim_1$S == i])
+    mut_list[count] <- unique(cB_sim_1$MT[cB_sim_1$S == i])
+    count <- count + 1
+  }
+
+
+  colnames(cB_sim_1) <- c("sample", "TP", "R", "MIR", "TC", "MT", "nT", "n", "XF")
+
+  metadf <- data.frame(tl = type_list, Exp_ID = as.integer(mut_list))
+
+  rownames(metadf) <- unique(cB_sim_1$sample)
+
+  cB_sim_1$sample <- as.character(cB_sim_1$sample)
+
+  DynData <- DynamicSeq::DynamicSeqData(cB_sim_1, metadf)
+
+  return(DynData)
+
+
+}
