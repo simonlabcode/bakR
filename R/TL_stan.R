@@ -1,25 +1,69 @@
 #' Bayesian hierarchical mixture model with Stan for TL-seq data analysis
 #'
 #' \code{TL_stan} analyzes nucleotide recoding sequencing data with a fully
-#' Bayesian hierarchical model implemented in the PPL Stan.
+#' Bayesian hierarchical model implemented in the PPL Stan. The models estimate
+#' fraction news as well as changes in kinetic parameters, comparing a single reference
+#' sample to each experimental sample provided.
 #'
-#' Details of the model can be found in Vock et al. 2021. In short, mutations
-#' are modeled as coming from a Poisson distribution with rate parameter
-#' adjusted by the empirical U-content of each feature analyzed. Features
-#' represent whatever the user defined them to be when constructing the
-#' DynamicSeq data object. Typical feature categories are genes, exons, etc.
-#' Multiple test adjusted significance values are also calculated for all
-#' parameters quantifying changes in degradation and synthesis rate constants.
-#' Local false-discovery rates and false sign rates (lfdr and lfsr,
-#' respectively) are provided for each feature and each experimental condition.
-#' Kinetic parameter changes are calcualted with respect to the user defined
-#' reference sample, but additional comparisons can be made downstream (see
-#' vignette for details).
+#' Two general models can be implemented in TL_stan: a full nucleotide recoding model and
+#' a hybrid model that takes as input results from \code{fast_analysis}.
+#' In the full model, U-to-C mutations are modeled as coming from a Poisson distribution
+#' with rate parameter adjusted by the empirical U-content of each feature analyzed. Features
+#' represent whatever the user defined them to be when constructing the DynamicSeq data object.
+#' Typical feature categories are genes, exons, etc. Hierarchical modeling is used to pool data
+#' across replicates, across features, and across datasets. More specifically, replicate data for the
+#' same feature are partially pooled to estimate feature-specific mean fraction news and uncertainties.
+#' Feature means are partially pooled to estimate dataset-wide mean fraction news and standard devitaitons.
+#' The replicate variability for each feature is also partially pooled to determine an experimental
+#' condition-wide mean-variance relationship between read depths and replicate variability. Partial pooling
+#' reduces subjectivity when determining priors by allowing the model to determine what priors should have
+#' been set. Partial pooling also regularizes estimates, reducing estimate variability and thus increasing
+#' estimate accuracy. This is particularly important for replicate variability estimates, which often rely
+#' on only a few replicates of data per feature and thus are typically highly unstable.
+#'
+#' The hybrid model inherits the hierarchical modeling structure of the full model, but reduces computational
+#' burden by foregoing per-replicate-and-feature fraction new estimation and uncertainty quantification. Instead,
+#' the hybrid model takes as data fraction new estimates and approximate uncertainties from \code{fast_analysis}.
+#' Runtimes of the hybrid model are thus often an order or magnitude or more shorter than with the full model, but
+#' loses some accuracy by relying on point estimates and uncertainty quantification that is only valid in the
+#' limit of large dataset sizes (where the dataset size for the per-replicate-and-feature fraction new estimate is the raw number
+#' of sequencing reads mapping to the feature in that replicate).
+#'
+#' For both models, users can also run a pooled version that performs complete rather than partial pooling
+#' of the replicate variability estimates. This means that data from a given experimental condition is used to estimate
+#' the mean-variance relationship between read depths and replicate variabilities, but then the regression prediction
+#' for the replicate variability of a specific feature is used as that features exact replicate variability. Contrast this
+#' with the partial pooling approach that allows the feature-specific replicate variability estimate to differ from the
+#' regression prediction, instead opting to shrink the feature-specific estimate towards the regression. Complex hierarchical
+#' models like the full and hybrid models can have convergence issues when fitting large datasets, so the pooled option exists
+#' to improve the chance of satisfactory model convergence. We suggest using the pooled model when your dataset includes very
+#' few replicates (< 5), as this is when the models are especially prone to convergence issues.
+#'
+#' Users also have the option to save or discard the Stan fit object. Fit objects can be exceedingly large (> 10 GB) for most
+#' nucleotide recoding datasets. Therefore, if you don't want to store such a large object, a summary object will be saved instead,
+#' which greatly reduces the size of the output (~ 1-10 MB) while still retaining much of the important information. In addition,
+#' the output of \code{TL_stan} provides the estimates and uncertainties for key parameters (L2FC(kdeg), kdeg, and fraction new)
+#' that will likely be of most interest. That being said, there are some analyses that are only possible if the original fit object
+#' is saved. For example, the fit object will contain all of the samples from the posterior collected during model fitting. Thus,
+#' new parameters (like L2FC(kdeg)'s comparing two experimental samples) not naturally generated by the model can be estimated
+#' post-hoc. Still, there are often approximate estimates that can be obtained for such parameters that don't rely on the full
+#' fit object. One analysis that is impossible without the original fit object is generating model diagnostic plots. These include
+#' trace plots (to show mixing and efficient parameter space exploration of the Markov chains), pairs plots (to show correlations
+#' between parameters and where any divergences occured), and other visualizations that can help users assess how well a model
+#' ran. Because the models implemented by \code{TL_stan} are highly validated, it is less likely that such diagnostics will be helpful,
+#' but often anomalies on your data can lead to poor model convergence, in which case assessing model diagnostics can help you
+#' identify the source of problems in your data. Summary statistics describing how well the model was able to estimate each parameter
+#' (n_eff and rhat) are provided in the fit summaries, but can often obscure some of the nuanced details of model fitting.
+#'
 #'
 #' @export
-#' @param data_list list to pass to Stan of form given by cBtoStan
-#' @param Hybrid_Fit if TRUE, Hybrid Stan model that takes as data output of fast_analysis is run.
-#' @param keep_fit if TRUE, Stan fit object is included in output; typically large file so default FALSE.
+#' @param data_list List to pass to Stan of form given by cBtoStan
+#' @param Hybrid_Fit Logical; if TRUE, Hybrid Stan model that takes as data output of fast_analysis is run.
+#' @param Pooled Logical; if TRUE, replicate variability estimates are not partially pooled. This means that the
+#' mean-variance regression is estimated using all data from an experimental condition and then the replicate variability estimate
+#' for each gene is exactly what the regression predicts, rather than the estimate being shrunk toward the regression line (as
+#' is done if Pooled is FALSE).
+#' @param keep_fit Logical; if TRUE, Stan fit object is included in output; typically large file so default FALSE.
 #' @param ... Arguments passed to `rstan::sampling` (e.g. iter, chains).
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #'
@@ -103,9 +147,9 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FAL
   rm(eff_gauss)
 
   # Fn dataframe setup
-  F_ID_fn <- rep(1:ngs, each = (nconds+1)*nreps)
-  Exp_ID_fn <- rep(rep(1:(nconds+1), each = nreps), times = ngs)
-  R_ID_fn <- rep(1:nreps, times = (nconds+1)*ngs)
+  F_ID_fn <- rep(1:ngs, each = (nconds+1)*reps)
+  Exp_ID_fn <- rep(rep(1:(nconds+1), each = reps), times = ngs)
+  R_ID_fn <- rep(1:reps, times = (nconds+1)*ngs)
   logit_fn <- fn_summary$logit_fn
   fn_se <- fn_summary$sd
 

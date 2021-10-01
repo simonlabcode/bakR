@@ -97,8 +97,10 @@ cBtofast <- function(cB_raw,
 #' implemented by \code{stats::optim} or a more conservative Bayesian hypothesis testing strategy. Output includes fraction new
 #' estimates for individual estimates as well as fraction news and effect sizes (L2FC(kdeg)s and changes in logit(fraction new))
 #' averaged across replicate data. Averaging takes into account uncertainties estimated using the Fisher Information and estimates
-#' are reguarlized using analytical results of fully Bayesian models. The result is that fraction news are shrunk towards population means
+#' are regularized using analytical results of fully Bayesian models. The result is that fraction news are shrunk towards population means
 #' and that uncertainties are shrunk towards a mean-variance trend estimated as part of the analysis.
+#'
+#'
 #'
 #' @param df Dataframe in form provided by cB_to_Fast
 #' @param pnew Labeled read mutation rate; default of 0 means that model estimates rate from s4U fed data

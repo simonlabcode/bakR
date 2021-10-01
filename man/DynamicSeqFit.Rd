@@ -19,21 +19,22 @@ DynamicSeqFit(
 \arguments{
 \item{obj}{DynamicSeqData object produced by \code{DynamicSeqData} or a DynamicSeqFit object produced by \code{DynamicFit}}
 
-\item{StanFit}{Logical; if TRUE, then Fully Bayesian Hierarchical model is implemented}
+\item{StanFit}{Logical; if TRUE, then Fully Bayesian Hierarchical model is implemented to estimate fraction news and pool information
+across the dataset}
 
 \item{HybridFit}{Logical; if TRUE, then a Fully Bayesian Hierarchical model is run using
 estimates for the fraction new and fraction new uncertainty obtained via the efficient
 statistical model.}
 
-\item{keep_input}{two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff}
+\item{keep_input}{Two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff}
 
-\item{Stan_prep}{Boolean; if TRUE, then data_list that can be passed to Stan is curated}
+\item{Stan_prep}{Logical; if TRUE, then data_list that can be passed to Stan is curated}
 
-\item{Fast_prep}{Boolean; if TRUE, then dataframe that can be passed to fast_analysis() is curated}
+\item{Fast_prep}{Logical; if TRUE, then dataframe that can be passed to fast_analysis() is curated}
 
 \item{FOI}{Features of interest; character vector containing names of features to analyze}
 
-\item{concat}{Boolean; If TRUE, FOI is concatenated with output of reliableFeatures}
+\item{concat}{Logical; If TRUE, FOI is concatenated with output of reliableFeatures}
 
 \item{...}{Arguments passed to either \code{fast_analysis} (if a DynamicSeqData object)
 or \code{TL_Stan} and \code{Hybrid_fit} (if a DynamicSeqFit object)}
@@ -62,7 +63,7 @@ by the procedure implemented in \code{fast_analysis}.
 
 If \code{DynamicFit} is run on a DynamicSeqFit object, \code{cBprocess} will not be called again,
 as the output of \code{cBprocess} will already be contained in the DynamicSeqFit object. Similarly,
-\code{fast_analysis} will not be called again unless \code{Fast} is set to \code{TRUE}. If you want to
+\code{fast_analysis} will not be called again unless DynamicSeqFit is rerun on the DynamicSeqData object. If you want to
 generate model fits using different parameters for cBprocess, you will have to rerun \code{DynamicFit}
 on the DynamicSeqData object.
 
@@ -72,24 +73,22 @@ recoding data. What follows is a brief overview of how each works
 \code{fast_analysis} either estimates mutation rates from + and - s4U samples or uses mutation rate estimates
 provided by the user to perform maximum likelihood estimation (MLE) of the fraction of RNA that is labeled for each
 replicate of nucleotide recoding data provided. Uncertainties for each replicate's estimate are approximated using
-asymptotic results involving the Fisher Information. Replicate data is pooled using an approximation to hierarchical
-modeling that relies on analytic solutions to simple Bayesian models. Linear regression is used to estimate the
-relationship between read depths and replicate variabiltiy for uncertainty estimation regularization, again performed
-using analytic solutions to models.
+asymptotic results involving the Fisher Information and assuming known mutation rates. Replicate data
+is pooled using an approximation to hierarchical modeling that relies on analytic solutions to simple Bayesian models.
+Linear regression is used to estimate the relationship between read depths and replicate variabiltiy for uncertainty
+estimation regularization, again performed using analytic solutions to Bayesian models.
 
 \code{Hybrid_fit} takes as input estimates of the logit(fraction new) and uncertainty provided by \code{fast_analysis}.
 It then uses Stan on the backend to implement a hierarchical modeling that pools data across replicates and the dataset
 to estimate effect sizes (L2FC(kdeg)) and uncertainties. Replicate variability information is pooled across each experimental
 condition to regularize variance estimates using a hierarchical linear regression model.
 
-\code{TL_Stan} uses Stan on the back end to impelement a model similar to \code{Hybrid_fit}. The difference is that while
+\code{TL_Stan} uses Stan on the back end to implement a model similar to \code{Hybrid_fit}. The difference is that while
 \code{Hybrid_fit} requires fraction new estimates from \code{fast_analysis}, \code{TL_Stan} implements a U-content exposure
 adjusted Poisson model to estimate fraction news while also using hierarchical modeling to partially pool information across
 replicates and the entire dataset.
 
 Since \code{fast_analysis} relies on -s4U control data to estimate background mutation rates, user inputted mutation rate
 estimates will have to be provided if such a control is not present. If the -s4U control is absent and no mutation rate
-estimate is inputted, a non-hierarchical (if Stan = FALSE) or the fully hierarchical (if Stan = TRUE, implemented by \code{TL_Stan})
-model will first be run on the data to estimate mutation rates, and these mutation rates as well as the fraction news and uncertainties
-estimated in each replicate by these models will be passed to \code{fast_analysis}.
+estimate is inputted, an error will be thrown.
 }
