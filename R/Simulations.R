@@ -72,20 +72,39 @@
 #'  \item RNA_conc; The average number of normalized read counts expected for each feature in each sample.
 #' }
 #'
-sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, eff_mean = 0,
-                               tl = 60, p_new = 0.05, p_old = 0.001, read_lengths = 200,
+sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_mean = 0,
+                               tl = 60, p_new = 0.05, p_old = 0.001, read_lengths = 200L,
                                p_do = 0, noise_deg_a = -0.3, noise_deg_b = -1.5, noise_synth = 0.1, sd_rep = 0.05,
                                low_L2FC_ks = -1, high_L2FC_ks = 1,
-                               num_kd_DE = c(0, rep(round(ngene/2), times = num_conds-1)),
-                               num_ks_DE = rep(0, times = num_conds),
+                               num_kd_DE = c(0L, as.integer(rep(round(ngene/2), times = num_conds-1))),
+                               num_ks_DE = rep(0L, times = num_conds),
                                scale_factor = 100,
                                sim_read_counts = TRUE, a1 = 5, a0 = 0.01,
-                               nreads = 50){
+                               nreads = 50L){
 
 
   ### Catch non-sensical values in all inputs
 
+  # Number of genes (features) to simulate
+  if(!is.numeric(ngene)){
+    stop("ngene must be numeric")
+  }else if(!is.integer(ngene)){
+    ngene <- as.integer(ngene)
+  }
+
+  if(ngene < 1){
+    stop("ngene must be > 0; it represents the number of features to simulate")
+  }
+
   # Number of experimental conditions
+
+
+  if(!is.numeric(num_conds)){
+    stop("num_conds must be an numeric")
+  }else if(!is.integer(num_conds)){
+    num_conds <- as.integer(num_conds)
+  }
+
   if(num_conds < 1){
     stop("num_conds must be > 0; it represents the number of experimental conditions")
   }else if(num_conds == 1){
@@ -93,6 +112,12 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
   }
 
   # Number of replicates
+  if(!is.numeric(nreps)){
+    stop("nreps must be numeric")
+  }else if(!is.integer(nreps)){
+    nreps <- as.integer(nreps)
+  }
+
   if(nreps < 1){
     stop("nreps must be > 0; it represents the number of replicates")
   }else if(nreps == 1){
@@ -100,14 +125,18 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
   }
 
   # Effect size distribution standard deviation
-  if(eff_sd <= 0){
+  if(!is.numeric(eff_sd)){
+    stop("eff_sd must be numeric")
+  }else if(eff_sd <= 0){
     stop("eff_sd must be > 0; it will be the sd parameter of a call to rnorm when simulating effect sizes")
   }else if (eff_sd > 4){
     warning("You are simulating an unusually large eff_sd (> 4)")
   }
 
   # Label time
-  if(tl <= 0){
+  if(!is.numeric(tl)){
+    stop("tl must be numeric")
+  }else if(tl <= 0){
     stop("tl must be > 0; it represents the label time in minutes.")
   }else if(tl < 30){
     warning("You are simulating an unusually short label time (< 30 minutes)")
@@ -116,7 +145,9 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
   }
 
   # s4U mutation rate
-  if(!all(p_new > 0)){
+  if(!all(is.numeric(p_new))){
+    stop("p_new must be numeric")
+  }else if(!all(p_new > 0)){
     stop("p_new must be > 0; it represents the mutation rate of s4U labeled transcripts")
   }else if(!all(p_new <= 1)){
     stop("p_new must be <= 1; it represents the mutation rate of s4U labeled transcripts")
@@ -127,7 +158,9 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
   }
 
   # Background mutation rate
-  if(!all(p_old > 0)){
+  if(!all(is.numeric(p_old))){
+    stop("p_old must be numeric")
+  }else if(!all(p_old > 0)){
     stop("p_old must be > 0; it represents the background mutation rate")
   }else if(!all(p_old <= 1)){
     stop("p_old must be <= 1; it represents the background mutation rate")
@@ -136,6 +169,12 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
   }
 
   # Read length
+  if(!all(is.numeric(read_lengths))){
+    stop("read_lengths must be numeric")
+  }else if(!all(is.integer(read_lengths))){
+    read_lengths <- as.integer(read_lengths)
+  }
+
   if(!all(read_lengths > 0)){
     stop("read_lengths must be > 0; it represents the total length of sequencing reads")
   }else if(!all(read_lengths >= 20)){
@@ -143,7 +182,9 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
   }
 
   # Dropout probability
-  if(!all(p_do <= 1)){
+  if(!all(is.numeric(p_do))){
+    stop("p_do must be numeric")
+  }else if(!all(p_do <= 1)){
     stop("p_do must be <= 1; it represents the percentage of s4U containing RNA lost during library prep")
   }else if(!all(p_do >= 0)){
     stop("p_do must be >= 0; it represents the percentage of s4U containing RNA lost during library prep")
@@ -152,19 +193,25 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
   }
 
   # Heteroskedastic Slope
-  if(noise_deg_a > 0){
+  if(!is.numeric(noise_deg_a)){
+    stop("noise_deg_a must be numeric")
+  }else if(noise_deg_a > 0){
     stop("noise_deg_a must be < 0; it represents the slope of the log10(read depth) vs. log(replicate variability) trend")
   }else if(noise_deg_a == 0){
     warning("You are simulating fraction new homoskedasticity, which is not reflective of actual nucleotide recoding data")
   }
 
   # Synthesis variability
-  if(noise_synth < 0){
+  if(!is.numeric(noise_synth)){
+    stop("noise_synth must be numeric")
+  }else if(noise_synth < 0){
     stop("noise_synth must be >= 0; it represents the homoskeastic variability in the synthesis rate")
   }
 
   # Replicate variability variability
-  if(sd_rep < 0){
+  if(!is.numeric(sd_rep)){
+    stop("sd_rep must be numeric")
+  }else if(sd_rep < 0){
     stop("sd_rep must be >= 0; it represents the sdlog parameter of the log-normal distribution from which replicate variabilites are simulated")
   }else if(sd_rep == 0){
     warning("You are simulating no variability in the replicate variability. This can cause minor convergence issues in the completely hierarchical
@@ -172,11 +219,19 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
   }
 
   # L2FC(ksyn) Bounds
-  if(high_L2FC_ks < low_L2FC_ks){
+  if(!all(is.numeric(c(high_L2FC_ks, low_L2FC_ks)))){
+    stop("high_L2FC_ks and low_L2FC_ks must be numeric")
+  }else if(high_L2FC_ks < low_L2FC_ks){
     stop("high_L2FC_ks must be greater than low_L2FC_ks; they represent the upper and lower bound of a uniform distribution respectively")
   }
 
   # Number of differentially stabilized features
+  if(!all(is.numeric(num_kd_DE))){
+    stop("All elements of num_kd_DE must be numeric")
+  }else if(!all(is.integer(num_kd_DE))){
+    num_kd_DE <- as.integer(num_kd_DE)
+  }
+
   if (length(num_kd_DE) > num_conds){
     stop("num_kd_DE has too many elements; it should be a vector of length == num_conds")
   }else if (length(num_kd_DE) < num_conds){
@@ -191,7 +246,13 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
   }
 
   # Number of differentially synthesized features
-  if (length(num_ks_DE) > num_conds){
+  if(!all(is.numeric(num_ks_DE))){
+    stop("All elements of num_ks_DE must be numeric")
+  }else if(!all(is.integer(num_ks_DE))){
+    num_ks_DE <- as.integer(num_ks_DE)
+  }
+
+  if(length(num_ks_DE) > num_conds){
     stop("num_ks_DE has too many elements; it should be a vector of length == num_conds")
   }else if (length(num_ks_DE) < num_conds){
     stop("num_ks_DE has too few elements; it should be a vector of length == num_conds")
@@ -205,7 +266,9 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
   }
 
   # Scale factor
-  if(scale_factor <=0){
+  if(!is.numeric(scale_factor)){
+    stop("scale_factor must be numeric")
+  }else if(scale_factor <=0){
     stop("scale_factor must be > 0; it represents the factor by which the RNA concentration is multiplied to yield the average number of sequencing reads")
   }else if(scale_factor < 10){
     warning("You are simulating an unusually low scale_factor (< 10); small scale factors will lead to low read counts.")
@@ -213,36 +276,58 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
 
   # Simulate read count Boolean
   if(!is.logical(sim_read_counts)){
-    stop("sim_read_counts must be a logical (TRUE or FALSE); if TRUE, read counts will be drawn from a heterodisperse negative binomial distribution")
+    stop("sim_read_counts must be a logical (TRUE or FALSE)")
   }else if(sim_read_counts){
-    if(nreads <= 0){
+    if(!is.integer(nreads)){
+      stop("nreads must be an integer")
+    }else if(nreads <= 0){
       stop("nreads must be > 0; it represents the number of sequencing reads to be simulated for all features")
     }
   }
 
   # Heterodispersion parameters
-  if(a1 < 0){
+
+  if(!all(is.numeric(c(a1, a0)))){
+    stop("a1 and a0 must be numeric")
+  }else if(a1 < 0){
     stop("a1 must be >= 0; it relates the average read count to the negative binomial dispersion parameter")
   }else if(a0 <= 0){
     stop("a0 must be > 0; it represents the high read count limit of the negative binomial dispersion parameter")
   }
 
+  # Parameters without numeric bounds
+  if(!is.numeric(noise_deg_b)){
+    stop("noise_deg_b must be numeric")
+  }
+
+  if(!is.numeric(eff_mean)){
+    stop("eff_mean must be numeric")
+  }
 
 
-  if(length(p_new) ==1){
+
+  if(length(p_new) == 1){
     p_new <- rep(p_new, times=num_conds)
+  }else if(length(p_new) != num_conds){
+    stop("p_new must be of length 1 or length == num_conds")
   }
 
   if(length(p_old) == 1){
     p_old <- rep(p_old, times=num_conds)
+  }else if(length(p_old) != num_conds){
+    stop("p_old must be of length 1 or length == num_conds")
   }
 
   if(length(read_lengths) == 1){
     read_lengths <- rep(read_lengths, times=num_conds)
+  }else if(length(read_lengths) != num_conds){
+    stop("read_lengths must be of length 1 or length == num_conds")
   }
 
   if(length(p_do) == 1){
     p_do <- rep(p_do, times=num_conds)
+  }else if(length(p_do) != num_conds){
+    stop("p_do must be of length 1 or length == num_conds")
   }
 
   # Define helper functions:
