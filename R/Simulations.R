@@ -26,6 +26,8 @@
 #' @param num_ks_DE Same as num_kd_DE but for significant changes in synthesis rates.
 #' @param scale_factor Factor relating RNA concentration (in arbitrary units) to average number of read counts
 #' @param sim_read_counts Logical; if TRUE, read counts are simulated as coming from a heterodisperse negative binomial distribution
+#' @param a1 Heterodispersion 1/reads dependence parameter
+#' @param a0 High read depth limit of negative binomial dispersion parameter
 #' @param nread Number of reads simulated if sim_read_counts is FALSE
 #' @export
 #'
@@ -36,7 +38,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
                                num_kd_DE = c(0, rep(round(ngene/2), times = num_conds-1)),
                                num_ks_DE = rep(0, times = num_conds),
                                scale_factor = 100,
-                               sim_read_counts = TRUE,
+                               sim_read_counts = TRUE, a1 = 5, a0 = 0.01,
                                nreads = 50){
 
   if(length(p_new) ==1){
