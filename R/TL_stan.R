@@ -123,6 +123,24 @@
 #'
 TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FALSE, ...) {
 
+  ### Error catching
+
+  ## Check Hybrid_Fit
+  if(!is.logical(Hybrid_Fit)){
+    stop("Hybrid_Fit must be logical (TRUE or FALSE)")
+  }
+
+  ## Check Pooled
+  if(!is.logical(Pooled)){
+    stop("Pooled must be logical (TRUE or FALSE)")
+  }
+
+  ## Check keep_fit
+  if(!is.logical(keep_fit)){
+    stop("keep_fit must be logical (TRUE or FALSE)")
+  }
+
+
   if(Pooled){
 
     if(Hybrid_Fit){
