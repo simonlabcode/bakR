@@ -71,8 +71,8 @@
 #'  reference sample for each feature. This dataframe also includes p-values obtained from a moderated t-test. The columns of this
 #'  dataframe are:
 #'  \itemize{
-#'   \item Genes_effects; Numerical ID of feature
-#'   \item Condition_effects; Numerical ID for experimental condition (Exp_ID from metadf)
+#'   \item Feature_ID; Numerical ID of feature
+#'   \item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
 #'   \item L2FC_kdegs; L2FC(kdeg) estimate
 #'   \item effects; Change in logit(fraction) new comparing reference and experimental sample(s)
 #'   \item ses; Uncertainty in effect size
@@ -90,9 +90,9 @@
 #'  \item Fn_Estimates; dataframe with estimates of the logit(fraction new) for each feature in each replicate.
 #'  The columns of this dataframe are:
 #'  \itemize{
-#'   \item Condition; Numerical ID for experimental condition (Exp_ID from metadf)
+#'   \item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
 #'   \item Replicate; Numerical ID for replicate
-#'   \item Gene_ID; Numerical ID for feature
+#'   \item Feature_ID; Numerical ID for feature
 #'   \item logit_fn; Logit(fraction new) posterior mean
 #'   \item logit_fn_se; Logit(fraction new) posterior standard deviation
 #'   \item sample; Sample name
@@ -239,22 +239,22 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FAL
   Kdeg_df <- data.frame(F_ID_kd, Exp_ID_kd, kdeg, kdeg_sd)
   Fn_df <- data.frame(F_ID_fn, Exp_ID_fn, R_ID_fn, logit_fn, fn_se)
 
-  colnames(Effects_df) <- c("Genes_effects", "Condition_effects", "L2FC_kdegs", "L2FC_kd_sds", "effects", "ses")
+  colnames(Effects_df) <- c("Feature_ID", "Exp_ID", "L2FC_kdeg", "L2FC_kd_sd", "effect", "se")
   colnames(Kdeg_df) <- c("Feature_ID", "Exp_ID", "kdeg", "kdeg_sd")
-  colnames(Fn_df) <- c("Gene_ID", "Condition", "Replicate", "logit_fn", "logit_fn_se")
+  colnames(Fn_df) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se")
 
-  Fn_df <- merge(Fn_df, data_list$sample_lookup, by.x = c("Condition", "Replicate"), by.y = c("mut", "reps"))
+  Fn_df <- merge(Fn_df, data_list$sample_lookup, by.x = c("Exp_ID", "Replicate"), by.y = c("mut", "reps"))
 
-  Fn_df <- Fn_df[order(Fn_df$Gene_ID, Fn_df$Condition, Fn_df$Replicate),]
+  Fn_df <- Fn_df[order(Fn_df$Feature_ID, Fn_df$Exp_ID, Fn_df$Replicate),]
 
   ## Add original gene name info
   sdf <- data_list$sdf[,c("XF", "fnum")] %>% dplyr::distinct()
 
-  Fn_df <- merge(Fn_df, sdf, by.x = c("Gene_ID"), by.y = "fnum")
+  Fn_df <- merge(Fn_df, sdf, by.x = c("Feature_ID"), by.y = "fnum")
 
   Kdeg_df <- merge(Kdeg_df, sdf, by.x = c("Feature_ID"), by.y = "fnum")
 
-  Effects_df <- merge(Effects_df, sdf, by.x = c("Genes_effects"), by.y = "fnum")
+  Effects_df <- merge(Effects_df, sdf, by.x = c("Feature_ID"), by.y = "fnum")
 
   if(keep_fit == FALSE){
     fit_summary <- as.data.frame(rstan::summary(fit)$summary)

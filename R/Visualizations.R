@@ -8,16 +8,16 @@
 FnPCA <- function(obj, ...){
   ### Extract logit(fn)
 
-  logit_fn_df <- obj$Fn_Estimates[,c("logit_fn", "Gene_ID", "Condition", "Replicate", "sample")]
+  logit_fn_df <- obj$Fn_Estimates[,c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")]
 
   ### Create sample to [MT, R] lookup table
 
-  sample_lookup <- logit_fn_df[,c("sample", "Condition", "Replicate")] %>% dplyr::distinct()
+  sample_lookup <- logit_fn_df[,c("sample", "Exp_ID", "Replicate")] %>% dplyr::distinct()
 
 
   ### Create logit_fn matrix
 
-  logit_fn_mat <- matrix(0, ncol = nrow(sample_lookup), nrow = max(logit_fn_df$Gene_ID))
+  logit_fn_mat <- matrix(0, ncol = nrow(sample_lookup), nrow = max(logit_fn_df$Feature_ID))
 
   count <- 1
   for(i in sample_lookup$sample){
@@ -42,7 +42,7 @@ FnPCA <- function(obj, ...){
   fn_PC1 <- fn_eigenvect[,c("PC1")]
   fn_PC2 <- fn_eigenvect[,c("PC2")]
 
-  Exp_ID <- as.factor(rep(1:max(sample_lookup$Condition), each = max(sample_lookup$Replicate)))
+  Exp_ID <- as.factor(rep(1:max(sample_lookup$Exp_ID), each = max(sample_lookup$Replicate)))
 
 
   fn_pca_df <- data.frame(PC1 = fn_PC1,
@@ -73,23 +73,23 @@ FnPCA <- function(obj, ...){
 #' @param Exp_shape Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot
 plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
   ## Extract L2FC(kdeg) and padj
-  L2FC_df <- obj$Effects_df[,c("L2FC_kdegs", "padj", "Condition_effects")]
+  L2FC_df <- obj$Effects_df[,c("L2FC_kdeg", "padj", "Exp_ID")]
 
   ## Add significance ID
-  L2FC_df <- L2FC_df %>% dplyr::mutate(conclusion = ifelse(padj < FDR, ifelse(L2FC_kdegs < 0, "Stabilized", "Destabilized"), "Not Sig."))
+  L2FC_df <- L2FC_df %>% dplyr::mutate(conclusion = ifelse(padj < FDR, ifelse(L2FC_kdeg < 0, "Stabilized", "Destabilized"), "Not Sig."))
 
   if(is.null(Exps)){
-    Exps <- 2:max(as.integer(L2FC_df$Condition_effects))
+    Exps <- 2:max(as.integer(L2FC_df$Exp_ID))
   }
 
   if(Exp_shape){
-    ggplot2::ggplot(L2FC_df[L2FC_df$Condition_effects %in% Exps, ], ggplot2::aes(x = L2FC_kdegs,y = -log10(padj), color = conclusion,  shape = as.factor(Condition_effects))) +
+    ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = L2FC_kdeg,y = -log10(padj), color = conclusion,  shape = as.factor(Exp_ID))) +
       ggplot2::geom_point(size = 1.5) +
       ggplot2::theme_classic() +
       ggplot2::xlab("L2FC(kdeg)") +
       ggplot2::ylab("-log10(padj)")
   }else{
-    ggplot2::ggplot(L2FC_df[L2FC_df$Condition_effects %in% Exps, ], ggplot2::aes(x = L2FC_kdegs,y = -log10(padj), color = conclusion )) +
+    ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = L2FC_kdeg,y = -log10(padj), color = conclusion )) +
       ggplot2::geom_point(size = 1.5) +
       ggplot2::theme_classic() +
       ggplot2::xlab("L2FC(kdeg)") +

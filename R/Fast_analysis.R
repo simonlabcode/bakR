@@ -704,18 +704,20 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
 
   Effect_sizes_df <- data.frame(Genes_effects, Condition_effects, L2FC_kdegs, effects, ses, pval, padj)
 
+  colnames(Effect_sizes_df) <- c("Feature_ID", "Exp_ID", "L2FC_kdeg", "effect", "se", "pval", "padj")
+
   # Add sample information to output
   df_fn <- merge(df_fn, sample_lookup, by.x = c("Condition", "Replicate"), by.y = c("mut", "reps"))
 
   # Add feature name information to output
   df_fn <- merge(df_fn, feature_lookup, by.x = "Gene_ID", by.y = "fnum")
   avg_df_fn_bayes <- merge(avg_df_fn_bayes, feature_lookup, by.x = "Gene_ID", by.y = "fnum")
-  Effect_sizes_df <- merge(Effect_sizes_df, feature_lookup, by.x = "Genes_effects", by.y = "fnum")
+  Effect_sizes_df <- merge(Effect_sizes_df, feature_lookup, by.x = "Feature_ID", by.y = "fnum")
 
   # Order output
   df_fn <- df_fn[order(df_fn$Gene_ID, df_fn$Condition, df_fn$Replicate),]
   avg_df_fn_bayes <- avg_df_fn_bayes[order(avg_df_fn_bayes$Gene_ID, avg_df_fn_bayes$Condition),]
-  Effect_sizes_df <- Effect_sizes_df[order(Effect_sizes_df$Genes_effects, Effect_sizes_df$Condition_effects),]
+  Effect_sizes_df <- Effect_sizes_df[order(Effect_sizes_df$Feature_ID, Effect_sizes_df$Exp_ID),]
 
 
   #hyperpars <- c(sdp, theta_o, var_pop, var_of_var, a_hyper, b_hyper)
@@ -723,6 +725,11 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
 
   avg_df_fn_bayes <- avg_df_fn_bayes[,c("Gene_ID", "Condition", "avg_logit_fn", "sd_logit_fn", "nreads", "sdp", "theta_o", "sd_post",
                                         "logit_fn_post", "kdeg", "kdeg_sd", "XF")]
+
+  colnames(avg_df_fn_bayes) <- c("Feature_ID", "Exp_ID", "avg_logit_fn", "sd_logit_fn", "nreads", "sdp", "theta_o", "sd_post",
+                                 "logit_fn_post", "kdeg", "kdeg_sd", "XF")
+
+  colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se", "fn_estimate", "nreads", "sample", "XF")
 
   #fast_list <- list(estimate_df, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, hyperpars)
   fast_list <- list(df_fn, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, c(a = a_hyper, b = b_hyper), heterosked_lm)

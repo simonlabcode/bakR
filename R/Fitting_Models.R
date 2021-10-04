@@ -151,7 +151,7 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
       ## Calculate p-value using moderated t-test
       dfs <- 2*max(obj$Fast_Fit$Fn_Estimates$Replicate) - 2 + as.numeric(obj$Fast_Fit$Hyper_Parameters[1])
 
-      Effects <- Effects %>% dplyr::mutate(padj = 2*stats::pt(-abs(effects/ses), df = dfs))
+      Effects <- Effects %>% dplyr::mutate(padj = 2*stats::pt(-abs(effect/se), df = dfs))
 
       Stan_list$Effects_df <- Effects
 
@@ -168,19 +168,20 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       data_list <- list(
         NE = nrow(Rep_Fn),
-        NF = max(Rep_Fn$Gene_ID),
-        MT = Rep_Fn$Condition,
-        FE = Rep_Fn$Gene_ID,
+        NF = max(Rep_Fn$Feature_ID),
+        MT = Rep_Fn$Exp_ID,
+        FE = Rep_Fn$Feature_ID,
         tl = obj$Data_lists$Stan_data$tl,
         logit_fn_rep = Rep_Fn$logit_fn,
         fn_se = Rep_Fn$logit_fn_se,
         Avg_Reads = obj$Data_lists$Stan_data$Avg_Reads,
-        nMT = max(Rep_Fn$Condition),
+        nMT = max(Rep_Fn$Exp_ID),
         R = Rep_Fn$Replicate,
         nrep = max(Rep_Fn$Replicate),
         sample_lookup = obj$Data_lists$Stan_data$sample_lookup,
         sdf = obj$Data_lists$Stan_data$sdf
       )
+
 
       rm(Rep_Fn)
 
@@ -191,7 +192,7 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
       ## Calculate p-value using moderated t-test
       dfs <- 2*max(obj$Fast_Fit$Fn_Estimates$Replicate) - 2 + as.numeric(obj$Fast_Fit$Hyper_Parameters[1])
 
-      Effects <- Effects %>% dplyr::mutate(padj = 2*stats::pt(-abs(effects/ses), df = dfs))
+      Effects <- Effects %>% dplyr::mutate(padj = 2*stats::pt(-abs(effect/se), df = dfs))
 
       Stan_list$Effects_df <- Effects
 
@@ -200,6 +201,10 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
       class(Stan_list) <- "HybridModelFit"
 
       obj$Hybrid_Fit <- Stan_list
+    }
+
+    if(!(StanFit | HybridFit)){
+      stop("Either StanFit or HybridFit has to be true (or both).")
     }
 
     return(obj)

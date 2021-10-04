@@ -558,7 +558,6 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
   type_list <- rep(0, times=length(samp_list))
   mut_list <- rep(0, times = length(samp_list))
   rep_list <- rep(0, times = length(samp_list))
-  tl <- 1
   count <- 1
   for(i in samp_list){
     type_list[count] <- unique(cB_sim_1$TP[cB_sim_1$S == i])
@@ -570,7 +569,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
 
   colnames(cB_sim_1) <- c("sample", "TP", "R", "MIR", "TC", "MT", "nT", "n", "XF")
 
-  metadf <- data.frame(tl = type_list, Exp_ID = as.integer(mut_list))
+  metadf <- data.frame(tl = type_list*tl, Exp_ID = as.integer(mut_list))
 
   rownames(metadf) <- unique(cB_sim_1$sample)
 
