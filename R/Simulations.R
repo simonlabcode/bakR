@@ -1,5 +1,30 @@
 
-#' Simulating Nucleotide Recoding Data
+#' Simulating nucleotide recoding data
+#'
+#' \code{sim_DynamicSeqData} simulated a `DynamicSeqData` object. It's output also includes the simulated
+#' values of all kinetic parameters of interest. Only the number of genes (\code{ngene}) has to be set by the
+#' user, but an extensive list of additional parameters can be adjusted.
+#'
+#' \code{sim_DynamicSeqData} simulates a `DynamicSeqData` object using an extensive list of
+#' adjustable parameters. Average RNA kinetic parameters are drawn from biologically inspired
+#' distributions. Replicate variability is simulated by drawing each replicate and feature's
+#' fraction labeled (aka fraction new) from a Logit-Normal distribution with a heteroskedastic
+#' variance term with average magnitude given by a read count vs. variance relationship, and each
+#' replicate and feature's ksyn from a homoskedastic lognormal distribution. Read counts
+#' can either be set to the same value for all simulated features or can be simulated according to
+#' a heterodisperse negative binomial distribution.
+#'
+#' The number of Us in each sequencing read is drawn from a binomial distribution with number of trials
+#' equal to the read length and probability of each nucleotide being a U of 0.25. Each read is assigned to the
+#' labeled or unlabeled population according to a Bernoulli distribution with p = fraction new. The number of
+#' mutations in each read are then drawn from one of two binomial distributions; if the read is assigned to the
+#' labeled population, the number of mutations are drawn from a binomial distribution with number of trials equal
+#' to the number of Us and probability of mutation = \code{p_new}; if the read is assigned to the unlabeled population,
+#' the number of mutations is instead drawn from a binomial distribution with the same number of trials but with the probability
+#' of mutation = \code{p_old}.
+#'
+#' Simulated read counts should be treated as if they are spike-in and RPKM normalized, so the same scale factor can be applied
+#' to each sample when comparing the sequencing reads (like if you are performing differential expression analysis).
 #'
 #' Function to simulate a DynamicSeqData object according to a heteroskedastic beta-binomial model
 #' of the fraction new.
@@ -30,6 +55,21 @@
 #' @param a0 High read depth limit of negative binomial dispersion parameter
 #' @param nread Number of reads simulated if sim_read_counts is FALSE
 #' @export
+#' @return A list containing a simulated `DynamicSeqData` object as well as a list of simulated kinetic parameters of interest.
+#' The contents of the latter list are:
+#' \itemize{
+#'  \item L2FC_kd_mean; The true L2FC(kdeg) for each feature in each experimental condition. The ith column corresponds to the L2FC(kdeg) when comparing
+#'  the ith condition to the reference condition (defined as the 1st condition) so the 1st column is always all 0s
+#'  \item fn_mean; True fraction new for each feature in each experimental condition.
+#'  \item fn_true; The fraction new used for each replicate of each feature in each experimental condition. These are generated using a heteroskedastic
+#'  logit-normal distribution, with variance depending on the abundance of the feature (greater RNA concentration = less variability)
+#'  \item effect_mean; The true change in logit(fraction new) for each feature in each experimental condition. The ith column corresponds to the
+#'  change in logit(fraction new) when comparing the ith condition to the reference condition (defined as the 1st condition), so the 1st column is
+#'  always all 0s
+#'  \item L2FC_ks_mean; The true L2FC(ksyn) for each feature in each experimental condition. The ith column corresponds to the L2FC(ksyn) when comparing
+#'  the ith condition to the reference condition (defined as the 1st condition) so the 1st column is always all 0s
+#'  \item RNA_conc; The average number of normalized read counts expected for each feature in each sample.
+#' }
 #'
 sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, eff_mean = 0,
                                tl = 1, p_new = 0.05, p_old = 0.001, read_lengths = 200,
@@ -315,7 +355,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
                                    fn_true = fn_real,
                                    effect_mean = effect_mean,
                                    L2FC_ks_mean = L2FC_ks_mean,
-                                   RNA_conc = RNA_conc) )
+                                   RNA_conc = RNA_conc*scale_factor) )
 
   return(sim_data)
 
