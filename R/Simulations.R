@@ -73,7 +73,7 @@
 #' }
 #'
 sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, eff_mean = 0,
-                               tl = 1, p_new = 0.05, p_old = 0.001, read_lengths = 200,
+                               tl = 60, p_new = 0.05, p_old = 0.001, read_lengths = 200,
                                p_do = 0, noise_deg_a = -0.3, noise_deg_b = -1.5, noise_synth = 0.1, sd_rep = 0.05,
                                low_L2FC_ks = -1, high_L2FC_ks = 1,
                                num_kd_DE = c(0, rep(round(ngene/2), times = num_conds-1)),
@@ -81,6 +81,153 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
                                scale_factor = 100,
                                sim_read_counts = TRUE, a1 = 5, a0 = 0.01,
                                nreads = 50){
+
+
+  ### Catch non-sensical values in all inputs
+
+  # Number of experimental conditions
+  if(num_conds < 1){
+    stop("num_conds must be > 0; it represents the number of experimental conditions")
+  }else if(num_conds == 1){
+    warning("You are only simluating a reference condition with no experimental conditions.")
+  }
+
+  # Number of replicates
+  if(nreps < 1){
+    stop("nreps must be > 0; it represents the number of replicates")
+  }else if(nreps == 1){
+    warning("You are only simulating a single replicate, which might represent an unrealistic experiment")
+  }
+
+  # Effect size distribution standard deviation
+  if(eff_sd <= 0){
+    stop("eff_sd must be > 0; it will be the sd parameter of a call to rnorm when simulating effect sizes")
+  }else if (eff_sd > 4){
+    warning("You are simulating an unusually large eff_sd (> 4)")
+  }
+
+  # Label time
+  if(tl <= 0){
+    stop("tl must be > 0; it represents the label time in minutes.")
+  }else if(tl < 30){
+    warning("You are simulating an unusually short label time (< 30 minutes)")
+  }else if(tl > 480){
+    warning("You are simulating an unusually long label time (> 8 hours)")
+  }
+
+  # s4U mutation rate
+  if(!all(p_new > 0)){
+    stop("p_new must be > 0; it represents the mutation rate of s4U labeled transcripts")
+  }else if(!all(p_new <= 1)){
+    stop("p_new must be <= 1; it represents the mutation rate of s4U labeled transcripts")
+  }else if(!all(p_new < 0.2)){
+    warning("You have simulated an unusually large s4U induced mutation rate (>= 0.2)")
+  }else if(!all((p_new - p_old) > 0)){
+    stop("All p_new must be > p_old, since the background mutation rate (p_old) should always be less than the labeled mutation rate (p_new)")
+  }
+
+  # Background mutation rate
+  if(!all(p_old > 0)){
+    stop("p_old must be > 0; it represents the background mutation rate")
+  }else if(!all(p_old <= 1)){
+    stop("p_old must be <= 1; it represents the background mutation rate")
+  }else if(!all(p_old < 0.01)){
+    warning("You have simulated an unusually large background mutation rate (>= 0.01)")
+  }
+
+  # Read length
+  if(!all(read_lengths > 0)){
+    stop("read_lengths must be > 0; it represents the total length of sequencing reads")
+  }else if(!all(read_lengths >= 20)){
+    warning("You have simulated an unusually short read length (< 20 nucleotides)")
+  }
+
+  # Dropout probability
+  if(!all(p_do <= 1)){
+    stop("p_do must be <= 1; it represents the percentage of s4U containing RNA lost during library prep")
+  }else if(!all(p_do >= 0)){
+    stop("p_do must be >= 0; it represents the percentage of s4U containing RNA lost during library prep")
+  }else if(!all(p_do == 0)){
+    warning("You are simulating dropout; statistical models implemented by DynamicSeq do not correct for dropout and thus will provide biased estimates")
+  }
+
+  # Heteroskedastic Slope
+  if(noise_deg_a > 0){
+    stop("noise_deg_a must be < 0; it represents the slope of the log10(read depth) vs. log(replicate variability) trend")
+  }else if(noise_deg_a == 0){
+    warning("You are simulating fraction new homoskedasticity, which is not reflective of actual nucleotide recoding data")
+  }
+
+  # Synthesis variability
+  if(noise_synth < 0){
+    stop("noise_synth must be >= 0; it represents the homoskeastic variability in the synthesis rate")
+  }
+
+  # Replicate variability variability
+  if(sd_rep < 0){
+    stop("sd_rep must be >= 0; it represents the sdlog parameter of the log-normal distribution from which replicate variabilites are simulated")
+  }else if(sd_rep == 0){
+    warning("You are simulating no variability in the replicate variability. This can cause minor convergence issues in the completely hierarchical
+            models implemented by DynamicSeq.")
+  }
+
+  # L2FC(ksyn) Bounds
+  if(high_L2FC_ks < low_L2FC_ks){
+    stop("high_L2FC_ks must be greater than low_L2FC_ks; they represent the upper and lower bound of a uniform distribution respectively")
+  }
+
+  # Number of differentially stabilized features
+  if (length(num_kd_DE) > num_conds){
+    stop("num_kd_DE has too many elements; it should be a vector of length == num_conds")
+  }else if (length(num_kd_DE) < num_conds){
+    stop("num_kd_DE has too few elements; it should be a vector of length == num_conds")
+  }else if(num_kd_DE[1] != 0){
+    stop("The 1st element of num_kd_DE must equal 0 by definition, as it represents the number of features differentially stabilized in the reference
+         condition relative to the reference condition")
+  }else if(!all(num_kd_DE <= ngene)){
+    stop("Not all elements of num_kd_DE are less than or equal to the total number of simulated features")
+  }else if(!all(num_kd_DE >= 0)){
+    stop("Not all elements of num_kd_DE are > 0")
+  }
+
+  # Number of differentially synthesized features
+  if (length(num_ks_DE) > num_conds){
+    stop("num_ks_DE has too many elements; it should be a vector of length == num_conds")
+  }else if (length(num_ks_DE) < num_conds){
+    stop("num_ks_DE has too few elements; it should be a vector of length == num_conds")
+  }else if(num_ks_DE[1] != 0){
+    stop("The 1st element of num_ks_DE must equal 0 by definition, as it represents the number of features differentially stabilized in the reference
+         condition relative to the reference condition")
+  }else if(!all(num_ks_DE <= ngene)){
+    stop("Not all elements of num_ks_DE are less than or equal to the total number of simulated features")
+  }else if(!all(num_ks_DE >= 0)){
+    stop("Not all elements of num_ks_DE are > 0")
+  }
+
+  # Scale factor
+  if(scale_factor <=0){
+    stop("scale_factor must be > 0; it represents the factor by which the RNA concentration is multiplied to yield the average number of sequencing reads")
+  }else if(scale_factor < 10){
+    warning("You are simulating an unusually low scale_factor (< 10); small scale factors will lead to low read counts.")
+  }
+
+  # Simulate read count Boolean
+  if(!is.logical(sim_read_counts)){
+    stop("sim_read_counts must be a logical (TRUE or FALSE); if TRUE, read counts will be drawn from a heterodisperse negative binomial distribution")
+  }else if(sim_read_counts){
+    if(nreads <= 0){
+      stop("nreads must be > 0; it represents the number of sequencing reads to be simulated for all features")
+    }
+  }
+
+  # Heterodispersion parameters
+  if(a1 < 0){
+    stop("a1 must be >= 0; it relates the average read count to the negative binomial dispersion parameter")
+  }else if(a0 <= 0){
+    stop("a0 must be > 0; it represents the high read count limit of the negative binomial dispersion parameter")
+  }
+
+
 
   if(length(p_new) ==1){
     p_new <- rep(p_new, times=num_conds)
@@ -129,19 +276,15 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
     #number of significant genes
     if (i == 1 ){
       if (length(num_kd_DE) > num_conds){
-        print("num_kd_DE has too many elements")
-        break
+        stop("num_kd_DE has too many elements")
       } else if (length(num_kd_DE) < num_conds){
-        print("num_kd_DE has too few elements")
-        break
+        stop("num_kd_DE has too few elements")
       }
 
       if (length(num_ks_DE) > num_conds){
-        print("num_ks_DE has too many elements")
-        break
+        stop("num_ks_DE has too many elements")
       } else if (length(num_ks_DE) < num_conds){
-        print("num_ks_DE has too few elements")
-        break
+        stop("num_ks_DE has too few elements")
       }
     }
 
