@@ -44,6 +44,7 @@
 #' @param noise_deg_a Slope of trend relating log10(standardized read counts) to log(replicate variability)
 #' @param noise_deg_b Intercept of trend relating log10(standardized read counts) to log(replicate variability)
 #' @param noise_synth Homoskedastic variability of L2FC(ksyn)
+#' @param sd_rep Variance of lognormal distribution from which replicate variability is drawn
 #' @param low_L2FC_ks Most negative L2FC(ksyn) that can be simulated
 #' @param high_L2FC_ks Most positive L2FC(ksyn) that can be simulated
 #' @param num_kd_DE Vector where each element represents the number of genes that show a significant change in stability relative
@@ -73,7 +74,7 @@
 #'
 sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, eff_mean = 0,
                                tl = 1, p_new = 0.05, p_old = 0.001, read_lengths = 200,
-                               p_do = 0, noise_deg_a = -0.3, noise_deg_b = -1.5, noise_synth = 0.1,
+                               p_do = 0, noise_deg_a = -0.3, noise_deg_b = -1.5, noise_synth = 0.1, sd_rep = 0.05,
                                low_L2FC_ks = -1, high_L2FC_ks = 1,
                                num_kd_DE = c(0, rep(round(ngene/2), times = num_conds-1)),
                                num_ks_DE = rep(0, times = num_conds),
@@ -203,7 +204,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
     for(j in 1:num_conds){
       for(k in 1:nreps){
         standard_RNA <- (log10(RNA_conc[i,j]*scale_factor) - mean(log10(RNA_conc[,j]*scale_factor)))/stats::sd(log10(RNA_conc[,j]*scale_factor))
-        fn[i, j, k] <- inv_logit(rnorm(1, mean=(logit(fn_mean[i]) + effect_mean[i,j]), sd = exp(noise_deg_a*log10(RNA_conc[i,j]*scale_factor) + noise_deg_b )))
+        fn[i, j, k] <- inv_logit(rnorm(1, mean=(logit(fn_mean[i]) + effect_mean[i,j]), sd = stats::rlnorm(1, noise_deg_a*log10(RNA_conc[i,j]*scale_factor) + noise_deg_b, sd_rep )))
         ks[i,j,k] <- exp(stats::rnorm(1, mean=log((2^L2FC_ks_mean[i,j])*ks_mean[i]), sd=noise_synth))
       }
     }
