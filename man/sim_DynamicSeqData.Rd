@@ -6,27 +6,29 @@
 \usage{
 sim_DynamicSeqData(
   ngene,
-  num_conds = 2,
-  nreps = 3,
+  num_conds = 2L,
+  nreps = 3L,
   eff_sd = 0.75,
   eff_mean = 0,
-  tl = 1,
+  tl = 60,
   p_new = 0.05,
   p_old = 0.001,
-  read_lengths = 200,
+  read_lengths = 200L,
   p_do = 0,
   noise_deg_a = -0.3,
   noise_deg_b = -1.5,
   noise_synth = 0.1,
+  sd_rep = 0.05,
   low_L2FC_ks = -1,
   high_L2FC_ks = 1,
-  num_kd_DE = c(0, rep(round(ngene/2), times = num_conds - 1)),
-  num_ks_DE = rep(0, times = num_conds),
+  num_kd_DE = c(0L, as.integer(rep(round(as.integer(ngene)/2), times =
+    as.integer(num_conds) - 1))),
+  num_ks_DE = rep(0L, times = as.integer(num_conds)),
   scale_factor = 100,
   sim_read_counts = TRUE,
   a1 = 5,
   a0 = 0.01,
-  nreads = 50
+  nreads = 50L
 )
 }
 \arguments{
@@ -58,6 +60,8 @@ to draw from a continuous random number generator. Setting this to 0 just means 
 \item{noise_deg_b}{Intercept of trend relating log10(standardized read counts) to log(replicate variability)}
 
 \item{noise_synth}{Homoskedastic variability of L2FC(ksyn)}
+
+\item{sd_rep}{Variance of lognormal distribution from which replicate variability is drawn}
 
 \item{low_L2FC_ks}{Most negative L2FC(ksyn) that can be simulated}
 
@@ -96,7 +100,7 @@ the ith condition to the reference condition (defined as the 1st condition) so t
 }
 }
 \description{
-\code{sim_DynamicSeqData} simulated a \code{DynamicSeqData} object. It's output also includes the simulated
+\code{sim_DynamicSeqData} simulates a \code{DynamicSeqData} object. It's output also includes the simulated
 values of all kinetic parameters of interest. Only the number of genes (\code{ngene}) has to be set by the
 user, but an extensive list of additional parameters can be adjusted.
 }
