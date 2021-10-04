@@ -44,9 +44,6 @@
 #' adjusted Poisson model to estimate fraction news while also using hierarchical modeling to partially pool information across
 #' replicates and the entire dataset.
 #'
-#' Since \code{fast_analysis} relies on -s4U control data to estimate background mutation rates, user inputted mutation rate
-#' estimates will have to be provided if such a control is not present. If the -s4U control is absent and no mutation rate
-#' estimate is inputted, an error will be thrown.
 #'
 #' @param obj DynamicSeqData object produced by \code{DynamicSeqData} or a DynamicSeqFit object produced by \code{DynamicFit}
 #' @param StanFit Logical; if TRUE, then Fully Bayesian Hierarchical model is implemented to estimate fraction news and pool information
