@@ -72,7 +72,7 @@
 #'  \item RNA_conc; The average number of normalized read counts expected for each feature in each sample.
 #' }
 #'
-sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_mean = 0,
+sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_mean = 0, fn_sd = 1,
                                tl = 60, p_new = 0.05, p_old = 0.001, read_lengths = 200L,
                                p_do = 0, noise_deg_a = -0.3, noise_deg_b = -1.5, noise_synth = 0.1, sd_rep = 0.05,
                                low_L2FC_ks = -1, high_L2FC_ks = 1,
@@ -131,6 +131,16 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
     stop("eff_sd must be > 0; it will be the sd parameter of a call to rnorm when simulating effect sizes")
   }else if (eff_sd > 4){
     warning("You are simulating an unusually large eff_sd (> 4)")
+  }
+
+
+  # Fraction new distribution sd
+  if(!is.numeric(fn_sd)){
+    stop("fn_sd must be numeric")
+  }else if(fn_sd <= 0){
+    stop("fn_sd must be > 0; it will be the sd parameter of a call to rnorm when simulating reference fraction news")
+  }else if (fn_sd > 2){
+    warning("You are simulating an unusually large fn_sd (> 2). This will lead to lots of extreme fraction news (close to 0 and 1).")
   }
 
   # Label time
@@ -346,7 +356,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
 
 
   #Initialize vectors of mean values for each gene and condition
-  fn_mean <- inv_logit(rnorm(n=ngene, mean=0, sd=1.5))
+  fn_mean <- inv_logit(rnorm(n=ngene, mean=0, sd=fn_sd))
   kd_mean <- -log(1-fn_mean)/tl
   ks_mean <- rexp(n=ngene, rate=1/(kd_mean*5))
 

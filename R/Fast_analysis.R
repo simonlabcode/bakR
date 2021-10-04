@@ -603,6 +603,14 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
 
 
   logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
+
+  if(!(all(logit_fn < upper) & all(logit_fn > lower))){
+    num_unstable <- sum(logit_fn >= upper) + sum(logit_fn <= lower)
+    warning(paste0(num_unstable, " logit(fn) estimates are at the upper or lower bounds set. These represent numerical instabilities
+                   due to either the presence of limited data or extremely stable/unstable features. If the number of instabilities is
+                   concerning, try increasing the magnitude of upper and lower."))
+  }
+
   fn_estimate <- as.vector(Mut_data_est$Fn_rep_est)
   # fn_se <- as.vector(Mut_data_est$fn_se)
   logit_fn_se <- as.vector(Mut_data_est$logit_fn_se)
