@@ -230,12 +230,16 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
   ## Check pold
   if(length(pold) > 1){
     stop("pold must be NULL or length 1")
-  }else if(!is.numeric(pold)){
-    stop("pold must be numeric")
-  }else if(pold < 0){
-    stop("pold must be >= 0")
-  }else if(pold > 1){
-    stop("pold must be <= 1")
+  }
+
+  if(!is.null(pold)){
+    if(!is.numeric(pold)){
+      stop("pold must be numeric")
+    }else if(pold < 0){
+      stop("pold must be >= 0")
+    }else if(pold > 1){
+      stop("pold must be <= 1")
+    }
   }
 
   nMT <- max(df$mut)
@@ -278,15 +282,18 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
   }
 
   ## Check nbin
-  if(!is.numeric(nbin)){
-    stop("nbin must be numeric")
-  }else if(!is.integer(nbin)){
-    nbin <- as.integer(nbin)
+  if(!is.null(nbin)){
+    if(!is.numeric(nbin)){
+      stop("nbin must be numeric")
+    }else if(!is.integer(nbin)){
+      nbin <- as.integer(nbin)
+    }
+
+    if(nbin <= 0){
+      stop("nbin must be > 0 and is preferably greater than or equal to 10")
+    }
   }
 
-  if(nbin <= 0){
-    stop("nbin must be > 0 and is preferably greater than or equal to 10")
-  }
 
   ## Check prior_weight
   if(!is.numeric(prior_weight)){
@@ -533,7 +540,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
       return(-logl)
     }
 
-    Mut_data_est <- Mut_data %>% ungroup() %>% dplyr::mutate(lam_n = pnew*nT, lam_o = pold*nT) %>%
+    Mut_data_est <- Mut_data %>% dplyr::ungroup() %>% dplyr::mutate(lam_n = pnew*nT, lam_o = pold*nT) %>%
       dplyr::group_by(fnum, mut, reps, TC) %>%
       dplyr::summarise(lam_n = sum(lam_n*n)/sum(n), lam_o = sum(lam_o*n)/sum(n),
                        n = sum(n), .group = "keep") %>%
@@ -553,7 +560,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
 
   ## Estimate Fisher Info and uncertainties
   ## Could make more efficient by summarizing over nT info and using U_content to adjust pnew*avg_U
-  Mut_data <- Mut_data %>% ungroup() %>%
+  Mut_data <- Mut_data %>% dplyr::ungroup() %>%
     dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep) %>%
     dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
     dplyr::mutate(Exp_l_fn = exp(logit_fn_rep)) %>%

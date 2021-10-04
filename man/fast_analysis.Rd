@@ -22,7 +22,10 @@ fast_analysis(
 \arguments{
 \item{df}{Dataframe in form provided by cB_to_Fast}
 
-\item{pnew}{Labeled read mutation rate; default of 0 means that model estimates rate from s4U fed data}
+\item{pnew}{Labeled read mutation rate; default of 0 means that model estimates rate from s4U fed data. If pnew is provided by user, must be  a vector
+of length == number of s4U fed samples. The 1st element corresponds to the s4U induced mutation rate estimate for the 1st replicate of the 1st
+experimental condition; the 2nd element corresponds to the s4U induced mutation rate estimate for the 2nd replicate of the 1st experimental condition,
+etc.}
 
 \item{pold}{Unlabeled read mutation rate; default of 0 means that model estimates rate from no-s4U fed data}
 
