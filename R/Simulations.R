@@ -1,7 +1,7 @@
 
 #' Simulating nucleotide recoding data
 #'
-#' \code{sim_DynamicSeqData} simulated a `DynamicSeqData` object. It's output also includes the simulated
+#' \code{sim_DynamicSeqData} simulates a `DynamicSeqData` object. It's output also includes the simulated
 #' values of all kinetic parameters of interest. Only the number of genes (\code{ngene}) has to be set by the
 #' user, but an extensive list of additional parameters can be adjusted.
 #'
