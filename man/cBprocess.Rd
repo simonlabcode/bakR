@@ -67,6 +67,31 @@ sample names and row names are the corresponding feature names.
 }
 }
 \description{
-This function obtains the data structures necessary to analyze nucleotide recoding sequencing data with any of the
-statistical models implemented by \code{DynamicSeqFit}.
+\code{cBprocess} obtains the data structures necessary to analyze nucleotide recoding sequencing data with any of the
+statistical models implemented by \code{DynamicSeqFit}. The input to \code{cBprocess} must be an object of class
+\code{DynamicSeqData}. The output can contain data passable to \code{fast_analysis} (if Fast == TRUE), \code{TL_stan} with StanFit = TRUE if
+Stan == TRUE, or both.
+}
+\details{
+The 1st step executed by \code{cBprocess} is to find the names of features which are deemed "reliable". A reliable feature is one with
+sufficient read coverage in every single sample (i.e., > keep_input\link{2} reads in all samples) and limited mutation content in all -s4U
+control samples (i.e., < keep_input\link{1} mutation rate in all samples lacking s4U feeds). This is done with a call to \code{reliableFeatures}.
+The 2nd step is to extract only reliableFeatures from the cB dataframe in the \code{DynamicSeqData} object. During this process, a numerical
+ID is given to each reliableFeature, with the numerical ID corresponding to the order in which each feature is found in the original cB
+(this might typically be alphabetical order).
+
+The 3rd step is to prepare a dataframe where each row corresponds to a set of n identical reads (that is they come from the same sample
+and have the same number of mutations and Us). Part of this process involves assigning an arbitrary numerical ID to each replicate in each
+experimental condition. The numerical ID will correspond to the order the sample appears in metadf. The outcome of this step is multiple
+dataframes with variable information content. These include a dataframe with information about read counts in each sample, one which logs
+the U-contents of each feature, one which is compatible with \code{fast_analysis} and thus groups reads by their number of mutations as
+well as their number of Us, and one which is compatible with \code{TL_stan} with StanFit == TRUE and thus groups ready by only their number
+of mutations. At the end of this step, two other smaller data structures are created, one which is an average count matrix (a count matrix
+where the ith row and jth column corresponds to the average number of reads mappin to feature i in experimental condition j, averaged over
+all replicates) and the other which is a sample lookup table that relates the numerical experimental and replicate IDs to the original
+sample name.
+
+If FOI is non-null and concat == TRUE, the features listed in FOI will be included in the list of reliable features that make it past
+filtering. If FOI is non-null and concat == FALSE, the features listed in FOI will be the only reliable features that make it past filtering.
+If FOI is null and concat == FALSE, an error will be thrown.
 }

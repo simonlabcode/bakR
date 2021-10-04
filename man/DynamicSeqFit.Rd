@@ -6,7 +6,7 @@
 \usage{
 DynamicSeqFit(
   obj,
-  StanFit = TRUE,
+  StanFit = FALSE,
   HybridFit = FALSE,
   keep_input = c(0.2, 50),
   Stan_prep = TRUE,
