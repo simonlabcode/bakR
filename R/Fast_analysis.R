@@ -158,7 +158,10 @@ cBtofast <- function(cB_raw,
 #'
 #'
 #' @param df Dataframe in form provided by cB_to_Fast
-#' @param pnew Labeled read mutation rate; default of 0 means that model estimates rate from s4U fed data
+#' @param pnew Labeled read mutation rate; default of 0 means that model estimates rate from s4U fed data. If pnew is provided by user, must be  a vector
+#' of length == number of s4U fed samples. The 1st element corresponds to the s4U induced mutation rate estimate for the 1st replicate of the 1st
+#' experimental condition; the 2nd element corresponds to the s4U induced mutation rate estimate for the 2nd replicate of the 1st experimental condition,
+#' etc.
 #' @param pold Unlabeled read mutation rate; default of 0 means that model estimates rate from no-s4U fed data
 #' @param no_ctl Logical; if TRUE, then -s4U control is not used for background mutation rate estimation
 #' @param read_cut Minimum number of reads for a given feature-sample combo to be used for mut rate estimates
@@ -223,6 +226,90 @@ cBtofast <- function(cB_raw,
 #' @importFrom magrittr %>%
 #' @export
 fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut = 50, features_cut = 10, nbin = NULL, prior_weight = 2, MLE = TRUE, lower = -7, upper = 7, se_max = 2.5){
+
+  ## Check pold
+  if(length(pold) > 1){
+    stop("pold must be NULL or length 1")
+  }else if(!is.numeric(pold)){
+    stop("pold must be numeric")
+  }else if(pold < 0){
+    stop("pold must be >= 0")
+  }else if(pold > 1){
+    stop("pold must be <= 1")
+  }
+
+  nMT <- max(df$mut)
+  nreps <- max(df$reps)
+
+  ## Check pnew
+  if(!is.null(pnew)){
+    if(!all(is.numeric(pnew))){
+      stop("All elements of pnew must be numeric")
+    }else if(length(pnew) != nMT*nreps){
+      stop("pnew must be a vector of length == number of s4U fed samples in dataset")
+    }else if(!all(pnew > 0)){
+      stop("All elements of pnew must be > 0")
+    }else if(!all(pnew <=1)){
+      stop("All elements of pnew must be <= 1")
+    }
+  }
+
+  ## Check no_ctl
+  if(!is.logical(no_ctl)){
+    stop("no_ctl must be logical (TRUE or FALSE)")
+  }
+
+  ## Check read_cut
+  if(!is.numeric(read_cut)){
+    stop("read_cut must be numeric")
+  }else if(read_cut < 0){
+    stop("read_cut must be >= 0")
+  }
+
+  ## Check read_cut
+  if(!is.numeric(features_cut)){
+    stop("features_cut must be numeric")
+  }else if(!is.integer(features_cut)){
+    features_cut <- as.integer(features_cut)
+  }
+
+  if(features_cut <= 0){
+    stop("features_cut must be > 0")
+  }
+
+  ## Check nbin
+  if(!is.numeric(nbin)){
+    stop("nbin must be numeric")
+  }else if(!is.integer(nbin)){
+    nbin <- as.integer(nbin)
+  }
+
+  if(nbin <= 0){
+    stop("nbin must be > 0 and is preferably greater than or equal to 10")
+  }
+
+  ## Check prior_weight
+  if(!is.numeric(prior_weight)){
+    stop("prior_weight must be numeric")
+  }else if(prior_weight < 1){
+    stop("prior_weight must be >= 1. The larger the value, the more each feature's fraction new uncertainty estimate is shrunk towards the
+         log10(read counts) vs. log(uncertainty) regression line.")
+  }
+
+
+  ## Check MLE
+  if(!is.logical(MLE)){
+    stop("MLE must be logical (TRUE or FALSE)")
+  }
+
+  ## Check lower and upper
+  if(!all(is.numeric(c(lower, upper)))){
+    stop("lower and upper must be numeric")
+  }else if(upper < lower){
+    stop("upper must be > lower. Upper and lower represent the upper and lower bounds used by stats::optim for MLE")
+  }
+
+
 
   logit <- function(x) log(x/(1-x))
   inv_logit <- function(x) exp(x)/(1+exp(x))
@@ -402,6 +489,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
 
   }
 
+  if(!all(New_data_estimate$pnew - pold > 0)){
+    stop("All pnew must be > pold; did you input an unusually large pold?")
+  }
 
   pmuts_list <- list(New_data_estimate, pold)
 
