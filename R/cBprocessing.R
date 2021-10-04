@@ -115,6 +115,50 @@ cBprocess <- function(obj,
                        Fast = TRUE,
                        FOI = c(),
                        concat = TRUE){
+
+  ## Check obj
+  if(class(obj) != "DynamicSeqData"){
+    stop("obj must be of class DynamicSeqData")
+  }
+
+  ## Check keep_input
+  if(!all(is.numeric(keep_input))){
+    stop("All elements of keep_input must be numeric")
+  }else if(length(keep_input) != 2){
+    stop("keep_input must be a vector of length 2. The 1st element should be a number between 0 and 1 representing the maximum acceptable mutation rate
+         in the no s4U control sample. The 2nd element should be anumber > 0 representing the read count cutoff for filtered features")
+  }else if(keep_input[1] < 0){
+    stop("1st element of keep_input must be >= 0")
+  }else if(keep_input[1] > 1){
+    stop("1st element of keep_input must be <= 1")
+  }else if(keep_input[2] < 0){
+    stop("2nd element of keep_input must be >= 0")
+  }
+
+  ## Check Stan
+  if(!is.logical(Stan)){
+    stop("Stan must be logical (TRUE or FALSE)")
+  }
+
+  ## Check Fast_prep
+  if(!is.logical(Fast)){
+    stop("Fast must be logical (TRUE or FALSE")
+  }
+
+  ## Check FOI
+  if(!is.null(FOI)){
+    if(typeof(obj$cB$XF) != typeof(FOI)){
+      warning("FOI should be the same data type as cB$XF in the DynamicSeqData object; if it is not none of the feature of interest will be found
+            in the cB.")
+    }
+  }
+
+  ## Check concat
+  if(!is.logical(concat)){
+    stop("concat must be logical (TRUE or FALSE)")
+  }
+
+
   cB <- obj$cB
   metadf <- obj$metadf
 
