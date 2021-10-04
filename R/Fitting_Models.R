@@ -69,13 +69,62 @@
 #'  \item Data_lists; Always will be present. Output of \code{cBprocess} with Fast and Stan == TRUE
 #' }
 #' @export
-DynamicSeqFit <- function(obj, StanFit = TRUE, HybridFit = FALSE,
+DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           keep_input = c(0.2, 50),
                           Stan_prep = TRUE,
                           Fast_prep = TRUE,
                           FOI = c(),
                           concat = TRUE,
                           ...){
+
+  ## Check StanFit
+  if(!is.logical(StanFit)){
+    stop("StanFit must be logical (TRUE or FALSE)")
+  }
+
+  ## Check HybridFit
+  if(!is.logical(HybridFit)){
+    stop("HybridFit must be logical (TRUE or FALSE")
+  }
+
+  ## Check keep_input
+  if(!all(is.numeric(keep_input))){
+    stop("All elements of keep_input must be numeric")
+  }else if(length(keep_input) != 2){
+    stop("keep_input must be a vector of length 2. The 1st element should be a number between 0 and 1 representing the maximum acceptable mutation rate
+         in the no s4U control sample. The 2nd element should be anumber > 0 representing the read count cutoff for filtered features")
+  }else if(keep_input[1] < 0){
+    stop("1st element of keep_input must be >= 0")
+  }else if(keep_input[1] > 1){
+    stop("1st element of keep_input must be <= 1")
+  }else if(keep_input[2] < 0){
+    stop("2nd element of keep_input must be >= 0")
+  }
+
+  ## Check Stan_prep
+  if(!is.logical(Stan_prep)){
+    stop("Stan_prep must be logical (TRUE or FALSE)")
+  }
+
+  ## Check Fast_prep
+  if(!is.logical(Fast_prep)){
+    stop("Fast_prep must be logical (TRUE or FALSE")
+  }
+
+  ## Check FOI
+  if(!is.null(FOI)){
+    if(typeof(obj$cB$XF) != typeof(FOI)){
+      warning("FOI should be the same data type as cB$XF in the DynamicSeqData object; if it is not none of the feature of interest will be found
+            in the cB.")
+    }
+  }
+
+
+  ## Check concat
+  if(!is.logical(concat)){
+    stop("concat must be logical (TRUE or FALSE)")
+  }
+
 
   if(class(obj) == "DynamicSeqData"){
 
