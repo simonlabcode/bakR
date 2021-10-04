@@ -274,11 +274,11 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
 
   # Extract simulated cB and summarise data
   cB_sim_1 <- sim_df_1$sample_data
-  cB_sim_1 <- cB_sim_1 %>% dplyr::group_by(S, TP, R, MIR, TC, MT, num_us) %>%
-    dplyr::tally()
-
 
   rm(sim_df_1)
+
+  cB_sim_1 <- cB_sim_1 %>% dplyr::group_by(S, TP, R, MIR, TC, MT, num_us) %>%
+    dplyr::tally()
 
   # Define XF column
   cB_sim_1$XF <- cB_sim_1$MIR
@@ -309,7 +309,15 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2, nreps = 3, eff_sd = 0.75, e
 
   DynData <- DynamicSeq::DynamicSeqData(cB_sim_1, metadf)
 
-  return(DynData)
+  sim_data <- list(DynData = DynData,
+                   sim_list = list(L2FC_kd_mean = L2FC_kd_mean,
+                                   fn_mean = fn_mean,
+                                   fn_true = fn_real,
+                                   effect_mean = effect_mean,
+                                   L2FC_ks_mean = L2FC_ks_mean,
+                                   RNA_conc = RNA_conc) )
+
+  return(sim_data)
 
 
 }
