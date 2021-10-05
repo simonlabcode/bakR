@@ -87,14 +87,11 @@ to the reference. 1st entry must be 0 by definition (since relative to the refer
 A list containing a simulated \code{DynamicSeqData} object as well as a list of simulated kinetic parameters of interest.
 The contents of the latter list are:
 \itemize{
-\item L2FC_kd_mean; The true L2FC(kdeg) for each feature in each experimental condition. The ith column corresponds to the L2FC(kdeg) when comparing
-the ith condition to the reference condition (defined as the 1st condition) so the 1st column is always all 0s
-\item fn_mean; True fraction new for each feature in each experimental condition.
-\item fn_true; The fraction new used for each replicate of each feature in each experimental condition. These are generated using a heteroskedastic
-logit-normal distribution, with variance depending on the abundance of the feature (greater RNA concentration = less variability)
-\item effect_mean; The true change in logit(fraction new) for each feature in each experimental condition. The ith column corresponds to the
-change in logit(fraction new) when comparing the ith condition to the reference condition (defined as the 1st condition), so the 1st column is
-always all 0s
+\item Effect_sim; Dataframe meant to mimic formatting of Effect_df that are part of \code{TL_stan} and \code{fast_analysis} output.
+\item Fn_mean_sim; Dataframe meant to mimic formatting of Regularized_ests that is part of \code{fast_analysis} output. Contains information
+about the true fraction new simulated in each condition (the mean of the normal distribution from which replicate fraction news are simulated)
+\item Fn_rep_sim; Dataframe meant to mimic formatting of Fn_Estimates that is part of \code{fast_analysis} output. Contains information
+about the fraction new simulated for each feature in each replicate of each condition.
 \item L2FC_ks_mean; The true L2FC(ksyn) for each feature in each experimental condition. The ith column corresponds to the L2FC(ksyn) when comparing
 the ith condition to the reference condition (defined as the 1st condition) so the 1st column is always all 0s
 \item RNA_conc; The average number of normalized read counts expected for each feature in each sample.

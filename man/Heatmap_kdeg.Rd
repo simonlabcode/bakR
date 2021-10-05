@@ -4,13 +4,18 @@
 \alias{Heatmap_kdeg}
 \title{Creating a L2FC(kdeg) matrix that can be passed to heatmap functions}
 \usage{
-Heatmap_kdeg(obj, zscore = FALSE)
+Heatmap_kdeg(obj, zscore = FALSE, filter_sig = FALSE, FDR = 0.05)
 }
 \arguments{
 \item{obj}{Object of class FastFit or HMCFit outputted by respective analysis functions}
 
 \item{zscore}{Logical; if TRUE, then each matrix entry is log-odds fold change in the fraction new (a.k.a the effect size) divided by
 the uncertainty in the effect size}
+
+\item{filter_sig}{Logical; if TRUE, then only features which have a statistically significant L2FC(kdeg) in at least one comparison
+are kept}
+
+\item{FDR}{Numeric; False discovery to control at if filter_sig is TRUE.}
 }
 \description{
 \code{Heatmap_kdeg} creates a matrix where each column represents a pair of samples (reference and experimental) and each
