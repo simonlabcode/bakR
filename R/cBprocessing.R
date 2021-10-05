@@ -113,6 +113,8 @@ reliableFeatures <- function(obj,
 #'   \item U_cont; Log2-fold-difference in U-content for a feature in a sample relative to average U-content for that sample
 #'   \item Avg_Reads; Standardized log10(average read counts) for a particular feature in a particular condition, averaged over
 #'   replicates
+#'   \item Avg_Reads_natural; Unstandardized average read counts for a particular feature in a particular condition, averaged over
+#'   replicates. Used for \code{plotMA}
 #'   \item sdf; Dataframe that maps numerical feature ID to original feature name. Also has read depth information
 #'   \item sample_lookup; Lookup table relating MT and R to the original sample name
 #'  }
@@ -362,13 +364,14 @@ cBprocess <- function(obj,
       dplyr::summarise(Avg_Reads = sum(n)/nreps) %>% dplyr::ungroup()
 
     Avg_Reads <- matrix(0, ncol = nMT, nrow = NF)
+    Avg_Reads_natural <- Avg_Reads
 
     tls <-rep(0, times = nMT)
 
     for(f in 1:NF){
       for(i in 1:nMT){
         Avg_Reads[f,i] <- (mean(log10(Avg_Counts$Avg_Reads[(Avg_Counts$mut == i) & (Avg_Counts$fnum == f)])) - mean(log10(Avg_Counts$Avg_Reads[Avg_Counts$mut == i])))/sd(log10(Avg_Counts$Avg_Reads[Avg_Counts$mut == i]))
-
+        Avg_Reads_natural[f,i] <- mean(Avg_Counts$Avg_Reads[(Avg_Counts$mut == i) & (Avg_Counts$fnum == f)])
       }
     }
 
@@ -394,6 +397,7 @@ cBprocess <- function(obj,
       tl = tls,
       U_cont = df$U_factor,
       Avg_Reads = Avg_Reads,
+      Avg_Reads_natural = Avg_Reads_natural,
       sdf = sdf,
       sample_lookup = sample_lookup
     )

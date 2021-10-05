@@ -99,3 +99,50 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
 
 }
 
+
+#' Creating L2FC(kdeg) MA plot from fit objects
+#'
+#' This function outputs a L2FC(kdeg) MA plot. Plots are colored according to statistical
+#' significance and the sign of L2FC(kdeg)
+#'
+#' @param obj Object of class FastFit or HMCFit outputted by respective analysis functions
+#' @param FDR False discovery rate to control at for significance assessment
+#' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
+#' @param Exp_shape Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot
+plotMA <- function(obj, Avg_reads_natural, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
+  ## Extract L2FC(kdeg) and padj
+  L2FC_df <- obj$Effects_df[,c("L2FC_kdeg", "padj", "Exp_ID", "Feature_ID")]
+
+  ## Add significance ID
+  L2FC_df <- L2FC_df %>% dplyr::mutate(conclusion = ifelse(padj < FDR, ifelse(L2FC_kdeg < 0, "Stabilized", "Destabilized"), "Not Sig."))
+
+  if(is.null(Exps)){
+    Exps <- 2:max(as.integer(L2FC_df$Exp_ID))
+  }
+
+  ## Calc avg reads per pairs of conditions
+  Reads <- matrix(0, ncol = max(L2FC_df$Exp_ID), nrow = max(L2FC_df$Feature_ID))
+  for(i in seq_along(unique(L2FC_df$Exp_ID))){
+    Reads[,i] <- log10(rowMeans(Avg_reads_natural[,c(1,i+1)]))
+  }
+
+  ## Add read cnt info to L2FC_df
+
+  L2FC_df <- L2FC_df %>% dplyr::group_by(Feature_ID, Exp_ID)  %>% dplyr::mutate(Read_ct = Reads[Feature_ID, Exp_ID-1]) %>% dplyr::ungroup()
+
+  if(Exp_shape){
+    ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = Read_ct,y = L2FC_kdeg, color = conclusion,  shape = as.factor(Exp_ID))) +
+      ggplot2::geom_point(size = 1) +
+      ggplot2::theme_classic() +
+      ggplot2::xlab("log10(Avg. Read Count)") +
+      ggplot2::ylab("L2FC(kdeg)")
+  }else{
+    ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = Read_ct,y = L2FC_kdeg, color = conclusion )) +
+      ggplot2::geom_point(size = 1) +
+      ggplot2::theme_classic() +
+      ggplot2::xlab("log10(Avg. Read Count)") +
+      ggplot2::ylab("L2FC(kdeg)")
+  }
+
+
+}

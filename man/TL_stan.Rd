@@ -27,8 +27,8 @@ A list of objects:
 reference sample for each feature. This dataframe also includes p-values obtained from a moderated t-test. The columns of this
 dataframe are:
 \itemize{
-\item Genes_effects; Numerical ID of feature
-\item Condition_effects; Numerical ID for experimental condition (Exp_ID from metadf)
+\item Feature_ID; Numerical ID of feature
+\item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
 \item L2FC_kdegs; L2FC(kdeg) estimate
 \item effects; Change in logit(fraction) new comparing reference and experimental sample(s)
 \item ses; Uncertainty in effect size
@@ -46,9 +46,9 @@ The columns of this dataframe are:
 \item Fn_Estimates; dataframe with estimates of the logit(fraction new) for each feature in each replicate.
 The columns of this dataframe are:
 \itemize{
-\item Condition; Numerical ID for experimental condition (Exp_ID from metadf)
+\item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
 \item Replicate; Numerical ID for replicate
-\item Gene_ID; Numerical ID for feature
+\item Feature_ID; Numerical ID for feature
 \item logit_fn; Logit(fraction new) posterior mean
 \item logit_fn_se; Logit(fraction new) posterior standard deviation
 \item sample; Sample name

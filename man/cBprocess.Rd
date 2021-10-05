@@ -46,6 +46,8 @@ Stan will analyze. Data to be analyzed consists of equal length vectors. The con
 \item U_cont; Log2-fold-difference in U-content for a feature in a sample relative to average U-content for that sample
 \item Avg_Reads; Standardized log10(average read counts) for a particular feature in a particular condition, averaged over
 replicates
+\item Avg_Reads_natural; Unstandardized average read counts for a particular feature in a particular condition, averaged over
+replicates. Used for \code{plotMA}
 \item sdf; Dataframe that maps numerical feature ID to original feature name. Also has read depth information
 \item sample_lookup; Lookup table relating MT and R to the original sample name
 }

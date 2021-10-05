@@ -10,6 +10,7 @@ sim_DynamicSeqData(
   nreps = 3L,
   eff_sd = 0.75,
   eff_mean = 0,
+  fn_sd = 1,
   tl = 60,
   p_new = 0.05,
   p_old = 0.001,

@@ -93,8 +93,4 @@ condition to regularize variance estimates using a hierarchical linear regressio
 \code{Hybrid_fit} requires fraction new estimates from \code{fast_analysis}, \code{TL_Stan} implements a U-content exposure
 adjusted Poisson model to estimate fraction news while also using hierarchical modeling to partially pool information across
 replicates and the entire dataset.
-
-Since \code{fast_analysis} relies on -s4U control data to estimate background mutation rates, user inputted mutation rate
-estimates will have to be provided if such a control is not present. If the -s4U control is absent and no mutation rate
-estimate is inputted, an error will be thrown.
 }
