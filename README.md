@@ -1,5 +1,5 @@
 # DynamicSeq
-R package for analyzing nucleotide recoding high-throughput sequencing data
+R package for analyzing nucleotide recoding high-throughput sequencing data. 
 Kinetic parameter estimation and statistical testing is compatible with any enrichment free metabolic labeling mutational data.
 # Installation
 Currently, the only way to install the package is to:
