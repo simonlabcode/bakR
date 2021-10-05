@@ -608,6 +608,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
     }
   }
 
+  ## Make dataframes that are similar to Fit outputs
   Effect_sim <- data.frame(Feature_ID = rep(1:ngene, times = (num_conds-1)),
                            Exp_ID = rep(2:num_conds, each = ngene),
                            L2FC_kdeg = L2FC_kd_vect,
@@ -625,6 +626,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
                             Avg_fn = inv_logit(fn_mean_vect))
 
 
+  ## Order dataframes as they are in fit output
   Effect_sim <- Effect_sim[order(Effect_sim$Feature_ID, Effect_sim$Exp_ID),]
   Fn_rep_sim <- Fn_rep_sim[order(Fn_rep_sim$Feature_ID, Fn_rep_sim$Exp_ID, Fn_rep_sim$Replicate),]
   Fn_mean_sim <- Fn_mean_sim[order(Fn_mean_sim$Feature_ID, Fn_mean_sim$Exp_ID),]
