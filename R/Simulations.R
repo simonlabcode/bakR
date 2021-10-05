@@ -59,14 +59,11 @@
 #' @return A list containing a simulated `DynamicSeqData` object as well as a list of simulated kinetic parameters of interest.
 #' The contents of the latter list are:
 #' \itemize{
-#'  \item L2FC_kd_mean; The true L2FC(kdeg) for each feature in each experimental condition. The ith column corresponds to the L2FC(kdeg) when comparing
-#'  the ith condition to the reference condition (defined as the 1st condition) so the 1st column is always all 0s
-#'  \item fn_mean; True fraction new for each feature in each experimental condition.
-#'  \item fn_true; The fraction new used for each replicate of each feature in each experimental condition. These are generated using a heteroskedastic
-#'  logit-normal distribution, with variance depending on the abundance of the feature (greater RNA concentration = less variability)
-#'  \item effect_mean; The true change in logit(fraction new) for each feature in each experimental condition. The ith column corresponds to the
-#'  change in logit(fraction new) when comparing the ith condition to the reference condition (defined as the 1st condition), so the 1st column is
-#'  always all 0s
+#'  \item Effect_sim; Dataframe meant to mimic formatting of Effect_df that are part of \code{TL_stan} and \code{fast_analysis} output.
+#'  \item Fn_mean_sim; Dataframe meant to mimic formatting of Regularized_ests that is part of \code{fast_analysis} output. Contains information
+#'  about the true fraction new simulated in each condition (the mean of the normal distribution from which replicate fraction news are simulated)
+#'  \item Fn_rep_sim; Dataframe meant to mimic formatting of Fn_Estimates that is part of \code{fast_analysis} output. Contains information
+#'  about the fraction new simulated for each feature in each replicate of each condition.
 #'  \item L2FC_ks_mean; The true L2FC(ksyn) for each feature in each experimental condition. The ith column corresponds to the L2FC(ksyn) when comparing
 #'  the ith condition to the reference condition (defined as the 1st condition) so the 1st column is always all 0s
 #'  \item RNA_conc; The average number of normalized read counts expected for each feature in each sample.
@@ -587,11 +584,56 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
 
   DynData <- DynamicSeq::DynamicSeqData(cB_sim_1, metadf)
 
+
+  ## Create dataframe for Effect sizes and fn
+
+  fn_vect <-  c()
+  L2FC_kd_vect <- c()
+  effect_vect <- c()
+  fn_mean_vect <- c()
+
+
+  for(j in 1:num_conds){
+    if(j > 1){
+      L2FC_kd_vect <- c(L2FC_kd_vect, L2FC_kd_mean[,j])
+      effect_vect <- c(effect_vect, effect_mean[,j])
+    }
+
+    fn_mean_vect <- c(fn_mean_vect, logit(fn_mean) + effect_mean[,j])
+
+    for(i in 1:ngene){
+      fn_vect <- c(fn_vect, fn_real[i,j,])
+
+
+    }
+  }
+
+  Effect_sim <- data.frame(Feature_ID = rep(1:ngene, times = (num_conds-1)),
+                           Exp_ID = rep(2:num_conds, each = ngene),
+                           L2FC_kdeg = L2FC_kd_vect,
+                           effect = effect_vect)
+
+  Fn_rep_sim <- data.frame(Feature_ID = rep(1:ngene, times = num_conds*nreps),
+                           Replicate = rep(1:nreps, times = ngene*num_conds),
+                           Exp_ID = rep(1:num_conds, each = ngene*nreps),
+                           Logit_fn = logit(fn_vect),
+                           fn = fn_vect)
+
+  Fn_mean_sim <- data.frame(Feature_ID = rep(1:ngene, times = num_conds),
+                            Exp_ID = rep(1:num_conds, each = ngene),
+                            Avg_logit_fn = fn_mean_vect,
+                            Avg_fn = inv_logit(fn_mean_vect))
+
+
+  Effect_sim <- Effect_sim[order(Effect_sim$Feature_ID, Effect_sim$Exp_ID),]
+  Fn_rep_sim <- Fn_rep_sim[order(Fn_rep_sim$Feature_ID, Fn_rep_sim$Exp_ID, Fn_rep_sim$Replicate),]
+  Fn_mean_sim <- Fn_mean_sim[order(Fn_mean_sim$Feature_ID, Fn_mean_sim$Exp_ID),]
+
+
   sim_data <- list(DynData = DynData,
-                   sim_list = list(L2FC_kd_mean = L2FC_kd_mean,
-                                   fn_mean = fn_mean,
-                                   fn_true = fn_real,
-                                   effect_mean = effect_mean,
+                   sim_list = list(Effect_sim = Effect_sim,
+                                   Fn_mean_sim = Fn_mean_sim,
+                                   Fn_rep_sim = Fn_rep_sim,
                                    L2FC_ks_mean = L2FC_ks_mean,
                                    RNA_conc = RNA_conc*scale_factor) )
 
