@@ -210,7 +210,7 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FAL
 
   # Effects dataframe setup
   F_ID <- rep(seq(from=1, to=ngs), each=nconds) # Feature number vector
-  Exp_ID <- rep(seq(from=1, to=nconds), times=ngs) # Experimental condition vector
+  Exp_ID <- rep(seq(from=2, to=nconds+1), times=ngs) # Experimental condition vector
   Effect <- eff_gauss$mean # Effect size vector
   Se <- eff_gauss$sd # Effect standard deviation vector
   L2FC_kdeg <- L2FC_df$mean # L2FC(kdeg) vector

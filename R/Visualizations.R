@@ -146,3 +146,93 @@ plotMA <- function(obj, Avg_reads_natural, FDR = 0.05, Exps = NULL, Exp_shape = 
 
 
 }
+
+#' Creating a L2FC(kdeg) matrix that can be passed to heatmap functions
+#'
+#' \code{Heatmap_kdeg} creates a matrix where each column represents a pair of samples (reference and experimental) and each
+#' row represents a feature. The entry in the ith row and jth column is the L2FC(kdeg) for feature i when comparing sample with
+#' experimental ID j+1 to the reference sample
+#'
+#' @param obj Object of class FastFit or HMCFit outputted by respective analysis functions
+#' @param zscore Logical; if TRUE, then each matrix entry is log-odds fold change in the fraction new (a.k.a the effect size) divided by
+#' the uncertainty in the effect size
+#' @param filter_sig Logical; if TRUE, then only features which have a statistically significant L2FC(kdeg) in at least one comparison
+#' are kept
+#' @param FDR Numeric; False discovery to control at if filter_sig is TRUE.
+Heatmap_kdeg <- function(obj, zscore = FALSE, filter_sig = FALSE, FDR = 0.05){
+  ## Extract L2FC(kdeg) and padj
+  if(zscore){
+
+
+    L2FC_df <- obj$Effects_df[,c("effect", "se", "Exp_ID", "Feature_ID", "padj")]
+
+    if(class(obj) == "FastFit"){
+      df <- obj$Hyper_Parameters[1] + 2*max(obj$Fn_Estimates$Replicate) - 2
+
+      L2FC_df <- L2FC_df %>% dplyr::mutate(zscore = ifelse(effect < 0, 1, -1)*stats::qt(padj, df = df) )
+    }
+
+
+    if(filter_sig){
+      L2FC_df <- L2FC_df %>% dplyr::mutate(Sig = ifelse(padj < FDR, 1, 0))
+
+      sig_df <- L2FC_df %>% dplyr::group_by(Feature_ID) %>% dplyr::summarise(Sig = sum(Sig), .groups = "keep") %>% dplyr::ungroup()
+
+      fnum_keep <- sig_df$Feature_ID[sig_df$Sig > 0]
+
+      L2FC_df <- L2FC_df[L2FC_df$Feature_ID %in% fnum_keep,]
+
+      if(nrow(L2FC_df) == 0){
+        stop("Filtering for significance removed all features; try increasing FDR or not filtering for significance")
+      }
+
+    }
+
+    L2FC_df <- L2FC_df[order(L2FC_df$Feature_ID, L2FC_df$Exp_ID),]
+
+    L2FC_mat <- matrix(0, nrow = length(unique(L2FC_df$Feature_ID)), ncol = max(L2FC_df$Exp_ID)-1)
+
+    for(i in seq_along(unique(L2FC_df$Exp_ID))){
+      if(class(obj) == "FastFit"){
+        L2FC_mat[,i] <- L2FC_df$zscore[L2FC_df$Exp_ID == (i+1)]
+
+      }else{
+        L2FC_mat[,i] <- L2FC_df$effect[L2FC_df$Exp_ID == (i+1)]/L2FC_df$se[L2FC_df$Exp_ID == (i+1)]
+
+      }
+    }
+
+  }else{
+    L2FC_df <- obj$Effects_df[,c("L2FC_kdeg", "Exp_ID", "Feature_ID", "padj")]
+
+    if(filter_sig){
+      L2FC_df <- L2FC_df %>% dplyr::mutate(Sig = ifelse(padj < FDR, 1, 0))
+
+      sig_df <- L2FC_df %>% dplyr::group_by(Feature_ID) %>% dplyr::summarise(Sig = sum(Sig), .groups = "keep") %>% dplyr::ungroup()
+
+      fnum_keep <- sig_df$Feature_ID[sig_df$Sig > 0]
+
+      L2FC_df <- L2FC_df[L2FC_df$Feature_ID %in% fnum_keep,]
+
+      if(nrow(L2FC_df) == 0){
+        stop("Filtering for significance removed all features; try increasing FDR or not filtering for significance")
+      }
+
+    }
+
+    L2FC_df <- L2FC_df[order(L2FC_df$Feature_ID, L2FC_df$Exp_ID),]
+
+    L2FC_mat <- matrix(0, nrow = length(unique(L2FC_df$Feature_ID)), ncol = max(L2FC_df$Exp_ID)-1)
+
+    for(i in seq_along(unique(L2FC_df$Exp_ID))){
+      L2FC_mat[,i] <- L2FC_df$L2FC_kdeg[L2FC_df$Exp_ID == (i+1)]
+    }
+  }
+
+  return(L2FC_mat)
+
+
+
+
+
+}
