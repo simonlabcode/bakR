@@ -1,0 +1,136 @@
+---
+title: "Differential Kinetic Analysis with DynamicSeq"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting-Started}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+abstract: >
+  In a standard RNA-seq experiment, differential expression 
+  analysis is incredibly common. The idea is to compare the expression
+  of thousands of genes or transcripts between two conditions, which
+  I'll refer to as the reference and experimental samples. Once you 
+  have compiled a list of genes whose expressions differ significantly
+  between the two conditions, a reasonable follow-up question is "what
+  caused the change in each of the genes"? The three broad answers to
+  that question are 1) Something altered the RNA synthesis rates; 2) Something
+  altered the RNA degradation rates (i.e., its stability); or 3) A little bit
+  of both 1) and 2). Unfortunately, standard RNA-seq analysis cannot answer this
+  mechanistic question, as RNA-seq only tells you about changes in expression level
+  and cannot deduce the kinetic cause of those changes. 
+  
+  
+  If the kinetics is of interest to you, then a recently developed solution to 
+  this problem is nucleotide recoding RNA-seq, which exists in several fundamentally 
+  similar flavors, TimeLapse-seq, SLAM-seq, and TUC-seq. The strategy involves feeding
+  cells with a metabolic label (typically 4-thiouridine, a.k.a. s4U), extracting the RNA as you
+  normally would for RNA-seq, but then using a unique chemistry to convert the metabolic
+  label (e.g., s4U) into something that a sequencer will read as a different base (e.g.,
+  a cytosine analog). Thus, labeled and unlabeled reads can be separated bioinformatically
+  upon sequencing by the presence of mutations (e.g., U-to-C mutations). 
+  
+  
+  One problem though; the metabolic label must 1st get into cells, and then it must compete 
+  with the normal nucleotide for incorporation into RNA. The result of this is that mutation
+  rates are typically low (~ 5% in RNA produced during metabolic labeling, meaning that each U
+  in a sequencing read has about a 5% chance of being mutated to a C), making simple and 
+  definitive separation of labeled and unlabeled reads impossible. The solution, advanced
+  statistical modeling implemented by DynamicSeq, an R package for analyze nucleotide recoding
+  sequencing data. The analyses implemented in this package will allow you to perform 
+  differential kinetic analysis just as easily as you can perform differential expression analysis,
+  allowing you to elucidate the mechanisms of regulated gene expression.
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Necessary Setup
+
+Of course you will want to load the DynamicSeq package for
+this vignette, but we'll also be using utils, so make sure 
+to load (and if necessary, install) that as well. Finally, you'll
+want to set the seed so as to ensure the results you get reproduce
+those presented in the vignette. Additionally, you will need to install
+[Stan](https://mc-stan.org/), which is the statistical modeling software
+that DynamicSeq makes use of under the hood for the heavier, higher performance
+models.
+
+```{r setup}
+library(DynamicSeq)
+library(utils)
+set.seed(123)
+```
+
+## Step 1: Creating a DynamicSeqData Object
+
+The 1st step to using DynamicSeq is to create a DynamicSeqData
+object. To get a sense of what this looks like and the information
+it contains, let's simulate one:
+
+```{r}
+
+# Simulate DynamicSeqData object with 100 features (e.g., genes)
+sim_data <- sim_DynamicSeqData(100)
+
+# Extract DynamicSeqData object from simluation output
+DynData <- sim_data$DynData
+
+```
+
+The DynamicSeqData object, referred to as DynData in this example,
+consists of two components: a cB dataframe and a metadf dataframe.
+cB stands for counts binomial and contains all of the information about
+mutations seen in sequencing reads in each sample sequenced. metadf stands
+for metadata data frame and contains important information about the
+experimental details of each sample (i.e., how long the metabolic label
+feed was, which samples are reference samples, and which are experimental
+samples). 
+
+
+Lets get an idea for what the cB looks like 1st.
+
+```{r}
+
+# Extract 1st component of DynData, the cB dataframe
+cB <- DynData$cB
+
+# Observe contents of cB
+# Some columns are added by the simulation and don't need to be observed
+knitr::kable(head(cB[,c(1, 5, 7, 9, 8)]), "pipe")
+
+```
+
+One key aspect of the cB dataframe to keep in mind is that each row corresponds to a set of reads providing identical data. To help that make more sense,
+and to understand what information the cB tracks, let's go through the contents
+of each column:
+
+1. Sample: This is the name of the sample from which the reads described in this
+row originated. Usually this will be some sort of character vector that you have
+defined (e.g., WT_rep1_2021_10_06), but in the simulated data it is simplified
+to a numerical ID.
+1. TC: Number of U-to-C mutations (assuming using s4U as the metabolic label). Called TC because technically the data is T-to-C mutations in reverse-transcribed RNA
+1. nT: Number of Ts (Us in the RNA) in the sequencing read(s)
+1. XF: Name of the feature (gene, exon, etc.) that the read comes from. Kinetic parameters will be estimated for each feature, so this should represent the functional unit who's metabolic kinetics you are interested in. Like the sample column, this is typically a character vector, but is a simple numerical ID in the simulated data.
+    * XF stands for "exonic feature", since in most cases, you        should only be considering reads that map to definitively       exonic locations. Introns are typically rapidly turned          over and thus will be highly labeled species that will          bias estimates of RNA stability.
+1. n: Number of reads with identical data for the other 4 columns. For example, n = 5 in the 3rd row means that there are 5 reads from sample 1 that mapped to XF 1, had 0 T to C mutations, and had 36 Ts.
+
+The structure of the cB file most closely reflects the output of a pipeline for analyze nucleotide recoding sequencing data developed by the Simon lab (available [here](https://bitbucket.org/mattsimon9/timelapse_pipeline/src/master/)), but consists of data provided by all published pipelines (e.g., SlamDunk). 
+
+Now let's look at the metadf dataframe:
+
+```{r}
+
+# Extract 1st component of DynData, the cB data frame
+metadf <- DynData$metadf
+
+# Observe contents metadf data frame
+knitr::kable(metadf, row.names = 1:nrow(metadf))
+
+```
+
+
+
