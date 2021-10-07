@@ -12,17 +12,17 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 
-RcppExport SEXP _rcpp_module_boot_stan_fit4Hier_Heterosked_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4Hier_Hybrid_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4Pooled_Heterosked_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4Pooled_Hybrid_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4Heterosked_Hier_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4Heterosked_Pooled_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4Hybrid_Hier_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4Hybrid_Pooled_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4lm_mod();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_rcpp_module_boot_stan_fit4Hier_Heterosked_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Hier_Heterosked_mod, 0},
-    {"_rcpp_module_boot_stan_fit4Hier_Hybrid_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Hier_Hybrid_mod, 0},
-    {"_rcpp_module_boot_stan_fit4Pooled_Heterosked_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Pooled_Heterosked_mod, 0},
-    {"_rcpp_module_boot_stan_fit4Pooled_Hybrid_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Pooled_Hybrid_mod, 0},
+    {"_rcpp_module_boot_stan_fit4Heterosked_Hier_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Heterosked_Hier_mod, 0},
+    {"_rcpp_module_boot_stan_fit4Heterosked_Pooled_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Heterosked_Pooled_mod, 0},
+    {"_rcpp_module_boot_stan_fit4Hybrid_Hier_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Hybrid_Hier_mod, 0},
+    {"_rcpp_module_boot_stan_fit4Hybrid_Pooled_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Hybrid_Pooled_mod, 0},
     {"_rcpp_module_boot_stan_fit4lm_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4lm_mod, 0},
     {NULL, NULL, 0}
 };

@@ -144,18 +144,18 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FAL
   if(Pooled){
 
     if(Hybrid_Fit){
-      fit <- rstan::sampling(stanmodels$Pooled_Hybrid, data = data_list, ...)
+      fit <- rstan::sampling(stanmodels$Hybrid_Pooled, data = data_list, ...)
 
     }else{
-      fit <- rstan::sampling(stanmodels$Pooled_Heterosked, data = data_list, ...)
+      fit <- rstan::sampling(stanmodels$Heterosked_Pooled, data = data_list, ...)
 
     }
 
   }else{
     if(Hybrid_Fit){
-      fit <- rstan::sampling(stanmodels$Hier_Hybrid, data = data_list, ...)
+      fit <- rstan::sampling(stanmodels$Hybrid_Hier, data = data_list, ...)
     }else{
-      fit <- rstan::sampling(stanmodels$Hier_Heterosked, data = data_list, ...)
+      fit <- rstan::sampling(stanmodels$Heterosked_Hier, data = data_list, ...)
     }
   }
 
