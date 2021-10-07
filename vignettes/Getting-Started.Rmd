@@ -68,20 +68,7 @@ set.seed(123)
 ## Step 1: Creating a DynamicSeqData Object
 
 The 1st step to using DynamicSeq is to create a DynamicSeqData
-object. To get a sense of what this looks like and the information
-it contains, let's simulate one:
-
-```{r}
-
-# Simulate DynamicSeqData object with 100 features (e.g., genes)
-sim_data <- sim_DynamicSeqData(100)
-
-# Extract DynamicSeqData object from simluation output
-DynData <- sim_data$DynData
-
-```
-
-The DynamicSeqData object, referred to as DynData in this example,
+object. A DynamicSeqData object
 consists of two components: a cB dataframe and a metadf dataframe.
 cB stands for counts binomial and contains all of the information about
 mutations seen in sequencing reads in each sample sequenced. metadf stands
@@ -93,14 +80,22 @@ samples).
 
 Lets get an idea for what the cB looks like 1st.
 
-```{r}
+```{r, results = "hide"}
 
-# Extract 1st component of DynData, the cB dataframe
-cB <- DynData$cB
+# sim_data <- sim_DynamicSeqData(100)
+# DynData <- sim_data$DynData
+# cB <- DynData$cB
+# Load small example cB; will be called cB_small in global environment
+data("cB_example")
 
 # Observe contents of cB
-# Some columns are added by the simulation and don't need to be observed
-knitr::kable(head(cB[,c(1, 5, 7, 9, 8)]), "pipe")
+head(cB_small)
+
+```
+
+```{r, echo = FALSE, warning = FALSE}
+
+knitr::kable(head(cB_small), "pipe")
 
 ```
 
@@ -110,11 +105,10 @@ of each column:
 
 1. **sample**: This is the name of the sample from which the reads described in this
 row originated. Usually this will be some sort of character vector that you have
-defined (e.g., WT_rep1_2021_10_06), but in the simulated data it is simplified
-to a numerical ID.
+defined.
 1. **TC**: Number of U-to-C mutations (assuming using s4U as the metabolic label). Called TC because technically the data is T-to-C mutations in reverse-transcribed RNA
 1. **nT**: Number of Ts (Us in the RNA) in the sequencing read(s)
-1. **XF**: Name of the feature (gene, exon, etc.) that the read comes from. Kinetic parameters will be estimated for each feature, so this should represent the functional unit who's metabolic kinetics you are interested in. Like the sample column, this is typically a character vector, but is a simple numerical ID in the simulated data.
+1. **XF**: Name of the feature (gene, exon, etc.) that the read comes from. Kinetic parameters will be estimated for each feature, so this should represent the functional unit who's metabolic kinetics you are interested in. 
     * **XF** stands for "exonic feature", since in most cases, you        should only be considering reads that map to definitively       exonic locations. Introns are typically rapidly turned          over and thus will be highly labeled species that will          bias estimates of RNA stability.
 1. **n**: Number of reads with identical data for the other 4 columns. For example, n = 5 in the 3rd row means that there are 5 reads from sample 1 that mapped to **XF** 1, had 0 T to C mutations, and had 36 Ts.
 
@@ -124,8 +118,8 @@ Now let's look at the metadf dataframe:
 
 ```{r, results = "hide"}
 
-# Extract 1st component of DynData, the cB data frame
-metadf <- DynData$metadf
+# Load metadf data frame; will be loaded as metadf in global environment
+data("metadf_example")
 
 # Print the transpose of metadf
 # Rows will be the columns and columns will be the rows
@@ -147,7 +141,7 @@ print(rownames(metadf))
 
 
 # cB sample names
-print(unique(cB$sample))
+print(unique(cB_small$sample))
 
 ```
 
