@@ -34,7 +34,7 @@ abstract: >
   with the normal nucleotide for incorporation into RNA. The result of this is that mutation
   rates are typically low (~ 5% in RNA produced during metabolic labeling, meaning that each U
   in a sequencing read has about a 5% chance of being mutated to a C), making simple and 
-  definitive separation of labeled and unlabeled reads impossible. The solution, advanced
+  definitive separation of labeled and unlabeled reads impossible. The solution: advanced
   statistical modeling implemented by DynamicSeq, an R package for analyze nucleotide recoding
   sequencing data. The analyses implemented in this package will allow you to perform 
   differential kinetic analysis just as easily as you can perform differential expression analysis,
@@ -78,13 +78,9 @@ feed was, which samples are reference samples, and which are experimental
 samples). 
 
 
-Lets get an idea for what the cB looks like 1st.
+Lets get an idea for what a cB should look like 1st.
 
 ```{r, results = "hide"}
-
-# sim_data <- sim_DynamicSeqData(100)
-# DynData <- sim_data$DynData
-# cB <- DynData$cB
 # Load small example cB; will be called cB_small in global environment
 data("cB_example")
 
@@ -110,14 +106,13 @@ defined.
 1. **nT**: Number of Ts (Us in the RNA) in the sequencing read(s)
 1. **XF**: Name of the feature (gene, exon, etc.) that the read comes from. Kinetic parameters will be estimated for each feature, so this should represent the functional unit who's metabolic kinetics you are interested in. 
     * **XF** stands for "exonic feature", since in most cases, you        should only be considering reads that map to definitively       exonic locations. Introns are typically rapidly turned          over and thus will be highly labeled species that will          bias estimates of RNA stability.
-1. **n**: Number of reads with identical data for the other 4 columns. For example, n = 5 in the 3rd row means that there are 5 reads from sample 1 that mapped to **XF** 1, had 0 T to C mutations, and had 36 Ts.
+1. **n**: Number of reads with identical data for the other 4 columns. For example, n = 2 in the 4th row means that there are 2 reads from sample JS181101 that mapped to **XF** EPB41L1, had 0 T to C mutations, and had 14 Ts.
 
 The structure of the cB file most closely reflects the output of a pipeline for analyze nucleotide recoding sequencing data developed by the Simon lab (available [here](https://bitbucket.org/mattsimon9/timelapse_pipeline/src/master/)), but consists of data provided by all published pipelines (e.g., SlamDunk). 
 
-Now let's look at the metadf dataframe:
+Now let's look at the corresponding metadf dataframe:
 
 ```{r, results = "hide"}
-
 # Load metadf data frame; will be loaded as metadf in global environment
 data("metadf_example")
 
@@ -152,7 +147,10 @@ Keeping in mind that each row represents a sample, the content of the columns ar
 1. **tl**: The length of the metabolic labeling feed. This can be in any units (the simulated data puts it in terms of minutes), but **if no s4U fed to a sample, tl must be 0 for that sample**. -s4U controls play an important role in all of the statistical models, so this is crucial to remember.
 1. **Exp_ID**: Stands for "Experimental ID" and is a numerical ID that denotes which samples are from the reference condition and which experimental samples belong to the same "treatment". In this simulated dataset, there are two conditions, a reference condition (samples 1, 2, 3, and 7) and a single experimental condition (samples 4, 5, 6, and 8). **The reference condition must be given numerical ID 1** and **the experimental conditions must be given sequential numerical IDs starting from 2** (i.e., 2, 3, 4, ...)
 
+Once you have these two data frames correctly constructed, you can create a DynamicSeqData object in one line of code.
 
+```{r}
+# Create DynamicSeqData object
+DynData <- DynamicSeqData(cB_small, metadf)
 
-
-
+```
