@@ -108,29 +108,57 @@ One key aspect of the cB dataframe to keep in mind is that each row corresponds 
 and to understand what information the cB tracks, let's go through the contents
 of each column:
 
-1. Sample: This is the name of the sample from which the reads described in this
+1. **sample**: This is the name of the sample from which the reads described in this
 row originated. Usually this will be some sort of character vector that you have
 defined (e.g., WT_rep1_2021_10_06), but in the simulated data it is simplified
 to a numerical ID.
-1. TC: Number of U-to-C mutations (assuming using s4U as the metabolic label). Called TC because technically the data is T-to-C mutations in reverse-transcribed RNA
-1. nT: Number of Ts (Us in the RNA) in the sequencing read(s)
-1. XF: Name of the feature (gene, exon, etc.) that the read comes from. Kinetic parameters will be estimated for each feature, so this should represent the functional unit who's metabolic kinetics you are interested in. Like the sample column, this is typically a character vector, but is a simple numerical ID in the simulated data.
-    * XF stands for "exonic feature", since in most cases, you        should only be considering reads that map to definitively       exonic locations. Introns are typically rapidly turned          over and thus will be highly labeled species that will          bias estimates of RNA stability.
-1. n: Number of reads with identical data for the other 4 columns. For example, n = 5 in the 3rd row means that there are 5 reads from sample 1 that mapped to XF 1, had 0 T to C mutations, and had 36 Ts.
+1. **TC**: Number of U-to-C mutations (assuming using s4U as the metabolic label). Called TC because technically the data is T-to-C mutations in reverse-transcribed RNA
+1. **nT**: Number of Ts (Us in the RNA) in the sequencing read(s)
+1. **XF**: Name of the feature (gene, exon, etc.) that the read comes from. Kinetic parameters will be estimated for each feature, so this should represent the functional unit who's metabolic kinetics you are interested in. Like the sample column, this is typically a character vector, but is a simple numerical ID in the simulated data.
+    * **XF** stands for "exonic feature", since in most cases, you        should only be considering reads that map to definitively       exonic locations. Introns are typically rapidly turned          over and thus will be highly labeled species that will          bias estimates of RNA stability.
+1. **n**: Number of reads with identical data for the other 4 columns. For example, n = 5 in the 3rd row means that there are 5 reads from sample 1 that mapped to **XF** 1, had 0 T to C mutations, and had 36 Ts.
 
 The structure of the cB file most closely reflects the output of a pipeline for analyze nucleotide recoding sequencing data developed by the Simon lab (available [here](https://bitbucket.org/mattsimon9/timelapse_pipeline/src/master/)), but consists of data provided by all published pipelines (e.g., SlamDunk). 
 
 Now let's look at the metadf dataframe:
 
-```{r}
+```{r, results = "hide"}
 
 # Extract 1st component of DynData, the cB data frame
 metadf <- DynData$metadf
 
-# Observe contents metadf data frame
-knitr::kable(metadf, row.names = 1:nrow(metadf))
+# Print the transpose of metadf
+# Rows will be the columns and columns will be the rows
+print(t(metadf))
 
 ```
+
+```{r, echo = FALSE, warning = FALSE}
+knitr::kable(t(metadf))
+
+```
+
+The transpose of metadf is displayed above to save space (so the columns depicted are the rows of metadf, and vice versa). Metadf has 
+significantly less information than the cB data frame, but it's crucial information. One extremely important feature of metadf is its row names (column names as depicted above). Examine the row names and compare them to the sample names
+
+```{r}
+# metadf row names
+print(rownames(metadf))
+
+
+# cB sample names
+print(unique(cB$sample))
+
+```
+
+They're the same, and they HAVE TO BE!! Each row of metadf corresponds to a sample, and the order in which the sample names appear as the row names of metadf **MUST** correspond to the order they appear in cB sample column. 
+
+Keeping in mind that each row represents a sample, the content of the columns are:
+
+1. **tl**: The length of the metabolic labeling feed. This can be in any units (the simulated data puts it in terms of minutes), but **if no s4U fed to a sample, tl must be 0 for that sample**. -s4U controls play an important role in all of the statistical models, so this is crucial to remember.
+1. **Exp_ID**: Stands for "Experimental ID" and is a numerical ID that denotes which samples are from the reference condition and which experimental samples belong to the same "treatment". In this simulated dataset, there are two conditions, a reference condition (samples 1, 2, 3, and 7) and a single experimental condition (samples 4, 5, 6, and 8). **The reference condition must be given numerical ID 1** and **the experimental conditions must be given sequential numerical IDs starting from 2** (i.e., 2, 3, 4, ...)
+
+
 
 
 
