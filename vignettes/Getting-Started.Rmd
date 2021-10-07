@@ -154,3 +154,38 @@ Once you have these two data frames correctly constructed, you can create a Dyna
 DynData <- DynamicSeqData(cB_small, metadf)
 
 ```
+
+## Step 2: Fitting the Efficient Model
+
+DynamicSeq implements several blends of fundamentally similar statistical models to perform differential kinetic analysis. No matter your intentions though, you must first fit data with the most efficient model available. This model (implemented in the fast_analysis() function, so see ?fast_analysis for more details) estimates mutation rates and then find the maximum likelihood estimate (MLE) for the fraction of sequencing reads labeled for each feature in each s4U fed sample. The reason you have to run this model is that some part of its output will be used by every other model you can run with DynamicSeq. More on that later though; first, let's create a simulated dataset and fit it with the efficient model. Using a simulated dataset will allow us to compare the results to the ground truth and validate its accuracy. 
+
+```{r}
+# Simulate a nucleotide recoding dataset
+sim_data <- sim_DynamicSeqData(100)
+  # This will simulate 100 features, 2 experimental conditions
+  # and 3 replicates for each experimental condition
+  # See ?simDynamicSeqData for details regarding tunable parameters
+
+# Extract simulated DynamicSeqData object
+DynData <- sim_data$DynData
+
+# Extract simualted ground truths
+sim_truth <- sim_data$sim_list
+
+# Run the efficient model
+Fit <- DynamicSeqFit(DynData)
+
+```
+
+DynamicSeqFit() is used here as a wrapper for two functions in DynamicSeq: cBprocess() and fast_analysis(). cBprocess() will extract and properly format the information needed for all statistical models from the DynamicSeqData object and fast_analysis() will perform the efficient analysis. This should take no more than a minute to run. Messages are printed along the way to keep you updated as to the progress of the analysis. 
+
+One of the most important messages is that regarding the estimated pnews and pold. The pnews are the estimated mutation rates of labeled reads in each sample (muts = Exp_ID, reps = Replicate ID, corresponds to order replicates appear in cB), and pold is a global estimate of the background mutation rate used in all analyses. The simulated mutation rates are 0.05 for labeled reads and 0.001 for unlabeled reads in all samples this simulation, so the estimates are pretty close. "But Isaac, why are the pnews consistently underestimated"? Good question, its because this is a small simulated dataset with a somewhat tight distribution of fraction news. fast_analysis() makes lots of assumptions to assure maximum efficiency, and one is that the highest mutation rates in s4U fed samples come from features with almost 100% labeling (fraction labeled = 1). That won't be true in small simulated datasets, but it's still not that bad, everything considered. If you have better mutation rate estimates from elsewhere (say a run of the full Stan model implemented in DynamicSeq), you can pass the true values to DynamicSeqFit():
+
+```{r}
+# Run efficient model with known mutation rates
+Fit <- DynamicSeqFit(DynData, 
+                     pnew = rep(0.05, times = 6), 
+                     pold = 0.001)
+```
+
+"But didn't you say that all other models require the output of fast_analysis() to run? Won't poor mutation rate estimates at this stage bias all downstream models?" Wow, another great question! The short answer is no. The slightly longer answer is no for one set of models and yes for the other, but you can eliminate all bias thanks to the unaffected models. 
