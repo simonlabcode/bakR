@@ -5,7 +5,9 @@ Kinetic parameter estimation and statistical testing is compatible with any enri
 Currently, the only way to install the package is to:
   1. Clone the repository
   2. Navigate to the directory containing the cloned repository (not the repo directory itself)
-  3. Call (from R or R_studio) devtools::install("DynamicSeq") then library(DynamicSeq)
+  3. Call (from R or R_studio) devtools::install("DynamicSeq", build_vignettes = TRUE) 
+  4. Can load package with library(DynamicSeq) like normal
+  5. Call vignettes("Getting-Started", package = "DynamicSeq") to see introductory vignette.
   
 If trying to run on the cluster, installation should be done through an interactive R session. The steps are as follows:
   1. Clone the repository to your ruddle account (or use Globus to transfer the locally cloned copy) and navigate to directory containing repo directory (not the repo directory      itself)
