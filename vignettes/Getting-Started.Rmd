@@ -215,7 +215,7 @@ The Fit objects contain lists pertaining to the fits of each of the models. The 
 
 DynamicSeq provides a variety of easy to use functions for beginning to investigate your data. The visualizations are particularly aimed at revealing trends in RNA stabilization or destabilization. These include MA plots:
 
-```{r}
+```{r, fig.align='center'}
 ## MA Plot with Fast Fit
 plotMA(Fit$Fast_Fit, Fit$Data_lists$Stan_data$Avg_Reads_natural)
 
@@ -223,27 +223,15 @@ plotMA(Fit$Fast_Fit, Fit$Data_lists$Stan_data$Avg_Reads_natural)
 
 volcano plots:
 
-```{r}
+```{r, fig.align='center'}
 ## Volcano Plot with Fast Fit; significance assessed relative to an FDR control of 0.05
 plotVolcano(Fit$Fast_Fit)
 
 ```
 
-L2FC(kdeg) heatmaps (will require a separate function from another package to actually generate the
-heatmaps):
-
-```{r}
-## Make matrix that can be passed to heatmap functions
-L2FC_mat <- Heatmap_kdeg(Fit$Fast_Fit)
-
-library(pheatmap)
-pheatmap(L2FC_mat)
-
-```
-
 and PCA with replicate fraction new estimates for diagnosing potential batch effects:
 
-```{r}
+```{r, fig.align='center'}
 ## 2D PCA plot with replicate fraction news
 FnPCA(Fit$Fast_Fit)
 
