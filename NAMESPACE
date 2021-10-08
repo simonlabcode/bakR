@@ -3,6 +3,7 @@
 export(DynamicSeqData)
 export(DynamicSeqFit)
 export(FnPCA)
+export(Heatmap_kdeg)
 export(StanFDR)
 export(TL_stan)
 export(cBprocess)

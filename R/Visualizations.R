@@ -161,6 +161,7 @@ plotMA <- function(obj, Avg_reads_natural, FDR = 0.05, Exps = NULL, Exp_shape = 
 #' @param filter_sig Logical; if TRUE, then only features which have a statistically significant L2FC(kdeg) in at least one comparison
 #' are kept
 #' @param FDR Numeric; False discovery to control at if filter_sig is TRUE.
+#' @export
 Heatmap_kdeg <- function(obj, zscore = FALSE, filter_sig = FALSE, FDR = 0.05){
   ## Extract L2FC(kdeg) and padj
   if(zscore){
