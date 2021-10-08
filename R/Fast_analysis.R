@@ -402,7 +402,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
 
   if(is.null(pold)){
 
-    if((sum(Mut_data$type == 0) == 0) | (no_ctl)){ # Estimate using low mutation rate features
+    if((sum(df$type == 0) == 0) | (no_ctl)){ # Estimate using low mutation rate features
       message("Estimating unlabeled mutation rate")
 
       New_data <- df

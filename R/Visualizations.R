@@ -71,6 +71,7 @@ FnPCA <- function(obj, ...){
 #' @param FDR False discovery rate to control at for significance assessment
 #' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
 #' @param Exp_shape Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot
+#' @export
 plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
   ## Extract L2FC(kdeg) and padj
   L2FC_df <- obj$Effects_df[,c("L2FC_kdeg", "padj", "Exp_ID")]
@@ -109,6 +110,7 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
 #' @param FDR False discovery rate to control at for significance assessment
 #' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
 #' @param Exp_shape Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot
+#' @export
 plotMA <- function(obj, Avg_reads_natural, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
   ## Extract L2FC(kdeg) and padj
   L2FC_df <- obj$Effects_df[,c("L2FC_kdeg", "padj", "Exp_ID", "Feature_ID")]
