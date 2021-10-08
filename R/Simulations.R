@@ -439,7 +439,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
     for(j in 1:num_conds){
       for(k in 1:nreps){
         standard_RNA <- (log10(RNA_conc[i,j]*scale_factor) - mean(log10(RNA_conc[,j]*scale_factor)))/stats::sd(log10(RNA_conc[,j]*scale_factor))
-        fn[i, j, k] <- inv_logit(rnorm(1, mean=(logit(fn_mean[i]) + effect_mean[i,j]), sd = stats::rlnorm(1, noise_deg_a*log10(RNA_conc[i,j]*scale_factor) + noise_deg_b, sd_rep )))
+        fn[i, j, k] <- inv_logit(rnorm(1, mean=(logit(fn_mean[i]) + effect_mean[i,j]), sd = stats::rlnorm(1, noise_deg_a*standard_RNA + noise_deg_b, sd_rep )))
         ks[i,j,k] <- exp(stats::rnorm(1, mean=log((2^L2FC_ks_mean[i,j])*ks_mean[i]), sd=noise_synth))
       }
     }
