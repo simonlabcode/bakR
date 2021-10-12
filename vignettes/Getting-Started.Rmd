@@ -44,7 +44,8 @@ abstract: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.dim = c(6, 4)
 )
 ```
 
@@ -161,10 +162,10 @@ DynamicSeq implements several blends of fundamentally similar statistical models
 
 ```{r}
 # Simulate a nucleotide recoding dataset
-sim_data <- sim_DynamicSeqData(100)
-  # This will simulate 100 features, 2 experimental conditions
+sim_data <- sim_DynamicSeqData(500)
+  # This will simulate 500 features, 2 experimental conditions
   # and 3 replicates for each experimental condition
-  # See ?simDynamicSeqData for details regarding tunable parameters
+  # See ?sim_DynamicSeqData for details regarding tunable parameters
 
 # Extract simulated DynamicSeqData object
 DynData <- sim_data$DynData
@@ -196,7 +197,7 @@ rstan::rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
 
-# Run Hybrid model (This might take a minute or two to run)
+# Run Hybrid model (This might take several minutes to run)
 Fit <- DynamicSeqFit(Fit, HybridFit = TRUE)
 
 # Run Full model (This might take ~10-20 minutes to run)
