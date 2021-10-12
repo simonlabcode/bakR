@@ -543,10 +543,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
     Mut_data_est <- Mut_data %>% dplyr::ungroup() %>% dplyr::mutate(lam_n = pnew*nT, lam_o = pold*nT) %>%
       dplyr::group_by(fnum, mut, reps, TC) %>%
       dplyr::summarise(lam_n = sum(lam_n*n)/sum(n), lam_o = sum(lam_o*n)/sum(n),
-                       n = sum(n), .group = "keep") %>%
+                       n = sum(n), .groups = "keep") %>%
       dplyr::ungroup() %>%
       dplyr::group_by(fnum, mut, reps) %>%
-      dplyr::summarise(logit_fn_rep = optim(0.5, mixed_lik, TC = TC, n = n, lam_n = lam_n, lam_o = lam_o, method = "L-BFGS-B", lower = lower, upper = upper)$par, nreads =sum(n), .groups = "keep") %>%
+      dplyr::summarise(logit_fn_rep = optim(0.5, mixed_lik, TC = TC, n = n, lam_n = sum(lam_n*n)/sum(n), lam_o = sum(lam_o*n)/sum(n), method = "L-BFGS-B", lower = lower, upper = upper)$par, nreads =sum(n), .groups = "keep") %>%
       dplyr::mutate(logit_fn_rep = ifelse(logit_fn_rep == lower, runif(1, lower-0.2, lower), ifelse(logit_fn_rep == upper, runif(1, upper, upper+0.2), logit_fn_rep))) %>%
       dplyr::mutate(Fn_rep_est = inv_logit(logit_fn_rep)) %>%
       dplyr::ungroup()

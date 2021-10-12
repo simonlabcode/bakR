@@ -610,7 +610,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
 
   ## Make dataframes that are similar to Fit outputs
 
-  Fn_rep_sim <- data.frame(Feature_ID = rep(1:ngene, times = num_conds*nreps),
+  Fn_rep_sim <- data.frame(Feature_ID = rep(rep(1:ngene, each = nreps), times = num_conds),
                            Replicate = rep(1:nreps, times = ngene*num_conds),
                            Exp_ID = rep(1:num_conds, each = ngene*nreps),
                            Logit_fn = logit(fn_vect),
