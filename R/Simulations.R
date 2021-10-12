@@ -609,10 +609,6 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
   }
 
   ## Make dataframes that are similar to Fit outputs
-  Effect_sim <- data.frame(Feature_ID = rep(1:ngene, times = (num_conds-1)),
-                           Exp_ID = rep(2:num_conds, each = ngene),
-                           L2FC_kdeg = L2FC_kd_vect,
-                           effect = effect_vect)
 
   Fn_rep_sim <- data.frame(Feature_ID = rep(1:ngene, times = num_conds*nreps),
                            Replicate = rep(1:nreps, times = ngene*num_conds),
@@ -625,19 +621,40 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
                             Avg_logit_fn = fn_mean_vect,
                             Avg_fn = inv_logit(fn_mean_vect))
 
+  if(num_conds > 1){
+    Effect_sim <- data.frame(Feature_ID = rep(1:ngene, times = (num_conds-1)),
+                             Exp_ID = rep(2:num_conds, each = ngene),
+                             L2FC_kdeg = L2FC_kd_vect,
+                             effect = effect_vect)
 
-  ## Order dataframes as they are in fit output
-  Effect_sim <- Effect_sim[order(Effect_sim$Feature_ID, Effect_sim$Exp_ID),]
-  Fn_rep_sim <- Fn_rep_sim[order(Fn_rep_sim$Feature_ID, Fn_rep_sim$Exp_ID, Fn_rep_sim$Replicate),]
-  Fn_mean_sim <- Fn_mean_sim[order(Fn_mean_sim$Feature_ID, Fn_mean_sim$Exp_ID),]
+    Effect_sim <- Effect_sim[order(Effect_sim$Feature_ID, Effect_sim$Exp_ID),]
+
+    ## Order dataframes as they are in fit output
+    Fn_rep_sim <- Fn_rep_sim[order(Fn_rep_sim$Feature_ID, Fn_rep_sim$Exp_ID, Fn_rep_sim$Replicate),]
+    Fn_mean_sim <- Fn_mean_sim[order(Fn_mean_sim$Feature_ID, Fn_mean_sim$Exp_ID),]
+
+    sim_data <- list(DynData = DynData,
+                     sim_list = list(Effect_sim = Effect_sim,
+                                     Fn_mean_sim = Fn_mean_sim,
+                                     Fn_rep_sim = Fn_rep_sim,
+                                     L2FC_ks_mean = L2FC_ks_mean,
+                                     RNA_conc = RNA_conc*scale_factor) )
+
+  }else{
+    ## Order dataframes as they are in fit output
+    Fn_rep_sim <- Fn_rep_sim[order(Fn_rep_sim$Feature_ID, Fn_rep_sim$Exp_ID, Fn_rep_sim$Replicate),]
+    Fn_mean_sim <- Fn_mean_sim[order(Fn_mean_sim$Feature_ID, Fn_mean_sim$Exp_ID),]
 
 
-  sim_data <- list(DynData = DynData,
-                   sim_list = list(Effect_sim = Effect_sim,
-                                   Fn_mean_sim = Fn_mean_sim,
-                                   Fn_rep_sim = Fn_rep_sim,
-                                   L2FC_ks_mean = L2FC_ks_mean,
-                                   RNA_conc = RNA_conc*scale_factor) )
+    sim_data <- list(DynData = DynData,
+                     sim_list = list(Fn_mean_sim = Fn_mean_sim,
+                                     Fn_rep_sim = Fn_rep_sim,
+                                     L2FC_ks_mean = L2FC_ks_mean,
+                                     RNA_conc = RNA_conc*scale_factor) )
+  }
+
+
+
 
   return(sim_data)
 
