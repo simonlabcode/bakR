@@ -606,9 +606,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
 
   if(!(all(logit_fn < upper) & all(logit_fn > lower))){
     num_unstable <- sum(logit_fn >= upper) + sum(logit_fn <= lower)
-    warning(paste0(num_unstable, " logit(fn) estimates are at the upper or lower bounds set. These represent numerical instabilities
-                   due to either the presence of limited data or extremely stable/unstable features. If the number of instabilities is
-                   concerning, try increasing the magnitude of upper and lower."))
+    tot_ests <- length(logit_fn)
+    prcnt_unstable <- round((num_unstable/tot_ests)*100,3)
+    warning(paste0(num_unstable, " out of " , tot_ests, " (", prcnt_unstable,"%)", " logit(fn) estimates are at the upper or lower bounds set. These represent numerical instabilitie due to either the presence of limited data or extremely stable/unstable features. If the number of instabilities is concerning, try increasing the magnitude of upper and lower."))
   }
 
   fn_estimate <- as.vector(Mut_data_est$Fn_rep_est)
