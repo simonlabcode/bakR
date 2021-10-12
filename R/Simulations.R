@@ -118,7 +118,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
   if(nreps < 1){
     stop("nreps must be > 0; it represents the number of replicates")
   }else if(nreps == 1){
-    warning("You are only simulating a single replicate, which might represent an unrealistic experiment")
+    warning("You are only simulating a single replicate; All statistical models implemented in DynamicSeq require > 1 replicate.")
   }
 
   # Effect size distribution standard deviation
