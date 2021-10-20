@@ -592,14 +592,21 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
   Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
     dplyr::summarise(nreads = sum(nreads),fn_sd_log = log(sqrt(1/sum(1/((sd(logit_fn_rep)^2) + logit_fn_se^2 ) ) ) )) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID) %>%
+    dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
     dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(fn_sd_log))
 
   ## Regress avg_reads vs. avg_sd
-  heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data )
+  lm_list <- vector("list", length = 2L)
+  lm_var <- lm_list
 
-  h_int <- summary(heterosked_lm)$coefficients[1,1]
-  h_slope <- summary(heterosked_lm)$coefficients[2,1]
+  for(i in 1:nMT){
+    heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
+    h_int <- summary(heterosked_lm)$coefficients[1,1]
+    h_slope <- summary(heterosked_lm)$coefficients[2,1]
+    lm_list[[i]] <- c(h_int, h_slope)
+
+    lm_var[[i]] <- var(stats::residuals(heterosked_lm))
+  }
 
 
   logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
@@ -682,9 +689,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
   # Regularize estimates with Bayesian models and empirically informed priors
   avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
     #dplyr::mutate(sd_post = sqrt((a_hyper*b_hyper + nreps*sd_logit_fn)/(a_hyper + nreps - 2))) %>%
-    dplyr::mutate(sd_post = exp( (log(sd_logit_fn)*nreps + prior_weight*(h_int + h_slope*log10(nreads)))/(nreps + prior_weight) )) %>%
+    dplyr::mutate(sd_post = exp( (log(sd_logit_fn)*nreps*(1/lm_var[[Condition]]) + prior_weight*(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(nreps*(1/lm_var[[Condition]]) + prior_weight) )) %>%
     dplyr::mutate(logit_fn_post = (avg_logit_fn*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2))) %>%
-    dplyr::mutate(sd_post = sqrt(1/(nreps/(sd_post^2) + (1/sdp^2)))) %>%
+    #dplyr::mutate(sd_post = sqrt(1/(nreps/(sd_post^2) + (1/sdp^2)))) %>%
     dplyr::mutate(kdeg = -log(1 - inv_logit(logit_fn_post))) %>%
     dplyr::mutate(kdeg_sd = sd_post*(exp(logit_fn_post)/((1 + exp(-logit_fn_post))^2))) %>%
     dplyr::ungroup() %>%
@@ -692,7 +699,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
     dplyr::mutate(effect_size = logit_fn_post - logit_fn_post[Condition == 1]) %>%
     dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
     dplyr::mutate(L2FC_kdeg = ifelse(Condition == 1, 0, log2(kdeg/kdeg[Condition == 1]))) %>%
-    dplyr::mutate(pval = 2*pt(-abs(effect_size/effect_std_error), df = 2*nreps - 2 + a_hyper)) %>%
+    dplyr::mutate(pval = 2*pt(-abs(effect_size/effect_std_error), df = 2*nreps - 2 + 2*a_hyper)) %>%
     dplyr::ungroup()
 
   # Calcuate lfsr using ashr package
