@@ -587,7 +587,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
     nbin <- max(c(round(ngene*num_conds*nreps/100), 10))
   }
 
-  message("Estimating mean-variance relationship")
+  message("Estimating read count-variance relationship")
 
   Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
     dplyr::summarise(nreads = sum(nreads),fn_sd_log = log(sqrt(1/sum(1/((sd(logit_fn_rep)^2) + logit_fn_se^2 ) ) ) )) %>%
@@ -608,7 +608,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
     num_unstable <- sum(logit_fn >= upper) + sum(logit_fn <= lower)
     tot_ests <- length(logit_fn)
     prcnt_unstable <- round((num_unstable/tot_ests)*100,3)
-    warning(paste0(num_unstable, " out of " , tot_ests, " (", prcnt_unstable,"%)", " logit(fn) estimates are at the upper or lower bounds set. These represent numerical instabilitie due to either the presence of limited data or extremely stable/unstable features. If the number of instabilities is concerning, try increasing the magnitude of upper and lower."))
+    warning(paste0(num_unstable, " out of " , tot_ests, " (", prcnt_unstable,"%)", " logit(fn) estimates are at the upper or lower bounds set. These likely represent features with limited data or extremely stable/unstable features. If the number of boundary estimates is concerning, try increasing the magnitude of upper and lower."))
   }
 
   fn_estimate <- as.vector(Mut_data_est$Fn_rep_est)
