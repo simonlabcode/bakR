@@ -225,7 +225,15 @@ cBtofast <- function(cB_raw,
 #' }
 #' @importFrom magrittr %>%
 #' @export
-fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut = 50, features_cut = 10, nbin = NULL, prior_weight = 2, MLE = TRUE, lower = -7, upper = 7, se_max = 2.5){
+fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
+                          read_cut = 50, features_cut = 10,
+                          nbin = NULL, prior_weight = 2,
+                          MLE = TRUE,
+                          lower = -7, upper = 7,
+                          se_max = 2.5,
+                          mut_reg = 0.1,
+                          p_mean = 0,
+                          p_sd = 1){
 
   ## Check pold
   if(length(pold) > 1){
@@ -316,7 +324,30 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
     stop("upper must be > lower. Upper and lower represent the upper and lower bounds used by stats::optim for MLE")
   }
 
+  ## Check mut_reg
+  if(!is.numeric(mut_reg)){
+    stop("mut_reg must be numeric")
+  }else if(mut_reg < 0){
+    stop("mut_reg must be greater than 0")
+  }else if(mut_reg > 0.5){
+    stop("mut_reg must be less than 0.5")
+  }
 
+  ## Check p_mean
+  if(!is.numeric(p_mean)){
+    stop("p_mean must be numeric")
+  }else if(abs(p_mean) > 2){
+    warning("p_mean is far from 0. This might bias estimates considerably; tread lightly.")
+  }
+
+  ## Check p_sd
+  if(!is.numeric(p_sd)){
+    stop("p_sd must be numeric")
+  }else if(p_sd <= 0){
+    stop("p_sd must be greater than 0")
+  }else if(p_sd < 0.5){
+    warning("p_sd is pretty small. This might bias estimates considerably; tread lightly.")
+  }
 
   logit <- function(x) log(x/(1-x))
   inv_logit <- function(x) exp(x)/(1+exp(x))
@@ -536,7 +567,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
   }else{
     # MLE
     mixed_lik <- function(lam_n, lam_o, TC, n, logit_fn){
-      logl <- sum(n*log(inv_logit(logit_fn)*(lam_n^TC)*exp(-lam_n) + (1-inv_logit(logit_fn))*(lam_o^TC)*exp(-lam_o) ))
+      logl <- sum(n*log(inv_logit(logit_fn)*(lam_n^TC)*exp(-lam_n) + (1-inv_logit(logit_fn))*(lam_o^TC)*exp(-lam_o) )) + log(dnorm(logit_fn, mean = p_mean, sd = p_sd))
       return(-logl)
     }
 
@@ -546,7 +577,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
                        n = sum(n), .groups = "keep") %>%
       dplyr::ungroup() %>%
       dplyr::group_by(fnum, mut, reps) %>%
-      dplyr::summarise(logit_fn_rep = optim(0.5, mixed_lik, TC = TC, n = n, lam_n = sum(lam_n*n)/sum(n), lam_o = sum(lam_o*n)/sum(n), method = "L-BFGS-B", lower = lower, upper = upper)$par, nreads =sum(n), .groups = "keep") %>%
+      dplyr::summarise(logit_fn_rep = optim(0, mixed_lik, TC = TC, n = n, lam_n = sum(lam_n*n)/sum(n), lam_o = sum(lam_o*n)/sum(n), method = "L-BFGS-B", lower = lower, upper = upper)$par, nreads =sum(n), .groups = "keep") %>%
       dplyr::mutate(logit_fn_rep = ifelse(logit_fn_rep == lower, runif(1, lower-0.2, lower), ifelse(logit_fn_rep == upper, runif(1, upper, upper+0.2), logit_fn_rep))) %>%
       dplyr::ungroup()
 
@@ -557,13 +588,13 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE, read_cut
     mut_instab <- instab_df$mut
     reps_instab <- instab_df$reps
 
-    instab_est <- dplyr::left_join(Mut_data, instab_df, by = c("fnum", "mut", "reps")) %>%
+    instab_est <- dplyr::right_join(Mut_data, instab_df, by = c("fnum", "mut", "reps")) %>%
       dplyr::ungroup() %>%
       dplyr::mutate(totTC = TC*n, totU = nT*n) %>%
       dplyr::group_by(fnum, mut, reps) %>%
       dplyr::summarise(tot_mut = sum(totTC), totUs = sum(totU), pnew = mean(pnew), pold = mean(pold)) %>% dplyr::ungroup() %>%
       dplyr::mutate(avg_mut = tot_mut/totUs,
-                    Fn_rep_est = (avg_mut - 0.9*pold)/(1.1*pnew - 0.9*pold)) %>%
+                    Fn_rep_est = (avg_mut - (1-mut_reg)*pold)/((1+mut_reg)*pnew - (1-mut_reg)*pold)) %>%
       dplyr::mutate(Fn_rep_est = ifelse(Fn_rep_est > 1, runif(1, min = inv_logit(upper-0.1), max = 1) , ifelse(Fn_rep_est < 0, runif(1, min = 0, max = inv_logit(lower+0.1)), Fn_rep_est ) )) %>%
       dplyr::mutate(logit_fn_rep = logit(Fn_rep_est)) %>%
       dplyr::select(fnum, mut, reps, logit_fn_rep)
