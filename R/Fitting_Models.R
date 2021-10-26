@@ -68,6 +68,7 @@
 #' @export
 DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           keep_input = c(0.2, 50),
+                          FastRerun = FALSE,
                           Stan_prep = TRUE,
                           Fast_prep = TRUE,
                           FOI = c(),
@@ -141,6 +142,19 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     return(Fit_lists)
 
   }else if(class(obj) == "DynamicSeqFit"){
+
+    if(FastRerun & (StanFit | HybridFit)){
+      stop("Can only rerun fast_analysis() or run Stan models, not both. If you want to rerun fast_analysis() and then run Stan model, use separate calls to DynamicSeqFit().")
+    }
+
+    if(FastRerun){
+      fast_list <- DynamicSeq::fast_analysis(obj$Data_lists$Fast_df, ...)
+
+
+      obj$Fast_Fit <- fast_list
+
+      return(obj)
+    }
 
     if(StanFit){
 

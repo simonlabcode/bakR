@@ -304,7 +304,7 @@ cBprocess <- function(obj,
   df_feature_U <- df_U[df_U$type == 1, ] %>% dplyr::group_by(reps, mut, fnum) %>%
     dplyr::summarise(feature_avg_Us = sum(nT*n)/sum(n)) %>% dplyr::ungroup()
 
-  df_U_tot <- merge(df_global_U, df_feature_U, by = c("mut", "reps"))
+  df_U_tot <- dplyr::left_join(df_global_U, df_feature_U, by = c("mut", "reps"))
 
   df_U_tot <- df_U_tot %>% dplyr::mutate(U_factor = log(feature_avg_Us/tot_avg_Us)) %>%
     dplyr::select(mut, reps, fnum, U_factor)
@@ -345,7 +345,7 @@ cBprocess <- function(obj,
 
 
 
-    df <- merge(df, df_U_tot, by = c("fnum", "mut", "reps"))
+    df <- dplyr::left_join(df, df_U_tot, by = c("fnum", "mut", "reps"))
     df <- df[order(df$fnum, df$mut, df$reps), ]
 
     FE = df$fnum
