@@ -9,6 +9,7 @@ DynamicSeqFit(
   StanFit = FALSE,
   HybridFit = FALSE,
   keep_input = c(0.2, 50),
+  FastRerun = FALSE,
   Stan_prep = TRUE,
   Fast_prep = TRUE,
   FOI = c(),

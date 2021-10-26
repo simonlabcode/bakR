@@ -16,7 +16,10 @@ fast_analysis(
   MLE = TRUE,
   lower = -7,
   upper = 7,
-  se_max = 2.5
+  se_max = 2.5,
+  mut_reg = 0.1,
+  p_mean = 0,
+  p_sd = 1
 )
 }
 \arguments{
@@ -44,6 +47,12 @@ etc.}
 \item{lower}{Lower bound for MLE with L-BFGS-B algorithm}
 
 \item{upper}{Upper bound for MLE with L-BFGS-B algorithm}
+
+\item{mut_reg}{If MLE has instabilities, empircal mut rate will be used to estimate fn, multiplying pnew by 1+mut_reg and pold by 1-mut_reg to regularize fn}
+
+\item{p_mean}{Mean of normal distribution used as prior penalty in MLE of logit(fn)}
+
+\item{p_sd}{Standard deviation of normal distribution used as prior peanlty in MLE of logit(fn)}
 }
 \value{
 List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
