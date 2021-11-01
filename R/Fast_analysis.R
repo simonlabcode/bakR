@@ -236,7 +236,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           se_max = 2.5,
                           mut_reg = 0.1,
                           p_mean = 0,
-                          p_sd = 1){
+                          p_sd = 1,
+                          StanRate = FALSE,
+                          Stan_data = NULL){
 
   ## Check pold
   if(length(pold) > 1){
@@ -352,60 +354,93 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     warning("p_sd is pretty small. This might bias estimates considerably; tread lightly.")
   }
 
+  ## Check StanRate
+  if(!is.logical(StanRate)){
+    stop("StanRate must be logical (TRUE or FALSE)")
+  }
+
   logit <- function(x) log(x/(1-x))
   inv_logit <- function(x) exp(x)/(1+exp(x))
 
   #Old mutation rate estimation
 
+  if((is.null(pnew) | is.null(pold)) & StanRate ){
+
+
+    mut_fit <- rstan::sampling(stanmodels$Full_Model, data = Stan_data, chains = 1)
+  }
+
   #Trim df and name columns
   if(is.null(pnew)){
-    message("Estimating labeled mutation rate")
-    Mut_data <- df
 
-    ##New Mutation rate Estimation
-    # Extract only s4U labeled data to estimate s4U mut rate
-    New_data <- Mut_data[Mut_data$type == 1, ]
+    if(StanRate){
+      nMT <- max(df$mut)
+      nreps <- max(df$reps)
 
-    # Calculate avg. mut rate at each row
-    New_data$avg_mut <- New_data$TC/New_data$nT
+      U_df <- df[df$type == 1,] %>% dplyr::group_by(mut, reps) %>%
+        dplyr::summarise(avg_T = sum(nT*n)/sum(n))
 
-    # Remove rows with NAs
-    New_data <- New_data[!is.na(New_data$avg_mut),]
+      U_df <- U_df[order(U_df$mut, U_df$rep),]
 
-    # calculate total number of mutations
-    # which is the avg. for that row of dataframe times n
-    # the number of reads that had the identical average
-    New_data$weight_mut <- New_data$avg_mut*New_data$n
+      pnew <- exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_n"))$mean)/U_df$avg_T
 
-    # This is to estimate the total mutation rate for each gene in
-    # each replicate and each experimental condition
-    New_data_summary <- New_data %>%
-      dplyr::group_by(reps, mut, fnum) %>% # group by gene, replicate ID, and experiment ID
-      dplyr::summarise(avg_mut = sum(weight_mut)/sum(n), n = sum(n))
+      rm(U_df)
 
-    # Order datalist so that it's ordered by sample and then avg mutation rate
-    # Goal is to use the highest avg. mutation rates to estimate s4U mutation rate,
-    # assuming that highest mutation rates are from fast turnover, compeltely
-    # labeled transcripts
-    New_data_ordered <- New_data_summary[order(New_data_summary$mut, New_data_summary$reps, New_data_summary$avg_mut, decreasing=TRUE), ]
+      rep_vect <- rep(seq(from = 1, to = nreps), times = nMT)
 
-    ## This part has some magic numbers I should get rid of
-    ## or move to user input
+      mut_vect <- rep(seq(from = 1, to = nMT), each = nreps)
+      New_data_estimate <- data.frame(mut_vect, rep_vect, pnew)
+      colnames(New_data_estimate) <- c("mut", "reps", "pnew")
 
-    New_data_cutoff <- New_data_ordered[New_data_ordered$n > read_cut,]
-
-    # Check to make sure that the number of features that made it past the
-    # read count filter is still more than the total number of features required for
-    # mutation rate estimate
-    check <- New_data_cutoff %>% dplyr::ungroup() %>%
-      dplyr::count(mut, reps, sort = TRUE)
-
-    if(sum(check$n < features_cut) > 0){
-      stop("Not enough features made it past the read cutoff filter in one sample; try decreasing read_cut or features_cut")
     }else{
-      New_data_estimate <- New_data_cutoff %>% dplyr::group_by(mut, reps) %>%
-        dplyr::summarise(pnew = mean(avg_mut[1:features_cut]))
-      message(paste0(c("Estimated pnews for each sample are:", capture.output(New_data_estimate)), collapse = "\n"))
+      message("Estimating labeled mutation rate")
+      Mut_data <- df
+
+      ##New Mutation rate Estimation
+      # Extract only s4U labeled data to estimate s4U mut rate
+      New_data <- Mut_data[Mut_data$type == 1, ]
+
+      # Calculate avg. mut rate at each row
+      New_data$avg_mut <- New_data$TC/New_data$nT
+
+      # Remove rows with NAs
+      New_data <- New_data[!is.na(New_data$avg_mut),]
+
+      # calculate total number of mutations
+      # which is the avg. for that row of dataframe times n
+      # the number of reads that had the identical average
+      New_data$weight_mut <- New_data$avg_mut*New_data$n
+
+      # This is to estimate the total mutation rate for each gene in
+      # each replicate and each experimental condition
+      New_data_summary <- New_data %>%
+        dplyr::group_by(reps, mut, fnum) %>% # group by gene, replicate ID, and experiment ID
+        dplyr::summarise(avg_mut = sum(weight_mut)/sum(n), n = sum(n))
+
+      # Order datalist so that it's ordered by sample and then avg mutation rate
+      # Goal is to use the highest avg. mutation rates to estimate s4U mutation rate,
+      # assuming that highest mutation rates are from fast turnover, compeltely
+      # labeled transcripts
+      New_data_ordered <- New_data_summary[order(New_data_summary$mut, New_data_summary$reps, New_data_summary$avg_mut, decreasing=TRUE), ]
+
+      ## This part has some magic numbers I should get rid of
+      ## or move to user input
+
+      New_data_cutoff <- New_data_ordered[New_data_ordered$n > read_cut,]
+
+      # Check to make sure that the number of features that made it past the
+      # read count filter is still more than the total number of features required for
+      # mutation rate estimate
+      check <- New_data_cutoff %>% dplyr::ungroup() %>%
+        dplyr::count(mut, reps, sort = TRUE)
+
+      if(sum(check$n < features_cut) > 0){
+        stop("Not enough features made it past the read cutoff filter in one sample; try decreasing read_cut or features_cut")
+      }else{
+        New_data_estimate <- New_data_cutoff %>% dplyr::group_by(mut, reps) %>%
+          dplyr::summarise(pnew = mean(avg_mut[1:features_cut]))
+        message(paste0(c("Estimated pnews for each sample are:", capture.output(New_data_estimate)), collapse = "\n"))
+      }
     }
 
 
@@ -435,96 +470,113 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   }
 
   if(is.null(pold)){
+    if(StanRate){
+      nMT <- max(df$mut)
+      nreps <- max(df$reps)
 
-    if((sum(df$type == 0) == 0) | (no_ctl)){ # Estimate using low mutation rate features
-      message("Estimating unlabeled mutation rate")
+      U_df <- df[df$type == 1,] %>% dplyr::group_by(mut, reps) %>%
+        dplyr::summarise(avg_T = sum(nT*n)/sum(n))
 
-      New_data <- df
+      U_df <- U_df[order(U_df$mut, U_df$rep),]
 
-      # Calculate avg. mut rate at each row
-      New_data$avg_mut <- New_data$TC/New_data$nT
+      pold <- mean(exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_o"))$mean)/U_df$avg_T)
 
-      # Remove rows with NAs
-      New_data <- New_data[!is.na(New_data$avg_mut),]
+      rm(U_df)
 
-      # calculate total number of mutations
-      # which is the avg. for that row of dataframe times n
-      # the number of reads that had the identical average
-      New_data$weight_mut <- New_data$avg_mut*New_data$n
+      message(paste(c("Estimated pold is: ", pold), collapse = " "))
 
-      # This is to estimate the total mutation rate for each gene in
-      # each replicate and each experimental condition
-      New_data_summary <- New_data %>%
-        dplyr::group_by(fnum) %>% # group by gene, replicate ID, and experiment ID
-        dplyr::summarise(avg_mut = sum(weight_mut)/sum(n), n = sum(n), .groups = "keep")
+    }else{
+      if((sum(df$type == 0) == 0) | (no_ctl)){ # Estimate using low mutation rate features
+        message("Estimating unlabeled mutation rate")
 
-      # Order datalist so that it's ordered by sample and then avg mutation rate
-      # Goal is to use the lowest avg. mutation rates to estimate s4U mutation rate,
-      # assuming that highest mutation rates are from fast turnover, completely
-      # labeled transcripts
-      New_data_ordered <- New_data_summary[order(New_data_summary$avg_mut, decreasing=FALSE), ]
+        New_data <- df
 
+        # Calculate avg. mut rate at each row
+        New_data$avg_mut <- New_data$TC/New_data$nT
 
-      # Filter out for high read depth features
-      New_data_cutoff <- New_data_ordered[New_data_ordered$n > read_cut,]
+        # Remove rows with NAs
+        New_data <- New_data[!is.na(New_data$avg_mut),]
 
-      # Check to make sure that the number of features that made it past the
-      # read count filter is still more than the total number of features required for
-      # mutation rate estimate
-      check <- nrow(New_data_cutoff)
+        # calculate total number of mutations
+        # which is the avg. for that row of dataframe times n
+        # the number of reads that had the identical average
+        New_data$weight_mut <- New_data$avg_mut*New_data$n
 
-      if(check < features_cut){
-        stop("Not enough features made it past the read cutoff filter in one sample; try decreasing read_cut or features_cut")
-      }else{
-        pold <- stats::weighted.mean(New_data_cutoff$avg_mut[1:features_cut], w = New_data_cutoff$n[1:features_cut])
-        message(paste(c("Estimated pold is: ", pold), collapse = " "))
-      }
+        # This is to estimate the total mutation rate for each gene in
+        # each replicate and each experimental condition
+        New_data_summary <- New_data %>%
+          dplyr::group_by(fnum) %>% # group by gene, replicate ID, and experiment ID
+          dplyr::summarise(avg_mut = sum(weight_mut)/sum(n), n = sum(n), .groups = "keep")
+
+        # Order datalist so that it's ordered by sample and then avg mutation rate
+        # Goal is to use the lowest avg. mutation rates to estimate s4U mutation rate,
+        # assuming that highest mutation rates are from fast turnover, completely
+        # labeled transcripts
+        New_data_ordered <- New_data_summary[order(New_data_summary$avg_mut, decreasing=FALSE), ]
 
 
-    }else{ # Estimate using -s4U data
-      message("Estimating unlabeled mutation rate")
+        # Filter out for high read depth features
+        New_data_cutoff <- New_data_ordered[New_data_ordered$n > read_cut,]
 
-      #Old mutation rate estimation
-      Mut_data <- df
+        # Check to make sure that the number of features that made it past the
+        # read count filter is still more than the total number of features required for
+        # mutation rate estimate
+        check <- nrow(New_data_cutoff)
 
-      Old_data <- Mut_data[Mut_data$type == 0, ]
+        if(check < features_cut){
+          stop("Not enough features made it past the read cutoff filter in one sample; try decreasing read_cut or features_cut")
+        }else{
+          pold <- stats::weighted.mean(New_data_cutoff$avg_mut[1:features_cut], w = New_data_cutoff$n[1:features_cut])
+          message(paste(c("Estimated pold is: ", pold), collapse = " "))
+        }
 
-      Old_data$avg_mut <- Old_data$TC/Old_data$nT
 
-      # Remove rows with NAs
-      Old_data <- Old_data[!is.na(Old_data$avg_mut),]
+      }else{ # Estimate using -s4U data
+        message("Estimating unlabeled mutation rate")
 
-      Old_data$weight_mut <- Old_data$avg_mut*Old_data$n
+        #Old mutation rate estimation
+        Mut_data <- df
 
-      #Old_data$n <- rep(1, times=nrow(Old_data))
+        Old_data <- Mut_data[Mut_data$type == 0, ]
 
-      Old_data_summary <- Old_data %>%
-        dplyr::group_by(reps, mut, fnum) %>% # group by gene, replicate ID, and experiment ID
-        dplyr::summarise(avg_mut = sum(weight_mut)/sum(n), n = sum(n))
+        Old_data$avg_mut <- Old_data$TC/Old_data$nT
 
-      # Order data differently than for s4U mut rate estimation
-      # Difference is that every mutation is a background mutation in these samples
-      # So we just want the highest confidence estimation, meaning we should only
-      # order by read counts
-      Old_data_ordered <- Old_data_summary[order(Old_data_summary$n, decreasing=TRUE), ]
+        # Remove rows with NAs
+        Old_data <- Old_data[!is.na(Old_data$avg_mut),]
 
-      ## This part has some magic numbers I should get rid of
-      ## or move to user input
+        Old_data$weight_mut <- Old_data$avg_mut*Old_data$n
 
-      Old_data_cutoff <- Old_data_ordered[Old_data_ordered$n > read_cut,]
+        #Old_data$n <- rep(1, times=nrow(Old_data))
 
-      # Check to make sure that the number of features that made it past the
-      # read count filter is still more than the total number of features required for
-      # mutation rate estimate
-      check <- nrow(Old_data_cutoff)
+        Old_data_summary <- Old_data %>%
+          dplyr::group_by(reps, mut, fnum) %>% # group by gene, replicate ID, and experiment ID
+          dplyr::summarise(avg_mut = sum(weight_mut)/sum(n), n = sum(n))
 
-      if(check < features_cut){
-        stop("Not enough features made it past the read cutoff filter in one sample; try decreasing read_cut or features_cut")
-      }else{
-        pold <- stats::weighted.mean(Old_data_cutoff$avg_mut[1:features_cut], w = Old_data_cutoff$n[1:features_cut])
-        message(paste(c("Estimated pold is: ", pold), collapse = " "))
+        # Order data differently than for s4U mut rate estimation
+        # Difference is that every mutation is a background mutation in these samples
+        # So we just want the highest confidence estimation, meaning we should only
+        # order by read counts
+        Old_data_ordered <- Old_data_summary[order(Old_data_summary$n, decreasing=TRUE), ]
+
+        ## This part has some magic numbers I should get rid of
+        ## or move to user input
+
+        Old_data_cutoff <- Old_data_ordered[Old_data_ordered$n > read_cut,]
+
+        # Check to make sure that the number of features that made it past the
+        # read count filter is still more than the total number of features required for
+        # mutation rate estimate
+        check <- nrow(Old_data_cutoff)
+
+        if(check < features_cut){
+          stop("Not enough features made it past the read cutoff filter in one sample; try decreasing read_cut or features_cut")
+        }else{
+          pold <- stats::weighted.mean(Old_data_cutoff$avg_mut[1:features_cut], w = Old_data_cutoff$n[1:features_cut])
+          message(paste(c("Estimated pold is: ", pold), collapse = " "))
+        }
       }
     }
+
 
 
 
