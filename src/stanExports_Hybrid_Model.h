@@ -33,7 +33,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_Hybrid_Model");
-    reader.add_event(104, 102, "end", "model_Hybrid_Model");
+    reader.add_event(108, 106, "end", "model_Hybrid_Model");
     return reader;
 }
 #include <stan_meta_header.hpp>
@@ -49,6 +49,7 @@ private:
         int nrep;
         std::vector<double> tl;
         std::vector<double> logit_fn_rep;
+        std::vector<double> fn_se;
         std::vector<std::vector<double> > Avg_Reads;
 public:
     model_Hybrid_Model(stan::io::var_context& context__,
@@ -155,6 +156,16 @@ public:
                 logit_fn_rep[k_0__] = vals_r__[pos__++];
             }
             current_statement_begin__ = 11;
+            validate_non_negative_index("fn_se", "NE", NE);
+            context__.validate_dims("data initialization", "fn_se", "double", context__.to_vec(NE));
+            fn_se = std::vector<double>(NE, double(0));
+            vals_r__ = context__.vals_r("fn_se");
+            pos__ = 0;
+            size_t fn_se_k_0_max__ = NE;
+            for (size_t k_0__ = 0; k_0__ < fn_se_k_0_max__; ++k_0__) {
+                fn_se[k_0__] = vals_r__[pos__++];
+            }
+            current_statement_begin__ = 12;
             validate_non_negative_index("Avg_Reads", "NF", NF);
             validate_non_negative_index("Avg_Reads", "nMT", nMT);
             context__.validate_dims("data initialization", "Avg_Reads", "double", context__.to_vec(NF,nMT));
@@ -174,26 +185,31 @@ public:
             // validate, set parameter ranges
             num_params_r__ = 0U;
             param_ranges_i__.clear();
-            current_statement_begin__ = 15;
+            current_statement_begin__ = 16;
             validate_non_negative_index("alpha", "nMT", nMT);
             validate_non_negative_index("alpha", "NF", NF);
             num_params_r__ += (nMT * NF);
-            current_statement_begin__ = 16;
+            current_statement_begin__ = 17;
             validate_non_negative_index("mu_fn", "nMT", nMT);
             num_params_r__ += nMT;
-            current_statement_begin__ = 17;
+            current_statement_begin__ = 18;
             validate_non_negative_index("log_sig_fn", "nMT", nMT);
             num_params_r__ += nMT;
             current_statement_begin__ = 21;
+            validate_non_negative_index("z_fn", "NF", NF);
+            validate_non_negative_index("z_fn", "nMT", nMT);
+            validate_non_negative_index("z_fn", "nrep", nrep);
+            num_params_r__ += (((1 * NF) * nMT) * nrep);
+            current_statement_begin__ = 22;
             validate_non_negative_index("a", "nMT", nMT);
             num_params_r__ += nMT;
-            current_statement_begin__ = 22;
+            current_statement_begin__ = 23;
             validate_non_negative_index("b", "nMT", nMT);
             num_params_r__ += nMT;
-            current_statement_begin__ = 23;
+            current_statement_begin__ = 24;
             validate_non_negative_index("sd_rep", "nMT", nMT);
             num_params_r__ += nMT;
-            current_statement_begin__ = 24;
+            current_statement_begin__ = 25;
             validate_non_negative_index("z_rep", "nMT", nMT);
             validate_non_negative_index("z_rep", "NF", NF);
             num_params_r__ += (nMT * NF);
@@ -214,7 +230,7 @@ public:
         (void) pos__; // dummy call to supress warning
         std::vector<double> vals_r__;
         std::vector<int> vals_i__;
-        current_statement_begin__ = 15;
+        current_statement_begin__ = 16;
         if (!(context__.contains_r("alpha")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable alpha missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("alpha");
@@ -238,7 +254,7 @@ public:
                 stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable alpha: ") + e.what()), current_statement_begin__, prog_reader__());
             }
         }
-        current_statement_begin__ = 16;
+        current_statement_begin__ = 17;
         if (!(context__.contains_r("mu_fn")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable mu_fn missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("mu_fn");
@@ -255,7 +271,7 @@ public:
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable mu_fn: ") + e.what()), current_statement_begin__, prog_reader__());
         }
-        current_statement_begin__ = 17;
+        current_statement_begin__ = 18;
         if (!(context__.contains_r("log_sig_fn")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable log_sig_fn missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("log_sig_fn");
@@ -273,6 +289,40 @@ public:
             stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable log_sig_fn: ") + e.what()), current_statement_begin__, prog_reader__());
         }
         current_statement_begin__ = 21;
+        if (!(context__.contains_r("z_fn")))
+            stan::lang::rethrow_located(std::runtime_error(std::string("Variable z_fn missing")), current_statement_begin__, prog_reader__());
+        vals_r__ = context__.vals_r("z_fn");
+        pos__ = 0U;
+        validate_non_negative_index("z_fn", "NF", NF);
+        validate_non_negative_index("z_fn", "nMT", nMT);
+        validate_non_negative_index("z_fn", "nrep", nrep);
+        context__.validate_dims("parameter initialization", "z_fn", "double", context__.to_vec(NF,nMT,nrep));
+        std::vector<std::vector<std::vector<double> > > z_fn(NF, std::vector<std::vector<double> >(nMT, std::vector<double>(nrep, double(0))));
+        size_t z_fn_k_0_max__ = NF;
+        size_t z_fn_k_1_max__ = nMT;
+        size_t z_fn_k_2_max__ = nrep;
+        for (size_t k_2__ = 0; k_2__ < z_fn_k_2_max__; ++k_2__) {
+            for (size_t k_1__ = 0; k_1__ < z_fn_k_1_max__; ++k_1__) {
+                for (size_t k_0__ = 0; k_0__ < z_fn_k_0_max__; ++k_0__) {
+                    z_fn[k_0__][k_1__][k_2__] = vals_r__[pos__++];
+                }
+            }
+        }
+        size_t z_fn_i_0_max__ = NF;
+        size_t z_fn_i_1_max__ = nMT;
+        size_t z_fn_i_2_max__ = nrep;
+        for (size_t i_0__ = 0; i_0__ < z_fn_i_0_max__; ++i_0__) {
+            for (size_t i_1__ = 0; i_1__ < z_fn_i_1_max__; ++i_1__) {
+                for (size_t i_2__ = 0; i_2__ < z_fn_i_2_max__; ++i_2__) {
+                    try {
+                        writer__.scalar_unconstrain(z_fn[i_0__][i_1__][i_2__]);
+                    } catch (const std::exception& e) {
+                        stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable z_fn: ") + e.what()), current_statement_begin__, prog_reader__());
+                    }
+                }
+            }
+        }
+        current_statement_begin__ = 22;
         if (!(context__.contains_r("a")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable a missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("a");
@@ -289,7 +339,7 @@ public:
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable a: ") + e.what()), current_statement_begin__, prog_reader__());
         }
-        current_statement_begin__ = 22;
+        current_statement_begin__ = 23;
         if (!(context__.contains_r("b")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable b missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("b");
@@ -306,7 +356,7 @@ public:
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable b: ") + e.what()), current_statement_begin__, prog_reader__());
         }
-        current_statement_begin__ = 23;
+        current_statement_begin__ = 24;
         if (!(context__.contains_r("sd_rep")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable sd_rep missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("sd_rep");
@@ -323,7 +373,7 @@ public:
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable sd_rep: ") + e.what()), current_statement_begin__, prog_reader__());
         }
-        current_statement_begin__ = 24;
+        current_statement_begin__ = 25;
         if (!(context__.contains_r("z_rep")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable z_rep missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("z_rep");
@@ -372,7 +422,7 @@ public:
         try {
             stan::io::reader<local_scalar_t__> in__(params_r__, params_i__);
             // model parameters
-            current_statement_begin__ = 15;
+            current_statement_begin__ = 16;
             std::vector<Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> > alpha;
             size_t alpha_d_0_max__ = NF;
             alpha.reserve(alpha_d_0_max__);
@@ -382,14 +432,14 @@ public:
                 else
                     alpha.push_back(in__.vector_constrain(nMT));
             }
-            current_statement_begin__ = 16;
+            current_statement_begin__ = 17;
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> mu_fn;
             (void) mu_fn;  // dummy to suppress unused var warning
             if (jacobian__)
                 mu_fn = in__.vector_constrain(nMT, lp__);
             else
                 mu_fn = in__.vector_constrain(nMT);
-            current_statement_begin__ = 17;
+            current_statement_begin__ = 18;
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> log_sig_fn;
             (void) log_sig_fn;  // dummy to suppress unused var warning
             if (jacobian__)
@@ -397,27 +447,45 @@ public:
             else
                 log_sig_fn = in__.vector_constrain(nMT);
             current_statement_begin__ = 21;
+            std::vector<std::vector<std::vector<local_scalar_t__> > > z_fn;
+            size_t z_fn_d_0_max__ = NF;
+            size_t z_fn_d_1_max__ = nMT;
+            size_t z_fn_d_2_max__ = nrep;
+            z_fn.resize(z_fn_d_0_max__);
+            for (size_t d_0__ = 0; d_0__ < z_fn_d_0_max__; ++d_0__) {
+                z_fn[d_0__].resize(z_fn_d_1_max__);
+                for (size_t d_1__ = 0; d_1__ < z_fn_d_1_max__; ++d_1__) {
+                    z_fn[d_0__][d_1__].reserve(z_fn_d_2_max__);
+                    for (size_t d_2__ = 0; d_2__ < z_fn_d_2_max__; ++d_2__) {
+                        if (jacobian__)
+                            z_fn[d_0__][d_1__].push_back(in__.scalar_constrain(lp__));
+                        else
+                            z_fn[d_0__][d_1__].push_back(in__.scalar_constrain());
+                    }
+                }
+            }
+            current_statement_begin__ = 22;
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> a;
             (void) a;  // dummy to suppress unused var warning
             if (jacobian__)
                 a = in__.vector_lb_constrain(0, nMT, lp__);
             else
                 a = in__.vector_lb_constrain(0, nMT);
-            current_statement_begin__ = 22;
+            current_statement_begin__ = 23;
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> b;
             (void) b;  // dummy to suppress unused var warning
             if (jacobian__)
                 b = in__.vector_constrain(nMT, lp__);
             else
                 b = in__.vector_constrain(nMT);
-            current_statement_begin__ = 23;
+            current_statement_begin__ = 24;
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> sd_rep;
             (void) sd_rep;  // dummy to suppress unused var warning
             if (jacobian__)
                 sd_rep = in__.vector_lb_constrain(0, nMT, lp__);
             else
                 sd_rep = in__.vector_lb_constrain(0, nMT);
-            current_statement_begin__ = 24;
+            current_statement_begin__ = 25;
             std::vector<Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> > z_rep;
             size_t z_rep_d_0_max__ = NF;
             z_rep.reserve(z_rep_d_0_max__);
@@ -428,34 +496,64 @@ public:
                     z_rep.push_back(in__.vector_constrain(nMT));
             }
             // transformed parameters
-            current_statement_begin__ = 31;
+            current_statement_begin__ = 30;
+            validate_non_negative_index("mu_rep_logit_fn", "NF", NF);
+            validate_non_negative_index("mu_rep_logit_fn", "nMT", nMT);
+            validate_non_negative_index("mu_rep_logit_fn", "nrep", nrep);
+            std::vector<std::vector<std::vector<local_scalar_t__> > > mu_rep_logit_fn(NF, std::vector<std::vector<local_scalar_t__> >(nMT, std::vector<local_scalar_t__>(nrep, local_scalar_t__(0))));
+            stan::math::initialize(mu_rep_logit_fn, DUMMY_VAR__);
+            stan::math::fill(mu_rep_logit_fn, DUMMY_VAR__);
+            current_statement_begin__ = 32;
             validate_non_negative_index("sig_fn", "nMT", nMT);
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> sig_fn(nMT);
             stan::math::initialize(sig_fn, DUMMY_VAR__);
             stan::math::fill(sig_fn, DUMMY_VAR__);
             stan::math::assign(sig_fn,stan::math::exp(log_sig_fn));
-            current_statement_begin__ = 32;
+            current_statement_begin__ = 33;
             validate_non_negative_index("sd_r_mu", "nMT", nMT);
             validate_non_negative_index("sd_r_mu", "NF", NF);
             std::vector<Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> > sd_r_mu(NF, Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1>(nMT));
             stan::math::initialize(sd_r_mu, DUMMY_VAR__);
             stan::math::fill(sd_r_mu, DUMMY_VAR__);
             // transformed parameters block statements
-            current_statement_begin__ = 36;
+            current_statement_begin__ = 37;
             for (int i = 1; i <= NF; ++i) {
-                current_statement_begin__ = 37;
+                current_statement_begin__ = 38;
                 for (int j = 1; j <= nMT; ++j) {
-                    current_statement_begin__ = 39;
+                    current_statement_begin__ = 40;
                     stan::model::assign(sd_r_mu, 
                                 stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::nil_index_list())), 
                                 stan::math::exp((((-(get_base1(a, j, "a", 1)) * get_base1(get_base1(Avg_Reads, i, "Avg_Reads", 1), j, "Avg_Reads", 2)) + get_base1(b, j, "b", 1)) + (get_base1(sd_rep, j, "sd_rep", 1) * get_base1(get_base1(z_rep, i, "z_rep", 1), j, "z_rep", 2)))), 
                                 "assigning variable sd_r_mu");
+                    current_statement_begin__ = 45;
+                    for (int k = 1; k <= nrep; ++k) {
+                        current_statement_begin__ = 46;
+                        stan::model::assign(mu_rep_logit_fn, 
+                                    stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::cons_list(stan::model::index_uni(k), stan::model::nil_index_list()))), 
+                                    (get_base1(get_base1(alpha, i, "alpha", 1), j, "alpha", 2) + (get_base1(get_base1(get_base1(z_fn, i, "z_fn", 1), j, "z_fn", 2), k, "z_fn", 3) * get_base1(get_base1(sd_r_mu, i, "sd_r_mu", 1), j, "sd_r_mu", 2))), 
+                                    "assigning variable mu_rep_logit_fn");
+                    }
                 }
             }
             // validate transformed parameters
             const char* function__ = "validate transformed params";
             (void) function__;  // dummy to suppress unused var warning
-            current_statement_begin__ = 31;
+            current_statement_begin__ = 30;
+            size_t mu_rep_logit_fn_k_0_max__ = NF;
+            size_t mu_rep_logit_fn_k_1_max__ = nMT;
+            size_t mu_rep_logit_fn_k_2_max__ = nrep;
+            for (size_t k_0__ = 0; k_0__ < mu_rep_logit_fn_k_0_max__; ++k_0__) {
+                for (size_t k_1__ = 0; k_1__ < mu_rep_logit_fn_k_1_max__; ++k_1__) {
+                    for (size_t k_2__ = 0; k_2__ < mu_rep_logit_fn_k_2_max__; ++k_2__) {
+                        if (stan::math::is_uninitialized(mu_rep_logit_fn[k_0__][k_1__][k_2__])) {
+                            std::stringstream msg__;
+                            msg__ << "Undefined transformed parameter: mu_rep_logit_fn" << "[" << k_0__ << "]" << "[" << k_1__ << "]" << "[" << k_2__ << "]";
+                            stan::lang::rethrow_located(std::runtime_error(std::string("Error initializing variable mu_rep_logit_fn: ") + msg__.str()), current_statement_begin__, prog_reader__());
+                        }
+                    }
+                }
+            }
+            current_statement_begin__ = 32;
             size_t sig_fn_j_1_max__ = nMT;
             for (size_t j_1__ = 0; j_1__ < sig_fn_j_1_max__; ++j_1__) {
                 if (stan::math::is_uninitialized(sig_fn(j_1__))) {
@@ -465,7 +563,7 @@ public:
                 }
             }
             check_greater_or_equal(function__, "sig_fn", sig_fn, 0);
-            current_statement_begin__ = 32;
+            current_statement_begin__ = 33;
             size_t sd_r_mu_k_0_max__ = NF;
             size_t sd_r_mu_j_1_max__ = nMT;
             for (size_t k_0__ = 0; k_0__ < sd_r_mu_k_0_max__; ++k_0__) {
@@ -482,30 +580,35 @@ public:
                 check_greater_or_equal(function__, "sd_r_mu[i_0__]", sd_r_mu[i_0__], 0);
             }
             // model body
-            current_statement_begin__ = 51;
-            lp_accum__.add(normal_log<propto__>(mu_fn, 0, 1.25));
-            current_statement_begin__ = 52;
-            lp_accum__.add(normal_log<propto__>(log_sig_fn, -(1), 0.5));
             current_statement_begin__ = 56;
-            lp_accum__.add(normal_log<propto__>(a, 0.3, 0.2));
+            lp_accum__.add(normal_log<propto__>(mu_fn, 0, 1.25));
             current_statement_begin__ = 57;
+            lp_accum__.add(normal_log<propto__>(log_sig_fn, -(1), 0.5));
+            current_statement_begin__ = 61;
+            lp_accum__.add(normal_log<propto__>(a, 0.3, 0.2));
+            current_statement_begin__ = 62;
             lp_accum__.add(normal_log<propto__>(b, -(1.5), 0.35));
-            current_statement_begin__ = 58;
+            current_statement_begin__ = 63;
             lp_accum__.add(lognormal_log<propto__>(sd_rep, -(2), 0.25));
-            current_statement_begin__ = 60;
+            current_statement_begin__ = 65;
             for (int i = 1; i <= NF; ++i) {
-                current_statement_begin__ = 63;
+                current_statement_begin__ = 68;
                 lp_accum__.add(normal_log<propto__>(get_base1(z_rep, i, "z_rep", 1), 0, 1));
-                current_statement_begin__ = 64;
+                current_statement_begin__ = 69;
                 for (int j = 1; j <= nMT; ++j) {
-                    current_statement_begin__ = 65;
+                    current_statement_begin__ = 70;
                     lp_accum__.add(normal_log<propto__>(get_base1(get_base1(alpha, i, "alpha", 1), j, "alpha", 2), get_base1(mu_fn, j, "mu_fn", 1), get_base1(sig_fn, j, "sig_fn", 1)));
+                    current_statement_begin__ = 74;
+                    for (int k = 1; k <= nrep; ++k) {
+                        current_statement_begin__ = 75;
+                        lp_accum__.add(normal_log<propto__>(get_base1(get_base1(get_base1(z_fn, i, "z_fn", 1), j, "z_fn", 2), k, "z_fn", 3), 0, 1));
+                    }
                 }
             }
-            current_statement_begin__ = 76;
+            current_statement_begin__ = 81;
             for (int i = 1; i <= NE; ++i) {
-                current_statement_begin__ = 77;
-                lp_accum__.add(normal_log<propto__>(get_base1(logit_fn_rep, i, "logit_fn_rep", 1), get_base1(get_base1(alpha, get_base1(FE, i, "FE", 1), "alpha", 1), get_base1(MT, i, "MT", 1), "alpha", 2), get_base1(get_base1(sd_r_mu, get_base1(FE, i, "FE", 1), "sd_r_mu", 1), get_base1(MT, i, "MT", 1), "sd_r_mu", 2)));
+                current_statement_begin__ = 82;
+                lp_accum__.add(normal_log<propto__>(get_base1(logit_fn_rep, i, "logit_fn_rep", 1), get_base1(get_base1(get_base1(mu_rep_logit_fn, get_base1(FE, i, "FE", 1), "mu_rep_logit_fn", 1), get_base1(MT, i, "MT", 1), "mu_rep_logit_fn", 2), get_base1(R, i, "R", 1), "mu_rep_logit_fn", 3), get_base1(fn_se, i, "fn_se", 1)));
             }
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -530,10 +633,12 @@ public:
         names__.push_back("alpha");
         names__.push_back("mu_fn");
         names__.push_back("log_sig_fn");
+        names__.push_back("z_fn");
         names__.push_back("a");
         names__.push_back("b");
         names__.push_back("sd_rep");
         names__.push_back("z_rep");
+        names__.push_back("mu_rep_logit_fn");
         names__.push_back("sig_fn");
         names__.push_back("sd_r_mu");
         names__.push_back("kd");
@@ -553,6 +658,11 @@ public:
         dims__.push_back(nMT);
         dimss__.push_back(dims__);
         dims__.resize(0);
+        dims__.push_back(NF);
+        dims__.push_back(nMT);
+        dims__.push_back(nrep);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
         dims__.push_back(nMT);
         dimss__.push_back(dims__);
         dims__.resize(0);
@@ -564,6 +674,11 @@ public:
         dims__.resize(0);
         dims__.push_back(NF);
         dims__.push_back(nMT);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(NF);
+        dims__.push_back(nMT);
+        dims__.push_back(nrep);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(nMT);
@@ -618,6 +733,30 @@ public:
         for (size_t j_1__ = 0; j_1__ < log_sig_fn_j_1_max__; ++j_1__) {
             vars__.push_back(log_sig_fn(j_1__));
         }
+        std::vector<std::vector<std::vector<double> > > z_fn;
+        size_t z_fn_d_0_max__ = NF;
+        size_t z_fn_d_1_max__ = nMT;
+        size_t z_fn_d_2_max__ = nrep;
+        z_fn.resize(z_fn_d_0_max__);
+        for (size_t d_0__ = 0; d_0__ < z_fn_d_0_max__; ++d_0__) {
+            z_fn[d_0__].resize(z_fn_d_1_max__);
+            for (size_t d_1__ = 0; d_1__ < z_fn_d_1_max__; ++d_1__) {
+                z_fn[d_0__][d_1__].reserve(z_fn_d_2_max__);
+                for (size_t d_2__ = 0; d_2__ < z_fn_d_2_max__; ++d_2__) {
+                    z_fn[d_0__][d_1__].push_back(in__.scalar_constrain());
+                }
+            }
+        }
+        size_t z_fn_k_0_max__ = NF;
+        size_t z_fn_k_1_max__ = nMT;
+        size_t z_fn_k_2_max__ = nrep;
+        for (size_t k_2__ = 0; k_2__ < z_fn_k_2_max__; ++k_2__) {
+            for (size_t k_1__ = 0; k_1__ < z_fn_k_1_max__; ++k_1__) {
+                for (size_t k_0__ = 0; k_0__ < z_fn_k_0_max__; ++k_0__) {
+                    vars__.push_back(z_fn[k_0__][k_1__][k_2__]);
+                }
+            }
+        }
         Eigen::Matrix<double, Eigen::Dynamic, 1> a = in__.vector_lb_constrain(0, nMT);
         size_t a_j_1_max__ = nMT;
         for (size_t j_1__ = 0; j_1__ < a_j_1_max__; ++j_1__) {
@@ -654,43 +793,68 @@ public:
         if (!include_tparams__ && !include_gqs__) return;
         try {
             // declare and define transformed parameters
-            current_statement_begin__ = 31;
+            current_statement_begin__ = 30;
+            validate_non_negative_index("mu_rep_logit_fn", "NF", NF);
+            validate_non_negative_index("mu_rep_logit_fn", "nMT", nMT);
+            validate_non_negative_index("mu_rep_logit_fn", "nrep", nrep);
+            std::vector<std::vector<std::vector<double> > > mu_rep_logit_fn(NF, std::vector<std::vector<double> >(nMT, std::vector<double>(nrep, double(0))));
+            stan::math::initialize(mu_rep_logit_fn, DUMMY_VAR__);
+            stan::math::fill(mu_rep_logit_fn, DUMMY_VAR__);
+            current_statement_begin__ = 32;
             validate_non_negative_index("sig_fn", "nMT", nMT);
             Eigen::Matrix<double, Eigen::Dynamic, 1> sig_fn(nMT);
             stan::math::initialize(sig_fn, DUMMY_VAR__);
             stan::math::fill(sig_fn, DUMMY_VAR__);
             stan::math::assign(sig_fn,stan::math::exp(log_sig_fn));
-            current_statement_begin__ = 32;
+            current_statement_begin__ = 33;
             validate_non_negative_index("sd_r_mu", "nMT", nMT);
             validate_non_negative_index("sd_r_mu", "NF", NF);
             std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > sd_r_mu(NF, Eigen::Matrix<double, Eigen::Dynamic, 1>(nMT));
             stan::math::initialize(sd_r_mu, DUMMY_VAR__);
             stan::math::fill(sd_r_mu, DUMMY_VAR__);
             // do transformed parameters statements
-            current_statement_begin__ = 36;
+            current_statement_begin__ = 37;
             for (int i = 1; i <= NF; ++i) {
-                current_statement_begin__ = 37;
+                current_statement_begin__ = 38;
                 for (int j = 1; j <= nMT; ++j) {
-                    current_statement_begin__ = 39;
+                    current_statement_begin__ = 40;
                     stan::model::assign(sd_r_mu, 
                                 stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::nil_index_list())), 
                                 stan::math::exp((((-(get_base1(a, j, "a", 1)) * get_base1(get_base1(Avg_Reads, i, "Avg_Reads", 1), j, "Avg_Reads", 2)) + get_base1(b, j, "b", 1)) + (get_base1(sd_rep, j, "sd_rep", 1) * get_base1(get_base1(z_rep, i, "z_rep", 1), j, "z_rep", 2)))), 
                                 "assigning variable sd_r_mu");
+                    current_statement_begin__ = 45;
+                    for (int k = 1; k <= nrep; ++k) {
+                        current_statement_begin__ = 46;
+                        stan::model::assign(mu_rep_logit_fn, 
+                                    stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::cons_list(stan::model::index_uni(k), stan::model::nil_index_list()))), 
+                                    (get_base1(get_base1(alpha, i, "alpha", 1), j, "alpha", 2) + (get_base1(get_base1(get_base1(z_fn, i, "z_fn", 1), j, "z_fn", 2), k, "z_fn", 3) * get_base1(get_base1(sd_r_mu, i, "sd_r_mu", 1), j, "sd_r_mu", 2))), 
+                                    "assigning variable mu_rep_logit_fn");
+                    }
                 }
             }
             if (!include_gqs__ && !include_tparams__) return;
             // validate transformed parameters
             const char* function__ = "validate transformed params";
             (void) function__;  // dummy to suppress unused var warning
-            current_statement_begin__ = 31;
-            check_greater_or_equal(function__, "sig_fn", sig_fn, 0);
             current_statement_begin__ = 32;
+            check_greater_or_equal(function__, "sig_fn", sig_fn, 0);
+            current_statement_begin__ = 33;
             size_t sd_r_mu_i_0_max__ = NF;
             for (size_t i_0__ = 0; i_0__ < sd_r_mu_i_0_max__; ++i_0__) {
                 check_greater_or_equal(function__, "sd_r_mu[i_0__]", sd_r_mu[i_0__], 0);
             }
             // write transformed parameters
             if (include_tparams__) {
+                size_t mu_rep_logit_fn_k_0_max__ = NF;
+                size_t mu_rep_logit_fn_k_1_max__ = nMT;
+                size_t mu_rep_logit_fn_k_2_max__ = nrep;
+                for (size_t k_2__ = 0; k_2__ < mu_rep_logit_fn_k_2_max__; ++k_2__) {
+                    for (size_t k_1__ = 0; k_1__ < mu_rep_logit_fn_k_1_max__; ++k_1__) {
+                        for (size_t k_0__ = 0; k_0__ < mu_rep_logit_fn_k_0_max__; ++k_0__) {
+                            vars__.push_back(mu_rep_logit_fn[k_0__][k_1__][k_2__]);
+                        }
+                    }
+                }
                 size_t sig_fn_j_1_max__ = nMT;
                 for (size_t j_1__ = 0; j_1__ < sig_fn_j_1_max__; ++j_1__) {
                     vars__.push_back(sig_fn(j_1__));
@@ -705,32 +869,32 @@ public:
             }
             if (!include_gqs__) return;
             // declare and define generated quantities
-            current_statement_begin__ = 89;
+            current_statement_begin__ = 94;
             validate_non_negative_index("kd", "nMT", nMT);
             validate_non_negative_index("kd", "NF", NF);
             std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > kd(NF, Eigen::Matrix<double, Eigen::Dynamic, 1>(nMT));
             stan::math::initialize(kd, DUMMY_VAR__);
             stan::math::fill(kd, DUMMY_VAR__);
-            current_statement_begin__ = 90;
+            current_statement_begin__ = 95;
             validate_non_negative_index("L2FC_kd", "(nMT - 1)", (nMT - 1));
             validate_non_negative_index("L2FC_kd", "NF", NF);
             std::vector<Eigen::Matrix<double, Eigen::Dynamic, 1> > L2FC_kd(NF, Eigen::Matrix<double, Eigen::Dynamic, 1>((nMT - 1)));
             stan::math::initialize(L2FC_kd, DUMMY_VAR__);
             stan::math::fill(L2FC_kd, DUMMY_VAR__);
             // generated quantities statements
-            current_statement_begin__ = 92;
+            current_statement_begin__ = 97;
             for (int i = 1; i <= NF; ++i) {
-                current_statement_begin__ = 93;
+                current_statement_begin__ = 98;
                 for (int j = 1; j <= nMT; ++j) {
-                    current_statement_begin__ = 94;
+                    current_statement_begin__ = 99;
                     stan::model::assign(kd, 
                                 stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::nil_index_list())), 
                                 (-(stan::math::log((1 - inv_logit(get_base1(get_base1(alpha, i, "alpha", 1), j, "alpha", 2))))) / get_base1(tl, j, "tl", 1)), 
                                 "assigning variable kd");
                 }
-                current_statement_begin__ = 96;
+                current_statement_begin__ = 101;
                 for (int j = 1; j <= (nMT - 1); ++j) {
-                    current_statement_begin__ = 97;
+                    current_statement_begin__ = 102;
                     stan::model::assign(L2FC_kd, 
                                 stan::model::cons_list(stan::model::index_uni(i), stan::model::cons_list(stan::model::index_uni(j), stan::model::nil_index_list())), 
                                 stan::math::log2((get_base1(get_base1(kd, i, "kd", 1), (j + 1), "kd", 2) / get_base1(get_base1(kd, i, "kd", 1), 1, "kd", 2))), 
@@ -738,7 +902,7 @@ public:
                 }
             }
             // validate, write generated quantities
-            current_statement_begin__ = 89;
+            current_statement_begin__ = 94;
             size_t kd_j_1_max__ = nMT;
             size_t kd_k_0_max__ = NF;
             for (size_t j_1__ = 0; j_1__ < kd_j_1_max__; ++j_1__) {
@@ -746,7 +910,7 @@ public:
                     vars__.push_back(kd[k_0__](j_1__));
                 }
             }
-            current_statement_begin__ = 90;
+            current_statement_begin__ = 95;
             size_t L2FC_kd_j_1_max__ = (nMT - 1);
             size_t L2FC_kd_k_0_max__ = NF;
             for (size_t j_1__ = 0; j_1__ < L2FC_kd_j_1_max__; ++j_1__) {
@@ -805,6 +969,18 @@ public:
             param_name_stream__ << "log_sig_fn" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
+        size_t z_fn_k_0_max__ = NF;
+        size_t z_fn_k_1_max__ = nMT;
+        size_t z_fn_k_2_max__ = nrep;
+        for (size_t k_2__ = 0; k_2__ < z_fn_k_2_max__; ++k_2__) {
+            for (size_t k_1__ = 0; k_1__ < z_fn_k_1_max__; ++k_1__) {
+                for (size_t k_0__ = 0; k_0__ < z_fn_k_0_max__; ++k_0__) {
+                    param_name_stream__.str(std::string());
+                    param_name_stream__ << "z_fn" << '.' << k_0__ + 1 << '.' << k_1__ + 1 << '.' << k_2__ + 1;
+                    param_names__.push_back(param_name_stream__.str());
+                }
+            }
+        }
         size_t a_j_1_max__ = nMT;
         for (size_t j_1__ = 0; j_1__ < a_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
@@ -834,6 +1010,18 @@ public:
         }
         if (!include_gqs__ && !include_tparams__) return;
         if (include_tparams__) {
+            size_t mu_rep_logit_fn_k_0_max__ = NF;
+            size_t mu_rep_logit_fn_k_1_max__ = nMT;
+            size_t mu_rep_logit_fn_k_2_max__ = nrep;
+            for (size_t k_2__ = 0; k_2__ < mu_rep_logit_fn_k_2_max__; ++k_2__) {
+                for (size_t k_1__ = 0; k_1__ < mu_rep_logit_fn_k_1_max__; ++k_1__) {
+                    for (size_t k_0__ = 0; k_0__ < mu_rep_logit_fn_k_0_max__; ++k_0__) {
+                        param_name_stream__.str(std::string());
+                        param_name_stream__ << "mu_rep_logit_fn" << '.' << k_0__ + 1 << '.' << k_1__ + 1 << '.' << k_2__ + 1;
+                        param_names__.push_back(param_name_stream__.str());
+                    }
+                }
+            }
             size_t sig_fn_j_1_max__ = nMT;
             for (size_t j_1__ = 0; j_1__ < sig_fn_j_1_max__; ++j_1__) {
                 param_name_stream__.str(std::string());
@@ -895,6 +1083,18 @@ public:
             param_name_stream__ << "log_sig_fn" << '.' << j_1__ + 1;
             param_names__.push_back(param_name_stream__.str());
         }
+        size_t z_fn_k_0_max__ = NF;
+        size_t z_fn_k_1_max__ = nMT;
+        size_t z_fn_k_2_max__ = nrep;
+        for (size_t k_2__ = 0; k_2__ < z_fn_k_2_max__; ++k_2__) {
+            for (size_t k_1__ = 0; k_1__ < z_fn_k_1_max__; ++k_1__) {
+                for (size_t k_0__ = 0; k_0__ < z_fn_k_0_max__; ++k_0__) {
+                    param_name_stream__.str(std::string());
+                    param_name_stream__ << "z_fn" << '.' << k_0__ + 1 << '.' << k_1__ + 1 << '.' << k_2__ + 1;
+                    param_names__.push_back(param_name_stream__.str());
+                }
+            }
+        }
         size_t a_j_1_max__ = nMT;
         for (size_t j_1__ = 0; j_1__ < a_j_1_max__; ++j_1__) {
             param_name_stream__.str(std::string());
@@ -924,6 +1124,18 @@ public:
         }
         if (!include_gqs__ && !include_tparams__) return;
         if (include_tparams__) {
+            size_t mu_rep_logit_fn_k_0_max__ = NF;
+            size_t mu_rep_logit_fn_k_1_max__ = nMT;
+            size_t mu_rep_logit_fn_k_2_max__ = nrep;
+            for (size_t k_2__ = 0; k_2__ < mu_rep_logit_fn_k_2_max__; ++k_2__) {
+                for (size_t k_1__ = 0; k_1__ < mu_rep_logit_fn_k_1_max__; ++k_1__) {
+                    for (size_t k_0__ = 0; k_0__ < mu_rep_logit_fn_k_0_max__; ++k_0__) {
+                        param_name_stream__.str(std::string());
+                        param_name_stream__ << "mu_rep_logit_fn" << '.' << k_0__ + 1 << '.' << k_1__ + 1 << '.' << k_2__ + 1;
+                        param_names__.push_back(param_name_stream__.str());
+                    }
+                }
+            }
             size_t sig_fn_j_1_max__ = nMT;
             for (size_t j_1__ = 0; j_1__ < sig_fn_j_1_max__; ++j_1__) {
                 param_name_stream__.str(std::string());

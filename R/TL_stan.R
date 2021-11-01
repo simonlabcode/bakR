@@ -127,8 +127,8 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...) {
     fit <- rstan::sampling(stanmodels$Hybrid_Model, data = data_list, ...)
   }else{
     fit <- rstan::sampling(stanmodels$Full_Model, data = data_list, ...)
-  }
 
+  }
 
   fn_summary <- rstan::summary(fit, pars = "mu_rep_logit_fn", probs = c(0.5))$summary
 
@@ -216,7 +216,7 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...) {
     out <- list(Effects_df, Kdeg_df, Fn_df, fit_summary)
     names(out) <- c("Effects_df", "Kdeg_df", "Fn_Estimates","Fit_Summary")
   }else{
-    out <- list(Effects_df, Kdeg_df, fit)
+    out <- list(Effects_df, Kdeg_df, Fn_df, fit)
     names(out) <- c("Effects_df", "Kdeg_df", "Fn_Estimates","Stan_fit")
   }
 

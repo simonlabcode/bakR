@@ -8,6 +8,7 @@ data {
   int nrep;
   real tl[nMT];
   real logit_fn_rep[NE]; //Replicate fn estimate
+  real fn_se[NE] ; //Standard error of replicate fn estimate
   real Avg_Reads[NF, nMT]; // Average read counts in transcript i and sample j (avg. across replicates)
 }
 
@@ -17,7 +18,7 @@ parameters {
   vector[nMT] log_sig_fn;
   //vector[nMT-1] z_e [NF];
   //real mu_rep_logit_fn[NF, nMT, nrep]; // Inferred fraction new of obs reads on native scale.
-  //real z_fn[NF, nMT, nrep];
+  real z_fn[NF, nMT, nrep];
   vector<lower=0>[nMT] a;
   vector[nMT] b;
   vector<lower=0>[nMT] sd_rep;
@@ -26,7 +27,7 @@ parameters {
 }
 
 transformed parameters {
-  //real mu_rep_logit_fn[NF, nMT, nrep]; // Inferred fraction new of obs reads on native scale.
+  real mu_rep_logit_fn[NF, nMT, nrep]; // Inferred fraction new of obs reads on native scale.
   //vector[nMT-1] eff[NF]; //  Parameter for fraction new of observed reads
   vector<lower=0>[nMT] sig_fn = exp(log_sig_fn);
   vector<lower=0>[nMT] sd_r_mu[NF];
@@ -41,7 +42,11 @@ transformed parameters {
           // if(j > 1){
           //    eff[i, j-1] = mu_e[j-1] + z_e[i,j-1]*sig_e[j-1];
           // }
+          for(k in 1:nrep){
+              mu_rep_logit_fn[i, j, k] = alpha[i,j] + z_fn[i,j,k]*sd_r_mu[i,j];
 
+
+          }
        }
     }
 }
@@ -66,15 +71,15 @@ model {
      //sd_r_mu[i,j] ~ lognormal(sd_mean[i,j], sd_rep[j]);
 
 
-     // for(k in 1:nrep){
-     //  z_fn[i, j, k] ~ normal(0, 1);
-     // }
+     for(k in 1:nrep){
+      z_fn[i, j, k] ~ normal(0, 1);
+     }
     }
   }
 
     // Model fraction of reads that are new.
     for (i in 1:NE) {
-        logit_fn_rep[i] ~ normal( alpha[FE[i], MT[i]], sd_r_mu[FE[i], MT[i]] );
+        logit_fn_rep[i] ~ normal( mu_rep_logit_fn[FE[i], MT[i], R[i]], fn_se[i]);
 
         // if(MT[i] > 1){
         //   logit_fn_rep[i] ~ normal(alpha[FE[i]] + eff[FE[i], MT[i] - 1], sd_r_mu[FE[i], MT[i]] );
@@ -99,5 +104,4 @@ model {
  }
 
  }
-
 

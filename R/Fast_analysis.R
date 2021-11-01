@@ -625,16 +625,25 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   Mut_data <- Mut_data %>% dplyr::ungroup() %>%
     dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep, kd_rep_est) %>%
     dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
+    dplyr::mutate(Exp_l_fn = exp(logit_fn_rep)) %>%
+    dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
+    dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
+    dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
     dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
     dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
     dplyr::ungroup() %>%
     dplyr::group_by(fnum, mut, reps) %>%
-    dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),tot_n = sum(n)) %>% #,
+    dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
+                     Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
+                     tot_n = sum(n)) %>% #,
     #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
-    dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg)) %>%
-    dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
+    dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
+                  Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
+    dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
+                  Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
 
 
+  Mut_data_est$logit_fn_se <- Mut_data$Logit_fn_se
   Mut_data_est$log_kd_se <- Mut_data$log_kd_se
 
   Mut_data_est <- Mut_data_est %>% dplyr::mutate(log_kd_rep_est = log(kd_rep_est))
@@ -689,6 +698,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   kd_estimate <- as.vector(Mut_data_est$kd_rep_est)
   # fn_se <- as.vector(Mut_data_est$fn_se)
   log_kd_se <- as.vector(Mut_data_est$log_kd_se)
+  logit_fn_se <- as.vector(Mut_data_est$logit_fn_se)
   Replicate <- as.vector(Mut_data_est$reps)
   Condition <- as.vector(Mut_data_est$mut)
   Gene_ID <- as.vector(Mut_data_est$fnum)
@@ -696,10 +706,11 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   rm(Mut_data_est)
 
-  df_fn <- data.frame(logit_fn, Replicate, Condition, Gene_ID, nreads, log_kd, kd_estimate, log_kd_se)
+  df_fn <- data.frame(logit_fn, logit_fn_se, Replicate, Condition, Gene_ID, nreads, log_kd, kd_estimate, log_kd_se)
 
   # Remove vectors no longer of use
   rm(logit_fn)
+  rm(logit_fn_se)
   rm(Replicate)
   rm(Condition)
   rm(Gene_ID)
@@ -810,7 +821,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   colnames(avg_df_fn_bayes) <- c("Feature_ID", "Exp_ID", "avg_log_kdeg", "sd_log_kdeg", "nreads", "sdp", "theta_o", "sd_post",
                                  "log_kdeg_post", "kdeg", "kdeg_sd", "XF")
 
-  colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "nreads", "log_kdeg", "kdeg", "log_kd_se", "sample", "XF")
+  colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se", "nreads", "log_kdeg", "kdeg", "log_kd_se", "sample", "XF")
 
   #fast_list <- list(estimate_df, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, hyperpars)
   fast_list <- list(df_fn, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, c(a = a_hyper, b = b_hyper), lm_list)
