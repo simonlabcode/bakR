@@ -4,17 +4,12 @@
 \alias{TL_stan}
 \title{Bayesian hierarchical mixture model with Stan for TL-seq data analysis}
 \usage{
-TL_stan(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FALSE, ...)
+TL_stan(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...)
 }
 \arguments{
 \item{data_list}{List to pass to Stan of form given by cBtoStan}
 
 \item{Hybrid_Fit}{Logical; if TRUE, Hybrid Stan model that takes as data output of fast_analysis is run.}
-
-\item{Pooled}{Logical; if TRUE, replicate variability estimates are not partially pooled. This means that the
-mean-variance regression is estimated using all data from an experimental condition and then the replicate variability estimate
-for each gene is exactly what the regression predicts, rather than the estimate being shrunk toward the regression line (as
-is done if Pooled is FALSE).}
 
 \item{keep_fit}{Logical; if TRUE, Stan fit object is included in output; typically large file so default FALSE.}
 
@@ -107,16 +102,6 @@ Runtimes of the hybrid model are thus often an order or magnitude or more shorte
 loses some accuracy by relying on point estimates and uncertainty quantification that is only valid in the
 limit of large dataset sizes (where the dataset size for the per-replicate-and-feature fraction new estimate is the raw number
 of sequencing reads mapping to the feature in that replicate).
-
-For both models, users can also run a pooled version that performs complete rather than partial pooling
-of the replicate variability estimates. This means that data from a given experimental condition is used to estimate
-the mean-variance relationship between read depths and replicate variabilities, but then the regression prediction
-for the replicate variability of a specific feature is used as that features exact replicate variability. Contrast this
-with the partial pooling approach that allows the feature-specific replicate variability estimate to differ from the
-regression prediction, instead opting to shrink the feature-specific estimate towards the regression. Complex hierarchical
-models like the full and hybrid models can have convergence issues when fitting large datasets, so the pooled option exists
-to improve the chance of satisfactory model convergence. We suggest using the pooled model when your dataset includes very
-few replicates (< 5), as this is when the models are especially prone to convergence issues.
 
 Users also have the option to save or discard the Stan fit object. Fit objects can be exceedingly large (> 10 GB) for most
 nucleotide recoding datasets. Therefore, if you don't want to store such a large object, a summary object will be saved instead,

@@ -2,12 +2,12 @@
 
 #include <Rcpp.h>
 using namespace Rcpp ;
-#include "stanExports_Hybrid_Pooled.h"
+#include "stanExports_Mut_rate_Model.h"
 
-RCPP_MODULE(stan_fit4Hybrid_Pooled_mod) {
+RCPP_MODULE(stan_fit4Mut_rate_Model_mod) {
 
 
-    class_<rstan::stan_fit<stan_model, boost::random::ecuyer1988> >("model_Hybrid_Pooled")
+    class_<rstan::stan_fit<stan_model, boost::random::ecuyer1988> >("model_Mut_rate_Model")
 
     .constructor<SEXP,SEXP,SEXP>()
 

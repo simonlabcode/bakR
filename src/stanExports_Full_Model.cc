@@ -2,12 +2,12 @@
 
 #include <Rcpp.h>
 using namespace Rcpp ;
-#include "stanExports_Hybrid_Hier.h"
+#include "stanExports_Full_Model.h"
 
-RCPP_MODULE(stan_fit4Hybrid_Hier_mod) {
+RCPP_MODULE(stan_fit4Full_Model_mod) {
 
 
-    class_<rstan::stan_fit<stan_model, boost::random::ecuyer1988> >("model_Hybrid_Hier")
+    class_<rstan::stan_fit<stan_model, boost::random::ecuyer1988> >("model_Full_Model")
 
     .constructor<SEXP,SEXP,SEXP>()
 

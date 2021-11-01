@@ -29,16 +29,6 @@
 #' limit of large dataset sizes (where the dataset size for the per-replicate-and-feature fraction new estimate is the raw number
 #' of sequencing reads mapping to the feature in that replicate).
 #'
-#' For both models, users can also run a pooled version that performs complete rather than partial pooling
-#' of the replicate variability estimates. This means that data from a given experimental condition is used to estimate
-#' the mean-variance relationship between read depths and replicate variabilities, but then the regression prediction
-#' for the replicate variability of a specific feature is used as that features exact replicate variability. Contrast this
-#' with the partial pooling approach that allows the feature-specific replicate variability estimate to differ from the
-#' regression prediction, instead opting to shrink the feature-specific estimate towards the regression. Complex hierarchical
-#' models like the full and hybrid models can have convergence issues when fitting large datasets, so the pooled option exists
-#' to improve the chance of satisfactory model convergence. We suggest using the pooled model when your dataset includes very
-#' few replicates (< 5), as this is when the models are especially prone to convergence issues.
-#'
 #' Users also have the option to save or discard the Stan fit object. Fit objects can be exceedingly large (> 10 GB) for most
 #' nucleotide recoding datasets. Therefore, if you don't want to store such a large object, a summary object will be saved instead,
 #' which greatly reduces the size of the output (~ 1-10 MB) while still retaining much of the important information. In addition,
@@ -59,10 +49,6 @@
 #' @export
 #' @param data_list List to pass to Stan of form given by cBtoStan
 #' @param Hybrid_Fit Logical; if TRUE, Hybrid Stan model that takes as data output of fast_analysis is run.
-#' @param Pooled Logical; if TRUE, replicate variability estimates are not partially pooled. This means that the
-#' mean-variance regression is estimated using all data from an experimental condition and then the replicate variability estimate
-#' for each gene is exactly what the regression predicts, rather than the estimate being shrunk toward the regression line (as
-#' is done if Pooled is FALSE).
 #' @param keep_fit Logical; if TRUE, Stan fit object is included in output; typically large file so default FALSE.
 #' @param ... Arguments passed to `rstan::sampling` (e.g. iter, chains).
 #' @return A list of objects:
@@ -121,7 +107,7 @@
 #'  \item Stan_Fit; only outputted if keep_fit == TRUE. This is the full Stan fit object, an R6 object of class `stanfit`
 #' }
 #'
-TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FALSE, ...) {
+TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...) {
 
   ### Error catching
 
@@ -130,33 +116,17 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FAL
     stop("Hybrid_Fit must be logical (TRUE or FALSE)")
   }
 
-  ## Check Pooled
-  if(!is.logical(Pooled)){
-    stop("Pooled must be logical (TRUE or FALSE)")
-  }
-
   ## Check keep_fit
   if(!is.logical(keep_fit)){
     stop("keep_fit must be logical (TRUE or FALSE)")
   }
 
 
-  if(Pooled){
 
-    if(Hybrid_Fit){
-      fit <- rstan::sampling(stanmodels$Hybrid_Pooled, data = data_list, ...)
-
-    }else{
-      fit <- rstan::sampling(stanmodels$Heterosked_Pooled, data = data_list, ...)
-
-    }
-
+  if(Hybrid_Fit){
+    fit <- rstan::sampling(stanmodels$Hybrid_Model, data = data_list, ...)
   }else{
-    if(Hybrid_Fit){
-      fit <- rstan::sampling(stanmodels$Hybrid_Hier, data = data_list, ...)
-    }else{
-      fit <- rstan::sampling(stanmodels$Heterosked_Hier, data = data_list, ...)
-    }
+    fit <- rstan::sampling(stanmodels$Full_Model, data = data_list, ...)
   }
 
 
@@ -187,17 +157,6 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FAL
 
   nreps <- rep(reps, times=nconds)
 
-  #Extract effect sizes
-  eff_summary <- rstan::summary(fit, pars = c("eff"), probs = c(0.5))$summary
-
-  #Pull out mean and standard deviation of parameter estimate
-  eff_gauss <- eff_summary[, c("50%","mean", "sd")]
-
-
-  #Convert to data frame:
-  eff_gauss <- as.data.frame(eff_gauss)
-
-
   #Extract L2FC_kdeg
   L2FC_summary <- rstan::summary(fit, pars = "L2FC_kd", probs = c(0.5))$summary
 
@@ -211,12 +170,8 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FAL
   # Effects dataframe setup
   F_ID <- rep(seq(from=1, to=ngs), each=nconds) # Feature number vector
   Exp_ID <- rep(seq(from=2, to=nconds+1), times=ngs) # Experimental condition vector
-  Effect <- eff_gauss$mean # Effect size vector
-  Se <- eff_gauss$sd # Effect standard deviation vector
   L2FC_kdeg <- L2FC_df$mean # L2FC(kdeg) vector
   L2FC_kdeg_sd <- L2FC_df$sd # L2FC(kdeg) sd vector
-
-  rm(eff_gauss)
 
   # Fn dataframe setup
   F_ID_fn <- rep(1:ngs, each = (nconds+1)*reps)
@@ -235,7 +190,7 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, Pooled = TRUE, keep_fit = FAL
 
   rm(MT_summary)
 
-  Effects_df <- data.frame(F_ID, Exp_ID, L2FC_kdeg, L2FC_kdeg_sd, Effect, Se)
+  Effects_df <- data.frame(F_ID, Exp_ID, L2FC_kdeg, L2FC_kdeg_sd, L2FC_kdeg, L2FC_kdeg_sd)
   Kdeg_df <- data.frame(F_ID_kd, Exp_ID_kd, kdeg, kdeg_sd)
   Fn_df <- data.frame(F_ID_fn, Exp_ID_fn, R_ID_fn, logit_fn, fn_se)
 

@@ -17,18 +17,15 @@ data {
 parameters {
   vector<lower=0>[nrep] TL_lambda_eff[nMT];   // s4U induced increase in mutation rate
   vector[nrep] log_lambda_o[nMT];  // Background mutation rate
-  vector[NF] alpha;  // Reference sample mean logit(fn)
-  real mu_fn;        // Global mean fn
-  vector[nMT-1] mu_e;        // Global effect size mean
-  real<lower=0> sig_fn;
-  vector<lower=0>[nMT - 1] sig_e;
+  vector[nMT] alpha[NF];
+  real mu_fn[nMT];        // Global mean fn
+  real<lower=0> sig_fn[nMT];
   real z_fn[NF, nMT, nrep];
   //vector[nMT-1] z_e[NF];
   vector<lower=0>[nMT] a;
   vector[nMT] b;
-  //vector[nMT] z_sd_r [NF];
-  //vector<lower=0>[nMT] sig_rep;
-  vector[nMT-1] eff[NF];
+  vector[nMT] z_sd_r [NF];
+  vector<lower=0>[nMT] sig_rep;
   //vector<lower=0>[nMT] sd_r_mu [NF];
 }
 
@@ -36,25 +33,26 @@ transformed parameters {
   real<lower=0,upper=1> frac_new[NF, nMT, nrep];   // Fraction new (fn) of obs reads on native scale.
   real mu_rep_logit_fn[NF, nMT, nrep]; // Fn on logit scale
   vector[nrep] log_lambda_n[nMT]; // Mutation rate of s4U labelled reads
-  //vector<lower=0>[nMT] sd_r_mu[NF];
-  vector<lower=0>[nMT] sd_rep[NF];
+  vector<lower=0>[nMT] sd_r_mu[NF];
+  vector[nMT] sd_rep[NF];
+
+      for(m in 1:nMT){
+        for(r in 1:nrep){
+          log_lambda_n[m,r] = log_lambda_o[m,r] + TL_lambda_eff[m, r];
+
+        }
+      }
 
       for(i in 1:NF){
       for(j in 1:nMT){
-        sd_rep[i,j] = exp(-a[j]*Avg_Reads[i,j] + b[j]);
-        //sd_r_mu[i, j] = exp(sd_rep[i,j] + z_sd_r[i,j]*sig_rep[j]);
+        sd_rep[i,j] = -a[j]*Avg_Reads[i,j] + b[j];
+        sd_r_mu[i, j] = exp(sd_rep[i,j] + z_sd_r[i,j]*sig_rep[j]);
         // if(j > 1){
         //   eff[i, j-1] = mu_e[j-1] + sig_e[j-1]*z_e[i, j-1];
         // }
         for(k in 1:nrep){
-          log_lambda_n[j,k] = log_lambda_o[j,k] + TL_lambda_eff[j, k];
-          if(j == 1){
-             mu_rep_logit_fn[i, j, k] = alpha[i] + sd_rep[i,j]*z_fn[i,j,k];
-             frac_new[i, j, k] = inv_logit(mu_rep_logit_fn[i,j,k]);
-          }else{
-             mu_rep_logit_fn[i, j, k] = (alpha[i] + eff[i, j-1]) + sd_rep[i,j]*z_fn[i, j, k];
-             frac_new[i, j, k] = inv_logit(mu_rep_logit_fn[i,j,k]);
-          }
+          mu_rep_logit_fn[i, j, k] = alpha[i,j] + sd_r_mu[i,j]*z_fn[i,j,k];
+          frac_new[i, j, k] = inv_logit(mu_rep_logit_fn[i,j,k]);
         }
       }
       }
@@ -65,10 +63,6 @@ model {
 
   mu_fn ~ normal(0, 1.25);
   sig_fn ~ lognormal(-1, 0.5);
-  alpha ~ normal(mu_fn, sig_fn);
-
-  sig_e ~ lognormal(-1, 0.5);
-  mu_e ~ normal(0, 1);
 
   a ~ normal(0.3, 0.2);
   b ~ normal(-1.5, 0.35);
@@ -79,23 +73,22 @@ model {
       log_lambda_o[m] ~ normal(-3.5, 0.5);
   }
 
-  //sig_rep ~ lognormal(-1,0.5);
+  sig_rep ~ lognormal(-2,0.25);
 
   for (i in 1:NF) {
 
     // Remove if non-centered
     //eff[i] ~ normal(mu_e, sig_e);
 
-    //z_sd_r[i] ~ normal(0,1);
+    z_sd_r[i] ~ normal(0,1);
     for(j in 1:nMT){
+        alpha[i,j] ~ normal(mu_fn[j], sig_fn[j]);
+
         //sd_r_mu[i,j] ~ exponential(1/exp(-a[j]*log10(Avg_Reads[i,j]) + b[j]));
         z_fn[i,j] ~ normal(0, 1);
 
         //sd_r_mu[i,j] ~ lognormal(sd_rep[i,j], sig_rep[j]);
 
-        if(j > 1){
-          eff[i, j-1] ~ normal(mu_e[j-1], sig_e[j-1]);
-        }
 
     }
   }
@@ -115,11 +108,9 @@ generated quantities {
 
   for (i in 1:NF) {
     for (j in 1:nMT) {
-      if(j == 1){
-        kd[i,j] = -log(1-inv_logit(alpha[i]))/tl[j];  // divide by time if not 1
-      }else{
-        kd[i,j] = -log(1-inv_logit(alpha[i] + eff[i, j-1]))/tl[j];
-      }
+
+      kd[i,j] = -log(1-inv_logit(alpha[i,j]))/tl[j];  // divide by time if not 1
+
     } // treatment type
     for(k in 1:nMT-1){
       L2FC_kd[i,k] = log2(kd[i,k+1]/kd[i,1]);
@@ -127,5 +118,3 @@ generated quantities {
   }
 
 }
-
-
