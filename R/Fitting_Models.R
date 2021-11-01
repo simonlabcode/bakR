@@ -74,6 +74,7 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           FOI = c(),
                           concat = TRUE,
                           StanRateEst = FALSE,
+                          RateEst_size = 3,
                           low_reads = 1000,
                           high_reads = 5000,
                           ...){
@@ -144,7 +145,7 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       fnum_choose <- which(rowSums(Cnt_Mat) == ncol(Cnt_Mat))
 
-      XF_choose <- sample(unique(data_list$Stan_data$sdf$XF[data_list$Stan_data$sdf$fnum %in% fnum_choose]), 3, replace = FALSE)
+      XF_choose <- sample(unique(data_list$Stan_data$sdf$XF[data_list$Stan_data$sdf$fnum %in% fnum_choose]), RateEst_size, replace = FALSE)
 
       cB_small <- obj$cB[obj$cB$XF %in% XF_choose,]
 
@@ -175,21 +176,49 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
     if(FastRerun){
       if(StanRateEst){
-        ## find features to keep
         Cnt_Mat <- obj$Data_list$Count_Matrix
 
         Cnt_Mat <- (Cnt_Mat >= low_reads) & (Cnt_Mat <= high_reads)
 
-        fnum_choose <- which(rowSums(Cnt_Mat) == ncol(Cnt_Mat))
+        fnum_choose <- sample(which(rowSums(Cnt_Mat) == ncol(Cnt_Mat)), size = RateEst_size)
 
-        XF_choose <- sample(unique(obj$Data_list$Stan_data$sdf$XF[obj$Data_list$Stan_data$sdf$fnum %in% fnum_choose]), 3, replace = FALSE)
+        ## Need to reconstruct cB essentially
+        Stan_data <- obj$Data_list$Stan_data
 
-        mutrate_list <- DynamicSeq::cBprocess(obj,
-                                              FOI = XF_choose,
-                                              concat = FALSE)
+        data_df <- data.frame(old_fnum = Stan_data$FE,
+                              TP = Stan_data$TP,
+                              MT = Stan_data$MT,
+                              num_mut = Stan_data$num_mut,
+                              R = Stan_data$R,
+                              num_obs = Stan_data$num_obs,
+                              U_cont = Stan_data$U_cont)
 
 
-        fast_list <- DynamicSeq::fast_analysis(obj$Data_lists$Fast_df, Stan_data = obj$Data_lists$Stan_data, StanRate = TRUE, ...)
+        data_df <- data_df %>% dplyr::filter(old_fnum %in% fnum_choose)
+
+        new_FE <- data.frame(old_fnum = unique(data_df$old_fnum[order(data_df$old_fnum)]),
+                             FE = 1:RateEst_size)
+
+        data_df <- dplyr::left_join(data_df, new_FE, by = "old_fnum")
+
+
+        mutrate_list <- list(FE = data_df$FE,
+                          TP = data_df$TP,
+                          MT = data_df$MT,
+                          R = data_df$R,
+                          num_mut = data_df$num_mut,
+                          num_obs = data_df$num_obs,
+                          U_cont = data_df$U_cont,
+                          nMT = Stan_data$nMT,
+                          nrep = Stan_data$nrep,
+                          tl = Stan_data$tl,
+                          NE = length(data_df$FE),
+                          NF = max(data_df$FE))
+
+        rm(Stan_data)
+
+        fast_list <- DynamicSeq::fast_analysis(obj$Data_lists$Fast_df, Stan_data = mutrate_list, StanRate = TRUE, ...)
+
       }else{
         fast_list <- DynamicSeq::fast_analysis(obj$Data_lists$Fast_df, ...)
 
