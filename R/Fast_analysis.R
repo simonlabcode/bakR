@@ -605,35 +605,34 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     Mut_data_est <- dplyr::left_join(Mut_data_est, instab_est, by = c("fnum", "mut", "reps")) %>%
       dplyr::mutate(logit_fn_rep = ifelse(abs(logit_fn_rep.x) > upper, logit_fn_rep.y, logit_fn_rep.x)) %>%
       dplyr::select(fnum, mut, reps, nreads, logit_fn_rep) %>%
-      dplyr::mutate(Fn_rep_est = inv_logit(logit_fn_rep))
+      dplyr::mutate(Fn_rep_est = inv_logit(logit_fn_rep)) %>%
+      dplyr::mutate(kd_rep_est = -log(1 - Fn_rep_est)/tl[mut])
 
   }
 
-
   message("Estimating per replicate uncertainties")
 
-  Mut_data <- dplyr::left_join(Mut_data, Mut_data_est[, c("logit_fn_rep", "fnum", "mut", "reps")], by = c("fnum", "mut", "reps"))
+  Mut_data <- dplyr::left_join(Mut_data, Mut_data_est[, c("kd_rep_est" ,"logit_fn_rep", "fnum", "mut", "reps")], by = c("fnum", "mut", "reps"))
 
   ## Estimate Fisher Info and uncertainties
   ## Could make more efficient by summarizing over nT info and using U_content to adjust pnew*avg_U
   Mut_data <- Mut_data %>% dplyr::ungroup() %>%
-    dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep) %>%
+    dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep, kd_rep_est) %>%
     dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
-    dplyr::mutate(Exp_l_fn = exp(logit_fn_rep)) %>%
-    # dplyr::mutate(fn = inv_logit(Mut_data_est$logit_fn_rep[(Mut_data_est$mut == mut) & (Mut_data_est$reps == reps) & (Mut_data_est$fnum == fnum)])) %>%
-    # dplyr::mutate(Fisher_fn_num = ((pnew_est*nT)^TC)*exp(-pnew_est*nT) - ((pold*nT)^TC)*exp(-pold*nT) ) %>%
-    # dplyr::mutate(Fisher_fn_den = fn*Fisher_fn_num + ((pold*nT)^TC)*exp(-pold*nT)) %>%
-    dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
-    dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
-    dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
+    dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
+    dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
     dplyr::ungroup() %>%
     dplyr::group_by(fnum, mut, reps) %>%
-    dplyr::summarise(Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n), tot_n = sum(n)) %>% #,
+    dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),tot_n = sum(n)) %>% #,
     #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
-    dplyr::mutate(Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
-    dplyr::mutate(Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
+    dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg)) %>%
+    dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
 
-  Mut_data_est$logit_fn_se <- Mut_data$Logit_fn_se
+
+  Mut_data_est$log_kd_se <- Mut_data$log_kd_se
+
+  Mut_data_est <- Mut_data_est %>% dplyr::mutate(log_kd_rep_est = log(kd_rep_est))
+
   # Mut_data_est$fn_se = Mut_data$Fn_se
 
   ## Now affiliate each fnum, mut with a bin Id based on read counts,
@@ -646,13 +645,13 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   message("Estimating read count-variance relationship")
 
   Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-    dplyr::summarise(nreads = sum(nreads),fn_sd_log = log(sqrt(1/sum(1/((sd(logit_fn_rep)^2) + logit_fn_se^2 ) ) ) )) %>%
+    dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
-    dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(fn_sd_log))
+    dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
 
   ## Regress avg_reads vs. avg_sd
-  lm_list <- vector("list", length = 2L)
+  lm_list <- vector("list", length = nMT)
   lm_var <- lm_list
 
   for(i in 1:nMT){
@@ -664,12 +663,14 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     lm_var[[i]] <- var(stats::residuals(heterosked_lm))
   }
 
+
   true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-    dplyr::summarise(nreads = sum(nreads), fn_sd_log = log(sqrt(1/sum(1/((sd(logit_fn_rep)^2) + logit_fn_se^2 ) ) ) )) %>%
+    dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
     dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
     dplyr::group_by(mut) %>%
-    dplyr::summarise(true_var = var(fn_sd_log - (intercept + slope*log10(nreads) ) ))
+    dplyr::summarise(true_var = var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
 
+  log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
   logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
 
   if(!(all(logit_fn < upper) & all(logit_fn > lower))){
@@ -679,9 +680,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     warning(paste0(num_unstable, " out of " , tot_ests, " (", prcnt_unstable,"%)", " logit(fn) estimates are at the upper or lower bounds set. These likely represent features with limited data or extremely stable/unstable features. If the number of boundary estimates is concerning, try increasing the magnitude of upper and lower."))
   }
 
-  fn_estimate <- as.vector(Mut_data_est$Fn_rep_est)
+  kd_estimate <- as.vector(Mut_data_est$kd_rep_est)
   # fn_se <- as.vector(Mut_data_est$fn_se)
-  logit_fn_se <- as.vector(Mut_data_est$logit_fn_se)
+  log_kd_se <- as.vector(Mut_data_est$log_kd_se)
   Replicate <- as.vector(Mut_data_est$reps)
   Condition <- as.vector(Mut_data_est$mut)
   Gene_ID <- as.vector(Mut_data_est$fnum)
@@ -689,12 +690,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   rm(Mut_data_est)
 
-  df_fn <- data.frame(logit_fn, logit_fn_se, fn_estimate, Replicate, Condition, Gene_ID, nreads)
+  df_fn <- data.frame(logit_fn, Replicate, Condition, Gene_ID, nreads, log_kd, kd_estimate, log_kd_se)
 
   # Remove vectors no longer of use
   rm(logit_fn)
-  rm(fn_estimate)
-  rm(logit_fn_se)
   rm(Replicate)
   rm(Condition)
   rm(Gene_ID)
@@ -708,12 +707,12 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   #Average over replicates and estimate hyperparameters
   avg_df_fn_bayes <- df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
-    dplyr::summarize(avg_logit_fn = stats::weighted.mean(logit_fn, 1/logit_fn_se),
-              sd_logit_fn = sqrt(1/sum(1/((sd(logit_fn)^2) + logit_fn_se^2 ) ) ),
-              nreads = sum(nreads)) %>% dplyr::ungroup() %>%
+    dplyr::summarize(avg_log_kd = stats::weighted.mean(log_kd, 1/log_kd_se),
+                     sd_log_kd = sqrt(1/sum(1/((sd(log_kd)^2) + log_kd_se^2 ) ) ),
+                     nreads = sum(nreads)) %>% dplyr::ungroup() %>%
     dplyr::group_by(Condition) %>%
-    dplyr::mutate(sdp = sd(avg_logit_fn)) %>%
-    dplyr::mutate(theta_o = mean(avg_logit_fn)) %>%
+    dplyr::mutate(sdp = sd(avg_log_kd)) %>%
+    dplyr::mutate(theta_o = mean(avg_log_kd)) %>%
     # mutate(var_pop = mean(sd_logit_fn^2)) %>%
     # mutate(var_of_var = var(sd_logit_fn^2)) %>%
     # mutate(two_params = 8*(var_pop^4)/var_of_var) %>%
@@ -729,8 +728,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   #sdp <- sd(avg_df_fn$avg_logit_fn) # Will be prior sd in regularization of mean
   #theta_o <- mean(avg_df_fn$avg_logit_fn) # Will be prior mean in regularization of mean
 
-  var_pop <- mean(avg_df_fn_bayes$sd_logit_fn^2) # Will be prior mean in regularization of sd
-  var_of_var <- stats::var(avg_df_fn_bayes$sd_logit_fn^2) # Will be prior variance in regularization of sd
+  var_pop <- mean(avg_df_fn_bayes$sd_log_kd^2) # Will be prior mean in regularization of sd
+  var_of_var <- stats::var(avg_df_fn_bayes$sd_log_kd^2) # Will be prior variance in regularization of sd
 
 
   ## Regularize standard deviation estimate
@@ -741,8 +740,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   roots <- RConics::cubic(b)
 
   a_hyper <- roots[(roots > 2) & (!is.complex(roots))]
-    # Divide this by 2 to get inverse-gamma hyperprior
-    # that serves as prior degrees of freedom
+  # Divide this by 2 to get inverse-gamma hyperprior
+  # that serves as prior degrees of freedom
 
   b_hyper <- (var_pop*(a_hyper - 2))/a_hyper
 
@@ -750,16 +749,16 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   # Regularize estimates with Bayesian models and empirically informed priors
   avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
     #dplyr::mutate(sd_post = sqrt((a_hyper*b_hyper + nreps*sd_logit_fn)/(a_hyper + nreps - 2))) %>%
-    dplyr::mutate(sd_post = exp( (log(sd_logit_fn)*nreps*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])*(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(nreps*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])) )) %>%
-    dplyr::mutate(logit_fn_post = (avg_logit_fn*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2))) %>%
+    dplyr::mutate(sd_post = exp( (log(sd_log_kd)*nreps*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])*(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(nreps*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])) )) %>%
+    dplyr::mutate(log_kd_post = (avg_log_kd*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2))) %>%
     #dplyr::mutate(sd_post = sqrt(1/(nreps/(sd_post^2) + (1/sdp^2)))) %>%
-    dplyr::mutate(kdeg = -log(1 - inv_logit(logit_fn_post))) %>%
-    dplyr::mutate(kdeg_sd = sd_post*(exp(logit_fn_post)/((1 + exp(-logit_fn_post))^2))) %>%
+    dplyr::mutate(kdeg = exp(log_kd_post) ) %>%
+    dplyr::mutate(kdeg_sd = sd_post*exp(log_kd_post) ) %>%
     dplyr::ungroup() %>%
     dplyr::group_by(Gene_ID) %>%
-    dplyr::mutate(effect_size = logit_fn_post - logit_fn_post[Condition == 1]) %>%
+    dplyr::mutate(effect_size = log_kd_post - log_kd_post[Condition == 1]) %>%
     dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
-    dplyr::mutate(L2FC_kdeg = ifelse(Condition == 1, 0, log2(kdeg/kdeg[Condition == 1]))) %>%
+    dplyr::mutate(L2FC_kdeg = effect_size) %>%
     dplyr::mutate(pval = 2*pt(-abs(effect_size/effect_std_error), df = 2*nreps - 2 + 2*a_hyper)) %>%
     dplyr::ungroup()
 
@@ -799,13 +798,13 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   #hyperpars <- c(sdp, theta_o, var_pop, var_of_var, a_hyper, b_hyper)
   #names(hyperpars) <- c("Mean Prior sd", "Mean prior mean", "Variance prior mean", "Variance prior variance", "Variance hyperparam a", "Variance hyperparam b")
 
-  avg_df_fn_bayes <- avg_df_fn_bayes[,c("Gene_ID", "Condition", "avg_logit_fn", "sd_logit_fn", "nreads", "sdp", "theta_o", "sd_post",
-                                        "logit_fn_post", "kdeg", "kdeg_sd", "XF")]
+  avg_df_fn_bayes <- avg_df_fn_bayes[,c("Gene_ID", "Condition", "avg_log_kd", "sd_log_kd", "nreads", "sdp", "theta_o", "sd_post",
+                                        "log_kd_post", "kdeg", "kdeg_sd", "XF")]
 
-  colnames(avg_df_fn_bayes) <- c("Feature_ID", "Exp_ID", "avg_logit_fn", "sd_logit_fn", "nreads", "sdp", "theta_o", "sd_post",
-                                 "logit_fn_post", "kdeg", "kdeg_sd", "XF")
+  colnames(avg_df_fn_bayes) <- c("Feature_ID", "Exp_ID", "avg_log_kdeg", "sd_log_kdeg", "nreads", "sdp", "theta_o", "sd_post",
+                                 "log_kdeg_post", "kdeg", "kdeg_sd", "XF")
 
-  colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se", "fn_estimate", "nreads", "sample", "XF")
+  colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "nreads", "log_kdeg", "kdeg", "log_kd_se", "sample", "XF")
 
   #fast_list <- list(estimate_df, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, hyperpars)
   fast_list <- list(df_fn, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, c(a = a_hyper, b = b_hyper), lm_list)
@@ -814,6 +813,5 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   class(fast_list) <- "FastFit"
 
-  return(fast_list)
 
 }
