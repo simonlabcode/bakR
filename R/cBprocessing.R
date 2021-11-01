@@ -379,6 +379,11 @@ cBprocess <- function(obj,
       tls[m] <- unique(metadf$tl[(metadf$Exp_ID == m) & (metadf$tl != 0)])
     }
 
+    # Add tl info to fast_df
+    tl_df <- data.frame(tl = tls,
+                        mut = 1:length(tls))
+
+    df_U <- dplyr::left_join(df_U, tl_df, by = "mut")
 
 
     # Will have to change to make Stan models compatible

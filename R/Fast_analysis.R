@@ -538,6 +538,13 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   Mut_data <- df
 
+  tl_df <- Mut_data %>% dplyr::select(mut, tl) %>%
+    dplyr::distinct()
+
+  tl_df <- tl_df[order(tl_df$mut),]
+
+  tl <- unique(tl_df$tl)
+
   Mut_data <- Mut_data[Mut_data$type == 1,]
 
   ngene <- max(Mut_data$fnum)
@@ -551,7 +558,6 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   message("Estimating fraction labeled")
 
   Mut_data <- dplyr::left_join(Mut_data, New_data_estimate, by = c("mut", "reps"))
-
 
   if(!MLE){
     # Bayesian Hypothesis Testing Method
