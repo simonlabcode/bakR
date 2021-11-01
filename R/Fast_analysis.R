@@ -367,7 +367,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if((is.null(pnew) | is.null(pold)) & StanRate ){
 
 
-    mut_fit <- rstan::sampling(stanmodels$Full_Model, data = Stan_data, chains = 1)
+    mut_fit <- rstan::sampling(stanmodels$Mut_rate_Model, data = Stan_data, chains = 1)
   }
 
   #Trim df and name columns
@@ -380,9 +380,13 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       U_df <- df[df$type == 1,] %>% dplyr::group_by(mut, reps) %>%
         dplyr::summarise(avg_T = sum(nT*n)/sum(n))
 
-      U_df <- U_df[order(U_df$mut, U_df$rep),]
+      U_df <- U_df[order(U_df$mut, U_df$reps),]
 
-      pnew <- exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_n"))$mean)/U_df$avg_T
+      pnew <- exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_n")$summary)$mean)/U_df$avg_T
+
+      if(!is.null(pold)){
+        rm(mut_fit)
+      }
 
       rm(U_df)
 
@@ -391,6 +395,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       mut_vect <- rep(seq(from = 1, to = nMT), each = nreps)
       New_data_estimate <- data.frame(mut_vect, rep_vect, pnew)
       colnames(New_data_estimate) <- c("mut", "reps", "pnew")
+
+      message(paste0(c("Estimated pnews for each sample are:", capture.output(New_data_estimate)), collapse = "\n"))
 
     }else{
       message("Estimating labeled mutation rate")
@@ -477,9 +483,11 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       U_df <- df[df$type == 1,] %>% dplyr::group_by(mut, reps) %>%
         dplyr::summarise(avg_T = sum(nT*n)/sum(n))
 
-      U_df <- U_df[order(U_df$mut, U_df$rep),]
+      U_df <- U_df[order(U_df$mut, U_df$reps),]
 
-      pold <- mean(exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_o"))$mean)/U_df$avg_T)
+      pold <- mean(exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_o")$summary)$mean)/U_df$avg_T)
+
+      rm(mut_fit)
 
       rm(U_df)
 

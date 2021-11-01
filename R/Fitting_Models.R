@@ -146,11 +146,14 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       XF_choose <- sample(unique(data_list$Stan_data$sdf$XF[data_list$Stan_data$sdf$fnum %in% fnum_choose]), 3, replace = FALSE)
 
-      mutrate_list <- DynamicSeq::cBprocess(obj,
-                                            FOI = XF_choose,
-                                            concat = FALSE)
+      cB_small <- obj$cB[obj$cB$XF %in% XF_choose,]
+
+      DynData2 <- DynamicSeq::new_DynamicSeqData(cB_small, obj$metadf)
+
+      mutrate_list <- DynamicSeq::cBprocess(DynData2)
 
       fast_list <- DynamicSeq::fast_analysis(data_list$Fast_df, Stan_data = mutrate_list$Stan_data, StanRate = TRUE, ...)
+
     }else{
       fast_list <- DynamicSeq::fast_analysis(data_list$Fast_df, ...)
     }
@@ -185,7 +188,6 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                                               FOI = XF_choose,
                                               concat = FALSE)
 
-        fast_list <- DynamicSeq::fast_analysis(data_list$Fast_df, Stan_data = mutrate_list$Stan_data, StanRate = TRUE, ...)
 
         fast_list <- DynamicSeq::fast_analysis(obj$Data_lists$Fast_df, Stan_data = obj$Data_lists$Stan_data, StanRate = TRUE, ...)
       }else{
