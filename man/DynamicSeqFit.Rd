@@ -14,6 +14,10 @@ DynamicSeqFit(
   Fast_prep = TRUE,
   FOI = c(),
   concat = TRUE,
+  StanRateEst = FALSE,
+  RateEst_size = 3,
+  low_reads = 1000,
+  high_reads = 5000,
   ...
 )
 }
@@ -29,6 +33,9 @@ statistical model.}
 
 \item{keep_input}{Two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff}
 
+\item{FastRerun}{Logical; only matters if a DynamicSeqFit object is passed to \code{DynamicSeqFit()}. If TRUE, then the Stan-free
+model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the Stan models.}
+
 \item{Stan_prep}{Logical; if TRUE, then data_list that can be passed to Stan is curated}
 
 \item{Fast_prep}{Logical; if TRUE, then dataframe that can be passed to fast_analysis() is curated}
@@ -36,6 +43,18 @@ statistical model.}
 \item{FOI}{Features of interest; character vector containing names of features to analyze}
 
 \item{concat}{Logical; If TRUE, FOI is concatenated with output of reliableFeatures}
+
+\item{StanRateEst}{Logical; if TRUE, a simple Stan model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
+to the runtime of the analysis.}
+
+\item{RateEst_size}{Numeric; if StanRateEst is TRUE, then data from RateEst_size genes are used for mutation rate estimation. This can be as low
+as 1 and should be kept low to ensure maximum efficiency}
+
+\item{low_reads}{Numeric; if StanRateEst is TRUE, then only features with more than low_reads reads in all samples will be used for mutation rate estimation}
+
+\item{high_reads}{Numeric; if StanRateEst is TRUE, then only features with less than high_read reads in all samples will be used for mutation rate estimation.
+A high read count cutoff is as important as a low read count cutoff in this case because you don't want the fraction labeled of chosen features to be
+extreme (e.g., close to 0 or 1), and high read count features are likely low fraction new features.}
 
 \item{...}{Arguments passed to either \code{fast_analysis} (if a DynamicSeqData object)
 or \code{TL_Stan} and \code{Hybrid_fit} (if a DynamicSeqFit object)}
@@ -62,7 +81,7 @@ data that can be passed to the model fitting functions (\code{fast_analysis}, \c
 and \code{TL_Stan}). The call to \code{fast_analysis} will generate a list of dataframes
 containing information regarding the \code{fast_analysis} fit. \code{fast_analysis} is always
 called because its output is required for both \code{Hybrid_fit} and \code{TL_Stan}. In both cases,
-\code{fast_analysis} estimates a parameter that determines the number of degress of freedom of
+\code{fast_analysis} estimates a parameter that determines the number of degrees of freedom of
 the t-distribution to use when performing a moderated t-test for significance of L2FC(kdeg)s.
 For \code{Hybrid_fit}, the logit(fraction new) replicate estimates and Fisher Information derived
 approximate uncertainties are passed as data to a model that performs partial pooling approximated
@@ -70,11 +89,11 @@ by the procedure implemented in \code{fast_analysis}.
 
 If \code{DynamicFit} is run on a DynamicSeqFit object, \code{cBprocess} will not be called again,
 as the output of \code{cBprocess} will already be contained in the DynamicSeqFit object. Similarly,
-\code{fast_analysis} will not be called again unless DynamicSeqFit is rerun on the DynamicSeqData object. If you want to
-generate model fits using different parameters for cBprocess, you will have to rerun \code{DynamicFit}
-on the DynamicSeqData object.
+\code{fast_analysis} will not be called again unless DynamicSeqFit is rerun on the DynamicSeqData object.
+or if \code{FastRerun} is set to TRUE. If you want to generate model fits using different parameters for cBprocess,
+you will have to rerun \code{DynamicFit} on the DynamicSeqData object.
 
-See the doumentation for the indvidual fitting functions for details regarding how they analyze nucleotide
+See the documentation for the individual fitting functions for details regarding how they analyze nucleotide
 recoding data. What follows is a brief overview of how each works
 
 \code{fast_analysis} either estimates mutation rates from + and - s4U samples or uses mutation rate estimates

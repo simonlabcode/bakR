@@ -19,7 +19,9 @@ fast_analysis(
   se_max = 2.5,
   mut_reg = 0.1,
   p_mean = 0,
-  p_sd = 1
+  p_sd = 1,
+  StanRate = FALSE,
+  Stan_data = NULL
 )
 }
 \arguments{
@@ -53,6 +55,12 @@ etc.}
 \item{p_mean}{Mean of normal distribution used as prior penalty in MLE of logit(fn)}
 
 \item{p_sd}{Standard deviation of normal distribution used as prior peanlty in MLE of logit(fn)}
+
+\item{StanRate}{Logical; if TRUE, a simple Stan model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
+to the runtime of the analysis.}
+
+\item{Stan_data}{List; if StanRate is TRUE, then this is the data passed to the Stan model to estimate mutation rates. If using the \code{DynamicSeqFit}
+wrapper of \code{fast_analysis}, then this is created automatically.}
 }
 \value{
 List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
@@ -60,29 +68,31 @@ List with dataframes providing information about replicate-specific and pooled a
 \item Fn_Estimates; dataframe with estimates for the fraction new and fraction new uncertainty for each feature in each replicate.
 The columns of this dataframe are:
 \itemize{
-\item Gene_ID; Numerical ID of feature
-\item Condition; Numerical ID for experimental condition (Exp_ID from metadf)
+\item Feature_ID; Numerical ID of feature
+\item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
 \item Replicate; Numerical ID for replicate
 \item logit_fn; logit(fraction new) estimate, unregularized
 \item logit_fn_se; logit(fraction new) uncertainty, unregularized and obtained from Fisher Information
-\item fn_estimate; fraction new estimate (inverse logit of logit_fn)
 \item nreads; Number of reads mapping to the feature in the sample for which the estimates were obtained
+\item log_kdeg; log(kdeg) estimate, ungregularized
+\item kdeg; degradation rate constant (kdeg) estimate
+\item log_kd_se; log(kdeg) uncertainty, unregularized and obtained from Fisher Information
 \item sample; Sample name
 \item XF; Original feature name
 }
 \item Regularized_ests; dataframe with average fraction new and kdeg estimates, averaged across the replicates and regularized
 using priors informed by the entire dataset. The columns of this dataframe are:
 \itemize{
-\item Gene_ID; Numerical ID of feature
-\item Condition; Numerical ID for experimental condition (Exp_ID from metadf)
-\item avg_logit_fn; Weighted average of logit(fn) from each replicate, weighted by sample and feature-specific read depth
-\item sd_logit_fn; Variability of the logit(fn) estimates, estimated using minimum MSE variance estimator
+\item Feature_ID; Numerical ID of feature
+\item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
+\item avg_log_kdeg; Weighted average of log(kdeg) from each replicate, weighted by sample and feature-specific read depth
+\item sd_log_kdeg; Standard deviation of the log(kdeg) estimates
 \item nreads; Total number of reads mapping to the feature in that condition
 \item sdp; Prior standard deviation for fraction new estimate regularization
 \item theta_o; Prior mean for fraction new estimate regularization
 \item sd_post; Posterior uncertainty
-\item logit_fn_post; Posterior logit(fraction new)
-\item kdeg; average kdeg estimate
+\item log_kdeg_post; Posterior mean for log(kdeg) estimate
+\item kdeg; exp(log_kdeg_post)
 \item kdeg_sd; kdeg uncertainty
 \item XF; Original feature name
 }
@@ -90,12 +100,12 @@ using priors informed by the entire dataset. The columns of this dataframe are:
 reference sample for each feature. This dataframe also includes p-values obtained from a moderated t-test. The columns of this
 dataframe are:
 \itemize{
-\item Genes_effects; Numerical ID of feature
-\item Condition_effects; Numerical ID for experimental condition (Exp_ID from metadf)
+\item Feature_ID; Numerical ID of feature
+\item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
 \item L2FC_kdeg; L2FC(kdeg) estimate
-\item effects; Change in logit(fraction) new comparing reference and experimental sample(s)
-\item ses; Uncertainty in effect size
-\item pval; P-value obtained using effect_size, effect_std_error, and a moderated t-test
+\item effect; L2FC_kdeg (repeated because it is used elsewhere and used to be difference in logit(fn)s)
+\item se; Uncertainty in L2FC_kdeg
+\item pval; P-value obtained using effect_size, se, and a moderated t-test
 \item padj; pval adjusted for multiple testing using Benjamini-Hochberg procedure
 \item XF; Original feature name
 }
@@ -105,7 +115,7 @@ rate estimate used
 \item Hyper_Parameters; vector of two elements, named a and b. These are the hyperparameters estimated from the uncertainties for each
 feature, and represent the two parameters of a Scaled Inverse Chi-Square distribution. Importantly, a is the number of additional
 degrees of freedom provided by the sharing of uncertainty information across the dataset, to be used in the moderated t-test.
-\item Mean_Variance_lm; a linear model object obtained from the uncertainty vs. read count regression model.
+\item Mean_Variance_lms; linear model objects obtained from the uncertainty vs. read count regression model. One model is run for each Exp_ID
 }
 }
 \description{

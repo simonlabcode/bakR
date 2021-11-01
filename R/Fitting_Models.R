@@ -11,7 +11,7 @@
 #' and \code{TL_Stan}). The call to \code{fast_analysis} will generate a list of dataframes
 #' containing information regarding the \code{fast_analysis} fit. \code{fast_analysis} is always
 #' called because its output is required for both \code{Hybrid_fit} and \code{TL_Stan}. In both cases,
-#' \code{fast_analysis} estimates a parameter that determines the number of degress of freedom of
+#' \code{fast_analysis} estimates a parameter that determines the number of degrees of freedom of
 #' the t-distribution to use when performing a moderated t-test for significance of L2FC(kdeg)s.
 #' For \code{Hybrid_fit}, the logit(fraction new) replicate estimates and Fisher Information derived
 #' approximate uncertainties are passed as data to a model that performs partial pooling approximated
@@ -19,11 +19,11 @@
 #'
 #' If \code{DynamicFit} is run on a DynamicSeqFit object, \code{cBprocess} will not be called again,
 #' as the output of \code{cBprocess} will already be contained in the DynamicSeqFit object. Similarly,
-#' \code{fast_analysis} will not be called again unless DynamicSeqFit is rerun on the DynamicSeqData object. If you want to
-#' generate model fits using different parameters for cBprocess, you will have to rerun \code{DynamicFit}
-#' on the DynamicSeqData object.
+#' \code{fast_analysis} will not be called again unless DynamicSeqFit is rerun on the DynamicSeqData object.
+#' or if \code{FastRerun} is set to TRUE. If you want to generate model fits using different parameters for cBprocess,
+#' you will have to rerun \code{DynamicFit} on the DynamicSeqData object.
 #'
-#' See the doumentation for the indvidual fitting functions for details regarding how they analyze nucleotide
+#' See the documentation for the individual fitting functions for details regarding how they analyze nucleotide
 #' recoding data. What follows is a brief overview of how each works
 #'
 #' \code{fast_analysis} either estimates mutation rates from + and - s4U samples or uses mutation rate estimates
@@ -51,11 +51,21 @@
 #' @param HybridFit Logical; if TRUE, then a Fully Bayesian Hierarchical model is run using
 #' estimates for the fraction new and fraction new uncertainty obtained via the efficient
 #' statistical model.
+#' @param FastRerun Logical; only matters if a DynamicSeqFit object is passed to \code{DynamicSeqFit()}. If TRUE, then the Stan-free
+#' model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the Stan models.
 #' @param keep_input Two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff
 #' @param Stan_prep Logical; if TRUE, then data_list that can be passed to Stan is curated
 #' @param Fast_prep Logical; if TRUE, then dataframe that can be passed to fast_analysis() is curated
 #' @param FOI Features of interest; character vector containing names of features to analyze
 #' @param concat Logical; If TRUE, FOI is concatenated with output of reliableFeatures
+#' @param StanRateEst Logical; if TRUE, a simple Stan model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
+#' to the runtime of the analysis.
+#' @param RateEst_size Numeric; if StanRateEst is TRUE, then data from RateEst_size genes are used for mutation rate estimation. This can be as low
+#' as 1 and should be kept low to ensure maximum efficiency
+#' @param low_reads Numeric; if StanRateEst is TRUE, then only features with more than low_reads reads in all samples will be used for mutation rate estimation
+#' @param high_reads Numeric; if StanRateEst is TRUE, then only features with less than high_read reads in all samples will be used for mutation rate estimation.
+#' A high read count cutoff is as important as a low read count cutoff in this case because you don't want the fraction labeled of chosen features to be
+#' extreme (e.g., close to 0 or 1), and high read count features are likely low fraction new features.
 #' @param ... Arguments passed to either \code{fast_analysis} (if a DynamicSeqData object)
 #' or \code{TL_Stan} and \code{Hybrid_fit} (if a DynamicSeqFit object)
 #' @return DynamicSeqFit object with results from statistical modeling and data processing. Objects possibly included are:
@@ -125,6 +135,56 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   ## Check concat
   if(!is.logical(concat)){
     stop("concat must be logical (TRUE or FALSE)")
+  }
+
+  ## Check StanRateEst
+  if(!is.logical(StanRateEst)){
+    stop("StanRateEst must be logical (TRUE or FALSE)")
+  }
+
+  ## Check RateEst_size
+  if(!is.numeric(RateEst_size)){
+    stop("RateEst_size must be numeric")
+  }else{
+    RateEst_size <- as.integer(RateEst_size)
+    if(RateEst_size < 1){
+      stop("RateEst_size must be greater than 0")
+    }else if(RateEst_size > 10){
+      warning("You have set RateEst_size to a number greater than 10. This will reduce efficiency without much benefit to estimate accuracy.")
+    }
+  }
+
+  ## Check low_reads
+  if(!is.numeric(low_reads)){
+    stop("low_reads must be numeric")
+  }else if(low_reads < 0){
+    stop("low_reads must be greater than 0")
+  }
+
+  if(low_reads < 100){
+    warning("low_reads is less than 100. This may lead to inaccurate mutation rate estimation; tread lightly")
+  }else if(low_reads > 10000){
+    warning("low_reads is greater than 10000. There may not be enough features meeting this criterion.")
+  }
+
+  ## Check high_reads
+  if(!is.numeric(high_reads)){
+    stop("high_reads must be numeric")
+  }else if(high_reads < 0){
+    stop("high_reads must be greater than 0")
+  }
+
+  if(high_reads < 1000){
+    warning("high_reads is less than 1000. This may lead to inaccurate mutation rate estimation; tread lightly")
+  }else if(high_reads > 50000){
+    warning("high reads is greater than 50000. This may mean that chosen features are almost completely unlabeled; tread lightly")
+  }
+
+  ## Check low_reads vs. high_reads
+  if(high_reads < low_reads){
+    stop("high_reads must be greater than low_reads")
+  }else if(high_reads == low_reads){
+    warning("low_reads and high_reads are equal. This is a very small window of allowable read depths, so no features might pass this condition.")
   }
 
 
