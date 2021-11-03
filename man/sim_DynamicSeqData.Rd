@@ -10,7 +10,10 @@ sim_DynamicSeqData(
   nreps = 3L,
   eff_sd = 0.75,
   eff_mean = 0,
+  fn_mean = 0,
   fn_sd = 1,
+  kslog_c = 0.4,
+  kslog_sd = 0.6,
   tl = 60,
   p_new = 0.05,
   p_old = 0.001,
@@ -45,6 +48,15 @@ changes in logit(fraction new) are pulled from.}
 \item{eff_mean}{Effect size mean; mean of normal distribution from which non-zero changes in logit(fraction new) are pulled from.
 Note, setting this to 0 does not mean that some of the significant effect sizes will be 0, as any exact integer is impossible
 to draw from a continuous random number generator. Setting this to 0 just means that there is symmetric stabilization and destabilization}
+
+\item{fn_mean}{Mean of fraction news of simulated transcripts in reference condition. The fraction of RNA from each transcript that is
+s4U labeled (new) is drawn from a normal distribution with this mean}
+
+\item{fn_sd}{Standard deviation of fraction news of simulated transcripts in reference condition. The fraction of RNA from each transcript that
+is s4U labeled (new) is drawn from a normal distribution with this sd}
+
+\item{kslog_c}{Synthesis rate constants will be drawn from a lognormal distribution with meanlog = \code{kslog_c} - mean(log(kd_mean)) where kd_mean
+is determined from the fraction new simulated for each gene as well as the label time (\code{tl}).}
 
 \item{tl}{s4U label feed time}
 
