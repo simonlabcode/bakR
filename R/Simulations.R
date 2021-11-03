@@ -76,13 +76,13 @@
 #' }
 #'
 sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_mean = 0,
-                               fn_mean = 0, fn_sd = 1, kslog_c = 0.4, kslog_sd = 0.6,
+                               fn_mean = 0, fn_sd = 1, kslog_c = 0.8, kslog_sd = 0.95,
                                tl = 60, p_new = 0.05, p_old = 0.001, read_lengths = 200L,
                                p_do = 0, noise_deg_a = -0.3, noise_deg_b = -1.5, noise_synth = 0.1, sd_rep = 0.05,
                                low_L2FC_ks = -1, high_L2FC_ks = 1,
                                num_kd_DE = c(0L, as.integer(rep(round(as.integer(ngene)/2), times = as.integer(num_conds)-1))),
                                num_ks_DE = rep(0L, times = as.integer(num_conds)),
-                               scale_factor = 100,
+                               scale_factor = 150,
                                sim_read_counts = TRUE, a1 = 5, a0 = 0.01,
                                nreads = 50L){
 
@@ -362,7 +362,9 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
   #Initialize vectors of mean values for each gene and condition
   fn_mean <- inv_logit(rnorm(n=ngene, mean=fn_mean, sd=fn_sd))
   kd_mean <- -log(1-fn_mean)/tl
-  ks_mean <- stats::rlnorm(n=ngene, meanlog = kslog_c - mean(log(kd_mean)), sdlog = kslog_sd)
+  ks_mean <- stats::rlnorm(n=ngene, meanlog = kslog_c + log(kd_mean), sdlog = kslog_sd)
+
+  #ks_mean <- rexp(n = ngene, rate = (1/kd_mean)*5)
 
   effect_mean <- rep(0, times = ngene*num_conds)
   dim(effect_mean) <- c(ngene, num_conds)
@@ -503,7 +505,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
         mir_pnew_tc <- p_new[mt[s]]
 
         #Simulate which reads are labeled
-        newreads_tc <- purrr::rbernoulli(nreads[mir, MT, r], p = fn_s4U[mir, MT, r])# vector of reads, T/F is s4U labeled
+        newreads_tc <- purrr::rbernoulli(as.numeric(nreads[mir, MT, r]), p = as.numeric(fn_s4U[mir, MT, r]))# vector of reads, T/F is s4U labeled
 
         #Simulate the nubmer of Us in each read
         nu <- stats::rbinom(n = nreads[mir,MT,r], size = readsize, prob = 0.25)
