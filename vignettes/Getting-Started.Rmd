@@ -106,7 +106,7 @@ defined.
 1. **TC**: Number of U-to-C mutations (assuming using s4U as the metabolic label). Called TC because technically the data is T-to-C mutations in reverse-transcribed RNA
 1. **nT**: Number of Ts (Us in the RNA) in the sequencing read(s)
 1. **XF**: Name of the feature (gene, exon, etc.) that the read comes from. Kinetic parameters will be estimated for each feature, so this should represent the functional unit who's metabolic kinetics you are interested in. 
-    * **XF** stands for "exonic feature", since in most cases, you        should only be considering reads that map to definitively       exonic locations. Introns are typically rapidly turned          over and thus will be highly labeled species that will          bias estimates of RNA stability.
+    * **XF** stands for "exonic feature", since in most cases, you        should only be considering reads that map to definitively       exonic locations. Introns are typically rapidly turned          over and thus will be highly labeled species that will          bias estimates of mature transcript stability.
 1. **n**: Number of reads with identical data for the other 4 columns. For example, n = 2 in the 4th row means that there are 2 reads from sample JS181101 that mapped to **XF** EPB41L1, had 0 T to C mutations, and had 14 Ts.
 
 The structure of the cB file most closely reflects the output of a pipeline for analyze nucleotide recoding sequencing data developed by the Simon lab (available [here](https://bitbucket.org/mattsimon9/timelapse_pipeline/src/master/)), but consists of data provided by all published pipelines (e.g., SlamDunk). 

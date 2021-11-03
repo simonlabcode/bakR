@@ -205,6 +205,10 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       fnum_choose <- which(rowSums(Cnt_Mat) == ncol(Cnt_Mat))
 
+      if(length(fnum_choose) < RateEst_size){
+        stop("Not enough features have read depths between low_reads and high_reads. Try increasing high_reads and/or decreasing low_reads.")
+      }
+
       XF_choose <- sample(unique(data_list$Stan_data$sdf$XF[data_list$Stan_data$sdf$fnum %in% fnum_choose]), RateEst_size, replace = FALSE)
 
       cB_small <- obj$cB[obj$cB$XF %in% XF_choose,]
