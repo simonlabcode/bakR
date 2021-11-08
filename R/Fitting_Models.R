@@ -216,7 +216,7 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       cB_small <- obj$cB[obj$cB$XF %in% XF_choose,]
 
-      DynData2 <- DynamicSeq::new_DynamicSeqData(cB_small, obj$metadf)
+      DynData2 <- new_DynamicSeqData(cB_small, obj$metadf)
 
       mutrate_list <- DynamicSeq::cBprocess(DynData2)
 
