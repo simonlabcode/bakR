@@ -137,7 +137,7 @@ reliableFeatures <- function(obj,
 #' @importFrom magrittr %>%
 #' @export
 cBprocess <- function(obj,
-                       keep_input=c(0.2, 50),
+                       keep_input = c(0.2, 50),
                        Stan = TRUE,
                        Fast = TRUE,
                        FOI = c(),
@@ -227,6 +227,9 @@ cBprocess <- function(obj,
     keep <- FOI
   }
 
+  if((length(keep) == 0) | (is.null(keep))){
+    stop("No features made it past filtering.Try increasing the read count or -s4U background mutation rate cutoffs.")
+  }
 
 
   message("Filtering out unwanted or unreliable features")

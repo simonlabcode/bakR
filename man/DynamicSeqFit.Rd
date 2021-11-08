@@ -8,7 +8,8 @@ DynamicSeqFit(
   obj,
   StanFit = FALSE,
   HybridFit = FALSE,
-  keep_input = c(0.2, 50),
+  high_p = 0.2,
+  totcut = 50,
   FastRerun = FALSE,
   Stan_prep = TRUE,
   Fast_prep = TRUE,
@@ -30,8 +31,6 @@ across the dataset}
 \item{HybridFit}{Logical; if TRUE, then a Fully Bayesian Hierarchical model is run using
 estimates for the fraction new and fraction new uncertainty obtained via the efficient
 statistical model.}
-
-\item{keep_input}{Two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff}
 
 \item{FastRerun}{Logical; only matters if a DynamicSeqFit object is passed to \code{DynamicSeqFit()}. If TRUE, then the Stan-free
 model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the Stan models.}
@@ -58,6 +57,8 @@ extreme (e.g., close to 0 or 1), and high read count features are likely low fra
 
 \item{...}{Arguments passed to either \code{fast_analysis} (if a DynamicSeqData object)
 or \code{TL_Stan} and \code{Hybrid_fit} (if a DynamicSeqFit object)}
+
+\item{keep_input}{Two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff}
 }
 \value{
 DynamicSeqFit object with results from statistical modeling and data processing. Objects possibly included are:

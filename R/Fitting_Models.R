@@ -77,7 +77,8 @@
 #' }
 #' @export
 DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
-                          keep_input = c(0.2, 50),
+                          high_p = 0.2,
+                          totcut = 50,
                           FastRerun = FALSE,
                           Stan_prep = TRUE,
                           Fast_prep = TRUE,
@@ -88,6 +89,8 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           low_reads = 1000,
                           high_reads = 5000,
                           ...){
+
+  keep_input <- c(high_p, totcut)
 
   ## Check StanFit
   if(!is.logical(StanFit)){

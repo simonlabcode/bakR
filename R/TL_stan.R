@@ -124,9 +124,9 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...) {
 
 
   if(Hybrid_Fit){
-    fit <- rstan::sampling(stanmodels$Hybrid_Model, data = data_list, ...)
+    fit <- rstan::sampling(stanmodels$Hybrid_Model, data = data_list, chains = 1, ...)
   }else{
-    fit <- rstan::sampling(stanmodels$Full_Model, data = data_list, ...)
+    fit <- rstan::sampling(stanmodels$Full_Model, data = data_list, chains = 1, ...)
 
   }
 
