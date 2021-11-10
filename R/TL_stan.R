@@ -213,10 +213,10 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...) {
 
   if(keep_fit == FALSE){
     fit_summary <- as.data.frame(rstan::summary(fit)$summary)
-    out <- list(Effects_df, Kdeg_df, Fn_df, fit_summary)
+    out <- list(dplyr::as_tibble(Effects_df), dplyr::as_tibble(Kdeg_df), dplyr::as_tibble(Fn_df), fit_summary)
     names(out) <- c("Effects_df", "Kdeg_df", "Fn_Estimates","Fit_Summary")
   }else{
-    out <- list(Effects_df, Kdeg_df, Fn_df, fit)
+    out <- list(dplyr::as_tibble(Effects_df), dplyr::as_tibble(Kdeg_df), dplyr::as_tibble(Fn_df), fit)
     names(out) <- c("Effects_df", "Kdeg_df", "Fn_Estimates","Stan_fit")
   }
 
