@@ -107,6 +107,7 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
 #' significance and the sign of L2FC(kdeg)
 #'
 #' @param obj Object of class FastFit or HMCFit outputted by respective analysis functions
+#' @param Avg_reads_natural Average reads across all replicates on natural linear scale; Obtained from \code{Fit$Data_Lists$Stan_data$Avg_reads_natural}
 #' @param FDR False discovery rate to control at for significance assessment
 #' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
 #' @param Exp_shape Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot
