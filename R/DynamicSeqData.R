@@ -45,14 +45,18 @@ validate_DynamicSeqData <- function(obj){
 
 
   ## Check if Numerical data in cB is all integer
-  if(sum(purrr::map_dbl(unclass(cB), is.integer)) < 3){
+  if(sum(purrr::map_dbl(unclass(cB), is.numeric)) < 3){
     stop(
-      "There are less than 3 columns of cB containing integer data.
+      "There are less than 3 columns of cB containing numeric data.
       cB should have a column corresponding to numbers of mutations (TC),
       numbers of Ts in a read (nT), and number of identical observations (n),
       all of which should be integer data.",
       call. = FALSE
     )
+  }else if(sum(purrr::map_dbl(unclass(cB), is.integer)) < 3){
+    cB$TC <- as.integer(cB$TC)
+    cB$nT <- as.integer(cB$nT)
+    cB$n <- as.integer(cB$n)
   }
 
 
@@ -70,12 +74,7 @@ validate_DynamicSeqData <- function(obj){
   ## Check that one column in metadf is integer
 
   if(sum(purrr::map_dbl(unclass(metadf), is.integer)) < 1){
-    stop(
-      "No columns in metadf contain strictly integer data. The column containing numerical IDs
-      for experimental conditions (Exp_ID) should be strictly integer data. If Exp_ID is correctly
-      defined, try casting the column to an int with as.integer().",
-      call. = FALSE
-    )
+    metadf$Exp_ID <- as.integer(metadf$Exp_ID)
   }
 
   ## Check to make sure n > 0 in cB
