@@ -2,7 +2,7 @@
 R package for analyzing nucleotide recoding high-throughput sequencing data. 
 Kinetic parameter estimation and statistical testing is compatible with any enrichment free metabolic labeling mutational data.
 # Installation
-Currently, the only way to install the package is to:
+There are two important dependencies that need to be installed prior to installing this package: Stan and rstan. Go to ``http://mc-stan.org`` and follow the instructions for your platform. The biggest challenge is getting a C++ compiler configured to work with your installation of R. The instructions at ``https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started`` are hopefully helpful on that front. Once that is complete, you can install DynamicSeq. Currently, the only way to install the package is to:
   1. Clone the repository
   2. Navigate to the directory containing the cloned repository (not the repo directory itself)
   3. Call (from R or R_studio) devtools::install("DynamicSeq", build_vignettes = TRUE) 
