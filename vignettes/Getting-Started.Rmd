@@ -189,6 +189,22 @@ Fit <- DynamicSeqFit(DynData,
                      pold = 0.001)
 ```
 
+An even better, though slightly less efficient solution is to use a more rigorous statistical model implemented in Stan to estimate mutation rates. The idea is to run this model on only a small subset of features with sufficient sequencing depth and a fraction labeled moderately close to 0.5:
+
+```{r, eval = FALSE}
+# Set StanRateEst to TRUE to use Stan to estimate rates
+# low_reads and high_reads defines the read count cutoffs used to select features
+  # default = between 1000 and 5000 reads
+# RateEst_size determines the number of features to use (default = 3)
+Fit <- DynamicSeqFit(DynData,
+                     StanRateEst = TRUE.
+                     low_reads = 500,
+                     high_reads = 5500,
+                     RateEst_size = 5)
+
+
+```
+
 To run the heavier, more trustworthy models, just rerun DynamicSeqFit() on the Fit object, but with either the StanFit or HybridFit parameters set to true.
 
 ```{r, eval = FALSE}
@@ -201,7 +217,7 @@ options(mc.cores = parallel::detectCores())
 Fit <- DynamicSeqFit(Fit, HybridFit = TRUE)
 
 # Run Full model (This might take ~10-20 minutes to run)
-Fit <- DynmicSeqFit(Fit, StanFit = TRUE)
+Fit <- DynamicSeqFit(Fit, StanFit = TRUE)
 
 ```
 

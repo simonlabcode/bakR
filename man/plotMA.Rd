@@ -9,6 +9,8 @@ plotMA(obj, Avg_reads_natural, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...)
 \arguments{
 \item{obj}{Object of class FastFit or HMCFit outputted by respective analysis functions}
 
+\item{Avg_reads_natural}{Average reads across all replicates on natural linear scale; Obtained from \code{Fit$Data_Lists$Stan_data$Avg_reads_natural}}
+
 \item{FDR}{False discovery rate to control at for significance assessment}
 
 \item{Exps}{Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)}
