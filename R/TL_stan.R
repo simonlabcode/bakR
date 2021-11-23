@@ -215,7 +215,7 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...) {
     fit_summary <- as.data.frame(rstan::summary(fit)$summary)
 
     if(Hybrid_Fit){
-      mutrates <- data_list$mutrate_est
+      mutrates <- data_list$mutrates
     }else{
       mutrates <- dplyr::as_tibble(fit_summary[grep("log_lambda", rownames(fit_summary)), ])
     }
@@ -226,7 +226,7 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...) {
 
 
     if(Hybrid_Fit){
-      mutrates <- data_list$mutrate_est
+      mutrates <- data_list$mutrates
     }else{
       fit_summary <- as.data.frame(rstan::summary(fit)$summary)
       mutrates <- dplyr::as_tibble(fit_summary[grep("log_lambda", rownames(fit_summary)), ])
