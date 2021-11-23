@@ -213,11 +213,27 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...) {
 
   if(keep_fit == FALSE){
     fit_summary <- as.data.frame(rstan::summary(fit)$summary)
-    out <- list(dplyr::as_tibble(Effects_df), dplyr::as_tibble(Kdeg_df), dplyr::as_tibble(Fn_df), fit_summary)
-    names(out) <- c("Effects_df", "Kdeg_df", "Fn_Estimates","Fit_Summary")
+
+    if(Hybrid_Fit){
+      mutrates <- data_list$mutrate_est
+    }else{
+      mutrates <- dplyr::as_tibble(fit_summary[grep("log_lambda", rownames(fit_summary)), ])
+    }
+
+    out <- list(dplyr::as_tibble(Effects_df), dplyr::as_tibble(Kdeg_df), dplyr::as_tibble(Fn_df), fit_summary, mutrates)
+    names(out) <- c("Effects_df", "Kdeg_df", "Fn_Estimates","Fit_Summary", "Mutation_Rates")
   }else{
-    out <- list(dplyr::as_tibble(Effects_df), dplyr::as_tibble(Kdeg_df), dplyr::as_tibble(Fn_df), fit)
-    names(out) <- c("Effects_df", "Kdeg_df", "Fn_Estimates","Stan_fit")
+
+
+    if(Hybrid_Fit){
+      mutrates <- data_list$mutrate_est
+    }else{
+      fit_summary <- as.data.frame(rstan::summary(fit)$summary)
+      mutrates <- dplyr::as_tibble(fit_summary[grep("log_lambda", rownames(fit_summary)), ])
+    }
+
+    out <- list(dplyr::as_tibble(Effects_df), dplyr::as_tibble(Kdeg_df), dplyr::as_tibble(Fn_df), fit, mutrates)
+    names(out) <- c("Effects_df", "Kdeg_df", "Fn_Estimates","Stan_fit", "Mutation_Rates")
   }
 
 

@@ -334,7 +334,8 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
         R = Rep_Fn$Replicate,
         nrep = max(Rep_Fn$Replicate),
         sample_lookup = obj$Data_lists$Stan_data$sample_lookup,
-        sdf = obj$Data_lists$Stan_data$sdf
+        sdf = obj$Data_lists$Stan_data$sdf,
+        mutrates = obj$Fast_Fit$Mut_rates
       )
 
 
