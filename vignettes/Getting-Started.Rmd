@@ -195,7 +195,7 @@ An even better, though slightly less efficient solution is to use a more rigorou
 # Set StanRateEst to TRUE to use Stan to estimate rates
 # low_reads and high_reads defines the read count cutoffs used to select features
   # default = between 1000 and 5000 reads
-# RateEst_size determines the number of features to use (default = 3)
+# RateEst_size determines the number of features to use (default = 7)
 Fit <- DynamicSeqFit(DynData,
                      StanRateEst = TRUE.
                      low_reads = 500,
