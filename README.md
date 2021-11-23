@@ -7,7 +7,7 @@ There are two important dependencies that need to be installed prior to installi
   2. Navigate to the directory containing the cloned repository (not the repo directory itself)
   3. Call (from R or R_studio) devtools::install("DynamicSeq", build_vignettes = TRUE) 
   4. Can load package with library(DynamicSeq) like normal
-  5. Call vignettes("Getting-Started", package = "DynamicSeq") to see introductory vignette.
+  5. Call utils::vignette("Getting-Started", package = "DynamicSeq") to see introductory vignette.
 
 Small updates will constantly be made, so make sure to pull changes from Github and reinstall frequently.
 
