@@ -73,6 +73,25 @@ FnPCA <- function(obj, ...){
 #' @param Exp_shape Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot
 #' @export
 plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
+
+  # Pretty plotting theme
+  theme_mds <-    ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
+                                 panel.grid.minor = ggplot2::element_blank(),
+
+                                 panel.background = ggplot2::element_blank(),
+
+                                 axis.line.x = ggplot2::element_line(colour = "black"),
+
+                                 axis.line.y = ggplot2::element_line(colour = "black"),
+
+                                 axis.ticks = ggplot2::element_line(colour = "black"),
+
+                                 axis.text = ggplot2::element_text(color="black", size = 12),
+
+                                 axis.title = ggplot2::element_text(color="black", size = 18),
+
+                                 strip.background = ggplot2::element_blank())
+
   ## Extract L2FC(kdeg) and padj
   L2FC_df <- obj$Effects_df[,c("L2FC_kdeg", "padj", "Exp_ID")]
 
@@ -87,14 +106,20 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
     ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = L2FC_kdeg,y = -log10(padj), color = conclusion,  shape = as.factor(Exp_ID))) +
       ggplot2::geom_point(size = 1.5) +
       ggplot2::theme_classic() +
-      ggplot2::xlab("L2FC(kdeg)") +
-      ggplot2::ylab("-log10(padj)")
+      ggplot2::ylab(bquote(log[10](p[adj]))) +
+      ggplot2::xlab(bquote(L2FC(k[deg]))) +
+      ggplot2::scale_color_manual(values = c("#FFC20A", "gray","#0C7BDC")) +
+      theme_mds
   }else{
     ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = L2FC_kdeg,y = -log10(padj), color = conclusion )) +
       ggplot2::geom_point(size = 1.5) +
       ggplot2::theme_classic() +
-      ggplot2::xlab("L2FC(kdeg)") +
-      ggplot2::ylab("-log10(padj)")
+      ggplot2::ylab(bquote(log[10](p[adj]))) +
+      ggplot2::xlab(bquote(L2FC(k[deg]))) +
+      ggplot2::scale_color_manual(values = c("#FFC20A", "gray","#0C7BDC")) +
+      theme_mds
+
+
   }
 
 
@@ -113,6 +138,25 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
 #' @param Exp_shape Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot
 #' @export
 plotMA <- function(obj, Avg_reads_natural, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
+
+  # Pretty plotting theme
+  theme_mds <-    ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
+                                 panel.grid.minor = ggplot2::element_blank(),
+
+                                 panel.background = ggplot2::element_blank(),
+
+                                 axis.line.x = ggplot2::element_line(colour = "black"),
+
+                                 axis.line.y = ggplot2::element_line(colour = "black"),
+
+                                 axis.ticks = ggplot2::element_line(colour = "black"),
+
+                                 axis.text = ggplot2::element_text(color="black", size = 12),
+
+                                 axis.title = ggplot2::element_text(color="black", size = 18),
+
+                                 strip.background = ggplot2::element_blank())
+
   ## Extract L2FC(kdeg) and padj
   L2FC_df <- obj$Effects_df[,c("L2FC_kdeg", "padj", "Exp_ID", "Feature_ID")]
 
@@ -137,14 +181,18 @@ plotMA <- function(obj, Avg_reads_natural, FDR = 0.05, Exps = NULL, Exp_shape = 
     ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = Read_ct,y = L2FC_kdeg, color = conclusion,  shape = as.factor(Exp_ID))) +
       ggplot2::geom_point(size = 1) +
       ggplot2::theme_classic() +
-      ggplot2::xlab("log10(Avg. Read Count)") +
-      ggplot2::ylab("L2FC(kdeg)")
+      ggplot2::xlab(expression(log[10](Avg.~read~count))) +
+      ggplot2::ylab(bquote(L2FC(k[deg]))) +
+      ggplot2::scale_color_manual(values = c("#FFC20A", "gray","#0C7BDC")) +
+      theme_mds
   }else{
     ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = Read_ct,y = L2FC_kdeg, color = conclusion )) +
       ggplot2::geom_point(size = 1) +
       ggplot2::theme_classic() +
-      ggplot2::xlab("log10(Avg. Read Count)") +
-      ggplot2::ylab("L2FC(kdeg)")
+      ggplot2::xlab(expression(log[10](Avg.~read~count))) +
+      ggplot2::ylab(bquote(L2FC(k[deg]))) +
+      ggplot2::scale_color_manual(values = c("#FFC20A", "gray","#0C7BDC")) +
+      theme_mds
   }
 
 
