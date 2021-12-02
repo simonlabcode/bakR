@@ -27,9 +27,11 @@ reliableFeatures <- function(obj,
       dplyr::mutate(totTC = TC*n*ifelse(obj$metadf[sample, "tl"]==0, 1, 0) ) %>%
       dplyr::group_by(sample, XF) %>%
       dplyr::summarize(tot_mut = sum(totTC),
-                       totcounts = sum(n)) %>%
+                       totcounts = sum(n),
+                       totU = sum(nT)) %>%
       dplyr::filter(totcounts >= totcut) %>%
       dplyr::filter(tot_mut/totcounts < high_p) %>%
+      dplyr::filter(totU > 0) %>%
       dplyr::ungroup( ) %>%
       dplyr::group_by(XF) %>%
       dplyr::summarize(counts = dplyr::n()) %>%
@@ -43,8 +45,10 @@ reliableFeatures <- function(obj,
       dplyr::filter(sample %in% unique(sample),
                     !grepl('__', XF)) %>%
       dplyr::group_by(sample, XF) %>%
-      dplyr::summarize(totcounts = sum(n)) %>%
-      dplyr::filter(totcounts >= totcut) %>%
+      dplyr::summarize(totcounts = sum(n),
+                       totU = sum(nT)) %>%
+      dplyr::filter(totcounts >= totcut,
+                    totU > 0) %>%
       dplyr::ungroup( ) %>%
       dplyr::group_by(XF) %>%
       dplyr::summarize(counts = dplyr::n()) %>%
