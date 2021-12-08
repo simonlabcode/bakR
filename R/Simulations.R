@@ -65,6 +65,8 @@
 #' drawn for each gene.
 #' @param beta shape2 parameter of the beta distribution from which U-contents (probability that a nucleotide in a read from a transcript is a U) are
 #' drawn for each gene.
+#' @param STL logical; if TRUE, simulation is of STL-seq rather than a standard TL-seq experiment. The two big changes are that a short read lenght is required
+#' (< 60 nt) and that every read for a particular feature will have the same number of Us. Only one read length is simulated for simplicity.
 #' @export
 #' @return A list containing a simulated `DynamicSeqData` object as well as a list of simulated kinetic parameters of interest.
 #' The contents of the latter list are:
@@ -88,10 +90,25 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
                                num_ks_DE = rep(0L, times = as.integer(num_conds)),
                                scale_factor = 150,
                                sim_read_counts = TRUE, a1 = 5, a0 = 0.01,
-                               nreads = 50L, alpha = 25, beta = 75){
+                               nreads = 50L, alpha = 25, beta = 75,
+                               STL = FALSE, STL_len = 40){
 
 
   ### Catch non-sensical values in all inputs
+
+  # STL
+  if(!is.logical(STL)){
+    "STL must be logical (TRUE or FALSE)"
+  }
+
+  # STL_len
+  if(STL){
+    if(STL_len < 25){
+      stop("STL_len is less than 25. Must be between 25 and 55.")
+    }else if(STL_len > 55){
+      stop("STL_len is greater than 55. Must be between 25 and 55.")
+    }
+  }
 
   # alpha parameter of beta distribution
   if(!is.numeric(alpha)){
@@ -171,10 +188,6 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
     stop("tl must be numeric")
   }else if(tl <= 0){
     stop("tl must be > 0; it represents the label time in minutes.")
-  }else if(tl < 30){
-    warning("You are simulating an unusually short label time (< 30 minutes)")
-  }else if(tl > 480){
-    warning("You are simulating an unusually long label time (> 8 hours)")
   }
 
   # s4U mutation rate
@@ -537,7 +550,11 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
         newreads_tc <- purrr::rbernoulli(as.numeric(nreads[mir, MT, r]), p = as.numeric(fn_s4U[mir, MT, r]))# vector of reads, T/F is s4U labeled
 
         #Simulate the nubmer of Us in each read
-        nu <- stats::rbinom(n = nreads[mir,MT,r], size = readsize, prob = U_cont[mir])
+        if(STL){
+          nu <- abs(round(U_cont[mir]*STL_len) +  sign(runif(1, min = -0.1, max = 0.1))*rpois(nreads[mir, MT, r], 0.5))
+        }else{
+          nu <- stats::rbinom(n = nreads[mir,MT,r], size = readsize, prob = U_cont[mir])
+        }
 
         #Number of reads that are new
         newreads_tc <- sum(newreads_tc)
