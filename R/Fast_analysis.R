@@ -383,7 +383,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       nMT <- max(df$mut)
       nreps <- max(df$reps)
 
-      U_df <- df[df$type == 1,] %>% dplyr::group_by(mut, reps) %>%
+      U_df <- df[(df$type == 1) & (df$XF %in% unique(Stan_data$sdf$XF)),] %>% dplyr::group_by(mut, reps) %>%
         dplyr::summarise(avg_T = sum(nT*n)/sum(n))
 
       U_df <- U_df[order(U_df$mut, U_df$reps),]
@@ -394,7 +394,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
         rm(mut_fit)
       }
 
-      rm(U_df)
+      # rm(U_df)
 
       rep_vect <- rep(seq(from = 1, to = nreps), times = nMT)
 
@@ -486,7 +486,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       nMT <- max(df$mut)
       nreps <- max(df$reps)
 
-      U_df <- df[df$type == 1,] %>% dplyr::group_by(mut, reps) %>%
+      U_df <- df[(df$type == 1) & (df$XF %in% unique(Stan_data$sdf$XF)),] %>% dplyr::group_by(mut, reps) %>%
         dplyr::summarise(avg_T = sum(nT*n)/sum(n))
 
       U_df <- U_df[order(U_df$mut, U_df$reps),]
