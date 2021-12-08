@@ -61,6 +61,10 @@
 #' @param a1 Heterodispersion 1/reads dependence parameter
 #' @param a0 High read depth limit of negative binomial dispersion parameter
 #' @param nread Number of reads simulated if sim_read_counts is FALSE
+#' @param alpha shape1 parameter of the beta distribution from which U-contents (probability that a nucleotide in a read from a transcript is a U) are
+#' drawn for each gene.
+#' @param beta shape2 parameter of the beta distribution from which U-contents (probability that a nucleotide in a read from a transcript is a U) are
+#' drawn for each gene.
 #' @export
 #' @return A list containing a simulated `DynamicSeqData` object as well as a list of simulated kinetic parameters of interest.
 #' The contents of the latter list are:
@@ -84,10 +88,25 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
                                num_ks_DE = rep(0L, times = as.integer(num_conds)),
                                scale_factor = 150,
                                sim_read_counts = TRUE, a1 = 5, a0 = 0.01,
-                               nreads = 50L){
+                               nreads = 50L, alpha = 25, beta = 75){
 
 
   ### Catch non-sensical values in all inputs
+
+  # alpha parameter of beta distribution
+  if(!is.numeric(alpha)){
+    stop("alpha must be numeric!")
+  }else if(alpha <= 1){
+    stop("alpha must be > 1")
+  }else if(!is.numeric(beta)){
+    stop("beta must be numeric!")
+  }else if(beta <=1){
+    stop("beta must be > 1")
+  }else if(alpha/(alpha + beta) < 0.1){
+    warning("alpha and beta are such that the average U-content is less than 0.1. That is unreasonably low and may make many simulated transcripts unanalyzable.")
+  }else if(alpha/(alpha + beta) > 0.75){
+    warning("alpha and beta are such that the average U-content is > 0.75. I wish U-contents were this high, your simulation may not reflect real data though.")
+  }
 
   # Number of genes (features) to simulate
   if(!is.numeric(ngene)){
@@ -344,6 +363,9 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
     stop("p_do must be of length 1 or length == num_conds")
   }
 
+
+  U_cont <- stats::rbeta(ngene, alpha, beta)
+
   # Define helper functions:
   logit <- function(x) log(x/(1-x))
   inv_logit <- function(x) exp(x)/(1+exp(x))
@@ -515,7 +537,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
         newreads_tc <- purrr::rbernoulli(as.numeric(nreads[mir, MT, r]), p = as.numeric(fn_s4U[mir, MT, r]))# vector of reads, T/F is s4U labeled
 
         #Simulate the nubmer of Us in each read
-        nu <- stats::rbinom(n = nreads[mir,MT,r], size = readsize, prob = 0.25)
+        nu <- stats::rbinom(n = nreads[mir,MT,r], size = readsize, prob = U_cont[mir])
 
         #Number of reads that are new
         newreads_tc <- sum(newreads_tc)

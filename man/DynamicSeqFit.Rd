@@ -16,7 +16,7 @@ DynamicSeqFit(
   FOI = c(),
   concat = TRUE,
   StanRateEst = FALSE,
-  RateEst_size = 3,
+  RateEst_size = 7,
   low_reads = 1000,
   high_reads = 5000,
   ...

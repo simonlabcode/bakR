@@ -32,7 +32,9 @@ sim_DynamicSeqData(
   sim_read_counts = TRUE,
   a1 = 5,
   a0 = 0.01,
-  nreads = 50L
+  nreads = 50L,
+  alpha = 25,
+  beta = 75
 )
 }
 \arguments{
@@ -92,6 +94,12 @@ to the reference. 1st entry must be 0 by definition (since relative to the refer
 \item{a1}{Heterodispersion 1/reads dependence parameter}
 
 \item{a0}{High read depth limit of negative binomial dispersion parameter}
+
+\item{alpha}{shape1 parameter of the beta distribution from which U-contents (probability that a nucleotide in a read from a transcript is a U) are
+drawn for each gene.}
+
+\item{beta}{shape2 parameter of the beta distribution from which U-contents (probability that a nucleotide in a read from a transcript is a U) are
+drawn for each gene.}
 
 \item{nread}{Number of reads simulated if sim_read_counts is FALSE}
 }
