@@ -280,7 +280,8 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           nrep = Stan_data$nrep,
                           tl = Stan_data$tl,
                           NE = length(data_df$FE),
-                          NF = max(data_df$FE))
+                          NF = max(data_df$FE),
+                          sdf = Stan_data$sdf[Stan_data$sdf$fnum %in% fnum_choose,])
 
         rm(Stan_data)
 
@@ -306,7 +307,8 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
       ## Calculate p-value using moderated t-test
       dfs <- 2*max(obj$Fast_Fit$Fn_Estimates$Replicate) - 2 + as.numeric(obj$Fast_Fit$Hyper_Parameters[1])
 
-      Effects <- Effects %>% dplyr::mutate(padj = 2*stats::pt(-abs(effect/se), df = dfs))
+      Effects <- Effects %>% dplyr::mutate(pval = 2*stats::pnorm(-abs(effect/se))) %>%
+        mutate(padj = stats::p.adjust(pval, method = "BH"))
 
       Stan_list$Effects_df <- Effects
 
@@ -348,7 +350,8 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
       ## Calculate p-value using moderated t-test
       dfs <- 2*max(obj$Fast_Fit$Fn_Estimates$Replicate) - 2 + as.numeric(obj$Fast_Fit$Hyper_Parameters[1])
 
-      Effects <- Effects %>% dplyr::mutate(padj = 2*stats::pt(-abs(effect/se), df = dfs))
+      Effects <- Effects %>% dplyr::mutate(pval = 2*stats::pnorm(-abs(effect/se))) %>%
+        mutate(padj = stats::p.adjust(pval, method = "BH"))
 
       Stan_list$Effects_df <- Effects
 
