@@ -88,6 +88,7 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           RateEst_size = 7,
                           low_reads = 1000,
                           high_reads = 5000,
+                          chains = 1,
                           ...){
 
   keep_input <- c(high_p, totcut)
@@ -188,6 +189,19 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     stop("high_reads must be greater than low_reads")
   }else if(high_reads == low_reads){
     warning("low_reads and high_reads are equal. This is a very small window of allowable read depths, so no features might pass this condition.")
+  }
+
+  ## Check number of chains
+  if(!is.numeric(chains)){
+    stop("chains must be numerical")
+  }else if(chains < 1){
+    stop("chains must be greater than or equal to 1")
+  }else if(!is.integer(chains)){
+    chains <- as.integer(chains)
+  }
+
+  if(chains > 4){
+    warning("You are running more than 4 chains. This may be more than necessary and may sacrifice computational performance.")
   }
 
 
@@ -300,7 +314,7 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
     if(StanFit){
 
-      Stan_list <- DynamicSeq::TL_stan(obj$Data_lists$Stan_data, ...)
+      Stan_list <- DynamicSeq::TL_stan(obj$Data_lists$Stan_data, chains = chains, ...)
 
       Effects <- Stan_list$Effects_df
 
@@ -308,7 +322,7 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
       dfs <- 2*max(obj$Fast_Fit$Fn_Estimates$Replicate) - 2 + as.numeric(obj$Fast_Fit$Hyper_Parameters[1])
 
       Effects <- Effects %>% dplyr::mutate(pval = 2*stats::pnorm(-abs(effect/se))) %>%
-        mutate(padj = stats::p.adjust(pval, method = "BH"))
+        dplyr::mutate(padj = stats::p.adjust(pval, method = "BH"))
 
       Stan_list$Effects_df <- Effects
 
@@ -343,7 +357,7 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       rm(Rep_Fn)
 
-      Stan_list <- DynamicSeq::TL_stan(data_list, Hybrid_Fit = TRUE, ...)
+      Stan_list <- DynamicSeq::TL_stan(data_list, Hybrid_Fit = TRUE, chains = chains, ...)
 
       Effects <- Stan_list$Effects_df
 
@@ -351,7 +365,7 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
       dfs <- 2*max(obj$Fast_Fit$Fn_Estimates$Replicate) - 2 + as.numeric(obj$Fast_Fit$Hyper_Parameters[1])
 
       Effects <- Effects %>% dplyr::mutate(pval = 2*stats::pnorm(-abs(effect/se))) %>%
-        mutate(padj = stats::p.adjust(pval, method = "BH"))
+        dplyr::mutate(padj = stats::p.adjust(pval, method = "BH"))
 
       Stan_list$Effects_df <- Effects
 
