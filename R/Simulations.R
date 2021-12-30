@@ -42,6 +42,7 @@
 #' is s4U labeled (new) is drawn from a normal distribution with this sd
 #' @param kslog_c Synthesis rate constants will be drawn from a lognormal distribution with meanlog = \code{kslog_c} - mean(log(kd_mean)) where kd_mean
 #' is determined from the fraction new simulated for each gene as well as the label time (\code{tl}).
+#' @param kslog_sd Synthesis rate lognormal standard deviation; see kslog_c documentation for details
 #' @param tl s4U label feed time
 #' @param p_new s4U induced mutation rate. Can be a vector of length num_conds
 #' @param p_old background mutation rate
@@ -60,13 +61,15 @@
 #' @param sim_read_counts Logical; if TRUE, read counts are simulated as coming from a heterodisperse negative binomial distribution
 #' @param a1 Heterodispersion 1/reads dependence parameter
 #' @param a0 High read depth limit of negative binomial dispersion parameter
-#' @param nread Number of reads simulated if sim_read_counts is FALSE
+#' @param nreads Number of reads simulated if sim_read_counts is FALSE
 #' @param alpha shape1 parameter of the beta distribution from which U-contents (probability that a nucleotide in a read from a transcript is a U) are
 #' drawn for each gene.
 #' @param beta shape2 parameter of the beta distribution from which U-contents (probability that a nucleotide in a read from a transcript is a U) are
 #' drawn for each gene.
 #' @param STL logical; if TRUE, simulation is of STL-seq rather than a standard TL-seq experiment. The two big changes are that a short read lenght is required
 #' (< 60 nt) and that every read for a particular feature will have the same number of Us. Only one read length is simulated for simplicity.
+#' @param STL_len Average length of simulated STL-seq length. Since Pol II typically pauses about 20-60 bases
+#' from the promoter, this should be around 40
 #' @export
 #' @return A list containing a simulated `DynamicSeqData` object as well as a list of simulated kinetic parameters of interest.
 #' The contents of the latter list are:
@@ -395,7 +398,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
 
 
   #Initialize vectors of mean values for each gene and condition
-  fn_mean <- inv_logit(rnorm(n=ngene, mean=fn_mean, sd=fn_sd))
+  fn_mean <- inv_logit(stats::rnorm(n=ngene, mean=fn_mean, sd=fn_sd))
   kd_mean <- -log(1-fn_mean)/tl
   ks_mean <- stats::rlnorm(n=ngene, meanlog = kslog_c + log(kd_mean), sdlog = kslog_sd)
 
@@ -437,7 +440,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
         if(i < (ngene-num_ks_DE[j] + 1)){
           L2FC_ks_mean[i,j] <- 0
         }else{
-          if (runif(1) < 0.5){
+          if (stats::runif(1) < 0.5){
             L2FC_ks_mean[i,j] <- stats::runif(n=1, min=low_L2FC_ks, max=high_L2FC_ks)
           }else{
             L2FC_ks_mean[i,j] <- stats::runif(n=1, min=-high_L2FC_ks, max=-low_L2FC_ks)
@@ -551,7 +554,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
 
         #Simulate the nubmer of Us in each read
         if(STL){
-          nu <- abs(round(U_cont[mir]*STL_len) +  sign(runif(1, min = -0.1, max = 0.1))*rpois(nreads[mir, MT, r], 0.5))
+          nu <- abs(round(U_cont[mir]*STL_len) +  sign(stats::runif(1, min = -0.1, max = 0.1))*stats::rpois(nreads[mir, MT, r], 0.5))
         }else{
           nu <- stats::rbinom(n = nreads[mir,MT,r], size = readsize, prob = U_cont[mir])
         }

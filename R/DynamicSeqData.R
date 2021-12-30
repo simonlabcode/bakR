@@ -3,7 +3,7 @@
 #' This function efficiently creates an object of class DynamicSeqData
 #' without performing rigorous checks
 #' @param cB Dataframe with columns corresponding to feature ID, number of Ts, number of mutations, sample ID, and number of identical observations
-#' @param metadata Dataframe detailing s4U label time and experimental ID of each sample
+#' @param metadf Dataframe detailing s4U label time and experimental ID of each sample
 new_DynamicSeqData <- function(cB, metadf){
   stopifnot(is.data.frame(cB))
   stopifnot(is.data.frame(metadf))
@@ -133,7 +133,7 @@ validate_DynamicSeqData <- function(obj){
 #'
 #' This function creates an object of class DynamicSeqData
 #' @param cB Dataframe with columns corresponding to feature ID, number of Ts, number of mutations, sample ID, and number of identical observations
-#' @param metadata Dataframe detailing s4U label time and experimental ID of each sample
+#' @param metadf Dataframe detailing s4U label time and experimental ID of each sample
 #' @export
 DynamicSeqData <- function(cB, metadf){
 

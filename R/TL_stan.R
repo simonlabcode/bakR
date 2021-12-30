@@ -50,6 +50,7 @@
 #' @param data_list List to pass to Stan of form given by cBtoStan
 #' @param Hybrid_Fit Logical; if TRUE, Hybrid Stan model that takes as data output of fast_analysis is run.
 #' @param keep_fit Logical; if TRUE, Stan fit object is included in output; typically large file so default FALSE.
+#' @param chains Number of Markov chains to sample from. 1 should suffice since these are validated models
 #' @param ... Arguments passed to `rstan::sampling` (e.g. iter, chains).
 #' @return A list of objects:
 #' \itemize{
