@@ -642,7 +642,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   }else{
     # MLE
     mixed_lik <- function(lam_n, lam_o, TC, n, logit_fn){
-      logl <- sum(n*log(inv_logit(logit_fn)*(lam_n^TC)*exp(-lam_n) + (1-inv_logit(logit_fn))*(lam_o^TC)*exp(-lam_o) )) + log(dnorm(logit_fn, mean = p_mean, sd = p_sd))
+      logl <- sum(n*log(inv_logit(logit_fn)*(lam_n^TC)*exp(-lam_n) + (1-inv_logit(logit_fn))*(lam_o^TC)*exp(-lam_o) )) + log(stats::dnorm(logit_fn, mean = p_mean, sd = p_sd))
       return(-logl)
     }
 
