@@ -66,10 +66,10 @@ library(utils)
 set.seed(123)
 ```
 
-## Step 1: Creating a DynamicSeqData Object
+## Step 1: Creating a bakRData Object
 
-The 1st step to using bakR is to create a DynamicSeqData
-object. A DynamicSeqData object
+The 1st step to using bakR is to create a bakRData
+object. A bakRData object
 consists of two components: a cB dataframe and a metadf dataframe.
 cB stands for counts binomial and contains all of the information about
 mutations seen in sequencing reads in each sample sequenced. metadf stands
@@ -148,11 +148,11 @@ Keeping in mind that each row represents a sample, the content of the columns ar
 1. **tl**: The length of the metabolic labeling feed. This can be in any units (the simulated data puts it in terms of minutes), but **if no s4U fed to a sample, tl must be 0 for that sample**. -s4U controls play an important role in all of the statistical models, so this is crucial to remember.
 1. **Exp_ID**: Stands for "Experimental ID" and is a numerical ID that denotes which samples are from the reference condition and which experimental samples belong to the same "treatment". In this simulated dataset, there are two conditions, a reference condition (samples 1, 2, 3, and 7) and a single experimental condition (samples 4, 5, 6, and 8). **The reference condition must be given numerical ID 1** and **the experimental conditions must be given sequential numerical IDs starting from 2** (i.e., 2, 3, 4, ...)
 
-Once you have these two data frames correctly constructed, you can create a DynamicSeqData object in one line of code.
+Once you have these two data frames correctly constructed, you can create a bakRData object in one line of code.
 
 ```{r}
-# Create DynamicSeqData object
-DynData <- DynamicSeqData(cB_small, metadf)
+# Create bakRData object
+bakRData <- bakRData(cB_small, metadf)
 
 ```
 
@@ -162,36 +162,36 @@ bakR implements several blends of fundamentally similar statistical models to pe
 
 ```{r}
 # Simulate a nucleotide recoding dataset
-sim_data <- sim_DynamicSeqData(500)
+sim_data <- sim_bakRData(500)
   # This will simulate 500 features, 2 experimental conditions
   # and 3 replicates for each experimental condition
-  # See ?sim_DynamicSeqData for details regarding tunable parameters
+  # See ?sim_bakRData for details regarding tunable parameters
 
-# Extract simulated DynamicSeqData object
-DynData <- sim_data$DynData
+# Extract simulated bakRData object
+bakRData <- sim_data$bakRData
 
 # Extract simualted ground truths
 sim_truth <- sim_data$sim_list
 
 # Run the efficient model
-Fit <- DynamicSeqFit(DynData)
+Fit <- bakRFit(bakRData)
 
 ```
 
-DynamicSeqFit() is used here as a wrapper for two functions in bakR: cBprocess() and fast_analysis(). cBprocess() will extract and properly format the information needed for all statistical models from the DynamicSeqData object and fast_analysis() will perform the efficient analysis. This should take no more than a minute to run. Messages are printed along the way to keep you updated as to the progress of the analysis. 
+bakRFit() is used here as a wrapper for two functions in bakR: cBprocess() and fast_analysis(). cBprocess() will extract and properly format the information needed for all statistical models from the bakRData object and fast_analysis() will perform the efficient analysis. This should take no more than a minute to run. Messages are printed along the way to keep you updated as to the progress of the analysis. 
 
-One of the most important messages is that regarding the estimated pnews and pold. The pnews are the estimated mutation rates of labeled reads in each sample (muts = Exp_ID, and reps = a numerical replicate ID that corresponds to the order replicates appear in the cB), and pold is a global estimate of the background mutation rate used in all analyses. The simulated mutation rates are 0.05 for labeled reads and 0.001 for unlabeled reads in all samples this simulation, so the estimates are pretty close. "But Isaac, why are the pnews consistently underestimated"? Good question, its because this is a small simulated dataset with a somewhat tight distribution of fraction news. fast_analysis() makes lots of assumptions to assure maximum efficiency, and one is that the highest mutation rates in s4U fed samples come from features with almost 100% labeling (fraction labeled = 1). That won't be true in small simulated datasets, but it's still not that bad, everything considered. If you have better mutation rate estimates from elsewhere (say a run of the full Stan model implemented in bakR), you can pass the true values to DynamicSeqFit():
+One of the most important messages is that regarding the estimated pnews and pold. The pnews are the estimated mutation rates of labeled reads in each sample (muts = Exp_ID, and reps = a numerical replicate ID that corresponds to the order replicates appear in the cB), and pold is a global estimate of the background mutation rate used in all analyses. The simulated mutation rates are 0.05 for labeled reads and 0.001 for unlabeled reads in all samples this simulation, so the estimates are pretty close. "But Isaac, why are the pnews consistently underestimated"? Good question, its because this is a small simulated dataset with a somewhat tight distribution of fraction news. fast_analysis() makes lots of assumptions to assure maximum efficiency, and one is that the highest mutation rates in s4U fed samples come from features with almost 100% labeling (fraction labeled = 1). That won't be true in small simulated datasets, but it's still not that bad, everything considered. If you have better mutation rate estimates from elsewhere (say a run of the full Stan model implemented in bakR), you can pass the true values to bakRFit():
 
 ```{r}
 # Run efficient model with known mutation rates
-# Pass the Fit object rather than the DynamicSeqData object and set FastRerun to TRUE
-Fit <- DynamicSeqFit(Fit,
+# Pass the Fit object rather than the bakRData object and set FastRerun to TRUE
+Fit <- bakRFit(Fit,
                      FastRerun = TRUE,
                      pnew = rep(0.05, times = 6), 
                      pold = 0.001)
 ```
 
-Since we've already run the fast_analysis once, we can speed up the analysis by passing the Fit object from the first run rather than the DynamicSeqData object. This allows bakR to skip the time consuming pre-processing steps. Just make sure to set FastRerun to TRUE. 
+Since we've already run the fast_analysis once, we can speed up the analysis by passing the Fit object from the first run rather than the bakRData object. This allows bakR to skip the time consuming pre-processing steps. Just make sure to set FastRerun to TRUE. 
 
 An even better, though slightly less efficient solution is to use a more rigorous statistical model implemented in Stan to estimate mutation rates. The idea is to run this model on only a small subset of features with sufficient sequencing depth and a fraction labeled moderately close to 0.5:
 
@@ -200,7 +200,7 @@ An even better, though slightly less efficient solution is to use a more rigorou
 # low_reads and high_reads defines the read count cutoffs used to select features
   # default = between 1000 and 5000 reads
 # RateEst_size determines the number of features to use (default = 7)
-Fit <- DynamicSeqFit(Fit,
+Fit <- bakRFit(Fit,
                      FastRerun = TRUE,
                      StanRateEst = TRUE,
                      low_reads = 500,
@@ -231,7 +231,7 @@ abline(0, 1, col = "red")
 
 Looks pretty good to me!
 
-To run the heavier, more trustworthy models, just rerun DynamicSeqFit() on the Fit object, but with either the StanFit or HybridFit parameters set to true.
+To run the heavier, more trustworthy models, just rerun bakRFit() on the Fit object, but with either the StanFit or HybridFit parameters set to true.
 
 ```{r, eval = FALSE}
 # Load options that will make running models more efficient
@@ -240,10 +240,10 @@ options(mc.cores = parallel::detectCores())
 
 
 # Run Hybrid model (This might take several minutes to run)
-Fit <- DynamicSeqFit(Fit, HybridFit = TRUE)
+Fit <- bakRFit(Fit, HybridFit = TRUE)
 
 # Run Full model (This might take ~10-30 minutes to run)
-Fit <- DynamicSeqFit(Fit, StanFit = TRUE)
+Fit <- bakRFit(Fit, StanFit = TRUE)
 
 ```
 
@@ -251,10 +251,10 @@ You might rightfully ask what it is that makes these models "more trustworthy"? 
 
 The Fit objects contain lists pertaining to the fits of each of the models. The possible contents include:
 
-1. Fast_Fit: Result of the initial fitting of the DynamicSeqData object. To learn more about its contents, see ?fast_analysis()
+1. Fast_Fit: Result of the initial fitting of the bakRData object. To learn more about its contents, see ?fast_analysis()
 1. Data_lists: Processed data that can be passed to the statistical models
-1. Hybrid_Fit: Result of running DynamicSeqFit() on the Fit object with HybridFit = TRUE. To learn more about its contents, see ?TL_stan().
-1. Stan_Fit: Result of running DynamicSeqFit() on the Fit object with StanFit = TRUE. Its general contents are identical to the Hybrid_Fit, even though the models are different.
+1. Hybrid_Fit: Result of running bakRFit() on the Fit object with HybridFit = TRUE. To learn more about its contents, see ?TL_stan().
+1. Stan_Fit: Result of running bakRFit() on the Fit object with StanFit = TRUE. Its general contents are identical to the Hybrid_Fit, even though the models are different.
 
 ## Step 3: Visualizing the Results
 
