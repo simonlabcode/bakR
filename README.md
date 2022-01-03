@@ -36,7 +36,11 @@ If trying to run on the cluster, installation should be done through an interact
   5. Install bakR:
     
     
+<<<<<<< HEAD
     devtools::install("bakR")
+=======
+    devtools::install("bakR", build_vignettes = TRUE)
+>>>>>>> 0e1e1d2a74f4abad8c719dfc15949aa1a19fff33
     
     
   6. Exit interactive session; now you can include library(bakR) in any of your batch jobs to use this package.
