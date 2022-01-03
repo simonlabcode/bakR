@@ -19,6 +19,7 @@ DynamicSeqFit(
   RateEst_size = 7,
   low_reads = 1000,
   high_reads = 5000,
+  chains = 1,
   ...
 )
 }
@@ -31,6 +32,11 @@ across the dataset}
 \item{HybridFit}{Logical; if TRUE, then a Fully Bayesian Hierarchical model is run using
 estimates for the fraction new and fraction new uncertainty obtained via the efficient
 statistical model.}
+
+\item{high_p}{Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any no s4U control
+samples are filtered out}
+
+\item{totcut}{Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out}
 
 \item{FastRerun}{Logical; only matters if a DynamicSeqFit object is passed to \code{DynamicSeqFit()}. If TRUE, then the Stan-free
 model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the Stan models.}
@@ -55,10 +61,10 @@ as 1 and should be kept low to ensure maximum efficiency}
 A high read count cutoff is as important as a low read count cutoff in this case because you don't want the fraction labeled of chosen features to be
 extreme (e.g., close to 0 or 1), and high read count features are likely low fraction new features.}
 
+\item{chains}{Number of Markov chains to sample from. 1 should suffice since these are validated models}
+
 \item{...}{Arguments passed to either \code{fast_analysis} (if a DynamicSeqData object)
 or \code{TL_Stan} and \code{Hybrid_fit} (if a DynamicSeqFit object)}
-
-\item{keep_input}{Two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff}
 }
 \value{
 DynamicSeqFit object with results from statistical modeling and data processing. Objects possibly included are:

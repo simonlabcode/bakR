@@ -34,7 +34,9 @@ sim_DynamicSeqData(
   a0 = 0.01,
   nreads = 50L,
   alpha = 25,
-  beta = 75
+  beta = 75,
+  STL = FALSE,
+  STL_len = 40
 )
 }
 \arguments{
@@ -59,6 +61,8 @@ is s4U labeled (new) is drawn from a normal distribution with this sd}
 
 \item{kslog_c}{Synthesis rate constants will be drawn from a lognormal distribution with meanlog = \code{kslog_c} - mean(log(kd_mean)) where kd_mean
 is determined from the fraction new simulated for each gene as well as the label time (\code{tl}).}
+
+\item{kslog_sd}{Synthesis rate lognormal standard deviation; see kslog_c documentation for details}
 
 \item{tl}{s4U label feed time}
 
@@ -95,13 +99,19 @@ to the reference. 1st entry must be 0 by definition (since relative to the refer
 
 \item{a0}{High read depth limit of negative binomial dispersion parameter}
 
+\item{nreads}{Number of reads simulated if sim_read_counts is FALSE}
+
 \item{alpha}{shape1 parameter of the beta distribution from which U-contents (probability that a nucleotide in a read from a transcript is a U) are
 drawn for each gene.}
 
 \item{beta}{shape2 parameter of the beta distribution from which U-contents (probability that a nucleotide in a read from a transcript is a U) are
 drawn for each gene.}
 
-\item{nread}{Number of reads simulated if sim_read_counts is FALSE}
+\item{STL}{logical; if TRUE, simulation is of STL-seq rather than a standard TL-seq experiment. The two big changes are that a short read lenght is required
+(< 60 nt) and that every read for a particular feature will have the same number of Us. Only one read length is simulated for simplicity.}
+
+\item{STL_len}{Average length of simulated STL-seq length. Since Pol II typically pauses about 20-60 bases
+from the promoter, this should be around 40}
 }
 \value{
 A list containing a simulated \code{DynamicSeqData} object as well as a list of simulated kinetic parameters of interest.

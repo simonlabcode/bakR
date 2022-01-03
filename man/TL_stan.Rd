@@ -4,7 +4,7 @@
 \alias{TL_stan}
 \title{Bayesian hierarchical mixture model with Stan for TL-seq data analysis}
 \usage{
-TL_stan(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...)
+TL_stan(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, chains = 1, ...)
 }
 \arguments{
 \item{data_list}{List to pass to Stan of form given by cBtoStan}
@@ -12,6 +12,8 @@ TL_stan(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, ...)
 \item{Hybrid_Fit}{Logical; if TRUE, Hybrid Stan model that takes as data output of fast_analysis is run.}
 
 \item{keep_fit}{Logical; if TRUE, Stan fit object is included in output; typically large file so default FALSE.}
+
+\item{chains}{Number of Markov chains to sample from. 1 should suffice since these are validated models}
 
 \item{...}{Arguments passed to \code{rstan::sampling} (e.g. iter, chains).}
 }

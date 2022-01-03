@@ -9,7 +9,7 @@ new_DynamicSeqData(cB, metadf)
 \arguments{
 \item{cB}{Dataframe with columns corresponding to feature ID, number of Ts, number of mutations, sample ID, and number of identical observations}
 
-\item{metadata}{Dataframe detailing s4U label time and experimental ID of each sample}
+\item{metadf}{Dataframe detailing s4U label time and experimental ID of each sample}
 }
 \description{
 This function efficiently creates an object of class DynamicSeqData

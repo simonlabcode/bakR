@@ -50,6 +50,9 @@ etc.}
 
 \item{upper}{Upper bound for MLE with L-BFGS-B algorithm}
 
+\item{se_max}{Uncertainty given to those transcripts with estimates at the upper or lower bound sets. This prevents downstream errors due to
+abnormally high standard errors due to transcripts with extreme kinetics}
+
 \item{mut_reg}{If MLE has instabilities, empircal mut rate will be used to estimate fn, multiplying pnew by 1+mut_reg and pold by 1-mut_reg to regularize fn}
 
 \item{p_mean}{Mean of normal distribution used as prior penalty in MLE of logit(fn)}
@@ -74,7 +77,7 @@ The columns of this dataframe are:
 \item logit_fn; logit(fraction new) estimate, unregularized
 \item logit_fn_se; logit(fraction new) uncertainty, unregularized and obtained from Fisher Information
 \item nreads; Number of reads mapping to the feature in the sample for which the estimates were obtained
-\item log_kdeg; log(kdeg) estimate, ungregularized
+\item log_kdeg; log of degradation rate constant (kdeg) estimate, ungregularized
 \item kdeg; degradation rate constant (kdeg) estimate
 \item log_kd_se; log(kdeg) uncertainty, unregularized and obtained from Fisher Information
 \item sample; Sample name
@@ -102,7 +105,7 @@ dataframe are:
 \itemize{
 \item Feature_ID; Numerical ID of feature
 \item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
-\item L2FC_kdeg; L2FC(kdeg) estimate
+\item L2FC_kdeg; Log2 fold change (L2FC) kdeg estimate
 \item effect; L2FC_kdeg (repeated because it is used elsewhere and used to be difference in logit(fn)s)
 \item se; Uncertainty in L2FC_kdeg
 \item pval; P-value obtained using effect_size, se, and a moderated t-test
