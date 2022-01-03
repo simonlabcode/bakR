@@ -1,4 +1,4 @@
-Package: DynamicSeq
+Package: bakR
 Title: Functions for processing and analyzing Nucleotide Recoding (e.g., TLseq) data
 Version: 0.0.0.9000
 Authors@R: 

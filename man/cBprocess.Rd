@@ -2,7 +2,7 @@
 % Please edit documentation in R/cBprocessing.R
 \name{cBprocess}
 \alias{cBprocess}
-\title{Curate data in DynamicSeqData object for statistical modeling}
+\title{Curate data in bakRData object for statistical modeling}
 \usage{
 cBprocess(
   obj,
@@ -14,7 +14,7 @@ cBprocess(
 )
 }
 \arguments{
-\item{obj}{An object of class DynamicSeqData}
+\item{obj}{An object of class bakRData}
 
 \item{keep_input}{two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff}
 
@@ -70,15 +70,15 @@ sample names and row names are the corresponding feature names.
 }
 \description{
 \code{cBprocess} obtains the data structures necessary to analyze nucleotide recoding sequencing data with any of the
-statistical models implemented by \code{DynamicSeqFit}. The input to \code{cBprocess} must be an object of class
-\code{DynamicSeqData}. The output can contain data passable to \code{fast_analysis} (if Fast == TRUE), \code{TL_stan} with StanFit = TRUE if
+statistical models implemented by \code{bakRFit}. The input to \code{cBprocess} must be an object of class
+\code{bakRData}. The output can contain data passable to \code{fast_analysis} (if Fast == TRUE), \code{TL_stan} with StanFit = TRUE if
 Stan == TRUE, or both.
 }
 \details{
 The 1st step executed by \code{cBprocess} is to find the names of features which are deemed "reliable". A reliable feature is one with
 sufficient read coverage in every single sample (i.e., > keep_input\link{2} reads in all samples) and limited mutation content in all -s4U
 control samples (i.e., < keep_input\link{1} mutation rate in all samples lacking s4U feeds). This is done with a call to \code{reliableFeatures}.
-The 2nd step is to extract only reliableFeatures from the cB dataframe in the \code{DynamicSeqData} object. During this process, a numerical
+The 2nd step is to extract only reliableFeatures from the cB dataframe in the \code{bakRData} object. During this process, a numerical
 ID is given to each reliableFeature, with the numerical ID corresponding to the order in which each feature is found in the original cB
 (this might typically be alphabetical order).
 

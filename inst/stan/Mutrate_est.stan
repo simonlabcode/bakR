@@ -1,4 +1,5 @@
 // Completely centered parameterization with no hierarchy
+// Used to be called Mut_rate_Model.stan
 
 // Data block corresponds to what gets passed to Stan in data_list
 data {

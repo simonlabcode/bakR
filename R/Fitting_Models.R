@@ -1,11 +1,11 @@
 #' Estimating kinetic parameters from nucleotide recoding data
 #'
-#' \code{DynamicFit} analyzes nucleotide recoding data to estimate
+#' \code{bakRFit} analyzes nucleotide recoding data to estimate
 #' kinetic parameters relating to RNA stability and changes in RNA
 #' stability induced by experimental perturbations. Several statistical
 #' models of varying efficiency and performance can be used to fit data.
 #'
-#' If \code{DynamicFit} is run on a DynamicSeqData object, \code{cBprocess}
+#' If \code{bakRFit} is run on a bakRData object, \code{cBprocess}
 #' and then \code{fast_analysis} will always be called. The former will generate the processed
 #' data that can be passed to the model fitting functions (\code{fast_analysis}, \code{Hybrid_fit},
 #' and \code{TL_Stan}). The call to \code{fast_analysis} will generate a list of dataframes
@@ -17,11 +17,11 @@
 #' approximate uncertainties are passed as data to a model that performs partial pooling approximated
 #' by the procedure implemented in \code{fast_analysis}.
 #'
-#' If \code{DynamicFit} is run on a DynamicSeqFit object, \code{cBprocess} will not be called again,
-#' as the output of \code{cBprocess} will already be contained in the DynamicSeqFit object. Similarly,
-#' \code{fast_analysis} will not be called again unless DynamicSeqFit is rerun on the DynamicSeqData object.
+#' If \code{bakRFit} is run on a bakRFit object, \code{cBprocess} will not be called again,
+#' as the output of \code{cBprocess} will already be contained in the bakRFit object. Similarly,
+#' \code{fast_analysis} will not be called again unless bakRFit is rerun on the bakRData object.
 #' or if \code{FastRerun} is set to TRUE. If you want to generate model fits using different parameters for cBprocess,
-#' you will have to rerun \code{DynamicFit} on the DynamicSeqData object.
+#' you will have to rerun \code{bakRFit} on the bakRData object.
 #'
 #' See the documentation for the individual fitting functions for details regarding how they analyze nucleotide
 #' recoding data. What follows is a brief overview of how each works
@@ -45,7 +45,7 @@
 #' replicates and the entire dataset.
 #'
 #'
-#' @param obj DynamicSeqData object produced by \code{DynamicSeqData} or a DynamicSeqFit object produced by \code{DynamicFit}
+#' @param obj bakRData object produced by \code{bakRData} or a bakRFit object produced by \code{bakRFit}
 #' @param StanFit Logical; if TRUE, then Fully Bayesian Hierarchical model is implemented to estimate fraction news and pool information
 #' across the dataset
 #' @param HybridFit Logical; if TRUE, then a Fully Bayesian Hierarchical model is run using
@@ -54,7 +54,7 @@
 #' @param high_p Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any no s4U control
 #' samples are filtered out
 #' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
-#' @param FastRerun Logical; only matters if a DynamicSeqFit object is passed to \code{DynamicSeqFit()}. If TRUE, then the Stan-free
+#' @param FastRerun Logical; only matters if a bakRFit object is passed to \code{bakRFit()}. If TRUE, then the Stan-free
 #' model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the Stan models.
 #' @param Stan_prep Logical; if TRUE, then data_list that can be passed to Stan is curated
 #' @param Fast_prep Logical; if TRUE, then dataframe that can be passed to fast_analysis() is curated
@@ -69,9 +69,9 @@
 #' A high read count cutoff is as important as a low read count cutoff in this case because you don't want the fraction labeled of chosen features to be
 #' extreme (e.g., close to 0 or 1), and high read count features are likely low fraction new features.
 #' @param chains Number of Markov chains to sample from. 1 should suffice since these are validated models
-#' @param ... Arguments passed to either \code{fast_analysis} (if a DynamicSeqData object)
-#' or \code{TL_Stan} and \code{Hybrid_fit} (if a DynamicSeqFit object)
-#' @return DynamicSeqFit object with results from statistical modeling and data processing. Objects possibly included are:
+#' @param ... Arguments passed to either \code{fast_analysis} (if a bakRData object)
+#' or \code{TL_Stan} and \code{Hybrid_fit} (if a bakRFit object)
+#' @return bakRFit object with results from statistical modeling and data processing. Objects possibly included are:
 #' \itemize{
 #'  \item Fast_Fit; Always will be present. Output of \code{fast_analysis}
 #'  \item Hybrid_Fit; Only present if HybridFit = TRUE. Output of \code{TL_stan}
@@ -79,7 +79,7 @@
 #'  \item Data_lists; Always will be present. Output of \code{cBprocess} with Fast and Stan == TRUE
 #' }
 #' @export
-DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
+bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           high_p = 0.2,
                           totcut = 50,
                           FastRerun = FALSE,
@@ -133,7 +133,7 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   ## Check FOI
   if(!is.null(FOI)){
     if(typeof(obj$cB$XF) != typeof(FOI)){
-      warning("FOI should be the same data type as cB$XF in the DynamicSeqData object; if it is not none of the feature of interest will be found
+      warning("FOI should be the same data type as cB$XF in the bakRData object; if it is not none of the feature of interest will be found
             in the cB.")
     }
   }
@@ -208,9 +208,9 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   }
 
 
-  if(class(obj) == "DynamicSeqData"){
+  if(class(obj) == "bakRData"){
 
-    data_list <- DynamicSeq::cBprocess(obj, keep_input = keep_input,
+    data_list <- bakR::cBprocess(obj, keep_input = keep_input,
                                        Stan = Stan_prep,
                                        Fast = Fast_prep,
                                        FOI = FOI,
@@ -233,14 +233,14 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       cB_small <- obj$cB[obj$cB$XF %in% XF_choose,]
 
-      DynData2 <- new_DynamicSeqData(cB_small, obj$metadf)
+      bakRData2 <- new_bakRData(cB_small, obj$metadf)
 
-      mutrate_list <- DynamicSeq::cBprocess(DynData2)
+      mutrate_list <- bakR::cBprocess(bakRData2)
 
-      fast_list <- DynamicSeq::fast_analysis(data_list$Fast_df, Stan_data = mutrate_list$Stan_data, StanRate = TRUE, ...)
+      fast_list <- bakR::fast_analysis(data_list$Fast_df, Stan_data = mutrate_list$Stan_data, StanRate = TRUE, ...)
 
     }else{
-      fast_list <- DynamicSeq::fast_analysis(data_list$Fast_df, ...)
+      fast_list <- bakR::fast_analysis(data_list$Fast_df, ...)
     }
 
 
@@ -249,13 +249,13 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     Fit_lists <- list(Fast_Fit = fast_list,
                         Data_lists = data_list)
 
-    class(Fit_lists) <- "DynamicSeqFit"
+    class(Fit_lists) <- "bakRFit"
     return(Fit_lists)
 
-  }else if(class(obj) == "DynamicSeqFit"){
+  }else if(class(obj) == "bakRFit"){
 
     if(FastRerun & (StanFit | HybridFit)){
-      stop("Can only rerun fast_analysis() or run Stan models, not both. If you want to rerun fast_analysis() and then run Stan model, use separate calls to DynamicSeqFit().")
+      stop("Can only rerun fast_analysis() or run Stan models, not both. If you want to rerun fast_analysis() and then run Stan model, use separate calls to bakRFit().")
     }
 
     if(FastRerun){
@@ -302,10 +302,10 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
         rm(Stan_data)
 
-        fast_list <- DynamicSeq::fast_analysis(obj$Data_lists$Fast_df, Stan_data = mutrate_list, StanRate = TRUE, ...)
+        fast_list <- bakR::fast_analysis(obj$Data_lists$Fast_df, Stan_data = mutrate_list, StanRate = TRUE, ...)
 
       }else{
-        fast_list <- DynamicSeq::fast_analysis(obj$Data_lists$Fast_df, ...)
+        fast_list <- bakR::fast_analysis(obj$Data_lists$Fast_df, ...)
 
       }
 
@@ -317,7 +317,7 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
     if(StanFit){
 
-      Stan_list <- DynamicSeq::TL_stan(obj$Data_lists$Stan_data, chains = chains, ...)
+      Stan_list <- bakR::TL_stan(obj$Data_lists$Stan_data, chains = chains, ...)
 
       Effects <- Stan_list$Effects_df
 
@@ -360,7 +360,7 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       rm(Rep_Fn)
 
-      Stan_list <- DynamicSeq::TL_stan(data_list, Hybrid_Fit = TRUE, chains = chains, ...)
+      Stan_list <- bakR::TL_stan(data_list, Hybrid_Fit = TRUE, chains = chains, ...)
 
       Effects <- Stan_list$Effects_df
 
@@ -386,7 +386,7 @@ DynamicSeqFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     return(obj)
 
   }else{
-    stop("obj is not of class DynamicSeqData or DynamicSeqFit")
+    stop("obj is not of class bakRData or bakRFit")
   }
 
 

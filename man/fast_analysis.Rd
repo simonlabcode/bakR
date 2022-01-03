@@ -62,7 +62,7 @@ abnormally high standard errors due to transcripts with extreme kinetics}
 \item{StanRate}{Logical; if TRUE, a simple Stan model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
 to the runtime of the analysis.}
 
-\item{Stan_data}{List; if StanRate is TRUE, then this is the data passed to the Stan model to estimate mutation rates. If using the \code{DynamicSeqFit}
+\item{Stan_data}{List; if StanRate is TRUE, then this is the data passed to the Stan model to estimate mutation rates. If using the \code{bakRFit}
 wrapper of \code{fast_analysis}, then this is created automatically.}
 }
 \value{

@@ -1,5 +1,5 @@
 ---
-title: "Differential Kinetic Analysis with DynamicSeq"
+title: "Differential Kinetic Analysis with bakR"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Getting-Started}
@@ -35,7 +35,7 @@ abstract: >
   rates are typically low (often around 5% in RNA produced during metabolic labeling, meaning that each U
   in a sequencing read from these RNAs has about a 5% chance of being mutated to a C), making simple and 
   definitive separation of labeled and unlabeled reads impossible. The solution: advanced
-  statistical modeling implemented by DynamicSeq, an R package for analyzing nucleotide recoding
+  statistical modeling implemented by bakR, an R package for analyzing nucleotide recoding
   sequencing data. The analyses implemented in this package will enable you to perform 
   differential kinetic analysis just as easily as you can perform differential expression analysis,
   allowing you to elucidate the mechanisms of regulated gene expression.
@@ -51,24 +51,24 @@ knitr::opts_chunk$set(
 
 ## Necessary Setup
 
-Of course you will want to load the DynamicSeq package for
+Of course you will want to load the bakR package for
 this vignette, but we'll also be using utils, so make sure 
 to load (and if necessary, install) that as well. Finally, you'll
 want to set the seed so as to ensure the results you get reproduce
 those presented in the vignette. Additionally, you will need to install
 [Stan](https://mc-stan.org/), which is the statistical modeling software
-that DynamicSeq makes use of under the hood for the heavier, higher performance
+that bakR makes use of under the hood for the heavier, higher performance
 models, as well as the R package rstan to allow interfacing between Stan and R. The biggest challenge is getting a C++ compiler configured to work with your installation of R. Instructions [here](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) will hopefully help with installation of rstan. 
 
 ```{r setup}
-library(DynamicSeq)
+library(bakR)
 library(utils)
 set.seed(123)
 ```
 
 ## Step 1: Creating a DynamicSeqData Object
 
-The 1st step to using DynamicSeq is to create a DynamicSeqData
+The 1st step to using bakR is to create a DynamicSeqData
 object. A DynamicSeqData object
 consists of two components: a cB dataframe and a metadf dataframe.
 cB stands for counts binomial and contains all of the information about
@@ -158,7 +158,7 @@ DynData <- DynamicSeqData(cB_small, metadf)
 
 ## Step 2: Fitting the Efficient Model
 
-DynamicSeq implements several blends of fundamentally similar statistical models to perform differential kinetic analysis. No matter your intentions though, you must first fit data with the most efficient model available. This model (implemented in the fast_analysis() function, so see ?fast_analysis for more details) estimates mutation rates and then find the maximum likelihood estimate (MLE) for the fraction of sequencing reads labeled for each feature in each s4U fed sample. The reason you have to run this model is that some part of its output will be used by every other model you can run with DynamicSeq. More on that later though; first, let's create a simulated dataset and fit it with the efficient model. Using a simulated dataset will allow us to compare the results to the ground truth and validate its accuracy. 
+bakR implements several blends of fundamentally similar statistical models to perform differential kinetic analysis. No matter your intentions though, you must first fit data with the most efficient model available. This model (implemented in the fast_analysis() function, so see ?fast_analysis for more details) estimates mutation rates and then find the maximum likelihood estimate (MLE) for the fraction of sequencing reads labeled for each feature in each s4U fed sample. The reason you have to run this model is that some part of its output will be used by every other model you can run with bakR. More on that later though; first, let's create a simulated dataset and fit it with the efficient model. Using a simulated dataset will allow us to compare the results to the ground truth and validate its accuracy. 
 
 ```{r}
 # Simulate a nucleotide recoding dataset
@@ -178,9 +178,9 @@ Fit <- DynamicSeqFit(DynData)
 
 ```
 
-DynamicSeqFit() is used here as a wrapper for two functions in DynamicSeq: cBprocess() and fast_analysis(). cBprocess() will extract and properly format the information needed for all statistical models from the DynamicSeqData object and fast_analysis() will perform the efficient analysis. This should take no more than a minute to run. Messages are printed along the way to keep you updated as to the progress of the analysis. 
+DynamicSeqFit() is used here as a wrapper for two functions in bakR: cBprocess() and fast_analysis(). cBprocess() will extract and properly format the information needed for all statistical models from the DynamicSeqData object and fast_analysis() will perform the efficient analysis. This should take no more than a minute to run. Messages are printed along the way to keep you updated as to the progress of the analysis. 
 
-One of the most important messages is that regarding the estimated pnews and pold. The pnews are the estimated mutation rates of labeled reads in each sample (muts = Exp_ID, and reps = a numerical replicate ID that corresponds to the order replicates appear in the cB), and pold is a global estimate of the background mutation rate used in all analyses. The simulated mutation rates are 0.05 for labeled reads and 0.001 for unlabeled reads in all samples this simulation, so the estimates are pretty close. "But Isaac, why are the pnews consistently underestimated"? Good question, its because this is a small simulated dataset with a somewhat tight distribution of fraction news. fast_analysis() makes lots of assumptions to assure maximum efficiency, and one is that the highest mutation rates in s4U fed samples come from features with almost 100% labeling (fraction labeled = 1). That won't be true in small simulated datasets, but it's still not that bad, everything considered. If you have better mutation rate estimates from elsewhere (say a run of the full Stan model implemented in DynamicSeq), you can pass the true values to DynamicSeqFit():
+One of the most important messages is that regarding the estimated pnews and pold. The pnews are the estimated mutation rates of labeled reads in each sample (muts = Exp_ID, and reps = a numerical replicate ID that corresponds to the order replicates appear in the cB), and pold is a global estimate of the background mutation rate used in all analyses. The simulated mutation rates are 0.05 for labeled reads and 0.001 for unlabeled reads in all samples this simulation, so the estimates are pretty close. "But Isaac, why are the pnews consistently underestimated"? Good question, its because this is a small simulated dataset with a somewhat tight distribution of fraction news. fast_analysis() makes lots of assumptions to assure maximum efficiency, and one is that the highest mutation rates in s4U fed samples come from features with almost 100% labeling (fraction labeled = 1). That won't be true in small simulated datasets, but it's still not that bad, everything considered. If you have better mutation rate estimates from elsewhere (say a run of the full Stan model implemented in bakR), you can pass the true values to DynamicSeqFit():
 
 ```{r}
 # Run efficient model with known mutation rates
@@ -191,7 +191,7 @@ Fit <- DynamicSeqFit(Fit,
                      pold = 0.001)
 ```
 
-Since we've already run the fast_analysis once, we can speed up the analysis by passing the Fit object from the first run rather than the DynamicSeqData object. This allows DynamicSeq to skip the time consuming pre-processing steps. Just make sure to set FastRerun to TRUE. 
+Since we've already run the fast_analysis once, we can speed up the analysis by passing the Fit object from the first run rather than the DynamicSeqData object. This allows bakR to skip the time consuming pre-processing steps. Just make sure to set FastRerun to TRUE. 
 
 An even better, though slightly less efficient solution is to use a more rigorous statistical model implemented in Stan to estimate mutation rates. The idea is to run this model on only a small subset of features with sufficient sequencing depth and a fraction labeled moderately close to 0.5:
 
@@ -258,9 +258,9 @@ The Fit objects contain lists pertaining to the fits of each of the models. The 
 
 ## Step 3: Visualizing the Results
 
-DynamicSeq provides a variety of easy to use functions for beginning to investigate your data. The visualizations are particularly aimed at revealing trends in RNA stabilization or destabilization. Analyzing changes in RNA synthesis rate will require pairing the output of DynamicSeq with that of a differential expression analysis tool, like DESeq2 or limma. 
+bakR provides a variety of easy to use functions for beginning to investigate your data. The visualizations are particularly aimed at revealing trends in RNA stabilization or destabilization. Analyzing changes in RNA synthesis rate will require pairing the output of bakR with that of a differential expression analysis tool, like DESeq2 or limma. 
 
-One visualization powered by DynamicSeq is a L2FC(kdeg) MA plot. Each point in these plots will represent a feature-condition combination. The x-axis is the average number of sequencing reads mapping to that feature, averaging over all replicates in both the experimental and reference condition. The y-axis is the difference in stability between the reference and experimental condition, quantified as a log2-fold change (L2FC) in the degradation rate constant (kdeg). Positive values of L2FC(kdeg) represent features that are less stable (have a higher kdeg) in the experimental condition relative to the reference condition. Negative values thus represent features that are more stable in the experimental condition. The plotMA function in DynamicSeq allows you to make this plot with two inputs, both of which can be found in the Fit object:
+One visualization powered by bakR is a L2FC(kdeg) MA plot. Each point in these plots will represent a feature-condition combination. The x-axis is the average number of sequencing reads mapping to that feature, averaging over all replicates in both the experimental and reference condition. The y-axis is the difference in stability between the reference and experimental condition, quantified as a log2-fold change (L2FC) in the degradation rate constant (kdeg). Positive values of L2FC(kdeg) represent features that are less stable (have a higher kdeg) in the experimental condition relative to the reference condition. Negative values thus represent features that are more stable in the experimental condition. The plotMA function in bakR allows you to make this plot with two inputs, both of which can be found in the Fit object:
 
 ```{r, fig.align='center'}
 ## MA Plot with Fast Fit

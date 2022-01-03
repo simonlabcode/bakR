@@ -1,11 +1,11 @@
 
 #' Simulating nucleotide recoding data
 #'
-#' \code{sim_DynamicSeqData} simulates a `DynamicSeqData` object. It's output also includes the simulated
+#' \code{sim_bakRData} simulates a `bakRData` object. It's output also includes the simulated
 #' values of all kinetic parameters of interest. Only the number of genes (\code{ngene}) has to be set by the
 #' user, but an extensive list of additional parameters can be adjusted.
 #'
-#' \code{sim_DynamicSeqData} simulates a `DynamicSeqData` object using an extensive list of
+#' \code{sim_bakRData} simulates a `bakRData` object using an extensive list of
 #' adjustable parameters. Average RNA kinetic parameters are drawn from biologically inspired
 #' distributions. Replicate variability is simulated by drawing each replicate and feature's
 #' fraction labeled (aka fraction new) from a Logit-Normal distribution with a heteroskedastic
@@ -26,7 +26,7 @@
 #' Simulated read counts should be treated as if they are spike-in and RPKM normalized, so the same scale factor can be applied
 #' to each sample when comparing the sequencing reads (like if you are performing differential expression analysis).
 #'
-#' Function to simulate a DynamicSeqData object according to a heteroskedastic beta-binomial model
+#' Function to simulate a bakRData object according to a heteroskedastic beta-binomial model
 #' of the fraction new.
 #' @param ngene Number of genes to simulate data for
 #' @param num_conds Number of experimental conditions (including the reference condition) to simulate
@@ -71,7 +71,7 @@
 #' @param STL_len Average length of simulated STL-seq length. Since Pol II typically pauses about 20-60 bases
 #' from the promoter, this should be around 40
 #' @export
-#' @return A list containing a simulated `DynamicSeqData` object as well as a list of simulated kinetic parameters of interest.
+#' @return A list containing a simulated `bakRData` object as well as a list of simulated kinetic parameters of interest.
 #' The contents of the latter list are:
 #' \itemize{
 #'  \item Effect_sim; Dataframe meant to mimic formatting of Effect_df that are part of \code{TL_stan} and \code{fast_analysis} output.
@@ -84,7 +84,7 @@
 #'  \item RNA_conc; The average number of normalized read counts expected for each feature in each sample.
 #' }
 #'
-sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_mean = 0,
+sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_mean = 0,
                                fn_mean = 0, fn_sd = 1, kslog_c = 0.8, kslog_sd = 0.95,
                                tl = 60, p_new = 0.05, p_old = 0.001, read_lengths = 200L,
                                p_do = 0, noise_deg_a = -0.3, noise_deg_b = -1.5, noise_synth = 0.1, sd_rep = 0.05,
@@ -164,7 +164,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
   if(nreps < 1){
     stop("nreps must be > 0; it represents the number of replicates")
   }else if(nreps == 1){
-    warning("You are only simulating a single replicate; All statistical models implemented in DynamicSeq require > 1 replicate.")
+    warning("You are only simulating a single replicate; All statistical models implemented in bakR require > 1 replicate.")
   }
 
   # Effect size distribution standard deviation
@@ -238,7 +238,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
   }else if(!all(p_do >= 0)){
     stop("p_do must be >= 0; it represents the percentage of s4U containing RNA lost during library prep")
   }else if(!all(p_do == 0)){
-    warning("You are simulating dropout; statistical models implemented by DynamicSeq do not correct for dropout and thus will provide biased estimates")
+    warning("You are simulating dropout; statistical models implemented by bakR do not correct for dropout and thus will provide biased estimates")
   }
 
   # Heteroskedastic Slope
@@ -264,7 +264,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
     stop("sd_rep must be >= 0; it represents the sdlog parameter of the log-normal distribution from which replicate variabilites are simulated")
   }else if(sd_rep == 0){
     warning("You are simulating no variability in the replicate variability. This can cause minor convergence issues in the completely hierarchical
-            models implemented by DynamicSeq.")
+            models implemented by bakR.")
   }
 
   # L2FC(ksyn) Bounds
@@ -640,7 +640,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
 
   cB_sim_1$sample <- as.character(cB_sim_1$sample)
 
-  DynData <- DynamicSeq::DynamicSeqData(cB_sim_1, metadf)
+  bakRData <- bakR::bakRData(cB_sim_1, metadf)
 
 
   ## Create dataframe for Effect sizes and fn
@@ -691,7 +691,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
     Fn_rep_sim <- Fn_rep_sim[order(Fn_rep_sim$Feature_ID, Fn_rep_sim$Exp_ID, Fn_rep_sim$Replicate),]
     Fn_mean_sim <- Fn_mean_sim[order(Fn_mean_sim$Feature_ID, Fn_mean_sim$Exp_ID),]
 
-    sim_data <- list(DynData = DynData,
+    sim_data <- list(bakRData = bakRData,
                      sim_list = list(Effect_sim = Effect_sim,
                                      Fn_mean_sim = Fn_mean_sim,
                                      Fn_rep_sim = Fn_rep_sim,
@@ -704,7 +704,7 @@ sim_DynamicSeqData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75,
     Fn_mean_sim <- Fn_mean_sim[order(Fn_mean_sim$Feature_ID, Fn_mean_sim$Exp_ID),]
 
 
-    sim_data <- list(DynData = DynData,
+    sim_data <- list(bakRData = bakRData,
                      sim_list = list(Fn_mean_sim = Fn_mean_sim,
                                      Fn_rep_sim = Fn_rep_sim,
                                      L2FC_ks_mean = L2FC_ks_mean,

@@ -1,3 +1,4 @@
+// Used to be called Full_Model.stan
 data {
   int NE; //num entries in data frame.
   int NF; //num features

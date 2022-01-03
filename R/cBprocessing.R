@@ -4,7 +4,7 @@
 #' is below a set threshold in the control (no s4U) sample and which have more reads than a set threshold
 #' in all samples. If there is no -s4U sample, then only the read count cutoff is considered.
 #'
-#' @param obj Object of class DynamicSeqData
+#' @param obj Object of class bakRData
 #' @param high_p highest mutation rate accepted in control samples
 #' @param totcut readcount cutoff
 #' @importFrom magrittr %>%
@@ -62,17 +62,17 @@ reliableFeatures <- function(obj,
   return(y)
 }
 
-#' Curate data in DynamicSeqData object for statistical modeling
+#' Curate data in bakRData object for statistical modeling
 #'
 #' \code{cBprocess} obtains the data structures necessary to analyze nucleotide recoding sequencing data with any of the
-#' statistical models implemented by \code{DynamicSeqFit}. The input to \code{cBprocess} must be an object of class
-#' `DynamicSeqData`. The output can contain data passable to \code{fast_analysis} (if Fast == TRUE), \code{TL_stan} with StanFit = TRUE if
+#' statistical models implemented by \code{bakRFit}. The input to \code{cBprocess} must be an object of class
+#' `bakRData`. The output can contain data passable to \code{fast_analysis} (if Fast == TRUE), \code{TL_stan} with StanFit = TRUE if
 #' Stan == TRUE, or both.
 #'
 #' The 1st step executed by \code{cBprocess} is to find the names of features which are deemed "reliable". A reliable feature is one with
 #' sufficient read coverage in every single sample (i.e., > keep_input[2] reads in all samples) and limited mutation content in all -s4U
 #' control samples (i.e., < keep_input[1] mutation rate in all samples lacking s4U feeds). This is done with a call to \code{reliableFeatures}.
-#' The 2nd step is to extract only reliableFeatures from the cB dataframe in the `DynamicSeqData` object. During this process, a numerical
+#' The 2nd step is to extract only reliableFeatures from the cB dataframe in the `bakRData` object. During this process, a numerical
 #' ID is given to each reliableFeature, with the numerical ID corresponding to the order in which each feature is found in the original cB
 #' (this might typically be alphabetical order).
 #'
@@ -92,7 +92,7 @@ reliableFeatures <- function(obj,
 #' If FOI is null and concat == FALSE, an error will be thrown.
 #'
 #'
-#' @param obj An object of class DynamicSeqData
+#' @param obj An object of class bakRData
 #' @param keep_input two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff
 #' @param Stan Boolean; if TRUE, then data_list that can be passed to Stan is curated
 #' @param Fast Boolean; if TRUE, then dataframe that can be passed to fast_analysis() is curated
@@ -148,8 +148,8 @@ cBprocess <- function(obj,
                        concat = TRUE){
 
   ## Check obj
-  if(class(obj) != "DynamicSeqData"){
-    stop("obj must be of class DynamicSeqData")
+  if(class(obj) != "bakRData"){
+    stop("obj must be of class bakRData")
   }
 
   ## Check keep_input
@@ -179,7 +179,7 @@ cBprocess <- function(obj,
   ## Check FOI
   if(!is.null(FOI)){
     if(typeof(obj$cB$XF) != typeof(FOI)){
-      warning("FOI should be the same data type as cB$XF in the DynamicSeqData object; if it is not none of the feature of interest will be found
+      warning("FOI should be the same data type as cB$XF in the bakRData object; if it is not none of the feature of interest will be found
             in the cB.")
     }
   }else{
@@ -225,7 +225,7 @@ cBprocess <- function(obj,
   if(concat == TRUE | is.null(FOI)){
     message("Finding reliable Features")
 
-    reliables <- DynamicSeq::reliableFeatures(obj, high_p = keep_input[1], totcut = keep_input[2])
+    reliables <- bakR::reliableFeatures(obj, high_p = keep_input[1], totcut = keep_input[2])
     keep <- c(FOI, reliables[!(reliables %in% FOI)])
   }else{
     keep <- FOI

@@ -19,4 +19,4 @@
 #' @examples
 #' data(cB_example)
 #' data(metadf_example)
-#' dyndata <- DynamicSeqData(cB_small, metadf_small)
+#' dyndata <- bakRData(cB_small, metadf_small)

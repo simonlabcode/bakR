@@ -43,7 +43,7 @@ cBtofast <- function(cB_raw,
 
   # Get reliable features:
   if(concat == TRUE | is.null(FOI)){
-    reliables <- DynamicSeq::reliableFeatures(cB = cB, c_list = c_list, high_p = keep_input[1], totcut = keep_input[2])
+    reliables <- bakR::reliableFeatures(cB = cB, c_list = c_list, high_p = keep_input[1], totcut = keep_input[2])
     keep <- c(FOI, reliables[!(reliables %in% FOI)])
   }else{
     keep <- FOI
@@ -178,7 +178,7 @@ cBtofast <- function(cB_raw,
 #' @param p_sd Standard deviation of normal distribution used as prior peanlty in MLE of logit(fn)
 #' @param StanRate Logical; if TRUE, a simple Stan model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
 #' to the runtime of the analysis.
-#' @param Stan_data List; if StanRate is TRUE, then this is the data passed to the Stan model to estimate mutation rates. If using the \code{DynamicSeqFit}
+#' @param Stan_data List; if StanRate is TRUE, then this is the data passed to the Stan model to estimate mutation rates. If using the \code{bakRFit}
 #' wrapper of \code{fast_analysis}, then this is created automatically.
 #' @return List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
 #' \itemize{
@@ -375,7 +375,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if((is.null(pnew) | is.null(pold)) & StanRate ){
 
 
-    mut_fit <- rstan::sampling(stanmodels$Mut_rate_Model, data = Stan_data, chains = 1)
+    mut_fit <- rstan::sampling(stanmodels$Mutrate_est, data = Stan_data, chains = 1)
   }
 
   #Trim df and name columns

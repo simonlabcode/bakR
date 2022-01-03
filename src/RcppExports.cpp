@@ -12,20 +12,20 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 
-RcppExport SEXP _rcpp_module_boot_stan_fit4Full_Model_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4Hybrid_Model_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4Mut_rate_Model_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4lm_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4Hybrid_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4MCMC_Model_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4Mutrate_est_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4lmtest_mod();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_rcpp_module_boot_stan_fit4Full_Model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Full_Model_mod, 0},
-    {"_rcpp_module_boot_stan_fit4Hybrid_Model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Hybrid_Model_mod, 0},
-    {"_rcpp_module_boot_stan_fit4Mut_rate_Model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Mut_rate_Model_mod, 0},
-    {"_rcpp_module_boot_stan_fit4lm_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4lm_mod, 0},
+    {"_rcpp_module_boot_stan_fit4Hybrid_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Hybrid_mod, 0},
+    {"_rcpp_module_boot_stan_fit4MCMC_Model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4MCMC_Model_mod, 0},
+    {"_rcpp_module_boot_stan_fit4Mutrate_est_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Mutrate_est_mod, 0},
+    {"_rcpp_module_boot_stan_fit4lmtest_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4lmtest_mod, 0},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_DynamicSeq(DllInfo *dll) {
+RcppExport void R_init_bakR(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

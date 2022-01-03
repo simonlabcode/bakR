@@ -2,12 +2,12 @@
 
 #include <Rcpp.h>
 using namespace Rcpp ;
-#include "stanExports_Full_Model.h"
+#include "stanExports_Mutrate_est.h"
 
-RCPP_MODULE(stan_fit4Full_Model_mod) {
+RCPP_MODULE(stan_fit4Mutrate_est_mod) {
 
 
-    class_<rstan::stan_fit<stan_model, boost::random::ecuyer1988> >("model_Full_Model")
+    class_<rstan::stan_fit<stan_model, boost::random::ecuyer1988> >("model_Mutrate_est")
 
     .constructor<SEXP,SEXP,SEXP>()
 

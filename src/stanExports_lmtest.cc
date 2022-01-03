@@ -2,12 +2,12 @@
 
 #include <Rcpp.h>
 using namespace Rcpp ;
-#include "stanExports_Mut_rate_Model.h"
+#include "stanExports_lmtest.h"
 
-RCPP_MODULE(stan_fit4Mut_rate_Model_mod) {
+RCPP_MODULE(stan_fit4lmtest_mod) {
 
 
-    class_<rstan::stan_fit<stan_model, boost::random::ecuyer1988> >("model_Mut_rate_Model")
+    class_<rstan::stan_fit<stan_model, boost::random::ecuyer1988> >("model_lmtest")
 
     .constructor<SEXP,SEXP,SEXP>()
 

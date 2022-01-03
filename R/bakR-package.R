@@ -1,11 +1,11 @@
-#' The 'DynamicSeq' package.
+#' The 'bakR' package.
 #'
 #' @description A DESCRIPTION OF THE PACKAGE
 #'
 #' @docType package
-#' @name DynamicSeq-package
-#' @aliases DynamicSeq
-#' @useDynLib DynamicSeq, .registration = TRUE
+#' @name bakR-package
+#' @aliases bakR
+#' @useDynLib bakR, .registration = TRUE
 #' @import methods
 #' @import Rcpp
 #' @importFrom rstan sampling

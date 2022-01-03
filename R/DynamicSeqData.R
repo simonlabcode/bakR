@@ -1,22 +1,22 @@
-#' DynamicSeqData object constructor for internal use
+#' bakRData object constructor for internal use
 #'
-#' This function efficiently creates an object of class DynamicSeqData
+#' This function efficiently creates an object of class bakRData
 #' without performing rigorous checks
 #' @param cB Dataframe with columns corresponding to feature ID, number of Ts, number of mutations, sample ID, and number of identical observations
 #' @param metadf Dataframe detailing s4U label time and experimental ID of each sample
-new_DynamicSeqData <- function(cB, metadf){
+new_bakRData <- function(cB, metadf){
   stopifnot(is.data.frame(cB))
   stopifnot(is.data.frame(metadf))
-  structure(list(cB = cB, metadf = metadf), class = "DynamicSeqData")
+  structure(list(cB = cB, metadf = metadf), class = "bakRData")
 }
 
-#' DynamicSeq Data object validator
+#' bakR Data object validator
 #'
-#' This functions ensures that input for DynamicSeqData object construction is valid
+#' This functions ensures that input for bakRData object construction is valid
 #'
-#' @param obj An object of class DynamicseqData
+#' @param obj An object of class bakRData
 #' @export
-validate_DynamicSeqData <- function(obj){
+validate_bakRData <- function(obj){
 
   vals <- unclass(obj)
   cB <- vals$cB
@@ -129,13 +129,13 @@ validate_DynamicSeqData <- function(obj){
 }
 
 
-#' DynamicSeq Data object helper function for users
+#' bakR Data object helper function for users
 #'
-#' This function creates an object of class DynamicSeqData
+#' This function creates an object of class bakRData
 #' @param cB Dataframe with columns corresponding to feature ID, number of Ts, number of mutations, sample ID, and number of identical observations
 #' @param metadf Dataframe detailing s4U label time and experimental ID of each sample
 #' @export
-DynamicSeqData <- function(cB, metadf){
+bakRData <- function(cB, metadf){
 
   cB <- as.data.frame(cB)
   metadf <- as.data.frame(metadf)
@@ -167,16 +167,16 @@ DynamicSeqData <- function(cB, metadf){
   if(!all(cB_cols %in% colnames(cB))){
     colnames(cB)[1:5] <- cB_cols
     warning("Renamed first 5 columns of cB to XF, sample, TC, nT, and n.
-    If this does not reflect the content of those columns, properly rearrange cB columns and rerun DynamicSeqData().")
+    If this does not reflect the content of those columns, properly rearrange cB columns and rerun bakRData().")
   }
 
   if(!all(meta_cols %in% colnames(metadf))){
     colnames(metadf)[1:2] <- meta_cols
     warning("Renamed first 2 columns of metadf to tl and Exp_ID.
-    If this does not reflect the content of those columns, properly rearrange metadf columns and rerun DynamicSeqData().")
+    If this does not reflect the content of those columns, properly rearrange metadf columns and rerun bakRData().")
   }
 
-  validate_DynamicSeqData(new_DynamicSeqData(cB, metadf))
+  validate_bakRData(new_bakRData(cB, metadf))
 
 
 }

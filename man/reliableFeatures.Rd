@@ -7,7 +7,7 @@
 reliableFeatures(obj, high_p = 0.2, totcut = 50)
 }
 \arguments{
-\item{obj}{Object of class DynamicSeqData}
+\item{obj}{Object of class bakRData}
 
 \item{high_p}{highest mutation rate accepted in control samples}
 

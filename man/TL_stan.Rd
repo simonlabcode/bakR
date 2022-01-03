@@ -85,7 +85,7 @@ Two general models can be implemented in TL_stan: a full nucleotide recoding mod
 a hybrid model that takes as input results from \code{fast_analysis}.
 In the full model, U-to-C mutations are modeled as coming from a Poisson distribution
 with rate parameter adjusted by the empirical U-content of each feature analyzed. Features
-represent whatever the user defined them to be when constructing the DynamicSeq data object.
+represent whatever the user defined them to be when constructing the bakR data object.
 Typical feature categories are genes, exons, etc. Hierarchical modeling is used to pool data
 across replicates, across features, and across datasets. More specifically, replicate data for the
 same feature are partially pooled to estimate feature-specific mean fraction news and uncertainties.

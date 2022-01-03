@@ -1,4 +1,5 @@
-// Save this file as inst/stan/lm.stan
+// Used to be called lm.stan
+// The input data is a vector 'y' of length 'N'.
 data {
   int<lower=1> N;
   vector[N] x;
@@ -14,3 +15,4 @@ model {
 
   y ~ normal(intercept + beta * x, sigma);
 }
+
