@@ -94,8 +94,6 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           chains = 1,
                           ...){
 
-  keep_input <- c(high_p, totcut)
-
   ## Check StanFit
   if(!is.logical(StanFit)){
     stop("StanFit must be logical (TRUE or FALSE)")
@@ -106,18 +104,22 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     stop("HybridFit must be logical (TRUE or FALSE")
   }
 
-  ## Check keep_input
-  if(!all(is.numeric(keep_input))){
-    stop("All elements of keep_input must be numeric")
-  }else if(length(keep_input) != 2){
-    stop("keep_input must be a vector of length 2. The 1st element should be a number between 0 and 1 representing the maximum acceptable mutation rate
-         in the no s4U control sample. The 2nd element should be anumber > 0 representing the read count cutoff for filtered features")
-  }else if(keep_input[1] < 0){
-    stop("1st element of keep_input must be >= 0")
-  }else if(keep_input[1] > 1){
-    stop("1st element of keep_input must be <= 1")
-  }else if(keep_input[2] < 0){
-    stop("2nd element of keep_input must be >= 0")
+  ## Check high_p
+  if(!is.numeric(high_p)){
+    stop("high_p must be numeric")
+  }else if( (high_p < 0) | (high_p > 1) ){
+    stop("high_p must be between 0 and 1")
+  }else if (high_p < 0.01){
+    warning("high_p is abnormally low (< 0.01); many features will by pure chance have a higher mutation rate than this in a -s4U control and thus get filtered out")
+  }
+
+  ## Check totcut
+  if(!is.numeric(totcut)){
+    stop("totcut must be numeric")
+  }else if( totcut < 0 ){
+    stop("totcut must be greater than 0")
+  }else if(totcut > 5000){
+    warning("totcut is abnormally high (> 5000); many features will not have this much coverage in every sample and thus get filtered out.")
   }
 
   ## Check Stan_prep
@@ -210,7 +212,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
   if(class(obj) == "bakRData"){
 
-    data_list <- bakR::cBprocess(obj, keep_input = keep_input,
+    data_list <- bakR::cBprocess(obj, high_p = high_p, totcut = totcut,
                                        Stan = Stan_prep,
                                        Fast = Fast_prep,
                                        FOI = FOI,
