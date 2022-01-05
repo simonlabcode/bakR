@@ -83,7 +83,7 @@ Lets get an idea for what a cB should look like 1st.
 
 ```{r, results = "hide"}
 # Load small example cB; will be called cB_small in global environment
-data("cB_example")
+data("cB_small")
 
 # Observe contents of cB
 head(cB_small)
@@ -115,7 +115,7 @@ Now let's look at the corresponding metadf dataframe:
 
 ```{r, results = "hide"}
 # Load metadf data frame; will be loaded as metadf in global environment
-data("metadf_example")
+data("metadf")
 
 # Print the transpose of metadf
 # Rows will be the columns and columns will be the rows
