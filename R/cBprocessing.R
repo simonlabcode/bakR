@@ -70,8 +70,8 @@ reliableFeatures <- function(obj,
 #' Stan == TRUE, or both.
 #'
 #' The 1st step executed by \code{cBprocess} is to find the names of features which are deemed "reliable". A reliable feature is one with
-#' sufficient read coverage in every single sample (i.e., > keep_input[2] reads in all samples) and limited mutation content in all -s4U
-#' control samples (i.e., < keep_input[1] mutation rate in all samples lacking s4U feeds). This is done with a call to \code{reliableFeatures}.
+#' sufficient read coverage in every single sample (i.e., > totcut reads in all samples) and limited mutation content in all -s4U
+#' control samples (i.e., < high_p mutation rate in all samples lacking s4U feeds). This is done with a call to \code{reliableFeatures}.
 #' The 2nd step is to extract only reliableFeatures from the cB dataframe in the `bakRData` object. During this process, a numerical
 #' ID is given to each reliableFeature, with the numerical ID corresponding to the order in which each feature is found in the original cB
 #' (this might typically be alphabetical order).
@@ -93,7 +93,9 @@ reliableFeatures <- function(obj,
 #'
 #'
 #' @param obj An object of class bakRData
-#' @param keep_input two element vector; 1st element is highest mut rate accepted in control samples, 2nd element is read count cutoff
+#' @param high_p Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any no s4U control
+#' samples are filtered out
+#' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
 #' @param Stan Boolean; if TRUE, then data_list that can be passed to Stan is curated
 #' @param Fast Boolean; if TRUE, then dataframe that can be passed to fast_analysis() is curated
 #' @param FOI Features of interest; character vector containing names of features to analyze
