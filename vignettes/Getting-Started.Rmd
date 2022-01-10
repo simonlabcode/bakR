@@ -8,7 +8,7 @@ vignette: >
 abstract: >
   In a standard RNA-seq experiment, differential expression 
   analysis is incredibly common. The idea is to compare the expression
-  of thousands of genes or transcripts between two conditions, which
+  of thousands of transcripts between two conditions, which
   I'll refer to as the reference and experimental samples. Once you 
   have compiled a list of genes whose expressions differ significantly
   between the two conditions, a reasonable follow-up question is "what
@@ -25,8 +25,8 @@ abstract: >
   similar flavors, the primary ones being TimeLapse-seq, SLAM-seq, and TUC-seq. The strategy involves feeding
   cells with a metabolic label (typically 4-thiouridine, a.k.a. 4sU), extracting the RNA as you
   normally would for RNA-seq, but then using a unique chemistry to convert the metabolic
-  label (e.g., 4sU) into something that a sequencer will read as a different base (e.g.,
-  a cytosine analog). Thus, labeled and unlabeled reads can be separated bioinformatically
+  label into something that a sequencer will read as a different base (e.g., a cytosine analog
+  for 4sU). Thus, labeled and unlabeled reads can be separated bioinformatically
   upon sequencing by the presence of mutations (e.g., U-to-C mutations). 
   
   
@@ -82,7 +82,7 @@ samples).
 Lets get an idea for what a cB should look like 1st.
 
 ```{r, results = "hide"}
-# Load small example cB; will be called cB_small in global environment
+# Load small example cB
 data("cB_small")
 
 # Observe contents of cB
@@ -103,7 +103,7 @@ of each column:
 1. **sample**: This is the name of the sample from which the reads described in this
 row originated. Usually this will be some sort of character vector that you have
 defined.
-1. **TC**: Number of U-to-C mutations (assuming using s4U as the metabolic label). Called TC because technically the data is T-to-C mutations in reverse-transcribed RNA
+1. **TC**: Number of U-to-C mutations (assuming using 4sU as the metabolic label). Called TC because technically the data is T-to-C mutations in reverse-transcribed RNA
 1. **nT**: Number of Ts (Us in the RNA) in the sequencing read(s)
 1. **XF**: Name of the feature (gene, exon, etc.) that the read comes from. Kinetic parameters will be estimated for each feature, so this should represent the functional unit who's metabolic kinetics you are interested in. 
     * **XF** stands for "exonic feature", since in most cases, you        should only be considering reads that map to definitively       exonic locations. Introns are typically rapidly turned          over and thus will be highly labeled species that will          bias estimates of mature transcript stability.
@@ -146,7 +146,8 @@ They're the same, and they HAVE TO BE!! Each row of metadf corresponds to a samp
 Keeping in mind that each row represents a sample, the content of the columns are:
 
 1. **tl**: The length of the metabolic labeling feed. This can be in any units (the simulated data puts it in terms of minutes), but **if no s4U fed to a sample, tl must be 0 for that sample**. -s4U controls play an important role in all of the statistical models, so this is crucial to remember.
-1. **Exp_ID**: Stands for "Experimental ID" and is a numerical ID that denotes which samples are from the reference condition and which experimental samples belong to the same "treatment". In this simulated dataset, there are two conditions, a reference condition (samples 1, 2, 3, and 7) and a single experimental condition (samples 4, 5, 6, and 8). **The reference condition must be given numerical ID 1** and **the experimental conditions must be given sequential numerical IDs starting from 2** (i.e., 2, 3, 4, ...)
+1. **Exp_ID**: Stands for "Experimental ID" and is a numerical ID that denotes which samples are from the reference condition and which experimental samples belong to the same "treatment". In this simulated dataset, there are two conditions, a reference condition (samples 1, 2, 3, and 7) and a single experimental condition (samples 4, 5, 6, and 8). **The reference condition must be given numerical ID 1** and **the experimental conditions must be given sequential numerical IDs starting from 2** (i.e., 2, 3, 4, ...). You can have more than one experimental sample, but all comparisons will only be done with respect to one reference sample.
+    * If you want to compare two experimental samples, this can be done with the output of the models, though it will require a bit of post-hoc work on your end. More on this later...
 
 Once you have these two data frames correctly constructed, you can create a bakRData object in one line of code.
 
@@ -158,7 +159,7 @@ bakRData <- bakRData(cB_small, metadf)
 
 ## Step 2: Fitting the Efficient Model
 
-bakR implements several blends of fundamentally similar statistical models to perform differential kinetic analysis. No matter your intentions though, you must first fit data with the most efficient model available. This model (implemented in the fast_analysis() function, so see ?fast_analysis for more details) estimates mutation rates and then find the maximum likelihood estimate (MLE) for the fraction of sequencing reads labeled for each feature in each s4U fed sample. The reason you have to run this model is that some part of its output will be used by every other model you can run with bakR. More on that later though; first, let's create a simulated dataset and fit it with the efficient model. Using a simulated dataset will allow us to compare the results to the ground truth and validate its accuracy. 
+bakR implements several blends of fundamentally similar statistical models to perform differential kinetic analysis. No matter your intentions though, you must first fit data with the most efficient model available. This model (implemented in the fast_analysis() function, so see ?fast_analysis for more details) estimates mutation rates and then finds the maximum likelihood estimate (MLE) for the fraction of sequencing reads from new RNA (new meaning RNA synthesized after the start of metabolic labeling) for each feature in each s4U fed sample. The reason you have to run this model is that some part of its output will be used by every other model you can run with bakR. More on that later though; first, let's create a simulated dataset and fit it with the efficient model. Using a simulated dataset will allow us to compare the results to the ground truth and validate its accuracy. 
 
 ```{r}
 # Simulate a nucleotide recoding dataset
@@ -180,7 +181,7 @@ Fit <- bakRFit(bakRData)
 
 bakRFit() is used here as a wrapper for two functions in bakR: cBprocess() and fast_analysis(). cBprocess() will extract and properly format the information needed for all statistical models from the bakRData object and fast_analysis() will perform the efficient analysis. This should take no more than a minute to run. Messages are printed along the way to keep you updated as to the progress of the analysis. 
 
-One of the most important messages is that regarding the estimated pnews and pold. The pnews are the estimated mutation rates of labeled reads in each sample (muts = Exp_ID, and reps = a numerical replicate ID that corresponds to the order replicates appear in the cB), and pold is a global estimate of the background mutation rate used in all analyses. The simulated mutation rates are 0.05 for labeled reads and 0.001 for unlabeled reads in all samples this simulation, so the estimates are pretty close. "But Isaac, why are the pnews consistently underestimated"? Good question, its because this is a small simulated dataset with a somewhat tight distribution of fraction news. fast_analysis() makes lots of assumptions to assure maximum efficiency, and one is that the highest mutation rates in s4U fed samples come from features with almost 100% labeling (fraction labeled = 1). That won't be true in small simulated datasets, but it's still not that bad, everything considered. If you have better mutation rate estimates from elsewhere (say a run of the full Stan model implemented in bakR), you can pass the true values to bakRFit():
+One of the most important messages is that regarding the estimated pnews and pold. The pnews are the estimated mutation rates of reads from new RNAs (new meaning RNAs synthesized after 4sU labeling) in each sample (muts = Exp_ID, and reps = a numerical replicate ID that corresponds to the order replicates appear in the cB), and pold is a global estimate of the background mutation rate used in all analyses. The simulated mutation rates are 0.05 for new reads and 0.001 for old reads in all samples this simulation, so the estimates are pretty close. "But Isaac, why are the pnews consistently underestimated"? Good question, its because this is a small simulated dataset with a somewhat tight distribution of fraction news. fast_analysis() makes lots of assumptions to assure maximum efficiency, and one is that the highest mutation rates in s4U fed samples come from features with almost 100% labeling (fraction new = 1). That won't be true in small simulated datasets, but it's still not that bad, everything considered. If you have better mutation rate estimates from elsewhere (say a run of the full Stan model implemented in bakR), you can pass these estimates to bakRFit():
 
 ```{r}
 # Run efficient model with known mutation rates
@@ -193,7 +194,7 @@ Fit <- bakRFit(Fit,
 
 Since we've already run the fast_analysis once, we can speed up the analysis by passing the Fit object from the first run rather than the bakRData object. This allows bakR to skip the time consuming pre-processing steps. Just make sure to set FastRerun to TRUE. 
 
-An even better, though slightly less efficient solution is to use a more rigorous statistical model implemented in Stan to estimate mutation rates. The idea is to run this model on only a small subset of features with sufficient sequencing depth and a fraction labeled moderately close to 0.5:
+An even better, though slightly less efficient solution is to use a more rigorous statistical model implemented in Stan to estimate mutation rates. The idea is to run this model on only a small subset of features with sufficient sequencing depth and a fraction new moderately close to 0.5 so that there is representation of both labeled and unlabeled reads:
 
 ```{r, eval = FALSE}
 # Set StanRateEst to TRUE to use Stan to estimate rates
@@ -247,7 +248,7 @@ Fit <- bakRFit(Fit, StanFit = TRUE)
 
 ```
 
-You might rightfully ask what it is that makes these models "more trustworthy"? Didn't we just show that the logit(fn) estimates for the fast model were pretty good? Why bother with these computationally expensive models?? The answer is that a lot of the magic happens at the level of uncertainty quantification. While all models are going to agree pretty well on estimates for kinetic parameters, they won't necessarily agree on how uncertain those estimates are. The fastest model takes a lot of shortcuts and uses a lot of approximations that make it fast but also make its uncertainty quantification less rigorous. I like to say that the fast model should be used for initial investigations of your data, a rapid means by which to satisfy your desire to dive into whatever exciting biology you might be exploring. When you have a since of how promising your data is and what it is you want to analyze, switch on over to the heavier models. These will give you more peace of mind and allow you to comfortably dig a little deeper into your datasets as you prepare for stunning presentations and groundbreaking papers. The full Stan model (StanFit = TRUE) should be your go-to for this, but if you are working with an unusually large dataset, look to the hybrid model. A general rule of thumb for what constitutes a large dataset in this case is if (number of experimental conditions) x (number of replicates of each condition) is greater than 20. For example, 3 replicates of 10 different conditions (3 x 10 = 30) is going to take a while for the full model to process, likely on the order of weeks.
+You might rightfully ask what it is that makes these models "more trustworthy"? Didn't we just show that the logit(fn) estimates for the fast model were pretty good? Why bother with these computationally expensive models?? The answer is that a lot of the magic happens at the level of uncertainty quantification. While all models are going to agree pretty well on estimates for kinetic parameters, they won't necessarily agree on how uncertain those estimates are. The fastest model takes a lot of shortcuts and uses a lot of approximations that make it fast but also make its uncertainty quantification less rigorous. I like to say that the fast model should be used for initial investigations of your data, a rapid means by which to satisfy your desire to dive into whatever exciting biology you might be exploring. When you have a sense of how promising your data is and what it is you want to analyze, switch on over to the heavier models. These will give you more peace of mind and allow you to comfortably dig a little deeper into your datasets as you prepare for stunning presentations and groundbreaking papers. The full Stan model (StanFit = TRUE) should be your go-to for this, but if you are working with an unusually large dataset, look to the hybrid model. A general rule of thumb for what constitutes a large dataset in this case is if (number of experimental conditions) x (number of replicates of each condition) is greater than 20. For example, 3 replicates of 10 different conditions (3 x 10 = 30) is going to take a while for the full model to process, likely on the order of weeks.
 
 The Fit objects contain lists pertaining to the fits of each of the models. The possible contents include:
 
@@ -268,10 +269,10 @@ plotMA(Fit$Fast_Fit, Fit$Data_lists$Stan_data$Avg_Reads_natural)
 
 ```
 
-If you have more than one experimental condition, 
+If you have more than one experimental condition, you can choose to plot all comparisons or just a subset of those in which you are interested. See the Exps and Exp_shape parameters in the ?plotMA help file for details.
 
 
-volcano plots:
+Another common plot to make with the bakR fits is a volcano plot. The x-axis in a volcano plot is the same as the y-axis of an MA plot (so L2FC in a kinetic parameter), and the y-axis is a measure of statistical significance (e.g., FDR adjusted p-value), usually on a -log10 scale. The plotVolcano function is here to help you with this one too, containing many of the same parameters as plotMA:
 
 ```{r, fig.align='center'}
 ## Volcano Plot with Fast Fit; significance assessed relative to an FDR control of 0.05
@@ -279,10 +280,22 @@ plotVolcano(Fit$Fast_Fit)
 
 ```
 
-and PCA with replicate fraction new estimates for diagnosing potential batch effects:
+While volcano and MA plots are great for visualizing the results of bakR's model fits, another important class of plots are those to detect anomalies. Sometimes, high-throughput sequencing datasets are plagued by batch effects, biases that effect one or a few of your samples. These can lead to inflated false discovery rates and/or reduced power and are thus important to look out for. One simple way to see if there are large-scale biases present in any of your samples is to perform principle component analysis (PCA), a dimension reduction algorithm that will project your high-dimensional sequencing data onto a few dimensions. bakR specifically implements a novel fraction new PCA, where the high-dimensional object to be compressed is a matrix of fraction new estimates, with each column of the matrix corresponding to a sample and each row a feature (e.g., a transcript). If replicates don't cluster together in the 2D PCA plot produced by bakR's FnPCA, that could indicate the presence of batch effects:
 
 ```{r, fig.align='center'}
 ## 2D PCA plot with replicate fraction news
 FnPCA(Fit$Fast_Fit)
 
 ```
+
+In this case, replicates separate from eachother fairly well, which is promising and the difference between the red point in the lower left and those in the upper left is not significant enough to cause concern. I have found that clustering is improved with the full MCMC fit, so if you've taken the time to run that model, I suggest using it for an PCA plots.
+
+## Step 4: Where to go from here
+
+I hope that this vignette has provided a useful introduction to using bakR with your nucleotide recoding RNA-seq datasets. Inevitably, not all of your questions will be introduced in the Getting-Started vignette. Some of your remaining quandaries may be challenging problems specific to your exciting research, the unavoidable roadblocks of doing science that you will eventually conquer, but with little help from any documentation I could dream of writing. That being said, I can still imagine many important implementation questions not addressed here, like:
+
+1. What about estimating and comparing synthesis rates? bakR seems to only automatically perform degradation rate constant comparisons, but you keep calling it differential kinetic analysis, not differential stability analysis. What gives? 
+1. I want to perform more complicated comparisons, not just a set of comparisons with respect to a single reference sample. How do I do that?
+1. I'm new to Stan and have been getting weird warning messages upon running some of the heavier models. What are rhats and effective sample sizes?
+
+If either of the first two questions are of interest to you, head over to the Further-Analyses vignette! If the final question is of interest, then I would suggest heading over to some of the amazing documentation written by the Stan team. 
