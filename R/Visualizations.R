@@ -3,12 +3,19 @@
 #' This function creates a 2-component PCA plot with logit(fn) estimates.
 #'
 #' @param obj Object of class FastFit or HMCFit outputted by respective analysis functions
+#' @param log_kdeg Boolean; if TRUE, then log(kdeg) estimates used for PCA rather than logit(fn)
 #' @param ... Further arguments passed to or from other methods
 #' @export
-FnPCA <- function(obj, ...){
+FnPCA <- function(obj, log_kdeg = FALSE, ...){
   ### Extract logit(fn)
 
-  logit_fn_df <- obj$Fn_Estimates[,c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")]
+  if(log_kdeg){
+    logit_fn_df <- obj$Fn_Estimates[,c("log_kdeg", "Feature_ID", "Exp_ID", "Replicate", "sample")]
+    colnames(logit_fn_df) <- c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")
+  }else{
+    logit_fn_df <- obj$Fn_Estimates[,c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")]
+
+  }
 
   ### Create sample to [MT, R] lookup table
 
@@ -132,14 +139,17 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
 #' This function outputs a L2FC(kdeg) MA plot. Plots are colored according to statistical
 #' significance and the sign of L2FC(kdeg)
 #'
-#' @param obj Object of class FastFit or HMCFit outputted by respective analysis functions
-#' @param Avg_reads_natural Average reads across all replicates on natural linear scale; Obtained from \code{Fit$Data_Lists$Stan_data$Avg_reads_natural}
+#' @param obj Object of class bakRFit outputted by \code{bakRFit} function
+#' @param Model String identifying implementation for which you want to generate an MA plot
 #' @param FDR False discovery rate to control at for significance assessment
 #' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
 #' @param Exp_shape Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot
 #' @param ... Further arguments passed to or from other methods
 #' @export
-plotMA <- function(obj, Avg_reads_natural, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
+#'
+plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
+
+  Model <- match.arg(Model)
 
   # Pretty plotting theme
   theme_mds <-    ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
@@ -160,7 +170,20 @@ plotMA <- function(obj, Avg_reads_natural, FDR = 0.05, Exps = NULL, Exp_shape = 
                                  strip.background = ggplot2::element_blank())
 
   ## Extract L2FC(kdeg) and padj
-  L2FC_df <- obj$Effects_df[,c("L2FC_kdeg", "padj", "Exp_ID", "Feature_ID")]
+  if(Model == "MLE"){
+    L2FC_df <- obj$Fast_Fit$Effects_df[,c("L2FC_kdeg", "padj", "Exp_ID", "Feature_ID")]
+
+  }else if(Model == "Hybrid"){
+    L2FC_df <- obj$Hybrid_Fit$Effects_df[,c("L2FC_kdeg", "padj", "Exp_ID", "Feature_ID")]
+
+  }else if(Model == "MCMC"){
+    L2FC_df <- obj$Stan_Fit$Effects_df[,c("L2FC_kdeg", "padj", "Exp_ID", "Feature_ID")]
+
+  }
+
+  Avg_reads_natural <- obj$Data_lists$Stan_data$Avg_Reads_natural
+
+  ## Extract L2FC(kdeg) and padj
 
   ## Add significance ID
   L2FC_df <- L2FC_df %>% dplyr::mutate(conclusion = ifelse(padj < FDR, ifelse(L2FC_kdeg < 0, "Stabilized", "Destabilized"), "Not Sig."))

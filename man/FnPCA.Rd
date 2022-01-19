@@ -4,10 +4,12 @@
 \alias{FnPCA}
 \title{Creating PCA plots with logit(fn) estimates}
 \usage{
-FnPCA(obj, ...)
+FnPCA(obj, log_kdeg = FALSE, ...)
 }
 \arguments{
 \item{obj}{Object of class FastFit or HMCFit outputted by respective analysis functions}
+
+\item{log_kdeg}{Boolean; if TRUE, then log(kdeg) estimates used for PCA rather than logit(fn)}
 
 \item{...}{Further arguments passed to or from other methods}
 }

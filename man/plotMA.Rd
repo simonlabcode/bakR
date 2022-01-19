@@ -4,12 +4,19 @@
 \alias{plotMA}
 \title{Creating L2FC(kdeg) MA plot from fit objects}
 \usage{
-plotMA(obj, Avg_reads_natural, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...)
+plotMA(
+  obj,
+  Model = c("MLE", "Hybrid", "MCMC"),
+  FDR = 0.05,
+  Exps = NULL,
+  Exp_shape = FALSE,
+  ...
+)
 }
 \arguments{
-\item{obj}{Object of class FastFit or HMCFit outputted by respective analysis functions}
+\item{obj}{Object of class bakRFit outputted by \code{bakRFit} function}
 
-\item{Avg_reads_natural}{Average reads across all replicates on natural linear scale; Obtained from \code{Fit$Data_Lists$Stan_data$Avg_reads_natural}}
+\item{Model}{String identifying implementation for which you want to generate an MA plot}
 
 \item{FDR}{False discovery rate to control at for significance assessment}
 
