@@ -54,6 +54,7 @@
 #' @param high_p Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any no s4U control
 #' samples are filtered out
 #' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
+#' @param Ucut Numeric; Any transcripts with less than this number of Us (summed over all reads) in any sample are filtered out
 #' @param FastRerun Logical; only matters if a bakRFit object is passed to \code{bakRFit()}. If TRUE, then the Stan-free
 #' model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the Stan models.
 #' @param Stan_prep Logical; if TRUE, then data_list that can be passed to Stan is curated
@@ -82,6 +83,7 @@
 bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           high_p = 0.2,
                           totcut = 50,
+                          Ucut = 5,
                           FastRerun = FALSE,
                           Stan_prep = TRUE,
                           Fast_prep = TRUE,
@@ -121,6 +123,18 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   }else if(totcut > 5000){
     warning("totcut is abnormally high (> 5000); many features will not have this much coverage in every sample and thus get filtered out.")
   }
+
+  ## Check Ucut
+  if(!is.numeric(Ucut)){
+    stop("Ucut must be numeric")
+  }else if( Ucut < 0 ){
+    stop("Ucut must be greater than 0")
+  }else if(Ucut < 4){
+    warning("Ucut is abnormally low; you are allowing an average of less than 4 Us per sequencing read.")
+  }else if(Ucut > 100){
+    warning("Ucut is abnormally high; you are requiring an average of more than 100 Us per sequencing read." )
+  }
+
 
   ## Check Stan_prep
   if(!is.logical(Stan_prep)){
@@ -212,7 +226,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
   if(class(obj) == "bakRData"){
 
-    data_list <- bakR::cBprocess(obj, high_p = high_p, totcut = totcut,
+    data_list <- bakR::cBprocess(obj, high_p = high_p, totcut = totcut, Ucut = Ucut,
                                        Stan = Stan_prep,
                                        Fast = Fast_prep,
                                        FOI = FOI,

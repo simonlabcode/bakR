@@ -7,12 +7,15 @@
 #' @param obj Object of class bakRData
 #' @param high_p highest mutation rate accepted in control samples
 #' @param totcut readcount cutoff
+#' @param Ucut Average number of Us cutoff. This parameter is likely to only be relevant if analyzing
+#' short sequencing read data (e.g., STL-seq)
 #' @importFrom magrittr %>%
 #' @return vector of gene names that passed reliability filter
 #' @export
 reliableFeatures <- function(obj,
                              high_p = 0.2,
-                             totcut = 50){
+                             totcut = 50,
+                             Ucut = 5){
 
   cB <- obj$cB
   nsamps <- length(unique(cB$sample))
@@ -28,10 +31,10 @@ reliableFeatures <- function(obj,
       dplyr::group_by(sample, XF) %>%
       dplyr::summarize(tot_mut = sum(totTC),
                        totcounts = sum(n),
-                       totU = sum(nT)) %>%
+                       avgU = sum(nT*n)) %>%
       dplyr::filter(totcounts >= totcut) %>%
       dplyr::filter(tot_mut/totcounts < high_p) %>%
-      dplyr::filter(totU > 0) %>%
+      dplyr::filter(avgU > Ucut) %>%
       dplyr::ungroup( ) %>%
       dplyr::group_by(XF) %>%
       dplyr::summarize(counts = dplyr::n()) %>%
@@ -46,9 +49,9 @@ reliableFeatures <- function(obj,
                     !grepl('__', XF)) %>%
       dplyr::group_by(sample, XF) %>%
       dplyr::summarize(totcounts = sum(n),
-                       totU = sum(nT)) %>%
+                       avgU = sum(nT*n)/sum(n)) %>%
       dplyr::filter(totcounts >= totcut,
-                    totU > 0) %>%
+                    avgU > Ucut) %>%
       dplyr::ungroup( ) %>%
       dplyr::group_by(XF) %>%
       dplyr::summarize(counts = dplyr::n()) %>%
@@ -96,6 +99,7 @@ reliableFeatures <- function(obj,
 #' @param high_p Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any no s4U control
 #' samples are filtered out
 #' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
+#' @param Ucut Numeric; Any transcripts with less than this number of Us (summed over all reads) in any sample are filtered out
 #' @param Stan Boolean; if TRUE, then data_list that can be passed to Stan is curated
 #' @param Fast Boolean; if TRUE, then dataframe that can be passed to fast_analysis() is curated
 #' @param FOI Features of interest; character vector containing names of features to analyze
@@ -145,6 +149,7 @@ reliableFeatures <- function(obj,
 cBprocess <- function(obj,
                        high_p = 0.2,
                        totcut = 50,
+                       Ucut = 5,
                        Stan = TRUE,
                        Fast = TRUE,
                        FOI = c(),
@@ -171,6 +176,17 @@ cBprocess <- function(obj,
     stop("totcut must be greater than 0")
   }else if(totcut > 5000){
     warning("totcut is abnormally high (> 5000); many features will not have this much coverage in every sample and thus get filtered out.")
+  }
+
+  ## Check Ucut
+  if(!is.numeric(Ucut)){
+    stop("Ucut must be numeric")
+  }else if( Ucut < 0 ){
+    stop("Ucut must be greater than 0")
+  }else if(Ucut < 4){
+    warning("Ucut is abnormally low; you are allowing an average of less than 4 Us per sequencing read.")
+  }else if(Ucut > 100){
+    warning("Ucut is abnormally high; you are requiring an average of more than 100 Us per sequencing read." )
   }
 
   ## Check Stan
@@ -212,10 +228,13 @@ cBprocess <- function(obj,
 
   type_list <- ifelse(metadf[samp_list, "tl"] == 0, 0, 1)
   mut_list <- metadf[samp_list, "Exp_ID"]
-  rep_list <- metadf[samp_list,] %>% dplyr::group_by(tl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup() %>% dplyr::select(r_id)
+
+  rep_list <- metadf[samp_list,] %>% dplyr::mutate(ctl = ifelse(tl == 0, 0, 1)) %>%
+    dplyr::group_by(ctl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup() %>% dplyr::select(r_id)
   rep_list <- rep_list$r_id
 
-  metadf <- metadf[samp_list, ] %>% dplyr::group_by(tl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup()
+  metadf <- metadf[samp_list, ] %>% dplyr::mutate(ctl = ifelse(tl == 0, 0, 1)) %>%
+    dplyr::group_by(ctl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup()
 
   names(type_list) <- samp_list
   names(mut_list) <- samp_list
@@ -232,7 +251,7 @@ cBprocess <- function(obj,
   if(concat == TRUE | is.null(FOI)){
     message("Finding reliable Features")
 
-    reliables <- bakR::reliableFeatures(obj, high_p = high_p, totcut = totcut )
+    reliables <- bakR::reliableFeatures(obj, high_p = high_p, totcut = totcut, Ucut = Ucut )
     keep <- c(FOI, reliables[!(reliables %in% FOI)])
   }else{
     keep <- FOI
