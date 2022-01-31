@@ -31,7 +31,7 @@ reliableFeatures <- function(obj,
       dplyr::group_by(sample, XF) %>%
       dplyr::summarize(tot_mut = sum(totTC),
                        totcounts = sum(n),
-                       avgU = sum(nT*n)) %>%
+                       avgU = sum(nT*n)/sum(n)) %>%
       dplyr::filter(totcounts >= totcut) %>%
       dplyr::filter(tot_mut/totcounts < high_p) %>%
       dplyr::filter(avgU > Ucut) %>%
