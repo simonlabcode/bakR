@@ -844,7 +844,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     dplyr::mutate(effect_size = log_kd_post - log_kd_post[Condition == 1]) %>%
     dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
     dplyr::mutate(L2FC_kdeg = effect_size*log2(exp(1))) %>%
-    dplyr::mutate(pval = 2*pt(-abs(effect_size/effect_std_error), df = 2*nreps - 2 + 2*a_hyper)) %>%
+    dplyr::mutate(pval = 2*stats::pnorm(-abs(effect_size/effect_std_error))) %>%
     dplyr::ungroup()
 
   # Calcuate lfsr using ashr package
