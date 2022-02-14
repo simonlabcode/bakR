@@ -90,7 +90,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           FOI = c(),
                           concat = TRUE,
                           StanRateEst = FALSE,
-                          RateEst_size = 7,
+                          RateEst_size = 25,
                           low_reads = 1000,
                           high_reads = 5000,
                           chains = 1,
@@ -172,8 +172,10 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     RateEst_size <- as.integer(RateEst_size)
     if(RateEst_size < 1){
       stop("RateEst_size must be greater than 0")
-    }else if(RateEst_size > 10){
-      warning("You have set RateEst_size to a number greater than 10. This will reduce efficiency without much benefit to estimate accuracy.")
+    }else if(RateEst_size > 30){
+      warning("You have set RateEst_size to a number greater than 30. This will reduce efficiency without much benefit to estimate accuracy.")
+    }else if(RateEst_size < 10){
+      warning("You have set RateEst_size to a number less than 10. This may lead to inaccurate mutation rate estimates")
     }
   }
 
