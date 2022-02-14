@@ -246,7 +246,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           p_mean = 0,
                           p_sd = 1,
                           StanRate = FALSE,
-                          Stan_data = NULL){
+                          Stan_data = NULL,
+                          null_cutoff = 0){
 
   ## Check pold
   if(length(pold) > 1){
@@ -366,6 +367,16 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if(!is.logical(StanRate)){
     stop("StanRate must be logical (TRUE or FALSE)")
   }
+
+  ## Check null_cutoff
+  if(!is.numeric(null_cutoff)){
+    stop("null_cutoff must be numeric")
+  }else if(null_cutoff < 0){
+    stop("null_cutoff must be 0 or positive")
+  }else if(null_cutoff > 2){
+    warning("You are testing against a null hypothesis |L2FC(kdeg)| greater than 2; this might be too conservative")
+  }
+
 
   logit <- function(x) log(x/(1-x))
   inv_logit <- function(x) exp(x)/(1+exp(x))
@@ -844,7 +855,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     dplyr::mutate(effect_size = log_kd_post - log_kd_post[Condition == 1]) %>%
     dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
     dplyr::mutate(L2FC_kdeg = effect_size*log2(exp(1))) %>%
-    dplyr::mutate(pval = 2*stats::pnorm(-abs(effect_size/effect_std_error))) %>%
+    dplyr::mutate(pval = pmin(1, 2*stats::pnorm((abs(effect_size) - null_cutoff)/effect_std_error, lower.tail = FALSE))) %>%
     dplyr::ungroup()
 
   # Calcuate lfsr using ashr package
