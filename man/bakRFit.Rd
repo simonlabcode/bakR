@@ -10,7 +10,7 @@ bakRFit(
   HybridFit = FALSE,
   high_p = 0.2,
   totcut = 50,
-  Ucut = 5,
+  Ucut = 0.25,
   FastRerun = FALSE,
   Stan_prep = TRUE,
   Fast_prep = TRUE,

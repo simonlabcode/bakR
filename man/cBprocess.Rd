@@ -8,7 +8,7 @@ cBprocess(
   obj,
   high_p = 0.2,
   totcut = 50,
-  Ucut = 5,
+  Ucut = 0.25,
   Stan = TRUE,
   Fast = TRUE,
   FOI = c(),
