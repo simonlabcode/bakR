@@ -8,6 +8,7 @@ cBprocess(
   obj,
   high_p = 0.2,
   totcut = 50,
+  Ucut = 5,
   Stan = TRUE,
   Fast = TRUE,
   FOI = c(),
@@ -21,6 +22,8 @@ cBprocess(
 samples are filtered out}
 
 \item{totcut}{Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out}
+
+\item{Ucut}{Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples}
 
 \item{Stan}{Boolean; if TRUE, then data_list that can be passed to Stan is curated}
 

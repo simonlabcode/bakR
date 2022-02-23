@@ -7,15 +7,14 @@
 #' @param obj Object of class bakRData
 #' @param high_p highest mutation rate accepted in control samples
 #' @param totcut readcount cutoff
-#' @param Ucut Average number of Us cutoff. This parameter is likely to only be relevant if analyzing
-#' short sequencing read data (e.g., STL-seq)
+#' @param Ucut Must have a fraction of reads with 2 or less Us less than this cutoff in all samples
 #' @importFrom magrittr %>%
 #' @return vector of gene names that passed reliability filter
 #' @export
 reliableFeatures <- function(obj,
                              high_p = 0.2,
                              totcut = 50,
-                             Ucut = 5){
+                             Ucut = 0.25){
 
   cB <- obj$cB
   nsamps <- length(unique(cB$sample))
@@ -31,10 +30,12 @@ reliableFeatures <- function(obj,
       dplyr::group_by(sample, XF) %>%
       dplyr::summarize(tot_mut = sum(totTC),
                        totcounts = sum(n),
-                       avgU = sum(nT*n)/sum(n)) %>%
+                       n2U = sum(n[nT <= 2]),
+                       nmore = sum(n[nT > 2])) %>%
+      dplyr::mutate(f2U = n2U/(nmore + n2U)) %>%
       dplyr::filter(totcounts >= totcut) %>%
       dplyr::filter(tot_mut/totcounts < high_p) %>%
-      dplyr::filter(avgU > Ucut) %>%
+      dplyr::filter(f2U < Ucut) %>%
       dplyr::ungroup( ) %>%
       dplyr::group_by(XF) %>%
       dplyr::summarize(counts = dplyr::n()) %>%
@@ -49,9 +50,11 @@ reliableFeatures <- function(obj,
                     !grepl('__', XF)) %>%
       dplyr::group_by(sample, XF) %>%
       dplyr::summarize(totcounts = sum(n),
-                       avgU = sum(nT*n)/sum(n)) %>%
+                       n2U = sum(n[nT <= 2]),
+                       nmore = sum(n[nT > 2])) %>%
+      dplyr::mutate(f2U = n2U/(nmore + n2U)) %>%
       dplyr::filter(totcounts >= totcut,
-                    avgU > Ucut) %>%
+                    f2U < Ucut) %>%
       dplyr::ungroup( ) %>%
       dplyr::group_by(XF) %>%
       dplyr::summarize(counts = dplyr::n()) %>%
@@ -99,7 +102,7 @@ reliableFeatures <- function(obj,
 #' @param high_p Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any no s4U control
 #' samples are filtered out
 #' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
-#' @param Ucut Numeric; Any transcripts with less than this number of Us (summed over all reads) in any sample are filtered out
+#' @param Ucut Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples
 #' @param Stan Boolean; if TRUE, then data_list that can be passed to Stan is curated
 #' @param Fast Boolean; if TRUE, then dataframe that can be passed to fast_analysis() is curated
 #' @param FOI Features of interest; character vector containing names of features to analyze
@@ -183,11 +186,10 @@ cBprocess <- function(obj,
     stop("Ucut must be numeric")
   }else if( Ucut < 0 ){
     stop("Ucut must be greater than 0")
-  }else if(Ucut < 4){
-    warning("Ucut is abnormally low; you are allowing an average of less than 4 Us per sequencing read.")
-  }else if(Ucut > 100){
-    warning("Ucut is abnormally high; you are requiring an average of more than 100 Us per sequencing read." )
+  }else if(Ucut > 0.5 ){
+    warning("Ucut is abnormally high; you are allowing > 50% of reads to have 2 or less Us.")
   }
+
 
   ## Check Stan
   if(!is.logical(Stan)){

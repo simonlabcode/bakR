@@ -21,7 +21,8 @@ fast_analysis(
   p_mean = 0,
   p_sd = 1,
   StanRate = FALSE,
-  Stan_data = NULL
+  Stan_data = NULL,
+  null_cutoff = 0
 )
 }
 \arguments{

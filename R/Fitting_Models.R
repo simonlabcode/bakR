@@ -54,7 +54,7 @@
 #' @param high_p Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any no s4U control
 #' samples are filtered out
 #' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
-#' @param Ucut Numeric; Any transcripts with less than this number of Us (summed over all reads) in any sample are filtered out
+#' @param Ucut Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples
 #' @param FastRerun Logical; only matters if a bakRFit object is passed to \code{bakRFit()}. If TRUE, then the Stan-free
 #' model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the Stan models.
 #' @param Stan_prep Logical; if TRUE, then data_list that can be passed to Stan is curated
@@ -129,10 +129,8 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     stop("Ucut must be numeric")
   }else if( Ucut < 0 ){
     stop("Ucut must be greater than 0")
-  }else if(Ucut < 4){
-    warning("Ucut is abnormally low; you are allowing an average of less than 4 Us per sequencing read.")
-  }else if(Ucut > 100){
-    warning("Ucut is abnormally high; you are requiring an average of more than 100 Us per sequencing read." )
+  }else if(Ucut > 0.5 ){
+    warning("Ucut is abnormally high; you are allowing > 50% of reads to have 2 or less Us.")
   }
 
 

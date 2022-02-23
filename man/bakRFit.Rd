@@ -10,13 +10,14 @@ bakRFit(
   HybridFit = FALSE,
   high_p = 0.2,
   totcut = 50,
+  Ucut = 5,
   FastRerun = FALSE,
   Stan_prep = TRUE,
   Fast_prep = TRUE,
   FOI = c(),
   concat = TRUE,
   StanRateEst = FALSE,
-  RateEst_size = 7,
+  RateEst_size = 25,
   low_reads = 1000,
   high_reads = 5000,
   chains = 1,
@@ -37,6 +38,8 @@ statistical model.}
 samples are filtered out}
 
 \item{totcut}{Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out}
+
+\item{Ucut}{Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples}
 
 \item{FastRerun}{Logical; only matters if a bakRFit object is passed to \code{bakRFit()}. If TRUE, then the Stan-free
 model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the Stan models.}
