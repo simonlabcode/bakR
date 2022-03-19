@@ -71,6 +71,7 @@
 #' A high read count cutoff is as important as a low read count cutoff in this case because you don't want the fraction labeled of chosen features to be
 #' extreme (e.g., close to 0 or 1), and high read count features are likely low fraction new features.
 #' @param chains Number of Markov chains to sample from. 1 should suffice since these are validated models
+#' @param NSS Logical; if TRUE, logit(fn)s are directly compared to avoid assuming steady-state
 #' @param ... Arguments passed to either \code{fast_analysis} (if a bakRData object)
 #' or \code{TL_Stan} and \code{Hybrid_fit} (if a bakRFit object)
 #' @return bakRFit object with results from statistical modeling and data processing. Objects possibly included are:
@@ -95,7 +96,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           RateEst_size = 25,
                           low_reads = 1000,
                           high_reads = 5000,
-                          chains = 1,
+                          chains = 1, NSS = FALSE,
                           ...){
 
   ## Check StanFit
@@ -347,7 +348,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
     if(StanFit){
 
-      Stan_list <- bakR::TL_stan(obj$Data_lists$Stan_data, chains = chains, ...)
+      Stan_list <- bakR::TL_stan(obj$Data_lists$Stan_data, NSS = NSS, chains = chains, ...)
 
       Effects <- Stan_list$Effects_df
 
@@ -390,7 +391,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       rm(Rep_Fn)
 
-      Stan_list <- bakR::TL_stan(data_list, Hybrid_Fit = TRUE, chains = chains, ...)
+      Stan_list <- bakR::TL_stan(data_list, Hybrid_Fit = TRUE, NSS = NSS, chains = chains, ...)
 
       Effects <- Stan_list$Effects_df
 

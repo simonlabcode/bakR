@@ -49,6 +49,7 @@
 #' @export
 #' @param data_list List to pass to Stan of form given by cBtoStan
 #' @param Hybrid_Fit Logical; if TRUE, Hybrid Stan model that takes as data output of fast_analysis is run.
+#' @param NSS Logical; if TRUE, models that directly compare logit(fn)s are used to avoid steady-state assumption
 #' @param keep_fit Logical; if TRUE, Stan fit object is included in output; typically large file so default FALSE.
 #' @param chains Number of Markov chains to sample from. 1 should suffice since these are validated models
 #' @param ... Arguments passed to `rstan::sampling` (e.g. iter, chains).
@@ -108,7 +109,7 @@
 #'  \item Stan_Fit; only outputted if keep_fit == TRUE. This is the full Stan fit object, an R6 object of class `stanfit`
 #' }
 #'
-TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE,
+TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE,
                     chains = 1, ...) {
 
   ### Error catching
@@ -126,9 +127,20 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE,
 
 
   if(Hybrid_Fit){
-    fit <- rstan::sampling(stanmodels$Hybrid, data = data_list, chains = chains, ...)
+    if(NSS){
+      fit <- rstan::sampling(stanmodels$Hybrid_NSS, data = data_list, chains = chains, ...)
+
+    }else{
+      fit <- rstan::sampling(stanmodels$Hybrid, data = data_list, chains = chains, ...)
+
+    }
   }else{
-    fit <- rstan::sampling(stanmodels$MCMC_Model, data = data_list, chains = chains, ...)
+    if(NSS){
+      fit <- rstan::sampling(stanmodels$MCMC_NSS, data = data_list, chains = chains, ...)
+    }else{
+      fit <- rstan::sampling(stanmodels$MCMC_Model, data = data_list, chains = chains, ...)
+
+    }
 
   }
 
