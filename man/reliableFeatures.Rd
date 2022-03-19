@@ -4,7 +4,7 @@
 \alias{reliableFeatures}
 \title{Identify features (e.g., transcripts) with high quality data}
 \usage{
-reliableFeatures(obj, high_p = 0.2, totcut = 50, Ucut = 0.25)
+reliableFeatures(obj, high_p = 0.2, totcut = 50, Ucut = 0.25, AvgU = 4)
 }
 \arguments{
 \item{obj}{Object of class bakRData}
@@ -14,6 +14,8 @@ reliableFeatures(obj, high_p = 0.2, totcut = 50, Ucut = 0.25)
 \item{totcut}{readcount cutoff}
 
 \item{Ucut}{Must have a fraction of reads with 2 or less Us less than this cutoff in all samples}
+
+\item{AvgU}{Must have an average number of Us greater than this}
 }
 \value{
 vector of gene names that passed reliability filter

@@ -11,6 +11,7 @@ bakRFit(
   high_p = 0.2,
   totcut = 50,
   Ucut = 0.25,
+  AvgU = 4,
   FastRerun = FALSE,
   Stan_prep = TRUE,
   Fast_prep = TRUE,
@@ -40,6 +41,8 @@ samples are filtered out}
 \item{totcut}{Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out}
 
 \item{Ucut}{Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples}
+
+\item{AvgU}{Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples}
 
 \item{FastRerun}{Logical; only matters if a bakRFit object is passed to \code{bakRFit()}. If TRUE, then the Stan-free
 model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the Stan models.}

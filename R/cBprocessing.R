@@ -8,13 +8,15 @@
 #' @param high_p highest mutation rate accepted in control samples
 #' @param totcut readcount cutoff
 #' @param Ucut Must have a fraction of reads with 2 or less Us less than this cutoff in all samples
+#' @param AvgU Must have an average number of Us greater than this
 #' @importFrom magrittr %>%
 #' @return vector of gene names that passed reliability filter
 #' @export
 reliableFeatures <- function(obj,
                              high_p = 0.2,
                              totcut = 50,
-                             Ucut = 0.25){
+                             Ucut = 0.25,
+                             AvgU = 4){
 
   cB <- obj$cB
   nsamps <- length(unique(cB$sample))
@@ -30,12 +32,14 @@ reliableFeatures <- function(obj,
       dplyr::group_by(sample, XF) %>%
       dplyr::summarize(tot_mut = sum(totTC),
                        totcounts = sum(n),
+                       avgU = sum(nT*n)/sum(n),
                        n2U = sum(n[nT <= 2]),
                        nmore = sum(n[nT > 2])) %>%
       dplyr::mutate(f2U = n2U/(nmore + n2U)) %>%
       dplyr::filter(totcounts >= totcut) %>%
       dplyr::filter(tot_mut/totcounts < high_p) %>%
       dplyr::filter(f2U < Ucut) %>%
+      dplyr::filter(avgU > AvgU) %>%
       dplyr::ungroup( ) %>%
       dplyr::group_by(XF) %>%
       dplyr::summarize(counts = dplyr::n()) %>%
@@ -50,11 +54,13 @@ reliableFeatures <- function(obj,
                     !grepl('__', XF)) %>%
       dplyr::group_by(sample, XF) %>%
       dplyr::summarize(totcounts = sum(n),
+                       avgU = sum(nT*n)/sum(n),
                        n2U = sum(n[nT <= 2]),
                        nmore = sum(n[nT > 2])) %>%
       dplyr::mutate(f2U = n2U/(nmore + n2U)) %>%
       dplyr::filter(totcounts >= totcut,
                     f2U < Ucut) %>%
+      dplyr::filter(avgU > AvgU) %>%
       dplyr::ungroup( ) %>%
       dplyr::group_by(XF) %>%
       dplyr::summarize(counts = dplyr::n()) %>%
@@ -103,6 +109,7 @@ reliableFeatures <- function(obj,
 #' samples are filtered out
 #' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
 #' @param Ucut Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples
+#' @param AvgU Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples
 #' @param Stan Boolean; if TRUE, then data_list that can be passed to Stan is curated
 #' @param Fast Boolean; if TRUE, then dataframe that can be passed to fast_analysis() is curated
 #' @param FOI Features of interest; character vector containing names of features to analyze
@@ -153,6 +160,7 @@ cBprocess <- function(obj,
                        high_p = 0.2,
                        totcut = 50,
                        Ucut = 0.25,
+                       AvgU = 4,
                        Stan = TRUE,
                        Fast = TRUE,
                        FOI = c(),
@@ -190,6 +198,16 @@ cBprocess <- function(obj,
     warning("Ucut is abnormally high; you are allowing > 50% of reads to have 2 or less Us.")
   }
 
+  ## Check AvgU
+  if(!is.numeric(AvgU)){
+    stop("AvgU must be numeric")
+  }else if(AvgU < 0){
+    stop("AvgU must be greater than or equal to 0")
+  }else if (AvgU > 50){
+    warning("AvgU is abnormally high; you are requiring an average number of Us greater than 50")
+  }else if(AvgU < 4){
+    warning("AvgU is abnormally low; you are allowing an average of less than 4 Us per read, which may model convergence issues.")
+  }
 
   ## Check Stan
   if(!is.logical(Stan)){
@@ -253,7 +271,7 @@ cBprocess <- function(obj,
   if(concat == TRUE | is.null(FOI)){
     message("Finding reliable Features")
 
-    reliables <- bakR::reliableFeatures(obj, high_p = high_p, totcut = totcut, Ucut = Ucut )
+    reliables <- bakR::reliableFeatures(obj, high_p = high_p, totcut = totcut, Ucut = Ucut, AvgU = AvgU)
     keep <- c(FOI, reliables[!(reliables %in% FOI)])
   }else{
     keep <- FOI

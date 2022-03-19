@@ -180,6 +180,7 @@ cBtofast <- function(cB_raw,
 #' to the runtime of the analysis.
 #' @param Stan_data List; if StanRate is TRUE, then this is the data passed to the Stan model to estimate mutation rates. If using the \code{bakRFit}
 #' wrapper of \code{fast_analysis}, then this is created automatically.
+#' @param NSS Logical; if TRUE, logit(fn)s are compared rather than log(kdeg) so as to avoid steady-state assumption.
 #' @return List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
 #' \itemize{
 #'  \item Fn_Estimates; dataframe with estimates for the fraction new and fraction new uncertainty for each feature in each replicate.
@@ -247,7 +248,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           p_sd = 1,
                           StanRate = FALSE,
                           Stan_data = NULL,
-                          null_cutoff = 0){
+                          null_cutoff = 0,
+                          NSS = FALSE){
 
   ## Check pold
   if(length(pold) > 1){
@@ -787,6 +789,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   df_fn <- data.frame(logit_fn, logit_fn_se, Replicate, Condition, Gene_ID, nreads, log_kd, kd_estimate, log_kd_se)
 
+
   # Remove vectors no longer of use
   rm(logit_fn)
   rm(logit_fn_se)
@@ -796,6 +799,14 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   rm(nreads)
 
   df_fn <- df_fn[order(df_fn$Gene_ID, df_fn$Condition, df_fn$Replicate),]
+
+
+  if(NSS){
+    colnames(df_fn) <- c("log_kd", "log_kd_se", "Replicate", "Condition", "Gene_ID", "nreads", "logit_fn", "kd_estimate", "logit_fn_se")
+
+    df_fn$kd_estimate <- inv_logit(df_fn$log_kd)
+  }
+
 
   nreps <- max(df_fn$Replicate)
 
@@ -900,7 +911,12 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   colnames(avg_df_fn_bayes) <- c("Feature_ID", "Exp_ID", "avg_log_kdeg", "sd_log_kdeg", "nreads", "sdp", "theta_o", "sd_post",
                                  "log_kdeg_post", "kdeg", "kdeg_sd", "XF")
 
-  colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se", "nreads", "log_kdeg", "kdeg", "log_kd_se", "sample", "XF")
+  if(NSS){
+    colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se", "nreads", "log_kdeg", "fn", "log_kd_se", "sample", "XF")
+  }else{
+    colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se", "nreads", "log_kdeg", "kdeg", "log_kd_se", "sample", "XF")
+  }
+
 
   #fast_list <- list(estimate_df, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, hyperpars)
   fast_list <- list(dplyr::as_tibble(df_fn), dplyr::as_tibble(avg_df_fn_bayes), dplyr::as_tibble(Effect_sizes_df), pmuts_list, c(a = a_hyper, b = b_hyper), lm_list)

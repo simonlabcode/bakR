@@ -22,7 +22,8 @@ fast_analysis(
   p_sd = 1,
   StanRate = FALSE,
   Stan_data = NULL,
-  null_cutoff = 0
+  null_cutoff = 0,
+  NSS = FALSE
 )
 }
 \arguments{
@@ -65,6 +66,8 @@ to the runtime of the analysis.}
 
 \item{Stan_data}{List; if StanRate is TRUE, then this is the data passed to the Stan model to estimate mutation rates. If using the \code{bakRFit}
 wrapper of \code{fast_analysis}, then this is created automatically.}
+
+\item{NSS}{Logical; if TRUE, logit(fn)s are compared rather than log(kdeg) so as to avoid steady-state assumption.}
 }
 \value{
 List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:

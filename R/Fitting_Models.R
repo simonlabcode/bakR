@@ -55,6 +55,7 @@
 #' samples are filtered out
 #' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
 #' @param Ucut Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples
+#' @param AvgU Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples
 #' @param FastRerun Logical; only matters if a bakRFit object is passed to \code{bakRFit()}. If TRUE, then the Stan-free
 #' model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the Stan models.
 #' @param Stan_prep Logical; if TRUE, then data_list that can be passed to Stan is curated
@@ -84,6 +85,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           high_p = 0.2,
                           totcut = 50,
                           Ucut = 0.25,
+                          AvgU = 4,
                           FastRerun = FALSE,
                           Stan_prep = TRUE,
                           Fast_prep = TRUE,
@@ -128,11 +130,22 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   if(!is.numeric(Ucut)){
     stop("Ucut must be numeric")
   }else if( Ucut < 0 ){
-    stop("Ucut must be greater than 0")
+    stop("Ucut must be greater than or equal to 0")
   }else if(Ucut > 0.5 ){
     warning("Ucut is abnormally high; you are allowing > 50% of reads to have 2 or less Us.")
   }
 
+
+  ## Check AvgU
+  if(!is.numeric(AvgU)){
+    stop("AvgU must be numeric")
+  }else if(AvgU < 0){
+    stop("AvgU must be greater than or equal to 0")
+  }else if (AvgU > 50){
+    warning("AvgU is abnormally high; you are requiring an average number of Us greater than 50")
+  }else if(AvgU < 4){
+    warning("AvgU is abnormally low; you are allowing an average of less than 4 Us per read, which may model convergence issues.")
+  }
 
   ## Check Stan_prep
   if(!is.logical(Stan_prep)){
@@ -227,6 +240,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   if(class(obj) == "bakRData"){
 
     data_list <- bakR::cBprocess(obj, high_p = high_p, totcut = totcut, Ucut = Ucut,
+                                       AvgU = AvgU,
                                        Stan = Stan_prep,
                                        Fast = Fast_prep,
                                        FOI = FOI,
