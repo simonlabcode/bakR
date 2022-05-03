@@ -50,5 +50,7 @@ LinkingTo:
 SystemRequirements: GNU make
 Suggests: 
     rmarkdown,
-    knitr
+    knitr,
+    DESeq2,
+    pheatmap
 VignetteBuilder: knitr
