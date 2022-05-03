@@ -221,10 +221,10 @@ cBtofast <- function(cB_raw,
 #'  \itemize{
 #'   \item Feature_ID; Numerical ID of feature
 #'   \item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
-#'   \item L2FC_kdeg; Log2 fold change (L2FC) kdeg estimate
-#'   \item effect; L2FC_kdeg (repeated because it is used elsewhere and used to be difference in logit(fn)s)
+#'   \item L2FC(kdeg); Log2 fold change (L2FC) kdeg estimate or change in logit(fn) if NSS TRUE
+#'   \item effect; LFC(kdeg)
 #'   \item se; Uncertainty in L2FC_kdeg
-#'   \item pval; P-value obtained using effect_size, se, and a moderated t-test
+#'   \item pval; P-value obtained using effect_size, se, and a z-test
 #'   \item padj; pval adjusted for multiple testing using Benjamini-Hochberg procedure
 #'   \item XF; Original feature name
 #'  }
@@ -247,7 +247,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           mut_reg = 0.1,
                           p_mean = 0,
                           p_sd = 1,
-                          StanRate = FALSE,
+                          StanRate = TRUE,
                           Stan_data = NULL,
                           null_cutoff = 0,
                           NSS = FALSE){
