@@ -39,7 +39,7 @@ library(pheatmap)
 # Packages which are installed when bakR is installed
 library(dplyr) 
 library(magrittr) 
-library(ggplot) 
+library(ggplot2) 
 ```
 
 ## Differential synthesis analysis with bakR + DESeq2
