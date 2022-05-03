@@ -20,10 +20,11 @@ fast_analysis(
   mut_reg = 0.1,
   p_mean = 0,
   p_sd = 1,
-  StanRate = TRUE,
+  StanRate = FALSE,
   Stan_data = NULL,
   null_cutoff = 0,
-  NSS = FALSE
+  NSS = FALSE,
+  BDA_model = FALSE
 )
 }
 \arguments{
@@ -70,6 +71,9 @@ wrapper of \code{fast_analysis}, then this is created automatically.}
 \item{null_cutoff}{bakR will test the null hypothesis of |effect size| < |null_cutoff|}
 
 \item{NSS}{Logical; if TRUE, logit(fn)s are compared rather than log(kdeg) so as to avoid steady-state assumption.}
+
+\item{BDA_model}{Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
+model is used.}
 }
 \value{
 List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:

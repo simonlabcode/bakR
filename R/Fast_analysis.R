@@ -182,6 +182,8 @@ cBtofast <- function(cB_raw,
 #' wrapper of \code{fast_analysis}, then this is created automatically.
 #' @param null_cutoff bakR will test the null hypothesis of |effect size| < |null_cutoff|
 #' @param NSS Logical; if TRUE, logit(fn)s are compared rather than log(kdeg) so as to avoid steady-state assumption.
+#' @param BDA_model Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
+#' model is used.
 #' @return List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
 #' \itemize{
 #'  \item Fn_Estimates; dataframe with estimates for the fraction new and fraction new uncertainty for each feature in each replicate.
@@ -247,10 +249,11 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           mut_reg = 0.1,
                           p_mean = 0,
                           p_sd = 1,
-                          StanRate = TRUE,
+                          StanRate = FALSE,
                           Stan_data = NULL,
                           null_cutoff = 0,
-                          NSS = FALSE){
+                          NSS = FALSE,
+                          BDA_model = FALSE){
 
   ## Check pold
   if(length(pold) > 1){
@@ -842,31 +845,48 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   ## Regularize standard deviation estimate
   # Estimate hyperpriors with method of moments
-  two_params <- 8*(var_pop^4)/var_of_var
-  b <- c(1, -(4 + 2*(var_pop^2)/var_of_var), two_params, two_params)
 
-  roots <- RConics::cubic(b)
-
-  a_hyper <- roots[(roots > 2) & (!is.complex(roots))]
+  a_hyper <- 2*(var_pop^2)/var_of_var + 4
   # Divide this by 2 to get inverse-gamma hyperprior
   # that serves as prior degrees of freedom
 
   b_hyper <- (var_pop*(a_hyper - 2))/a_hyper
 
 
-  # Regularize estimates with Bayesian models and empirically informed priors
-  avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
-    dplyr::mutate(sd_post = exp( (log(sd_log_kd)*nreps*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])*(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(nreps*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])) )) %>%
-    dplyr::mutate(log_kd_post = (avg_log_kd*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2))) %>%
-    dplyr::mutate(kdeg = exp(log_kd_post) ) %>%
-    dplyr::mutate(kdeg_sd = sd_post*exp(log_kd_post) ) %>%
-    dplyr::ungroup() %>%
-    dplyr::group_by(Gene_ID) %>%
-    dplyr::mutate(effect_size = log_kd_post - log_kd_post[Condition == 1]) %>%
-    dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
-    dplyr::mutate(L2FC_kdeg = effect_size*log2(exp(1))) %>%
-    dplyr::mutate(pval = pmin(1, 2*stats::pnorm((abs(effect_size) - null_cutoff)/effect_std_error, lower.tail = FALSE))) %>%
-    dplyr::ungroup()
+  if(BDA_model){
+    avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
+      dplyr::mutate(sd_post = (sd_log_kd*nreps + a_hyper*exp(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(a_hyper + nreps - 2) ) %>%
+      dplyr::mutate(log_kd_post = (avg_log_kd*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2))) %>%
+      dplyr::mutate(kdeg = exp(log_kd_post) ) %>%
+      dplyr::mutate(kdeg_sd = sd_post*exp(log_kd_post) ) %>%
+      dplyr::ungroup() %>%
+      dplyr::group_by(Gene_ID) %>%
+      dplyr::mutate(effect_size = log_kd_post - log_kd_post[Condition == 1]) %>%
+      dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
+      dplyr::mutate(L2FC_kdeg = effect_size*log2(exp(1))) %>%
+      dplyr::mutate(pval = pmin(1, 2*stats::pnorm((abs(effect_size) - null_cutoff)/effect_std_error, lower.tail = FALSE))) %>%
+      dplyr::ungroup()
+
+  }else{
+    # Regularize estimates with Bayesian models and empirically informed priors
+    avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
+      dplyr::mutate(sd_post = exp( (log(sd_log_kd)*nreps*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])*(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(nreps*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])) )) %>%
+      dplyr::mutate(log_kd_post = (avg_log_kd*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2))) %>%
+      dplyr::mutate(kdeg = exp(log_kd_post) ) %>%
+      dplyr::mutate(kdeg_sd = sd_post*exp(log_kd_post) ) %>%
+      dplyr::ungroup() %>%
+      dplyr::group_by(Gene_ID) %>%
+      dplyr::mutate(effect_size = log_kd_post - log_kd_post[Condition == 1]) %>%
+      dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
+      dplyr::mutate(L2FC_kdeg = effect_size*log2(exp(1))) %>%
+      dplyr::mutate(pval = pmin(1, 2*stats::pnorm((abs(effect_size) - null_cutoff)/effect_std_error, lower.tail = FALSE))) %>%
+      dplyr::ungroup()
+
+
+  }
+
+
+
 
 
   message("Assessing statistical significance")

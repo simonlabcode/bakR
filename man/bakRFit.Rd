@@ -17,12 +17,13 @@ bakRFit(
   Fast_prep = TRUE,
   FOI = c(),
   concat = TRUE,
-  StanRateEst = TRUE,
+  StanRateEst = FALSE,
   RateEst_size = 25,
   low_reads = 1000,
   high_reads = 5000,
   chains = 1,
   NSS = FALSE,
+  BDA_model = FALSE,
   ...
 )
 }
@@ -71,6 +72,9 @@ extreme (e.g., close to 0 or 1), and high read count features are likely low fra
 \item{chains}{Number of Markov chains to sample from. 1 should suffice since these are validated models}
 
 \item{NSS}{Logical; if TRUE, logit(fn)s are directly compared to avoid assuming steady-state}
+
+\item{BDA_model}{Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
+model is used.}
 
 \item{...}{Arguments passed to either \code{fast_analysis} (if a bakRData object)
 or \code{TL_Stan} and \code{Hybrid_fit} (if a bakRFit object)}

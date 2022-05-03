@@ -72,6 +72,8 @@
 #' extreme (e.g., close to 0 or 1), and high read count features are likely low fraction new features.
 #' @param chains Number of Markov chains to sample from. 1 should suffice since these are validated models
 #' @param NSS Logical; if TRUE, logit(fn)s are directly compared to avoid assuming steady-state
+#' @param BDA_model Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
+#' model is used.
 #' @param ... Arguments passed to either \code{fast_analysis} (if a bakRData object)
 #' or \code{TL_Stan} and \code{Hybrid_fit} (if a bakRFit object)
 #' @return bakRFit object with results from statistical modeling and data processing. Objects possibly included are:
@@ -92,11 +94,11 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           Fast_prep = TRUE,
                           FOI = c(),
                           concat = TRUE,
-                          StanRateEst = TRUE,
+                          StanRateEst = FALSE,
                           RateEst_size = 25,
                           low_reads = 1000,
                           high_reads = 5000,
-                          chains = 1, NSS = FALSE,
+                          chains = 1, NSS = FALSE, BDA_model = FALSE,
                           ...){
 
   ## Check StanFit
@@ -268,10 +270,14 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       mutrate_list <- bakR::cBprocess(bakRData2)
 
-      fast_list <- bakR::fast_analysis(data_list$Fast_df, Stan_data = mutrate_list$Stan_data, StanRate = TRUE, ...)
+      fast_list <- bakR::fast_analysis(data_list$Fast_df, Stan_data = mutrate_list$Stan_data, StanRate = TRUE,
+                                       BDA_model = BDA_model,
+                                       NSS = NSS, ...)
 
     }else{
-      fast_list <- bakR::fast_analysis(data_list$Fast_df, ...)
+      fast_list <- bakR::fast_analysis(data_list$Fast_df,
+                                       BDA_model = BDA_model,
+                                       NSS = NSS, ...)
     }
 
 
@@ -333,10 +339,14 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
         rm(Stan_data)
 
-        fast_list <- bakR::fast_analysis(obj$Data_lists$Fast_df, Stan_data = mutrate_list, StanRate = TRUE, ...)
+        fast_list <- bakR::fast_analysis(obj$Data_lists$Fast_df, Stan_data = mutrate_list, StanRate = TRUE,
+                                         NSS = NSS,
+                                         BDA_model = BDA_model, ...)
 
       }else{
-        fast_list <- bakR::fast_analysis(obj$Data_lists$Fast_df, ...)
+        fast_list <- bakR::fast_analysis(obj$Data_lists$Fast_df,
+                                         NSS = NSS,
+                                         BDA_model = BDA_model, ...)
 
       }
 
