@@ -856,10 +856,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   # Regularize estimates with Bayesian models and empirically informed priors
   avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
-    #dplyr::mutate(sd_post = sqrt((a_hyper*b_hyper + nreps*sd_logit_fn)/(a_hyper + nreps - 2))) %>%
     dplyr::mutate(sd_post = exp( (log(sd_log_kd)*nreps*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])*(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(nreps*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])) )) %>%
     dplyr::mutate(log_kd_post = (avg_log_kd*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2))) %>%
-    #dplyr::mutate(sd_post = sqrt(1/(nreps/(sd_post^2) + (1/sdp^2)))) %>%
     dplyr::mutate(kdeg = exp(log_kd_post) ) %>%
     dplyr::mutate(kdeg_sd = sd_post*exp(log_kd_post) ) %>%
     dplyr::ungroup() %>%
@@ -870,7 +868,6 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     dplyr::mutate(pval = pmin(1, 2*stats::pnorm((abs(effect_size) - null_cutoff)/effect_std_error, lower.tail = FALSE))) %>%
     dplyr::ungroup()
 
-  # Calcuate lfsr using ashr package
 
   message("Assessing statistical significance")
 
