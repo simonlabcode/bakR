@@ -175,7 +175,7 @@ bakRData <- sim_data$bakRData
 sim_truth <- sim_data$sim_list
 
 # Run the efficient model
-Fit <- bakRFit(bakRData)
+Fit <- bakRFit(bakRData, StanRateEst = FALSE)
 
 ```
 
@@ -194,7 +194,7 @@ Fit <- bakRFit(Fit,
 
 Since we've already run the fast_analysis once, we can speed up the analysis by passing the Fit object from the first run rather than the bakRData object. This allows bakR to skip the time consuming pre-processing steps. Just make sure to set FastRerun to TRUE. 
 
-An even better, though slightly less efficient solution is to use a more rigorous statistical model implemented in Stan to estimate mutation rates. The idea is to run this model on only a small subset of features with sufficient sequencing depth and a fraction new moderately close to 0.5 so that there is representation of both labeled and unlabeled reads:
+An even better, though slightly less efficient solution is to use a more rigorous statistical model implemented in Stan to estimate mutation rates. The idea is to run this model on only a small subset of features with sufficient sequencing depth and a fraction new moderately close to 0.5 so that there is representation of both labeled and unlabeled reads. Note, this is the default mutation rate strategy in bakRFit:
 
 ```{r, eval = FALSE}
 # Set StanRateEst to TRUE to use Stan to estimate rates
@@ -248,7 +248,7 @@ Fit <- bakRFit(Fit, StanFit = TRUE)
 
 ```
 
-You might rightfully ask what it is that makes these models "more trustworthy"? Didn't we just show that the logit(fn) estimates for the fast model were pretty good? Why bother with these computationally expensive models?? The answer is that a lot of the magic happens at the level of uncertainty quantification. While all models are going to agree pretty well on estimates for kinetic parameters, they won't necessarily agree on how uncertain those estimates are. The fastest model takes a lot of shortcuts and uses a lot of approximations that make it fast but also make its uncertainty quantification less rigorous. I like to say that the fast model should be used for initial investigations of your data, a rapid means by which to satisfy your desire to dive into whatever exciting biology you might be exploring. When you have a sense of how promising your data is and what it is you want to analyze, switch on over to the heavier models. These will give you more peace of mind and allow you to comfortably dig a little deeper into your datasets as you prepare for stunning presentations and groundbreaking papers. The full Stan model (StanFit = TRUE) should be your go-to for this, but if you are working with an unusually large dataset, look to the hybrid model. A general rule of thumb for what constitutes a large dataset in this case is if (number of experimental conditions) x (number of replicates of each condition) is greater than 20. For example, 3 replicates of 10 different conditions (3 x 10 = 30) is going to take a while for the full model to process, likely on the order of weeks.
+You might rightfully ask what it is that makes these models "more trustworthy"? Didn't we just show that the logit(fn) estimates for the fast model were pretty good? Why bother with these computationally expensive models?? The answer is that a lot of the magic happens at the level of uncertainty quantification. While all models are going to agree pretty well on estimates for kinetic parameters, they won't necessarily agree on how uncertain those estimates are. The fastest model takes a lot of shortcuts and uses a lot of approximations that make it fast but also make its uncertainty quantification less rigorous. I like to say that the fast model should be used for initial investigations of your data, a rapid means by which to satisfy your desire to dive into whatever exciting biology you might be exploring. When you have a sense of how promising your data is and what it is you want to analyze, switch on over to the heavier models. These will give you more peace of mind and allow you to comfortably dig a little deeper into your datasets as you prepare for stunning presentations and groundbreaking papers. The full Stan model (StanFit = TRUE) should be your go-to for this, but if you are working with an unusually large dataset, look to the hybrid model. A general rule of thumb for what constitutes a large dataset in this case is if (number of experimental conditions) x (number of replicates of each condition) is greater than 10. For example, 3 replicates of 5 different conditions (3 x 5 = 15) is going to take a while for the full model to process, likely on the order of weeks.
 
 The Fit objects contain lists pertaining to the fits of each of the models. The possible contents include:
 
@@ -288,14 +288,28 @@ FnPCA(Fit$Fast_Fit)
 
 ```
 
-In this case, replicates separate from eachother fairly well, which is promising and the difference between the red point in the lower left and those in the upper left is not significant enough to cause concern. I have found that clustering is improved with the full MCMC fit, so if you've taken the time to run that model, I suggest using it for an PCA plots.
+In this case, replicates separate from eachother fairly well, which is promising and the difference between the red point in the lower left and those in the upper left is not significant enough to cause concern. I have found that clustering is improved with the full MCMC fit, so if you've taken the time to run that model, I suggest using it for any PCA plots.
 
 ## Step 4: Where to go from here
 
-I hope that this vignette has provided a useful introduction to using bakR with your nucleotide recoding RNA-seq datasets. Inevitably, not all of your questions will be introduced in the Getting-Started vignette. Some of your remaining quandaries may be challenging problems specific to your exciting research, the unavoidable roadblocks of doing science that you will eventually conquer, but with little help from any documentation I could dream of writing. That being said, I can still imagine many important implementation questions not addressed here, like:
+I hope that this vignette has provided a useful introduction to using bakR with your nucleotide recoding RNA-seq datasets. Inevitably, not all of your questions will be answered in the Getting-Started vignette. Some of your remaining quandaries may be challenging problems specific to your exciting research, the unavoidable roadblocks of doing science that you will eventually conquer, but with little help from any documentation I could dream of writing. That being said, I can still imagine many important implementation questions not addressed here, like:
 
 1. What about estimating and comparing synthesis rates? bakR seems to only automatically perform degradation rate constant comparisons, but you keep calling it differential kinetic analysis, not differential stability analysis. What gives? 
 1. I want to perform more complicated comparisons, not just a set of comparisons with respect to a single reference sample. How do I do that?
+1. What if my population of cells are dynamically responding to a perturbation during my experiment? The steady-state relationship between the fraction new and degradation rate that bakR seems to assume won't hold 
 1. I'm new to Stan and have been getting weird warning messages upon running some of the heavier models. What are rhats and effective sample sizes?
 
-If either of the first two questions are of interest to you, head over to the Further-Analyses vignette! If the final question is of interest, then I would suggest heading over to some of the amazing documentation written by the Stan team. 
+If either of the first two questions are of interest to you, head over to the Further-Analyses vignette! 
+
+If the final question is of interest, then I would suggest heading over to some of the amazing documentation written by the Stan team. In short though, warnings from Stan are a sign that the model did not converge. The cause of this is likely anomalies in your data. Some challenges that I have come across that could lead to such warnings include:
+
+1. Did you analyze a mix of technical and biological replicates? Technical replicates will have much less replicate
+to replicate variability than biological replicates, which will confuse and crash the models.
+1. Is your 4sU label time abnormally long or short? If you are getting warnings from running the MLE implementation 
+about logit(fn)s being at the lower or upper bounds, this could be the case. It means that there will be some extreme
+mutational data (e.g., 0 mutations in any sequencing read) that will make analysis with the MCMC implementation 
+more difficult. Try filtering out these extreme transcripts and rerunning bakR if this is the case.
+1. Do you have any extreme batch effects. Check the FnPCA plot; extreme differences between replicates could also break the models.
+1. Are you analyzing short sequencing reads? bakR has not yet been fully validated on short sequencing read nucleotide recoding RNA-seq data (e.g., read lengths less than 50 nucleotides), so exercise caution when analyzing this kind of data with bakR. Mutation rate estimation can also pose a challenge for bakR in this case. To get around these problems, try using the mutation rate estimates from the MCMC implementation (which I have found to be accurate even when model convergence is an issue) in the MLE implementation.  
+
+Sometimes, small warnings from Stan are no cause for concern. How do you know whether or not there is a serious problem though? I would suggest comparing the output of the Hybrid/MCMC implementation to that of the MLE implementation. In particular, check the correlation between the L2FC(kdeg) estimates. If the correlation is good, then there probably is nothing to worry about. If the estimates for a handful of transcripts differ wildly between the implementations though, that is strong evidence that the model didn't converge and that one of the anomalies mentioned above is afflicting your data. 
