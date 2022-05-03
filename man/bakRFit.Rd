@@ -17,7 +17,7 @@ bakRFit(
   Fast_prep = TRUE,
   FOI = c(),
   concat = TRUE,
-  StanRateEst = FALSE,
+  StanRateEst = TRUE,
   RateEst_size = 25,
   low_reads = 1000,
   high_reads = 5000,

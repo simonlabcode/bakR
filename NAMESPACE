@@ -2,6 +2,7 @@
 
 export(FnPCA)
 export(Heatmap_kdeg)
+export(NSSHeat)
 export(StanFDR)
 export(TL_stan)
 export(bakRData)
