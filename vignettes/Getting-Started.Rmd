@@ -261,11 +261,11 @@ The Fit objects contain lists pertaining to the fits of each of the models. The 
 
 bakR provides a variety of easy to use functions for beginning to investigate your data. The visualizations are particularly aimed at revealing trends in RNA stabilization or destabilization. Analyzing changes in RNA synthesis rate will require pairing the output of bakR with that of a differential expression analysis tool, like DESeq2 or limma. 
 
-One visualization powered by bakR is a L2FC(kdeg) MA plot. Each point in these plots will represent a feature-condition combination. The x-axis is the average number of sequencing reads mapping to that feature, averaging over all replicates in both the experimental and reference condition. The y-axis is the difference in stability between the reference and experimental condition, quantified as a log2-fold change (L2FC) in the degradation rate constant (kdeg). Positive values of L2FC(kdeg) represent features that are less stable (have a higher kdeg) in the experimental condition relative to the reference condition. Negative values thus represent features that are more stable in the experimental condition. The plotMA function in bakR allows you to make this plot with two inputs, both of which can be found in the Fit object:
+One visualization powered by bakR is a L2FC(kdeg) MA plot. Each point in these plots will represent a feature-condition combination. The x-axis is the average number of sequencing reads mapping to that feature, averaging over all replicates in both the experimental and reference condition. The y-axis is the difference in stability between the reference and experimental condition, quantified as a log2-fold change (L2FC) in the degradation rate constant (kdeg). Positive values of L2FC(kdeg) represent features that are less stable (have a higher kdeg) in the experimental condition relative to the reference condition. Negative values thus represent features that are more stable in the experimental condition. The plotMA function in bakR allows you to make this plot with two inputs, the bakRFit object and the model fit to use (MLE, Hybrid, or MCMC):
 
 ```{r, fig.align='center'}
 ## MA Plot with Fast Fit
-plotMA(Fit$Fast_Fit, Fit$Data_lists$Stan_data$Avg_Reads_natural)
+plotMA(Fit, Model = "MLE")
 
 ```
 

@@ -180,6 +180,7 @@ cBtofast <- function(cB_raw,
 #' to the runtime of the analysis.
 #' @param Stan_data List; if StanRate is TRUE, then this is the data passed to the Stan model to estimate mutation rates. If using the \code{bakRFit}
 #' wrapper of \code{fast_analysis}, then this is created automatically.
+#' @param null_cutoff bakR will test the null hypothesis of |effect size| < |null_cutoff|
 #' @param NSS Logical; if TRUE, logit(fn)s are compared rather than log(kdeg) so as to avoid steady-state assumption.
 #' @return List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
 #' \itemize{
