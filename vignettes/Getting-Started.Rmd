@@ -296,7 +296,7 @@ I hope that this vignette has provided a useful introduction to using bakR with 
 
 1. What about estimating and comparing synthesis rates? bakR seems to only automatically perform degradation rate constant comparisons, but you keep calling it differential kinetic analysis, not differential stability analysis. What gives? 
 1. I want to perform more complicated comparisons, not just a set of comparisons with respect to a single reference sample. How do I do that?
-1. What if my population of cells are dynamically responding to a perturbation during my experiment? The steady-state relationship between the fraction new and degradation rate that bakR seems to assume won't hold 
+1. What if my population of cells are dynamically responding to a perturbation during my experiment? The steady-state relationship between the fraction new and degradation rate that bakR seems to assume won't hold. What should I do about that? 
 1. I'm new to Stan and have been getting weird warning messages upon running some of the heavier models. What are rhats and effective sample sizes?
 
 If either of the first two questions are of interest to you, head over to the Further-Analyses vignette! 
