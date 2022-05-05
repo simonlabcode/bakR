@@ -79,7 +79,7 @@ NSSHeat <- function(bakRFit,
     mutate(Sig = ifelse(padj < DE_cutoff, ifelse(log2FoldChange < 0, "Down", "Up"), "NS"))
 
 
-  DE_reso <- DE_df[DE_df$padj < DE_cutoff,]
+  DE_reso <- reso[reso$padj < 0.05 & !is.na(reso$padj),]
 
   DE_XF <- DE_reso$XF
 
@@ -92,6 +92,9 @@ NSSHeat <- function(bakRFit,
   NSS_eff_DE <- NSS_eff_DE[, c("pval", "padj", "score_bakR", "XF", "Sig_bakR")]
 
   colnames(NSS_eff_DE) <- c("bakR_pval", "bakR_padj", "score_bakR", "XF", "Sig_bakR")
+
+
+  NSS_eff_DE <- NSS_eff_DE[NSS_eff_DE$XF %in% DE_XF,]
 
 
   test <- right_join(NSS_eff_DE, DE_reso, by = "XF")
@@ -145,8 +148,9 @@ NSSHeat <- function(bakRFit,
     mutate(DE_score = ifelse(DE_score < 0, DE_score*(lid/-min_DE), DE_score*(lid/max_DE)) ) %>%
     mutate(bakR_score = ifelse(bakR_score < 0, bakR_score*(lid/-min_bakR), bakR_score*(lid/max_bakR)) )
 
+
   heatmap_df <- as.data.frame(heatmap_df)
-  rownames(heatmap_df) <- heatmap_df$XF
+  row.names(heatmap_df) <- heatmap_df$XF
   heatmap_df <- heatmap_df[,c("bakR_score", "DE_score", "Mech_score")]
 
   heatmap_df <- heatmap_df[order(heatmap_df$Mech_score),]
