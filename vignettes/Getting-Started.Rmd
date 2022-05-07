@@ -266,7 +266,7 @@ One visualization powered by bakR is a L2FC(kdeg) MA plot. Each point in these p
 
 ```{r, fig.align='center'}
 ## MA Plot with Fast Fit
-plotMA(Fit, Model = "MLE")
+bakR::plotMA(Fit, Model = "MLE")
 
 ```
 
