@@ -862,7 +862,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       dplyr::ungroup() %>%
       dplyr::group_by(Gene_ID) %>%
       dplyr::mutate(effect_size = log_kd_post - log_kd_post[Condition == 1]) %>%
-      dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
+      dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post/sqrt(nreps), sqrt(sd_post[Condition == 1]^2 + sd_post^2)/sqrt(nreps) )) %>%
       dplyr::mutate(L2FC_kdeg = effect_size*log2(exp(1))) %>%
       dplyr::mutate(pval = pmin(1, 2*stats::pnorm((abs(effect_size) - null_cutoff)/effect_std_error, lower.tail = FALSE))) %>%
       dplyr::ungroup()
