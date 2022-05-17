@@ -176,6 +176,15 @@ bakRData <- function(cB, metadf){
     If this does not reflect the content of those columns, properly rearrange metadf columns and rerun bakRData().")
   }
 
+  if(max(metadf$Exp_ID) == 1){
+    warning("You only have data from one experimental condition. bakR is designed for comparing
+    two or more sets of samples, and thus some basic bakR use-cases will fail with your
+    data. If you are hoping to just estimate kinetic parmaters for your one set of samples,
+    then bakRFit(bakRData, StanRateEst = FALSE) will work. No other model implementaiton
+    (i.e., with any of StanRateEst, StanFit, or HybridFit set to TRUE) will work with this kind
+    of data.")
+  }
+
   validate_bakRData(new_bakRData(cB, metadf))
 
 
