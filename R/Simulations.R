@@ -560,7 +560,7 @@ sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_m
 
         #Simulate the nubmer of Us in each read
         if(STL){
-          nu <- abs(round(U_cont[mir]*STL_len) +  sign(stats::runif(1, min = -0.1, max = 0.1))*stats::rpois(nreads[mir, MT, r], 0.5))
+          nu <- abs(round(U_cont[mir]*STL_len) +  sign(stats::runif(nreads[mir, MT, r], min = -0.1, max = 0.1))*stats::rpois(nreads[mir, MT, r], 0.5))
         }else{
           nu <- stats::rbinom(n = nreads[mir,MT,r], size = readsize, prob = U_cont[mir])
         }
@@ -1287,8 +1287,13 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   Samp_ID <- rep(1:(nsamp - num_conds), each = l)
   U_contents <- U_cont[Gene_ID]
 
-  nU <- unlist(purrr::pmap(list(n = Reads_vect, size = read_length[Exp_ID], prob = U_contents),
-                    stats::rbinom))
+
+  if(STL){
+    nU <- abs(rep(round(U_contents*STL_len), times = Reads_vect) + sign(unlist(purrr::map(Reads_vect, stats::runif, min = -0.1, max = 0.1)))*unlist(purrr::map(Reads_vect, stats::rpois, lambda = 0.5)))
+  }else{
+    nU <- unlist(purrr::pmap(list(n = Reads_vect, size = read_length[Exp_ID], prob = U_contents),
+                             stats::rbinom))
+  }
 
   newness <- unlist(purrr::pmap(list(n = Reads_vect, p = fn_vect), purrr::rbernoulli))
 
