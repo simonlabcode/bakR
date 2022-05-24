@@ -712,7 +712,8 @@ sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_m
                                      Fn_mean_sim = Fn_mean_sim,
                                      Fn_rep_sim = Fn_rep_sim,
                                      L2FC_ks_mean = L2FC_ks_mean,
-                                     RNA_conc = RNA_conc*scale_factor) )
+                                     RNA_conc = RNA_conc*scale_factor,
+                                     Counts = Counts) )
 
   }else{
     ## Order dataframes as they are in fit output
@@ -724,7 +725,8 @@ sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_m
                      sim_list = list(Fn_mean_sim = Fn_mean_sim,
                                      Fn_rep_sim = Fn_rep_sim,
                                      L2FC_ks_mean = L2FC_ks_mean,
-                                     RNA_conc = RNA_conc*scale_factor) )
+                                     RNA_conc = RNA_conc*scale_factor,
+                                     Counts = Counts) )
   }
 
 
@@ -1284,7 +1286,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   Gene_ID <- rep(1:l, times = num_conds*nreps)
   Exp_ID <- rep(rep(1:num_conds, each = l), times = nreps)
   Rep_ID <- rep(1:nreps, each = l*num_conds)
-  Samp_ID <- rep(1:(nsamp - num_conds), each = l)
+  Samp_ID <- rep(rep(seq(from = 1, to = num_conds*nreps, by = nreps), times = nreps) + rep(0:(nreps-1), each = num_conds), each = l)
   U_contents <- U_cont[Gene_ID]
 
 
@@ -1322,7 +1324,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   Gene_ID <- rep(1:l, times = num_conds*nreps)
   Exp_ID <- rep(rep(1:num_conds, each = l), times = nreps)
   Rep_ID <- rep(1:nreps, each = l*num_conds)
-  Samp_ID <- rep(1:(nsamp - num_conds), each = l)
+  Samp_ID <- rep(rep(seq(from = 1, to = num_conds*nreps, by = nreps), times = nreps) + rep(0:(nreps-1), each = num_conds), each = l)
   U_contents <- U_cont[Gene_ID]
 
   ctl_data <- which(Rep_ID == 1)
@@ -1363,6 +1365,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   cB_sim_1 <- cB_sim_1[,.N, by = .(S, R, MT, FN, TC, nT, TP)]
   colnames(cB_sim_1) <- c(cols, "n")
 
+  cB_sim_1 <- cB_sim_1[order(cB_sim_1$S),]
 
 
   # Define XF column
@@ -1447,7 +1450,8 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
                                      Fn_mean_sim = Fn_mean_sim,
                                      Fn_rep_sim = Fn_rep_sim,
                                      L2FC_ks_mean = L2FC_ks_mean,
-                                     RNA_conc = RNA_conc*scale_factor) )
+                                     RNA_conc = RNA_conc*scale_factor,
+                                     Counts = Counts) )
 
   }else{
     ## Order dataframes as they are in fit output
@@ -1459,7 +1463,10 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
                      sim_list = list(Fn_mean_sim = Fn_mean_sim,
                                      Fn_rep_sim = Fn_rep_sim,
                                      L2FC_ks_mean = L2FC_ks_mean,
-                                     RNA_conc = RNA_conc*scale_factor) )
+                                     RNA_conc = RNA_conc*scale_factor,
+                                     Counts = Counts) )
   }
+
+  return(sim_data)
 
 }

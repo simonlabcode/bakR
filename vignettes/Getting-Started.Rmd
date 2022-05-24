@@ -164,7 +164,7 @@ bakR implements several blends of fundamentally similar statistical models to pe
 
 ```{r}
 # Simulate a nucleotide recoding dataset
-sim_data <- sim_bakRData(500)
+sim_data <- Simulate_bakRData(500)
   # This will simulate 500 features, 2 experimental conditions
   # and 3 replicates for each experimental condition
   # See ?sim_bakRData for details regarding tunable parameters
@@ -195,7 +195,7 @@ Fit <- bakRFit(Fit,
 
 Since we've already run the fast_analysis once, we can speed up the analysis by passing the Fit object from the first run rather than the bakRData object. This allows bakR to skip the time consuming pre-processing steps. Just make sure to set FastRerun to TRUE. 
 
-An even better, though slightly less efficient solution is to use a more rigorous statistical model implemented in Stan to estimate mutation rates. The idea is to run this model on only a small subset of features with sufficient sequencing depth and a fraction new moderately close to 0.5 so that there is representation of both labeled and unlabeled reads. Note, this is the default mutation rate strategy in bakRFit:
+An even better, though slightly less efficient solution is to use a more rigorous statistical model implemented in Stan to estimate mutation rates. The idea is to run this model on only a small subset of features with sufficient sequencing depth and a fraction new moderately close to 0.5 so that there is representation of both labeled and unlabeled reads:
 
 ```{r, eval = FALSE}
 # Set StanRateEst to TRUE to use Stan to estimate rates
