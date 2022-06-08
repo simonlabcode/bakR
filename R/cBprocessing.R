@@ -260,7 +260,12 @@ cBprocess <- function(obj,
   names(mut_list) <- samp_list
   names(rep_list) <- samp_list
 
-  nreps <- max(rep_list)
+  nreps <- rep(0, times = max(mut_list))
+  for(i in 1:max(mut_list)){
+    nreps[i] <- max(rep_list[mut_list == i])
+  }
+
+  #nreps <- max(rep_list)
 
   # Helper function:
   getType <- function(s) type_list[paste(s)]
@@ -450,7 +455,7 @@ cBprocess <- function(obj,
       MT = MT,
       nMT = nMT,
       R = R,
-      nrep = nreps,
+      nrep = max(nreps),
       num_obs = num_obs,
       tl = tls,
       U_cont = df$U_factor,
