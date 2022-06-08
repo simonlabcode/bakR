@@ -435,7 +435,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                            E = mut_actual)
 
 
-      pnewdf <- dplyr::right_join(pnewdf, truedf)
+      pnewdf <- dplyr::right_join(pnewdf, truedf, by = c("R", "E"))
 
       pnew <- pnewdf$pnew/U_df$avg_T
 
@@ -561,7 +561,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                            E = mut_actual)
 
 
-      polddf <- dplyr::right_join(polddf, truedf)
+      polddf <- dplyr::right_join(polddf, truedf, by = c("R", "E"))
 
       pold <- mean(polddf$pold/U_df$avg_T)
 
