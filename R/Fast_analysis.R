@@ -271,13 +271,20 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   }
 
   nMT <- max(df$mut)
-  nreps <- max(df$reps)
+
+  # nreps must be vector where each element i is number of replicates
+  # in Exp_ID = i
+  nreps <- rep(0, times = nMT)
+  for(i in 1:nMT){
+    nreps[i] <- max(df$reps[df$mut == i & df$type == 1])
+  }
+
 
   ## Check pnew
   if(!is.null(pnew)){
     if(!all(is.numeric(pnew))){
       stop("All elements of pnew must be numeric")
-    }else if(length(pnew) != nMT*nreps){
+    }else if(length(pnew) != sum(nreps) ){
       stop("pnew must be a vector of length == number of s4U fed samples in dataset")
     }else if(!all(pnew > 0)){
       stop("All elements of pnew must be > 0")
@@ -399,26 +406,46 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if(is.null(pnew)){
 
     if(StanRate){
-      nMT <- max(df$mut)
-      nreps <- max(df$reps)
+      ## Commented out because seemingly redundant
+      #nMT <- max(df$mut)
+      nrep_mut <- max(nreps)
 
       U_df <- df[(df$type == 1) & (df$XF %in% unique(Stan_data$sdf$XF)),] %>% dplyr::group_by(mut, reps) %>%
         dplyr::summarise(avg_T = sum(nT*n)/sum(n))
 
       U_df <- U_df[order(U_df$mut, U_df$reps),]
 
-      pnew <- exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_n")$summary)$mean)/U_df$avg_T
+      # In theory this may have too many entries; some could be imputed
+      # So going to need to associate a replicate/experimental ID with
+      # each row and remove those that are not real
+      # Especially important since I am dividing by U_df$avg_T
+      pnew <- exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_n")$summary)$mean)
+
+      rep_theory <- rep(seq(from = 1, to = nrep_mut), times = nMT)
+      mut_theory <- rep(seq(from = 1, to = nMT), each = nrep_mut)
+
+      rep_actual <- unlist(sapply(nreps, function(x) seq(1, x)))
+      mut_actual <- rep(1:nMT, times = nreps)
+
+      pnewdf <- data.frame(pnew = pnew,
+                           R = rep_theory,
+                           E = mut_theory)
+
+      truedf <- data.frame(R = rep_actual,
+                           E = mut_actual)
+
+
+      pnewdf <- dplyr::right_join(pnewdf, truedf)
+
+      pnew <- pnewdf$pnew/U_df$avg_T
+
 
       if(!is.null(pold)){
         rm(mut_fit)
       }
 
-      # rm(U_df)
 
-      rep_vect <- rep(seq(from = 1, to = nreps), times = nMT)
-
-      mut_vect <- rep(seq(from = 1, to = nMT), each = nreps)
-      New_data_estimate <- data.frame(mut_vect, rep_vect, pnew)
+      New_data_estimate <- data.frame(mut_actual, rep_actual, pnew)
       colnames(New_data_estimate) <- c("mut", "reps", "pnew")
 
       message(paste0(c("Estimated pnews for each sample are:", capture.output(New_data_estimate)), collapse = "\n"))
@@ -476,25 +503,32 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
 
   }else{ # Need to construct pmut dataframe from User input
-    nMT <- max(df$mut)
-    nreps <- max(df$reps)
+    # nMT <- max(df$mut)
+    # nreps <- max(df$reps)
     if(length(pnew) == 1){
 
-      pnew_vect <- rep(pnew, times = (nMT*nreps))
+      pnew_vect <- rep(pnew, times = sum(nreps) )
 
-      rep_vect <- rep(seq(from = 1, to = nreps), times = nMT)
+      ## Compatible with balanced replicates
+      rep_vect <- unlist(sapply(nreps, function(x) seq(1, x)))
 
-      mut_vect <- rep(seq(from = 1, to = nMT), each = nreps)
+      mut_vect <- rep(1:nMT, times = nreps)
+
+      ## Old code not compatible with unbalanced replicates
+      # rep_vect <- rep(seq(from = 1, to = nreps), times = nMT)
+      #
+      # mut_vect <- rep(seq(from = 1, to = nMT), each = nreps)
 
       New_data_estimate <- data.frame(mut_vect, rep_vect, pnew_vect)
       colnames(New_data_estimate) <- c("mut", "reps", "pnew")
 
-    } else if( length(pnew) != (nMT*nreps) ){
+    } else if( length(pnew) != sum(nreps)  ){
       stop("User inputted pnew is not of length 1 or of length equal to number of samples")
     } else{
-      rep_vect <- rep(seq(from = 1, to = nreps), times = nMT)
+      ## Compatible with balanced replicates
+      rep_vect <- unlist(sapply(nreps, function(x) seq(1, x)))
 
-      mut_vect <- rep(seq(from = 1, to = nMT), each = nreps)
+      mut_vect <- rep(1:nMT, times = nreps)
       New_data_estimate <- data.frame(mut_vect, rep_vect, pnew)
       colnames(New_data_estimate) <- c("mut", "reps", "pnew")
     }
@@ -502,15 +536,35 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   if(is.null(pold)){
     if(StanRate){
-      nMT <- max(df$mut)
-      nreps <- max(df$reps)
+      # nMT <- max(df$mut)
+      nrep_mut <- max(df$reps)
 
       U_df <- df[(df$type == 1) & (df$XF %in% unique(Stan_data$sdf$XF)),] %>% dplyr::group_by(mut, reps) %>%
         dplyr::summarise(avg_T = sum(nT*n)/sum(n))
 
       U_df <- U_df[order(U_df$mut, U_df$reps),]
 
-      pold <- mean(exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_o")$summary)$mean)/U_df$avg_T)
+      pold <- exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_o")$summary)$mean)
+
+
+      rep_theory <- rep(seq(from = 1, to = nrep_mut), times = nMT)
+      mut_theory <- rep(seq(from = 1, to = nMT), each = nrep_mut)
+
+      rep_actual <- unlist(sapply(nreps, function(x) seq(1, x)))
+      mut_actual <- rep(1:nMT, times = nreps)
+
+      polddf <- data.frame(pold = pold,
+                           R = rep_theory,
+                           E = mut_theory)
+
+      truedf <- data.frame(R = rep_actual,
+                           E = mut_actual)
+
+
+      polddf <- dplyr::right_join(polddf, truedf)
+
+      pold <- mean(polddf$pold/U_df$avg_T)
+
 
       rm(mut_fit)
 
@@ -634,7 +688,13 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   ngene <- max(Mut_data$fnum)
   num_conds <- max(Mut_data$mut)
-  nreps <- max(Mut_data$reps)
+  #nreps <- max(Mut_data$reps)
+
+  nreps <- rep(0, times = num_conds)
+  for(i in 1:num_conds){
+    nreps[i] <- max(Mut_data$reps[Mut_data$mut == i & Mut_data$type == 1])
+  }
+
 
   sample_lookup <- Mut_data[, c("sample", "mut", "reps")] %>% dplyr::distinct()
   feature_lookup <- Mut_data[,c("fnum", "XF")] %>% dplyr::distinct()
@@ -739,7 +799,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   ## bin data by bin_ID and average log10(reads) and log(sd(logit_fn))
 
   if(is.null(nbin)){
-    nbin <- max(c(round(ngene*num_conds*nreps/100), 10))
+    nbin <- max(c(round(ngene*sum(nreps)/100), 10))
   }
 
   message("Estimating read count-variance relationship")
@@ -812,7 +872,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   }
 
 
-  nreps <- max(df_fn$Replicate)
+  #nreps <- max(df_fn$Replicate)
 
   message("Averaging replicate data and regularizing estimates")
 
@@ -855,14 +915,14 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   if(BDA_model){
     avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
-      dplyr::mutate(sd_post = (sd_log_kd*nreps + a_hyper*exp(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(a_hyper + nreps - 2) ) %>%
-      dplyr::mutate(log_kd_post = (avg_log_kd*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2))) %>%
+      dplyr::mutate(sd_post = (sd_log_kd*nreps[Condition] + a_hyper*exp(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(a_hyper + nreps[Condition] - 2) ) %>%
+      dplyr::mutate(log_kd_post = (avg_log_kd*(nreps[Condition]*(1/(sd_post^2))))/(nreps[Condition]/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps[Condition]/(sd_post^2) + (1/sdp^2))) %>%
       dplyr::mutate(kdeg = exp(log_kd_post) ) %>%
       dplyr::mutate(kdeg_sd = sd_post*exp(log_kd_post) ) %>%
       dplyr::ungroup() %>%
       dplyr::group_by(Gene_ID) %>%
       dplyr::mutate(effect_size = log_kd_post - log_kd_post[Condition == 1]) %>%
-      dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post/sqrt(nreps), sqrt(sd_post[Condition == 1]^2 + sd_post^2)/sqrt(nreps) )) %>%
+      dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post/sqrt(nreps[1]), sqrt((sd_post[Condition == 1]^2)/nreps[1] + (sd_post^2)/nreps[Condition] ) )) %>%
       dplyr::mutate(L2FC_kdeg = effect_size*log2(exp(1))) %>%
       dplyr::mutate(pval = pmin(1, 2*stats::pnorm((abs(effect_size) - null_cutoff)/effect_std_error, lower.tail = FALSE))) %>%
       dplyr::ungroup()
@@ -870,8 +930,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   }else{
     # Regularize estimates with Bayesian models and empirically informed priors
     avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
-      dplyr::mutate(sd_post = exp( (log(sd_log_kd)*nreps*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])*(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(nreps*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])) )) %>%
-      dplyr::mutate(log_kd_post = (avg_log_kd*(nreps*(1/(sd_post^2))))/(nreps/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps/(sd_post^2) + (1/sdp^2))) %>%
+      dplyr::mutate(sd_post = exp( (log(sd_log_kd)*nreps[Condition]*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])*(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(nreps[Condition]*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])) )) %>%
+      dplyr::mutate(log_kd_post = (avg_log_kd*(nreps[Condition]*(1/(sd_post^2))))/(nreps[Condition]/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps[Condition]/(sd_post^2) + (1/sdp^2))) %>%
       dplyr::mutate(kdeg = exp(log_kd_post) ) %>%
       dplyr::mutate(kdeg_sd = sd_post*exp(log_kd_post) ) %>%
       dplyr::ungroup() %>%
