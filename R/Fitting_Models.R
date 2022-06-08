@@ -362,9 +362,6 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       Effects <- Stan_list$Effects_df
 
-      ## Calculate p-value using moderated t-test
-      dfs <- 2*max(obj$Fast_Fit$Fn_Estimates$Replicate) - 2 + as.numeric(obj$Fast_Fit$Hyper_Parameters[1])
-
       Effects <- Effects %>% dplyr::mutate(pval = 2*stats::pnorm(-abs(effect/se))) %>%
         dplyr::mutate(padj = stats::p.adjust(pval, method = "BH"))
 
@@ -395,7 +392,8 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
         nrep = max(Rep_Fn$Replicate),
         sample_lookup = obj$Data_lists$Stan_data$sample_lookup,
         sdf = obj$Data_lists$Stan_data$sdf,
-        mutrates = obj$Fast_Fit$Mut_rates
+        mutrates = obj$Fast_Fit$Mut_rates,
+        nrep_vect = obj$Data_lists$Stan_data$nrep_vect
       )
 
 
@@ -404,9 +402,6 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
       Stan_list <- bakR::TL_stan(data_list, Hybrid_Fit = TRUE, NSS = NSS, chains = chains, ...)
 
       Effects <- Stan_list$Effects_df
-
-      ## Calculate p-value using moderated t-test
-      dfs <- 2*max(obj$Fast_Fit$Fn_Estimates$Replicate) - 2 + as.numeric(obj$Fast_Fit$Hyper_Parameters[1])
 
       Effects <- Effects %>% dplyr::mutate(pval = 2*stats::pnorm(-abs(effect/se))) %>%
         dplyr::mutate(padj = stats::p.adjust(pval, method = "BH"))

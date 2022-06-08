@@ -225,6 +225,16 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
 
   Effects_df <- merge(Effects_df, sdf, by.x = c("Feature_ID"), by.y = "fnum")
 
+  r_vect <- data_list$nrep_vect
+  rep_actual <- unlist(sapply(r_vect, function(x) seq(1, x)))
+  mut_actual <- rep(1:(nconds+1), times = r_vect)
+
+  truedf <- data.frame(Replicate = rep_actual,
+                       Exp_ID = mut_actual)
+
+  Fn_df <- dplyr::right_join(Fn_df, truedf, by = c("Exp_ID", "Replicate"))
+
+
   if(keep_fit == FALSE){
     fit_summary <- as.data.frame(rstan::summary(fit)$summary)
 
