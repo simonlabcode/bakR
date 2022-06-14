@@ -424,7 +424,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       rep_theory <- rep(seq(from = 1, to = nrep_mut), times = nMT)
       mut_theory <- rep(seq(from = 1, to = nMT), each = nrep_mut)
 
-      rep_actual <- unlist(sapply(nreps, function(x) seq(1, x)))
+      rep_actual <- unlist(lapply(nreps, function(x) seq(1, x)))
       mut_actual <- rep(1:nMT, times = nreps)
 
       pnewdf <- data.frame(pnew = pnew,
@@ -510,7 +510,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       pnew_vect <- rep(pnew, times = sum(nreps) )
 
       ## Compatible with balanced replicates
-      rep_vect <- unlist(sapply(nreps, function(x) seq(1, x)))
+      rep_vect <- unlist(lapply(nreps, function(x) seq(1, x)))
 
       mut_vect <- rep(1:nMT, times = nreps)
 
@@ -526,7 +526,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       stop("User inputted pnew is not of length 1 or of length equal to number of samples")
     } else{
       ## Compatible with balanced replicates
-      rep_vect <- unlist(sapply(nreps, function(x) seq(1, x)))
+      rep_vect <- unlist(lapply(nreps, function(x) seq(1, x)))
 
       mut_vect <- rep(1:nMT, times = nreps)
       New_data_estimate <- data.frame(mut_vect, rep_vect, pnew)
@@ -550,7 +550,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       rep_theory <- rep(seq(from = 1, to = nrep_mut), times = nMT)
       mut_theory <- rep(seq(from = 1, to = nMT), each = nrep_mut)
 
-      rep_actual <- unlist(sapply(nreps, function(x) seq(1, x)))
+      rep_actual <- unlist(lapply(nreps, function(x) seq(1, x)))
       mut_actual <- rep(1:nMT, times = nreps)
 
       polddf <- data.frame(pold = pold,

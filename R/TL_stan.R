@@ -226,7 +226,7 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
   Effects_df <- merge(Effects_df, sdf, by.x = c("Feature_ID"), by.y = "fnum")
 
   r_vect <- data_list$nrep_vect
-  rep_actual <- unlist(sapply(r_vect, function(x) seq(1, x)))
+  rep_actual <- unlist(lapply(r_vect, function(x) seq(1, x)))
   mut_actual <- rep(1:(nconds+1), times = r_vect)
 
   truedf <- data.frame(Replicate = rep_actual,
