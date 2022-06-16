@@ -2,7 +2,8 @@
 #'
 #' This function identifies all features (e.g., transcripts, exons, etc.) for which the mutation rate
 #' is below a set threshold in the control (no s4U) sample and which have more reads than a set threshold
-#' in all samples. If there is no -s4U sample, then only the read count cutoff is considered.
+#' in all samples. If there is no -s4U sample, then only the read count cutoff is considered. Additional
+#' filtering options are only relevant if working with short RNA-seq read data.
 #'
 #' @param obj Object of class bakRData
 #' @param high_p highest mutation rate accepted in control samples

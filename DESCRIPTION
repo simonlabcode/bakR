@@ -14,8 +14,7 @@ Description: Several implementations of a statistical model of nucleotide recodi
 	improve uncertainty quantification. 'bakR' performs multiple-test adjusted
 	statistical inference with the output of this model to help biolgists separate 
 	signal from noise. Methods to automatically visualize key results and detect 
-	batch effects are also provided.
-	
+	batch effects are also provided.	
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
