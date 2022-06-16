@@ -747,33 +747,33 @@ sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_m
 
 #' Simulating nucleotide recoding data
 #'
-#' \code{sim_bakRData} simulates a `bakRData` object. It's output also includes the simulated
+#' \code{Simulate_bakRData} simulates a `bakRData` object. It's output also includes the simulated
 #' values of all kinetic parameters of interest. Only the number of genes (\code{ngene}) has to be set by the
 #' user, but an extensive list of additional parameters can be adjusted.
 #'
-#' \code{sim_bakRData} simulates a `bakRData` object using an extensive list of
+#' \code{Simulate_bakRData} simulates a `bakRData` object using a realistic generative model with many
 #' adjustable parameters. Average RNA kinetic parameters are drawn from biologically inspired
-#' distributions. Replicate variability is simulated by drawing each replicate and feature's
-#' fraction labeled (aka fraction new) from a Logit-Normal distribution with a heteroskedastic
-#' variance term with average magnitude given by a read count vs. variance relationship, and each
-#' replicate and feature's ksyn from a homoskedastic lognormal distribution. Read counts
+#' distributions. Replicate variability is simulated by drawing a feature's
+#' fraction new in a given replicate from a logit-Normal distribution with a heteroskedastic
+#' variance term with average magnitude given the chosen read count vs. variance relationship.
+#' For each replicate, a feature's ksyn is drawn from a homoskedastic lognormal distribution. Read counts
 #' can either be set to the same value for all simulated features or can be simulated according to
-#' a heterodisperse negative binomial distribution.
+#' a heterodisperse negative binomial distribution. The latter is the default
 #'
 #' The number of Us in each sequencing read is drawn from a binomial distribution with number of trials
-#' equal to the read length and probability of each nucleotide being a U of 0.25. Each read is assigned to the
-#' labeled or unlabeled population according to a Bernoulli distribution with p = fraction new. The number of
+#' equal to the read length and probability of each nucleotide being a U drawn from a beta distribution. Each read is assigned to the
+#' new or old population according to a Bernoulli distribution with p = fraction new. The number of
 #' mutations in each read are then drawn from one of two binomial distributions; if the read is assigned to the
-#' labeled population, the number of mutations are drawn from a binomial distribution with number of trials equal
-#' to the number of Us and probability of mutation = \code{p_new}; if the read is assigned to the unlabeled population,
+#' population of new RNA, the number of mutations are drawn from a binomial distribution with number of trials equal
+#' to the number of Us and probability of mutation = \code{p_new}; if the read is assigned to the population of old RNA,
 #' the number of mutations is instead drawn from a binomial distribution with the same number of trials but with the probability
-#' of mutation = \code{p_old}.
+#' of mutation = \code{p_old}. \code{p_new} must be greater than \code{p_old} because mutations in new RNA
+#' arise from both background mutations that occur with probability \code{p_old} as well as metabolic label induced mutations
 #'
 #' Simulated read counts should be treated as if they are spike-in and RPKM normalized, so the same scale factor can be applied
-#' to each sample when comparing the sequencing reads (like if you are performing differential expression analysis).
+#' to each sample when comparing the sequencing reads (e.g., if you are performing differential expression analysis).
 #'
-#' Function to simulate a bakRData object according to a heteroskedastic beta-binomial model
-#' of the fraction new.
+#' Function to simulate a bakRData object according to a realistic generative model
 #' @param ngene Number of genes to simulate data for
 #' @param num_conds Number of experimental conditions (including the reference condition) to simulate
 #' @param nreps Number of replicates to simulate
@@ -782,18 +782,18 @@ sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_m
 #' @param eff_mean Effect size mean; mean of normal distribution from which non-zero changes in logit(fraction new) are pulled from.
 #' Note, setting this to 0 does not mean that some of the significant effect sizes will be 0, as any exact integer is impossible
 #' to draw from a continuous random number generator. Setting this to 0 just means that there is symmetric stabilization and destabilization
-#' @param fn_mean Mean of fraction news of simulated transcripts in reference condition. The fraction of RNA from each transcript that is
-#' s4U labeled (new) is drawn from a normal distribution with this mean
-#' @param fn_sd Standard deviation of fraction news of simulated transcripts in reference condition. The fraction of RNA from each transcript that
-#' is s4U labeled (new) is drawn from a normal distribution with this sd
+#' @param fn_mean Mean of fraction news of simulated transcripts in reference condition. The logit(fraction) of RNA from each transcript that is
+#' metabolically labeled (new) is drawn from a normal distribution with this mean
+#' @param fn_sd Standard deviation of fraction news of simulated transcripts in reference condition. The logit(fraction) of RNA
+#' from each transcript that is metabolically labeled (new) is drawn from a normal distribution with this sd
 #' @param kslog_c Synthesis rate constants will be drawn from a lognormal distribution with meanlog = \code{kslog_c} - mean(log(kd_mean)) where kd_mean
 #' is determined from the fraction new simulated for each gene as well as the label time (\code{tl}).
 #' @param kslog_sd Synthesis rate lognormal standard deviation; see kslog_c documentation for details
-#' @param tl s4U label feed time
-#' @param p_new s4U induced mutation rate. Can be a vector of length num_conds
+#' @param tl metabolic label feed time
+#' @param p_new metabolic label (e.g., s4U) induced mutation rate. Can be a vector of length num_conds
 #' @param p_old background mutation rate
-#' @param read_lengths Total read length for each sequencing read (e.g., 200 means PE100 reads)
-#' @param p_do Rate at which s4U containing reads are lost due to dropout; must be between 0 and 1
+#' @param read_lengths Total read length for each sequencing read (e.g., PE100 reads correspond to read_lengths = 200)
+#' @param p_do Rate at which metabolic label containing reads are lost due to dropout; must be between 0 and 1
 #' @param noise_deg_a Slope of trend relating log10(standardized read counts) to log(replicate variability)
 #' @param noise_deg_b Intercept of trend relating log10(standardized read counts) to log(replicate variability)
 #' @param noise_synth Homoskedastic variability of L2FC(ksyn)
@@ -822,13 +822,13 @@ sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_m
 #' @return A list containing a simulated `bakRData` object as well as a list of simulated kinetic parameters of interest.
 #' The contents of the latter list are:
 #' \itemize{
-#'  \item Effect_sim; Dataframe meant to mimic formatting of Effect_df that are part of \code{TL_stan} and \code{fast_analysis} output.
-#'  \item Fn_mean_sim; Dataframe meant to mimic formatting of Regularized_ests that is part of \code{fast_analysis} output. Contains information
+#'  \item Effect_sim; Dataframe meant to mimic formatting of Effect_df that are part of \code{bakRFit(StanFit = TRUE)}, \code{bakRFit(HybridFit = TRUE)} and \code{bakRFit(bakRData object)} output.
+#'  \item Fn_mean_sim; Dataframe meant to mimic formatting of Regularized_ests that is part of \code{bakRFit(bakRData object)} output. Contains information
 #'  about the true fraction new simulated in each condition (the mean of the normal distribution from which replicate fraction news are simulated)
-#'  \item Fn_rep_sim; Dataframe meant to mimic formatting of Fn_Estimates that is part of \code{fast_analysis} output. Contains information
+#'  \item Fn_rep_sim; Dataframe meant to mimic formatting of Fn_Estimates that is part of \\code{bakRFit(bakRData object)} output. Contains information
 #'  about the fraction new simulated for each feature in each replicate of each condition.
-#'  \item L2FC_ks_mean; The true L2FC(ksyn) for each feature in each experimental condition. The ith column corresponds to the L2FC(ksyn) when comparing
-#'  the ith condition to the reference condition (defined as the 1st condition) so the 1st column is always all 0s
+#'  \item L2FC_ks_mean; The true L2FC(ksyn) for each feature in each experimental condition. The i-th column corresponds to the L2FC(ksyn) when comparing
+#'  the i-th condition to the reference condition (defined as the 1st condition) so the 1st column is always all 0s
 #'  \item RNA_conc; The average number of normalized read counts expected for each feature in each sample.
 #' }
 #'

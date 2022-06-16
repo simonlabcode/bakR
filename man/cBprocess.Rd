@@ -79,8 +79,8 @@ sample names and row names are the corresponding feature names.
 }
 }
 \description{
-\code{cBprocess} obtains the data structures necessary to analyze nucleotide recoding sequencing data with any of the
-statistical models implemented by \code{bakRFit}. The input to \code{cBprocess} must be an object of class
+\code{cBprocess} creates the data structures necessary to analyze nucleotide recoding RNA-seq data with any of the
+statistical model implementations in \code{bakRFit}. The input to \code{cBprocess} must be an object of class
 \code{bakRData}. The output can contain data passable to \code{fast_analysis} (if Fast == TRUE), \code{TL_stan} with StanFit = TRUE if
 Stan == TRUE, or both.
 }
