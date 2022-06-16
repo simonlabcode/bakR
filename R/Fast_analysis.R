@@ -118,6 +118,10 @@ cBtofast <- function(cB_raw,
 #' and that background is assumed to be constant for all samples. If a -s4U control is missing, then a strategy similar to that used
 #' to estimate s4U induced mutation rates is used. In this case, the lowest mutation rate features with sufficient read depths are used,
 #' and there average mutation rate is the background mutation rate estimate, as these features are assumed to be almost entirely unlabeled.
+#' Another slightly more computationally intensive but more accurate strategy to estimate mutation rates is to set \code{StanRate} = TRUE.
+#' This will fit a non-hierarchical mixture model to a small subset of transcripts using Stan. The default in \code{bakRFit} is to use
+#' 25 transcripts. If \code{StanRate} is TRUE, then a data list must be passed to \code{Stan_data} of the form that appears in the
+#' bakRFit object's Data_list$Stan_data entry.
 #'
 #' Once mutation rates are estimated, fraction news for each feature in each sample are estimated. The approach utilized is MLE
 #' using the L-BFGS-B algorithm implemented in \code{stats::optim}. The assumed likelihood function is derived from a Poisson mixture
