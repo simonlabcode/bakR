@@ -14,7 +14,6 @@
 #' @param concat Boolean; If TRUE, FOI is concatenated with output of reliableFeatures
 #' @importFrom magrittr %>%
 #' @return returns dataframe that can be passed to fast analysis
-#' @export
 cBtofast <- function(cB_raw,
                      samp_list,
                      type_list,
@@ -24,6 +23,9 @@ cBtofast <- function(cB_raw,
                      keep_input=c(0.2, 50),
                      FOI = c(),
                      concat = TRUE){
+
+  .Deprecated("cBprocess")
+
 
   cB <- cB_raw %>%
     dplyr::select(sample, XF, TC, n, nT)
@@ -93,15 +95,17 @@ cBtofast <- function(cB_raw,
 
 #' Efficiently analyze nucleotide recoding data
 #'
-#' \code{fast_analysis} analyzes nucleotide recoding data using either maximum likelihood estimation with the L-BFGS-B algorithm
-#' implemented by \code{stats::optim} or a more conservative Bayesian hypothesis testing strategy. Output includes fraction new
-#' estimates for individual estimates as well as fraction news and effect sizes (L2FC(kdeg)s and changes in logit(fraction new))
-#' averaged across replicate data. Averaging takes into account uncertainties estimated using the Fisher Information and estimates
-#' are regularized using analytical results of fully Bayesian models. The result is that fraction news are shrunk towards population means
-#' and that uncertainties are shrunk towards a mean-variance trend estimated as part of the analysis.
+#' \code{fast_analysis} analyzes nucleotide recoding data maximum likelihood estimation with the L-BFGS-B algorithm
+#' implemented by \code{stats::optim} combined with analytic solutations to simple Bayesian models to perform
+#' approximate partial pooling. Output includes kinetic parameter estimates in each replicate, kinetic parameter estimates
+#' averaged across replicates, and log-2 fold changes in the degradation rate constant (L2FC(kdeg)).
+#' Averaging takes into account uncertainties estimated using the Fisher Information and estimates
+#' are regularized using analytic solutions of fully Bayesian models. The result is that kdegs are
+#' shrunk towards population means and that uncertainties are shrunk towards a mean-variance trend estimated as part of the analysis.
 #'
 #' Unless the user supplies estimates for pnew and pold, the first step of \code{fast_analysis} is to estimate the background
-#' and s4U induced mutation rates. The former is best performed with a -s4U control sample, that is, a normal RNA-seq sample
+#' and metabolic label (will refer to as s4U for simplicity, though bakR is compatible with other metabolic labels such as s6G)
+#' induced mutation rates. The former is best performed with a -s4U control sample, that is, a normal RNA-seq sample
 #' that lacks a -s4U feed or TimeLapse chemistry conversion of s4U to a C analog. If this sample is missing, both background and
 #' s4U induced mutation rates are estimated from the s4U fed samples. For the s4U mutation rate, features with sufficient read depth,
 #' as defined by the \code{read_cut} parameter, and the highest mutation rates are assumed to be completely labeled. Thus, the
@@ -115,46 +119,45 @@ cBtofast <- function(cB_raw,
 #' to estimate s4U induced mutation rates is used. In this case, the lowest mutation rate features with sufficient read depths are used,
 #' and there average mutation rate is the background mutation rate estimate, as these features are assumed to be almost entirely unlabeled.
 #'
-#' Once mutation rates are estimated, fraction news for each feature in each sample are estimated. The default approach utilized is MLE
+#' Once mutation rates are estimated, fraction news for each feature in each sample are estimated. The approach utilized is MLE
 #' using the L-BFGS-B algorithm implemented in \code{stats::optim}. The assumed likelihood function is derived from a Poisson mixture
 #' model with rates adjusted according to each feature's empirical U-content (the average number of Us present in sequencing reads mapping
-#' to that feature in a particular sample). An alternative model is a more conservative Bayesian hypothesis testing model with an uninformative
-#' labeled vs. unlabeled prior. The Bayesian hypothesis testing model estimates the posterior probability that a set of reads with equivalent mutation
-#' and U content are labeled using a binomial likelihood and a prior of 1/2 labeled and 1/2 unlabeled. For example, if the background
-#' mutation rate is 0.001 and the s4U induced mutation rate is 0.1, then reads with 1 mutation in 25 Us have a posterior probability of being
-#' labeled of 0.891. If there are 15 such reads, then 15 x 0.891 (or 13.365) of those reads are called labeled and 15 x (1 - 0.891)
-#' (or 1.635) are called unlabeled. The estimated fraction new is then the number of reads called labeled divided by the total number
-#' of reads. This approach biases fraction new estimates towards 0.5 and is thus a more conservative estimate of the fraction new
-#' in each sample, as it is very skeptical of extreme fraction new values. This approach avoids some of the numerical instabilities
-#' of MLE strategies and can thus be favorable if running into problems performing the MLE fit.
+#' to that feature in a particular sample). Fraction new estimates are then converted to degradation rate constant estimates using
+#' a solution to a simple ordinary differntial equation model of RNA metabolism.
 #'
-#' Once fraction news are estimated, the uncertainty in the fraction new is estimated using the Fisher Information. In the limit of
-#' large datasets, the variance of the MLE is inversely related to the Fisher Information evaluated at the MLE. Mixture models are
+#' Once fraction new and kdegs are estimated, the uncertainty in these parameters is estimated using the Fisher Information. In the limit of
+#' large datasets, the variance of the MLE is inversely proportional to the Fisher Information evaluated at the MLE. Mixture models are
 #' typically singular, meaning that the Fisher information matrix is not positive definite and asymptotic results for the variance
-#' do not necessarily hold. This can be understood as arising due to nothing stopping the model from estimating a background mutation
-#' rate of 0. As the mutation rates are estimated a priori and fixed to be > 0, these problems are eliminated. In addition, when assessing
+#' do not necessarily hold. As the mutation rates are estimated a priori and fixed to be > 0, these problems are eliminated. In addition, when assessing
 #' the uncertainty of replicate fraction new estimates, the size of the dataset is the raw number of sequencing reads that map to a
 #' particular feature. This number is often large (>100) which increases the validity of invoking asymptotics.
 #'
-#' With fraction news and their uncertainties estimated, replicate estimates are pooled and regularized. There are two key steps in this
-#' downstream analysis. 1st, the uncertainty for each feature is used to extrapolate a linear log(uncertainty) vs. log10(read depth) trend,
+#' With kdegs and their uncertainties estimated, replicate estimates are pooled and regularized. There are two key steps in this
+#' downstream analysis. 1st, the uncertainty for each feature is used to fit a linear ln(uncertainty) vs. log10(read depth) trend,
 #' and uncertainties for individual features are shrunk towards the regression line. The uncertainty for each feature is a combination of the
 #' Fisher Information asymptotic uncertainty as well as the amount of variability seen between estimates. Regularization of uncertainty
 #' estimates is performed using the analytic results of a Normal distribution likelihood with known mean and unknown variance and conjugate
 #' priors. The prior parameters are estimated from the regression and amount of variability about the regression line. The strength of
 #' regularization can be tuned by adjusting the \code{prior_weight} parameter, with larger numbers yielding stronger shrinkage towards
-#' the regression line. The 2nd step is to regularize the average fraction new estimates. This is done using the analytic results of a
+#' the regression line. The 2nd step is to regularize the average kdeg estimates. This is done using the analytic results of a
 #' Normal distribution likelihood model with unknown mean and known variance and conjugate priors. The prior parameters are estimated from the
-#' population wide fraction new distribution (using its mean and standard deviation as the mean and standard deviation of the normal prior).
-#' In the 1st step, the known mean is assumed to be the average fraction new, averaged across replicates and weighted by the number of reads
+#' population wide kdeg distribution (using its mean and standard deviation as the mean and standard deviation of the normal prior).
+#' In the 1st step, the known mean is assumed to be the average kdeg, averaged across replicates and weighted by the number of reads
 #' mapping to the feature in each replicate. In the 2nd step, the known variance is assumed to be that obtained following regularization
-#' of the uncertainty estimates
+#' of the uncertainty estimates.
 #'
-#' Effect sizes (changes in fraction new) are obtained as the difference in logit(fraction new) means between the reference and experimental
-#' sample(s), and the logit(fraction new)s are assumed to be independent so that the variance of the effect size is the sum of the
-#' logit(fraction new) variances. P-values assessing the significance of the effect size are obtained using a moderated t-test with number
+#' Effect sizes (changes in kdeg) are obtained as the difference in log(kdeg) means between the reference and experimental
+#' sample(s), and the log(kdeg)s are assumed to be independent so that the variance of the effect size is the sum of the
+#' log(kdeg) variances. P-values assessing the significance of the effect size are obtained using a moderated t-test with number
 #' of degrees of freedom determined from the uncertainty regression hyperparameters and are adjusted for multiple testing using the Benjamini-
 #' Hochberg procedure to control false discovery rates (FDRs).
+#'
+#' In some cases, the assumed ODE model of RNA metabolism will not accurately model the dynamics of a biological system being analyzed.
+#' In these cases, it is best to compare logit(fraction new)s directly rather than converting fraction new to log(kdeg).
+#' This analysis strategy is implemented when \code{NSS} is set to TRUE. Comparing logit(fraction new) is only valid
+#' If a single metabolic label time has been used for all samples. For example, if a label time of 1 hour was used for NR-seq
+#' data from WT cells and a 2 hour label time was used in KO cells, this comparison is no longer valid as differences in
+#' logit(fraction new) could stem from differences in kinetics or label times.
 #'
 #'
 #' @param df Dataframe in form provided by cB_to_Fast
@@ -195,7 +198,7 @@ cBtofast <- function(cB_raw,
 #'   \item logit_fn; logit(fraction new) estimate, unregularized
 #'   \item logit_fn_se; logit(fraction new) uncertainty, unregularized and obtained from Fisher Information
 #'   \item nreads; Number of reads mapping to the feature in the sample for which the estimates were obtained
-#'   \item log_kdeg; log of degradation rate constant (kdeg) estimate, ungregularized
+#'   \item log_kdeg; log of degradation rate constant (kdeg) estimate, unregularized
 #'   \item kdeg; degradation rate constant (kdeg) estimate
 #'   \item log_kd_se; log(kdeg) uncertainty, unregularized and obtained from Fisher Information
 #'   \item sample; Sample name
