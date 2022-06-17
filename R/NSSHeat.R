@@ -81,7 +81,7 @@ NSSHeat <- function(bakRFit,
     dplyr::mutate(Sig = ifelse(padj < DE_cutoff, ifelse(log2FoldChange < 0, "Down", "Up"), "NS"))
 
 
-  DE_reso <- reso[reso$padj < 0.05 & !is.na(reso$padj),]
+  DE_reso <-  DE_df[DE_df$padj < 0.05 & !is.na(DE_df$padj),]
 
   DE_XF <- DE_reso$XF
 
@@ -98,6 +98,7 @@ NSSHeat <- function(bakRFit,
 
   NSS_eff_DE <- NSS_eff_DE[NSS_eff_DE$XF %in% DE_XF,]
 
+  #browser()
 
   test <- dplyr::right_join(NSS_eff_DE, DE_reso, by = "XF")
 
