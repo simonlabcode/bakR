@@ -2,7 +2,7 @@
 % Please edit documentation in R/Fitting_Models.R
 \name{bakRFit}
 \alias{bakRFit}
-\title{Estimating kinetic parameters from nucleotide recoding data}
+\title{Estimating kinetic parameters from nucleotide recoding RNA-seq data}
 \usage{
 bakRFit(
   obj,
@@ -69,7 +69,8 @@ as 1 and should be kept low to ensure maximum efficiency}
 A high read count cutoff is as important as a low read count cutoff in this case because you don't want the fraction labeled of chosen features to be
 extreme (e.g., close to 0 or 1), and high read count features are likely low fraction new features.}
 
-\item{chains}{Number of Markov chains to sample from. 1 should suffice since these are validated models}
+\item{chains}{Number of Markov chains to sample from. 1 should suffice since these are validated models. Running more chains is generally
+preferable, but memory constraints can make this unfeasible.}
 
 \item{NSS}{Logical; if TRUE, logit(fn)s are directly compared to avoid assuming steady-state}
 
@@ -89,23 +90,18 @@ bakRFit object with results from statistical modeling and data processing. Objec
 }
 }
 \description{
-\code{bakRFit} analyzes nucleotide recoding data to estimate
+\code{bakRFit} analyzes nucleotide recoding RNA-seq data to estimate
 kinetic parameters relating to RNA stability and changes in RNA
 stability induced by experimental perturbations. Several statistical
-models of varying efficiency and performance can be used to fit data.
+models of varying efficiency and accuracy can be used to fit data.
 }
 \details{
 If \code{bakRFit} is run on a bakRData object, \code{cBprocess}
 and then \code{fast_analysis} will always be called. The former will generate the processed
-data that can be passed to the model fitting functions (\code{fast_analysis}, \code{Hybrid_fit},
+data that can be passed to the model fitting functions (\code{fast_analysis}
 and \code{TL_Stan}). The call to \code{fast_analysis} will generate a list of dataframes
 containing information regarding the \code{fast_analysis} fit. \code{fast_analysis} is always
-called because its output is required for both \code{Hybrid_fit} and \code{TL_Stan}. In both cases,
-\code{fast_analysis} estimates a parameter that determines the number of degrees of freedom of
-the t-distribution to use when performing a moderated t-test for significance of L2FC(kdeg)s.
-For \code{Hybrid_fit}, the logit(fraction new) replicate estimates and Fisher Information derived
-approximate uncertainties are passed as data to a model that performs partial pooling approximated
-by the procedure implemented in \code{fast_analysis}.
+called because its output is required for both \code{Hybrid_fit} and \code{TL_Stan}.
 
 If \code{bakRFit} is run on a bakRFit object, \code{cBprocess} will not be called again,
 as the output of \code{cBprocess} will already be contained in the bakRFit object. Similarly,

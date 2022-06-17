@@ -2,7 +2,7 @@
 % Please edit documentation in R/NSSHeat.R
 \name{NSSHeat}
 \alias{NSSHeat}
-\title{Extract data for efficient analysis from cB}
+\title{Construct heatmap for non-steady state (NSS) analysis}
 \usage{
 NSSHeat(
   bakRFit,
@@ -37,6 +37,7 @@ aesthetics of any heatmap generated with the output.}
 returns dataframe that can be passed to pheatmap::pheatmap()
 }
 \description{
-This function processes the cB into a form necessary for the parameter estimation function
-that does not call Stan and is thus much more efficient and scalable.
+This uses the output of bakR and a differential expression analysis software to construct
+a dataframe that can be passed to pheatmap::pheatmap(). This heatmap will disply the
+result of a steady-state quasi-independent analysis of NR-seq data.
 }

@@ -1,7 +1,9 @@
-#' Extract data for efficient analysis from cB
+#' Construct heatmap for non-steady state (NSS) analysis
 #'
-#' This function processes the cB into a form necessary for the parameter estimation function
-#' that does not call Stan and is thus much more efficient and scalable.
+#' This uses the output of bakR and a differential expression analysis software to construct
+#' a dataframe that can be passed to pheatmap::pheatmap(). This heatmap will disply the
+#' result of a steady-state quasi-independent analysis of NR-seq data.
+#'
 #' @param bakRFit bakRFit object
 #' @param DE_df dataframe of required format with differential expression analysis results. See
 #' Further-Analyses vignette for details on what this dataframe should look like
@@ -76,7 +78,7 @@ NSSHeat <- function(bakRFit,
 
 
   DE_df <- DE_df %>%
-    mutate(Sig = ifelse(padj < DE_cutoff, ifelse(log2FoldChange < 0, "Down", "Up"), "NS"))
+    dplyr::mutate(Sig = ifelse(padj < DE_cutoff, ifelse(log2FoldChange < 0, "Down", "Up"), "NS"))
 
 
   DE_reso <- reso[reso$padj < 0.05 & !is.na(reso$padj),]
@@ -85,7 +87,7 @@ NSSHeat <- function(bakRFit,
 
 
   NSS_eff_DE <- NSS_eff %>%
-    mutate(Sig_bakR = ifelse(padj < 0.05, ifelse(effect < 0, "Down", "Up"), "NS"),
+    dplyr::mutate(Sig_bakR = ifelse(padj < 0.05, ifelse(effect < 0, "Down", "Up"), "NS"),
            score_bakR = effect/se)
 
 
@@ -97,12 +99,12 @@ NSSHeat <- function(bakRFit,
   NSS_eff_DE <- NSS_eff_DE[NSS_eff_DE$XF %in% DE_XF,]
 
 
-  test <- right_join(NSS_eff_DE, DE_reso, by = "XF")
+  test <- dplyr::right_join(NSS_eff_DE, DE_reso, by = "XF")
 
 
   ## Assess mechanism of differential expression
   test <- test %>%
-    mutate(mech = ifelse( Sig == "NS", "NS",  ifelse(is.na(Sig_bakR), "ksyn",
+    dplyr::mutate(mech = ifelse( Sig == "NS", "NS",  ifelse(is.na(Sig_bakR), "ksyn",
                                                      ifelse(Sig == "Down", ifelse(Sig_bakR == "Up", "kdeg", "ksyn"  ),
                                                             ifelse(Sig == "Up", ifelse(Sig_bakR == "Down", "kdeg", "ksyn"), "ksyn") ) ) ))
 
@@ -110,25 +112,25 @@ NSSHeat <- function(bakRFit,
 
   ## Calculate mechanism score
   test_stat <- test %>%
-    mutate(score_bakR = ifelse(is.na(score_bakR), 0, score_bakR)) %>% rowwise() %>%
-    mutate(mech_stat = ifelse(mech == "ksyn", ifelse( sign(score_bakR) == sign(stat), mean( c(abs(score_bakR), abs(stat)) ), abs(stat)/(abs(score_bakR) + 2) ) ,
+    dplyr::mutate(score_bakR = ifelse(is.na(score_bakR), 0, score_bakR)) %>% rowwise() %>%
+    dplyr::mutate(mech_stat = ifelse(mech == "ksyn", ifelse( sign(score_bakR) == sign(stat), mean( c(abs(score_bakR), abs(stat)) ), abs(stat)/(abs(score_bakR) + 2) ) ,
                               ifelse(mech == "kdeg", -mean( c(abs(score_bakR), abs(stat)) ) , 0) ))
 
 
-  heatmap_df <- tibble(DE_score = test_stat$stat,
+  heatmap_df <- dplyr::tibble(DE_score = test_stat$stat,
                        Mech_score = test_stat$mech_stat,
                        XF = test_stat$XF,
                        bakR_score = test_stat$score_bakR)
 
 
-  sd_DE <- sd(heatmap_df$DE_score)
-  sd_bakR <- sd(heatmap_df$bakR_score)
-  sd_mech <- sd(heatmap_df$Mech_score)
+  sd_DE <- stats::sd(heatmap_df$DE_score)
+  sd_bakR <- stats::sd(heatmap_df$bakR_score)
+  sd_mech <- stats::sd(heatmap_df$Mech_score)
 
 
   ## Standardize columns
   heatmap_df <- heatmap_df %>%
-    mutate(DE_score = DE_score/sd_DE,
+    dplyr::mutate(DE_score = DE_score/sd_DE,
            Mech_score = Mech_score/sd_mech,
            bakR_score = bakR_score/sd_bakR)
 
@@ -144,9 +146,9 @@ NSSHeat <- function(bakRFit,
   min_mech <- min(heatmap_df$Mech_score)
 
   heatmap_df <- heatmap_df %>%
-    mutate(Mech_score = ifelse(Mech_score < 0, Mech_score*(lid/-min_mech), Mech_score*(lid/max_mech))) %>%
-    mutate(DE_score = ifelse(DE_score < 0, DE_score*(lid/-min_DE), DE_score*(lid/max_DE)) ) %>%
-    mutate(bakR_score = ifelse(bakR_score < 0, bakR_score*(lid/-min_bakR), bakR_score*(lid/max_bakR)) )
+    dplyr::mutate(Mech_score = ifelse(Mech_score < 0, Mech_score*(lid/-min_mech), Mech_score*(lid/max_mech))) %>%
+    dplyr::mutate(DE_score = ifelse(DE_score < 0, DE_score*(lid/-min_DE), DE_score*(lid/max_DE)) ) %>%
+    dplyr::mutate(bakR_score = ifelse(bakR_score < 0, bakR_score*(lid/-min_bakR), bakR_score*(lid/max_bakR)) )
 
 
   heatmap_df <- as.data.frame(heatmap_df)
