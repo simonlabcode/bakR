@@ -403,7 +403,6 @@ We are ready to perform the steady-state independent analysis now!
 
 ```{r, results = 'hide'}
 
-
 NSSheatmap <- NSSHeat(Fit, DE_df)
 
 ```
@@ -419,7 +418,7 @@ So what can you do with the output of NSSHeat? Well, as the name implies, this f
 You can quickly make the heatmap using the lovely pheatmap package:
 
 ```{r, fig.align='center'}
-## NSS heatmap
+# NSS heatmap
 pheatmap(NSSheatmap, cluster_cols = FALSE, show_rownames = FALSE)
 
 ```

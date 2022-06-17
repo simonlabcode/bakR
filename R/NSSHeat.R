@@ -48,9 +48,13 @@ NSSHeat <- function(bakRFit,
   if(bakRModel == "MLE"){
     NSS_eff <- bakRFit$Fast_Fit$Effects_df
 
+
     if(is.null(NSS_eff)){
       stop("Your bakRFit is missing the Fast_Fit object, yet bakRModel == MLE.")
     }
+
+    NSS_eff$XF <- as.character(NSS_eff$XF)
+
 
   }else if(bakRModel == "Hybrid"){
     NSS_eff <- bakRFit$Hybrid_Fit$Effects_df
@@ -60,6 +64,9 @@ NSSHeat <- function(bakRFit,
            Did you mean to use MLE or MCMC fit?")
     }
 
+    NSS_eff$XF <- as.character(NSS_eff$XF)
+
+
   }else if(bakRModel == "MCMC"){
     NSS_eff <- bakRFit$Stan_Fit$Effects_df
 
@@ -67,6 +74,9 @@ NSSHeat <- function(bakRFit,
       stop("Your bakRFit is missing the Stan_Fit object, yet bakRModel == MCMC.
            Did you mean to use MLE or Hybrid fit?")
     }
+
+    NSS_eff$XF <- as.character(NSS_eff$XF)
+
   }
 
 
