@@ -24,7 +24,6 @@ knitr::opts_chunk$set(
 Welcome! This vignette discusses an exciting hodge-podge of additional analyses that can be done with bakR. The assumption is that at this point you have worked through the Getting-Started vignette. If that is not the case, I would highly suggest starting there and then coming back here once you're familiar with the standard use cases of bakR. The topics to be addressed are as follows:
 
 1. Performing differential synthesis analysis with bakR (and DESeq2, as you will see)
-1. Comparing experimental samples (so going beyond bakR's comparison of a single reference sample to a collection of experimental samples).
 1. Analyzing away-from-steady-state systems with bakR
 
 These are the packages you are going to have to install and load in order to do everything presented in this vignette:
@@ -51,7 +50,7 @@ I claim that bakR is a tool for performing differential kinetic analysis, but if
 are coming from the Getting-Started vignette then you might think that this is a misnomer.
 All that I showed you how to do in that vignette was differential *stability* analysis. Full-fledged differntial kinetic analysis means performing differential *synthesis* analysis as well, so let's talk about how you can do that with bakR.
 
-As the title of this section suggests though, bakR won't be able to accomplish this task alone. The reason for this is that assessing changes in synthesis means assessing changes in RNA stability and RNA expression. Therefore, we need to perform differential expression analysis in conjunction with differential stability analysis. In theory, I could have implemented my own differential expression analysis in bakR, but with so many popular software currently in existence to perform that task, it seemed pointlessly redundant. It also gives you the freedom to use whatever differential expression analysis tool that you are used to using, and to perform whatever kind of DE analysis that you like indepednent of bakR. 
+As the title of this section suggests though, bakR won't be able to accomplish this task alone. The reason for this is that assessing changes in synthesis means assessing changes in RNA stability and RNA expression. Therefore, we need to perform differential expression analysis in conjunction with differential stability analysis. In theory, I could have implemented my own differential expression analysis in bakR, but with so many popular software tools currently in existence to perform that task, it seemed pointlessly redundant. It also gives you the freedom to use whatever differential expression analysis tool that you are used to using, and to perform whatever kind of DE analysis that you like independent of bakR. 
 
 To show you how to perform differential synthesis analysis, I will be using DESeq2 for the purpose of differential expression analysis. Why? Because I like DESeq2. It's a good model, it's a good piece of software, and it was an early source of inspiration for me in my PhD. Also, you'll see that some of the output of bakR is specifically designed with DESeq2 in mind, so it will facilitate the process of performing differential expression analysis a bit. 
 
@@ -144,7 +143,7 @@ colnames(as.data.frame(reso))
 
 For our sake, we are going to use two columns in the reso object: log2FoldChange and lfcSE. Both of these column names are pretty self-explanatory, but for completeness sake, log2FoldChange is the log base-2 fold change in RNA expression, and lfcSE is the standard error in the log2FoldChange. 
 
-With that, we have all we need to perform differential synthesis analysis! But how you may ask? Well, if our population of cells that we performed RNA-seq on was at steady-state (i.e., the cells were not actively responding to some perturbation when RNA was extracted), then the following relationship holds between $ksyn$ (RNA synthesis rate) $kdeg$ (RNA degradation rate) and $[RNA]$ (RNA concentration):
+With that, we have all we need to perform differential synthesis analysis! But how you may ask? Well, if our population of cells that we performed RNA-seq on was at steady-state (i.e., the cells were not actively responding to some perturbation while treating with with a metabolic label), then the following relationship holds between $ksyn$ (RNA synthesis rate) $kdeg$ (RNA degradation rate) and $[RNA]$ (RNA concentration):
 
 $$
 [RNA] = \frac{ksyn}{kdeg}
@@ -209,7 +208,7 @@ ksyn_df <- ksyn_df %>%
                 
 ```
 
-You can now make a $L2FC(ksyn)$ volcano plot now to visualize the final conclusions!
+You can now make a $L2FC(ksyn)$ volcano plot to visualize the final conclusions!
 
 ```{r, fig.align='center'}
 
@@ -257,7 +256,6 @@ ksyn_results
 
 FP is a false positive, FN is a false negative, TP is a true positive, and TN is a true negative. All in all, I'd say it went pretty well! You now know how to perform differential synthesis analysis with bakR + DEseq2.
 
-## Performing additional comparisons
 
 ## Going beyond the steady-state assumption
 
