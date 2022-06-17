@@ -58,12 +58,12 @@ First things first, let's simulate some data! We'll simulate 1000 genes, with 20
 
 ```{r}
 # Simulate a nucleotide recoding dataset
-sim_data <- sim_bakRData(1000,
+sim_data <- Simulate_bakRData(1000,
                          num_kd_DE = c(0, 0),
                          num_ks_DE = c(0, 200))
   # This will simulate 500 features, 2 experimental conditions
   # and 3 replicates for each experimental condition
-  # See ?sim_bakRData for details regarding tunable parameters
+  # See ?Simulate_bakRData for details regarding tunable parameters
 
 # Extract simulated bakRData object
 bakRData <- sim_data$bakRData
