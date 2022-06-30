@@ -24,7 +24,7 @@ knitr::opts_chunk$set(
 Welcome! This vignette discusses an exciting hodge-podge of additional analyses that can be done with bakR. The assumption is that at this point you have worked through the Getting-Started vignette. If that is not the case, I would highly suggest starting there and then coming back here once you're familiar with the standard use cases of bakR. The topics to be addressed are as follows:
 
 1. Performing differential synthesis analysis with bakR (and DESeq2, as you will see)
-1. Analyzing away-from-steady-state systems with bakR
+1. TBD (Keep your eyes for announcements about updates to this vignette with more to come!)
 
 These are the packages you are going to have to install and load in order to do everything presented in this vignette:
 
@@ -33,7 +33,6 @@ library(bakR)
 
 # Packages that are NOT automatically installed when bakR is installed
 library(DESeq2)
-library(pheatmap)
 
 # Packages which are installed when bakR is installed
 library(dplyr) 
