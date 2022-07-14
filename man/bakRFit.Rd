@@ -13,8 +13,6 @@ bakRFit(
   Ucut = 0.25,
   AvgU = 4,
   FastRerun = FALSE,
-  Stan_prep = TRUE,
-  Fast_prep = TRUE,
   FOI = c(),
   concat = TRUE,
   StanRateEst = FALSE,
@@ -30,15 +28,14 @@ bakRFit(
 \arguments{
 \item{obj}{bakRData object produced by \code{bakRData} or a bakRFit object produced by \code{bakRFit}}
 
-\item{StanFit}{Logical; if TRUE, then Fully Bayesian Hierarchical model is implemented to estimate fraction news and pool information
-across the dataset}
+\item{StanFit}{Logical; if TRUE, then the MCMC implementation is run. Will only be used if \code{obj}
+is a \code{bakRFit} object}
 
-\item{HybridFit}{Logical; if TRUE, then a Fully Bayesian Hierarchical model is run using
-estimates for the fraction new and fraction new uncertainty obtained via the efficient
-statistical model.}
+\item{HybridFit}{Logical; if TRUE, then the Hybrid implementation is run. Will only be used if \code{obj}
+is a \code{bakRFit} object}
 
-\item{high_p}{Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any no s4U control
-samples are filtered out}
+\item{high_p}{Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any -s4U control
+samples (i.e., samples that were not treated with s4U) are filtered out}
 
 \item{totcut}{Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out}
 
@@ -46,12 +43,8 @@ samples are filtered out}
 
 \item{AvgU}{Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples}
 
-\item{FastRerun}{Logical; only matters if a bakRFit object is passed to \code{bakRFit()}. If TRUE, then the Stan-free
+\item{FastRerun}{Logical; only matters if a bakRFit object is passed to \code{bakRFit}. If TRUE, then the Stan-free
 model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the Stan models.}
-
-\item{Stan_prep}{Logical; if TRUE, then data_list that can be passed to Stan is curated}
-
-\item{Fast_prep}{Logical; if TRUE, then dataframe that can be passed to fast_analysis() is curated}
 
 \item{FOI}{Features of interest; character vector containing names of features to analyze}
 
@@ -112,7 +105,8 @@ you will have to rerun \code{bakRFit} on the bakRData object.
 See the documentation for the individual fitting functions for details regarding how they analyze nucleotide
 recoding data. What follows is a brief overview of how each works
 
-\code{fast_analysis} either estimates mutation rates from + and - s4U samples or uses mutation rate estimates
+\code{fast_analysis} (referred to as the MLE implementation in the bakR paper)
+either estimates mutation rates from + and (if available) - s4U samples or uses mutation rate estimates
 provided by the user to perform maximum likelihood estimation (MLE) of the fraction of RNA that is labeled for each
 replicate of nucleotide recoding data provided. Uncertainties for each replicate's estimate are approximated using
 asymptotic results involving the Fisher Information and assuming known mutation rates. Replicate data
@@ -120,13 +114,14 @@ is pooled using an approximation to hierarchical modeling that relies on analyti
 Linear regression is used to estimate the relationship between read depths and replicate variability for uncertainty
 estimation regularization, again performed using analytic solutions to Bayesian models.
 
-\code{Hybrid_fit} takes as input estimates of the logit(fraction new) and uncertainty provided by \code{fast_analysis}.
-It then uses Stan on the backend to implement a hierarchical modeling that pools data across replicates and the dataset
+\code{TL_Stan} with Hybrid_Fit set to TRUE (referred to as the Hybrid implementation in the bakR paper)
+takes as input estimates of the logit(fraction new) and uncertainty provided by \code{fast_analysis}.
+It then uses Stan on the backend to implement a hierarchical model that pools data across replicates and the dataset
 to estimate effect sizes (L2FC(kdeg)) and uncertainties. Replicate variability information is pooled across each experimental
 condition to regularize variance estimates using a hierarchical linear regression model.
 
-\code{TL_Stan} uses Stan on the back end to implement a model similar to \code{Hybrid_fit}. The difference is that while
-\code{Hybrid_fit} requires fraction new estimates from \code{fast_analysis}, \code{TL_Stan} implements a U-content exposure
-adjusted Poisson model to estimate fraction news while also using hierarchical modeling to partially pool information across
-replicates and the entire dataset.
+The default behavior of \code{TL_Stan} (referred to as the MCMC implementation in the bakR paper)
+is to use Stan on the back end to implement a U-content exposure adjusted Poisson mixture model
+to estimate fraction news from the mutational data. Partial pooling of replicate variability estimates
+is performed as with the Hybrid implementation.
 }
