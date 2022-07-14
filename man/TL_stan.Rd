@@ -2,7 +2,7 @@
 % Please edit documentation in R/TL_stan.R
 \name{TL_stan}
 \alias{TL_stan}
-\title{Fit fully Bayesian hierarchical mixture model for nucleotide recoding RNA-seq data analysis}
+\title{Fit Stan models to nucleotide recoding RNA-seq data analysis}
 \usage{
 TL_stan(
   data_list,
@@ -22,9 +22,17 @@ TL_stan(
 
 \item{NSS}{Logical; if TRUE, models that directly compare logit(fn)s are used to avoid steady-state assumption}
 
-\item{chains}{Number of Markov chains to sample from. 1 should suffice since these are validated models}
+\item{chains}{Number of Markov chains to sample from. The default is to only run a single chain. Typical NR-seq datasets
+yield very memory intensive analyses, but running a single chain should decrease this burden. For reference, running
+the MCMC implementation (Hybrid_Fit = FALSE) with 3 chains on an NR-seq dataset with 3 replicates of 2 experimental conditions
+with around 20 million raw (unmapped) reads per sample requires over 100 GB of RAM. With a single chain, this burden drops to
+around 20 GB. Due to memory demands and time constraints (runtimes for the MCMC implementation border will likely be around 1-2 days)
+means that these models should usually be run in a specialized High Performance Computing (HPC) system.}
 
-\item{...}{Arguments passed to \code{rstan::sampling} (e.g. iter, chains).}
+\item{...}{Arguments passed to \code{rstan::sampling} (e.g. iter, warmup, etc.).}
+
+\item{iter}{Positive integer; number of iterations for each Markov chain. By default, 1/2 of these will be reserved for warmup
+and thus not used for inference.}
 }
 \value{
 A list of objects:
@@ -85,18 +93,20 @@ than 1 could represent poor model convergence
 }
 \description{
 \code{TL_stan} analyzes nucleotide recoding RNA-seq data with a fully
-Bayesian hierarchical model implemented in the PPL Stan. The models estimate
-fraction news as well as changes in kinetic parameters, comparing a single reference
-sample to each experimental sample provided.
+Bayesian hierarchical model implemented in the PPL Stan. \code{TL_stan} estimates
+kinetic parameters and differences in kinetic parameters between experimental
+conditions. When assessing differences, a single reference sample is compared to
+each collection of experimental samples provided.
 }
 \details{
 Two general models can be implemented in TL_stan: a full nucleotide recoding RNA-seq model and
 a hybrid model that takes as input results from \code{fast_analysis}.
-In the full model, U-to-C mutations are modeled as coming from a Poisson distribution
+In the full model (referred to in the bakR publication as the MCMC implementation),
+U-to-C mutations are modeled as coming from a Poisson distribution
 with rate parameter adjusted by the empirical U-content of each feature analyzed. Features
 represent whatever the user defined them to be when constructing the bakR data object.
 Typical feature categories are genes, exons, etc. Hierarchical modeling is used to pool data
-across replicates, across features, and across datasets. More specifically, replicate data for the
+across replicates, across features, and across replicates. More specifically, replicate data for the
 same feature are partially pooled to estimate feature-specific mean fraction news and uncertainties.
 Feature means are partially pooled to estimate dataset-wide mean fraction news and standard deviations.
 The replicate variability for each feature is also partially pooled to determine a condition-wide
@@ -106,7 +116,8 @@ given the data. Partial pooling also regularizes estimates, reducing estimate va
 estimate accuracy. This is particularly important for replicate variability estimates, which often rely
 on only a few replicates of data per feature and thus are typically highly unstable.
 
-The hybrid model inherits the hierarchical modeling structure of the full model, but reduces computational
+The hybrid model (referred to in the bakR publication as the Hybrid implementation)
+inherits the hierarchical modeling structure of the full model, but reduces computational
 burden by foregoing per-replicate-and-feature fraction new estimation and uncertainty quantification. Instead,
 the hybrid model takes as data fraction new estimates and approximate uncertainties from \code{fast_analysis}.
 Runtimes of the hybrid model are thus often an order or magnitude or more shorter than with the full model, but
