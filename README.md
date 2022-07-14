@@ -1,4 +1,4 @@
-# bakR
+# Bayesian analysis of the kinetics of RNA (bakR)
 R package for analyzing nucleotide recoding high-throughput sequencing data. 
 Kinetic parameter estimation and statistical testing is compatible with any enrichment free metabolic labeling mutational data.
 # Installation
@@ -41,6 +41,12 @@ If trying to run on the cluster, installation should be done through an interact
     
     
   6. Exit interactive session; now you can include library(bakR) in any of your batch jobs to use this package.
+
+# Documentation
+There are currently two published vignettes to help get you up to speed with bakR:
+
+  1. An introductory vignette (link [here](https://rpubs.com/isaacvock/923586)) that walks you through the basic bakR workflow with simulated data.
+  2. A second vignette (link [here](https://rpubs.com/isaacvock/923576)) that dives into some specific follow-up analyses one can do after running bakR on a dataset. Currently, the only analysis discussed in this vignette is differential synthesis analysis (i.e., identifiying differences in RNA synthesis rates by combining bakR with differential expression analysis), but more analyses will be added to this vignette as time goes by.
 # Bug Catching
-Contact Isaac (isaac.vock@yale.edu or DM on Slack) with descriptions of bugs encountered or suggested improvements/functions. Thank you!
+Post descriptions of bugs and a simple reproducible example (if possible) in the Issues section of this repo. If you email me (Isaac Vock) with a question/concern/suggestion, I will direct you to the Issues section. If you have basic use questions, please see the vignettes linked above. 
 
