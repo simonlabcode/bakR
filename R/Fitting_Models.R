@@ -225,6 +225,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
   if(class(obj) == "bakRData"){
 
+    # Preprocess data
     data_list <- bakR::cBprocess(obj, high_p = high_p, totcut = totcut, Ucut = Ucut,
                                        AvgU = AvgU,
                                        Stan = TRUE,
@@ -232,6 +233,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                                        FOI = FOI,
                                        concat = concat)
 
+    # Use Stan to estimate mutation rates
     if(StanRateEst){
 
       ## find features to keep
@@ -241,9 +243,12 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       fnum_choose <- which(rowSums(Cnt_Mat) == ncol(Cnt_Mat))
 
+      # Check that enough features made it past filtering
       if(length(fnum_choose) < RateEst_size){
         stop("Not enough features have read depths between low_reads and high_reads. Try increasing high_reads and/or decreasing low_reads.")
       }
+
+      ## Create small cB for mutation rate estimation Stan model
 
       XF_choose <- sample(unique(data_list$Stan_data$sdf$XF[data_list$Stan_data$sdf$fnum %in% fnum_choose]), RateEst_size, replace = FALSE)
 
@@ -253,11 +258,13 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       mutrate_list <- bakR::cBprocess(bakRData2)
 
+      # Run MLE implementation
       fast_list <- bakR::fast_analysis(data_list$Fast_df, Stan_data = mutrate_list$Stan_data, StanRate = TRUE,
                                        BDA_model = BDA_model,
                                        NSS = NSS, ...)
 
     }else{
+      # Run MLE implementation
       fast_list <- bakR::fast_analysis(data_list$Fast_df,
                                        BDA_model = BDA_model,
                                        NSS = NSS, ...)
@@ -265,7 +272,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
 
 
-
+    # Make final object to be passed to users
     Fit_lists <- list(Fast_Fit = fast_list,
                         Data_lists = data_list)
 
@@ -275,7 +282,8 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   }else if(class(obj) == "bakRFit"){
 
     if(FastRerun & (StanFit | HybridFit)){
-      stop("Can only rerun fast_analysis() or run Stan models, not both. If you want to rerun fast_analysis() and then run Stan model, use separate calls to bakRFit().")
+      stop("Can only rerun MLE implementation or run Hybrid/MCMC implementation, not both. If you want to rerun the MLE implementation
+           and then run either the MCMC or Hybrid implementations, use separate calls to bakRFit().")
     }
 
     if(FastRerun){
@@ -286,7 +294,11 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
         fnum_choose <- sample(which(rowSums(Cnt_Mat) == ncol(Cnt_Mat)), size = RateEst_size)
 
-        ## Need to reconstruct cB essentially
+        if(length(fnum_choose) < RateEst_size){
+          stop("Not enough features have read depths between low_reads and high_reads. Try increasing high_reads and/or decreasing low_reads.")
+        }
+
+        ## Construct mini-cB
         Stan_data <- obj$Data_list$Stan_data
 
         data_df <- data.frame(old_fnum = Stan_data$FE,
@@ -298,6 +310,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                               U_cont = Stan_data$U_cont)
 
 
+        ## Filter for features to be used in mutation rate estimation
         data_df <- data_df %>% dplyr::filter(old_fnum %in% fnum_choose)
 
         new_FE <- data.frame(old_fnum = unique(data_df$old_fnum[order(data_df$old_fnum)]),
@@ -306,6 +319,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
         data_df <- dplyr::left_join(data_df, new_FE, by = "old_fnum")
 
 
+        # List for mutation rate estimation Stan model
         mutrate_list <- list(FE = data_df$FE,
                           TP = data_df$TP,
                           MT = data_df$MT,
@@ -322,11 +336,13 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
         rm(Stan_data)
 
+        # Run MLE implementation
         fast_list <- bakR::fast_analysis(obj$Data_lists$Fast_df, Stan_data = mutrate_list, StanRate = TRUE,
                                          NSS = NSS,
                                          BDA_model = BDA_model, ...)
 
       }else{
+        # Run MLE implementation
         fast_list <- bakR::fast_analysis(obj$Data_lists$Fast_df,
                                          NSS = NSS,
                                          BDA_model = BDA_model, ...)
@@ -339,10 +355,12 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
       return(obj)
     }
 
+    # Run MCMC implementation
     if(StanFit){
 
       Stan_list <- bakR::TL_stan(obj$Data_lists$Stan_data, NSS = NSS, chains = chains, ...)
 
+      ## Calculate and adjust p-values
       Effects <- Stan_list$Effects_df
 
       Effects <- Effects %>% dplyr::mutate(pval = 2*stats::pnorm(-abs(effect/se))) %>%
@@ -357,7 +375,11 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
       obj$Stan_Fit <- Stan_list
 
     }
+
+    # Run Hybrid implementation
     if(HybridFit){
+
+      ## Get fn estimates from MLE implementation and curate data for Stan
 
       Rep_Fn <- obj$Fast_Fit$Fn_Estimates
 
@@ -382,7 +404,10 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       rm(Rep_Fn)
 
+      # Run Hybrid implementation
       Stan_list <- bakR::TL_stan(data_list, Hybrid_Fit = TRUE, NSS = NSS, chains = chains, ...)
+
+      ## Calculate and adjust p-values
 
       Effects <- Stan_list$Effects_df
 
