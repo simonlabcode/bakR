@@ -4,15 +4,15 @@
 \alias{FnPCA}
 \title{Creating PCA plots with logit(fn) estimates}
 \usage{
-FnPCA(obj, log_kdeg = FALSE, ...)
+FnPCA(obj, log_kdeg = FALSE)
 }
 \arguments{
-\item{obj}{Object of class FastFit or HMCFit outputted by respective analysis functions}
+\item{obj}{Object contained within output of \code{bakRFit}. So, either Fast_Fit (MLE implementation fit),
+Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)}
 
-\item{log_kdeg}{Boolean; if TRUE, then log(kdeg) estimates used for PCA rather than logit(fn)}
-
-\item{...}{Further arguments passed to or from other methods}
+\item{log_kdeg}{Boolean; if TRUE, then log(kdeg) estimates used for PCA rather than logit(fn). Currently
+only compatible with Fast_Fit}
 }
 \description{
-This function creates a 2-component PCA plot with logit(fn) estimates.
+This function creates a 2-component PCA plot using logit(fn) estimates.
 }

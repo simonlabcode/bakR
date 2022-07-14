@@ -1,15 +1,20 @@
 #' Creating PCA plots with logit(fn) estimates
 #'
-#' This function creates a 2-component PCA plot with logit(fn) estimates.
+#' This function creates a 2-component PCA plot using logit(fn) estimates.
 #'
-#' @param obj Object of class FastFit or HMCFit outputted by respective analysis functions
-#' @param log_kdeg Boolean; if TRUE, then log(kdeg) estimates used for PCA rather than logit(fn)
-#' @param ... Further arguments passed to or from other methods
+#' @param obj Object contained within output of \code{bakRFit}. So, either Fast_Fit (MLE implementation fit),
+#' Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)
+#' @param log_kdeg Boolean; if TRUE, then log(kdeg) estimates used for PCA rather than logit(fn). Currently
+#' only compatible with Fast_Fit
 #' @export
-FnPCA <- function(obj, log_kdeg = FALSE, ...){
+FnPCA <- function(obj, log_kdeg = FALSE){
   ### Extract logit(fn)
 
   if(log_kdeg){
+    if(class(obj) != "FastFit"){
+      stop("log(kdeg) PCA is curently only compatible with Fast_Fit.")
+    }
+
     logit_fn_df <- obj$Fn_Estimates[,c("log_kdeg", "Feature_ID", "Exp_ID", "Replicate", "sample")]
     colnames(logit_fn_df) <- c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")
   }else{
@@ -71,16 +76,16 @@ FnPCA <- function(obj, log_kdeg = FALSE, ...){
 
 #' Creating L2FC(kdeg) volcano plot from fit objects
 #'
-#' This function creates L2FC(kdeg) volcano plot.
+#' This function creates a L2FC(kdeg) volcano plot.
 #' Plots are colored according to statistical significance and sign of L2FC(kdeg).
 #'
-#' @param obj Object of class FastFit or HMCFit outputted by respective analysis functions
+#' @param obj Object contained within output of \code{bakRFit}. So, either Fast_Fit (MLE implementation fit),
+#' Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)
 #' @param FDR False discovery rate to control at for significance assessment
 #' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
 #' @param Exp_shape Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot
-#' @param ... Further arguments passed to or from other methods
 #' @export
-plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
+plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
 
   # Pretty plotting theme
   theme_mds <-    ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
@@ -110,7 +115,7 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
     Exps <- 2:max(as.integer(L2FC_df$Exp_ID))
   }
 
-  if(Exp_shape){
+  if(Exp_shape){ # Plot different experimental conditions together using different shapes
     ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = L2FC_kdeg,y = -log10(padj), color = conclusion,  shape = as.factor(Exp_ID))) +
       ggplot2::geom_point(size = 1.5) +
       ggplot2::theme_classic() +
@@ -118,7 +123,7 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
       ggplot2::xlab(bquote(L2FC(k[deg]))) +
       ggplot2::scale_color_manual(values = c("#FFC20A", "gray","#0C7BDC")) +
       theme_mds
-  }else{
+  }else{ # Plot a subset of experimental conditions
     ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = L2FC_kdeg,y = -log10(padj), color = conclusion )) +
       ggplot2::geom_point(size = 1.5) +
       ggplot2::theme_classic() +
@@ -144,10 +149,9 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
 #' @param FDR False discovery rate to control at for significance assessment
 #' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
 #' @param Exp_shape Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot
-#' @param ... Further arguments passed to or from other methods
 #' @export
 #'
-plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = NULL, Exp_shape = FALSE, ...){
+plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
 
   Model <- match.arg(Model)
 

@@ -9,8 +9,7 @@ plotMA(
   Model = c("MLE", "Hybrid", "MCMC"),
   FDR = 0.05,
   Exps = NULL,
-  Exp_shape = FALSE,
-  ...
+  Exp_shape = FALSE
 )
 }
 \arguments{
@@ -23,8 +22,6 @@ plotMA(
 \item{Exps}{Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)}
 
 \item{Exp_shape}{Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot}
-
-\item{...}{Further arguments passed to or from other methods}
 }
 \description{
 This function outputs a L2FC(kdeg) MA plot. Plots are colored according to statistical
