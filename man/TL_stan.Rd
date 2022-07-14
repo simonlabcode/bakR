@@ -96,9 +96,9 @@ conditions. When assessing differences, a single reference sample is compared to
 each collection of experimental samples provided.
 }
 \details{
-Two general models can be implemented in TL_stan: a full nucleotide recoding RNA-seq model and
-a hybrid model that takes as input results from \code{fast_analysis}.
-In the full model (referred to in the bakR publication as the MCMC implementation),
+Two implementations of a similar model can be fit with TL_stan: a complete nucleotide recoding RNA-seq
+analysis and a hybrid analysis that takes as input results from \code{fast_analysis}.
+In the complete analysis (referred to in the bakR publication as the MCMC implementation),
 U-to-C mutations are modeled as coming from a Poisson distribution
 with rate parameter adjusted by the empirical U-content of each feature analyzed. Features
 represent whatever the user defined them to be when constructing the bakR data object.
@@ -113,11 +113,11 @@ given the data. Partial pooling also regularizes estimates, reducing estimate va
 estimate accuracy. This is particularly important for replicate variability estimates, which often rely
 on only a few replicates of data per feature and thus are typically highly unstable.
 
-The hybrid model (referred to in the bakR publication as the Hybrid implementation)
-inherits the hierarchical modeling structure of the full model, but reduces computational
+The hybrid analysis (referred to in the bakR publication as the Hybrid implementation)
+inherits the hierarchical modeling structure of the complete analysis, but reduces computational
 burden by foregoing per-replicate-and-feature fraction new estimation and uncertainty quantification. Instead,
-the hybrid model takes as data fraction new estimates and approximate uncertainties from \code{fast_analysis}.
-Runtimes of the hybrid model are thus often an order or magnitude or more shorter than with the full model, but
+the hybrid analysis takes as data fraction new estimates and approximate uncertainties from \code{fast_analysis}.
+Runtimes of the hybrid analysis are thus often an order or magnitude or more shorter than with the complete analysis, but
 loses some accuracy by relying on point estimates and uncertainty quantification that is only valid in the
 limit of large dataset sizes (where the dataset size for the per-replicate-and-feature fraction new estimate is the raw number
 of sequencing reads mapping to the feature in that replicate).
