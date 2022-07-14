@@ -18,12 +18,12 @@ data(metadf)
 }
 \description{
 metadf dataframe describing the data present in the cB file that
-can be loaded with \code{data(cB_example)}. The contents are discussed
+can be loaded with \code{data(cB_small)}. The contents are discussed
 in great detail in the Getting_started vignette.
 }
 \examples{
 data(cB_small)
 data(metadf)
-dyndata <- bakRData(cB_small, metadf)
+bakRdat <- bakRData(cB_small, metadf)
 }
 \keyword{metadf}

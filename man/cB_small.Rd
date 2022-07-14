@@ -5,7 +5,7 @@
 \alias{cB_small}
 \title{Example cB data frame}
 \format{
-A dataframe with 2614 rows and 5 variables; each row corresponds to a group of sequencing reads
+A dataframe with 5788 rows and 5 variables; each row corresponds to a group of sequencing reads
 \describe{
 \item{sample}{Sample name}
 \item{TC}{Number of T-to-C mutations}
@@ -26,7 +26,7 @@ are described in the Getting_Started vignette.
 \examples{
 data(cB_small)
 data(metadf)
-dyndata <- bakRData(cB_small, metadf)
+bakRdat <- bakRData(cB_small, metadf)
 }
 \references{
 Luo et al. (2020) Biochemistry. 59(42), 4121-4142

@@ -9,7 +9,7 @@
 #'
 #' @usage data(cB_small)
 #'
-#' @format A dataframe with 2614 rows and 5 variables; each row corresponds to a group of sequencing reads
+#' @format A dataframe with 5788 rows and 5 variables; each row corresponds to a group of sequencing reads
 #' \describe{
 #' \item{sample}{Sample name}
 #' \item{TC}{Number of T-to-C mutations}
@@ -26,5 +26,5 @@
 #' @examples
 #' data(cB_small)
 #' data(metadf)
-#' dyndata <- bakRData(cB_small, metadf)
+#' bakRdat <- bakRData(cB_small, metadf)
 "cB_small"
