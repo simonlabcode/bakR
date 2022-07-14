@@ -262,6 +262,11 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           NSS = FALSE,
                           BDA_model = FALSE){
 
+  ## Check df
+  if (!all(c("sample", "XF", "TC", "nT", "n", "fnum", "type", "mut", "reps", "tl") %in% names(df))) {
+    stop("`df` must contain `sample`, `XF`, `TC`, `nT`, `n`, `fnum`, `type`, `mut`, `reps`, and `tl` columns")
+  }
+
   ## Check pold
   if(length(pold) > 1){
     stop("pold must be NULL or length 1")
@@ -277,6 +282,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     }
   }
 
+  ## Extract info about # of replicates in each condition
   nMT <- max(df$mut)
 
   # nreps must be vector where each element i is number of replicates
@@ -312,7 +318,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     stop("read_cut must be >= 0")
   }
 
-  ## Check read_cut
+  ## Check features_cut
   if(!is.numeric(features_cut)){
     stop("features_cut must be numeric")
   }else if(!is.integer(features_cut)){
@@ -398,23 +404,30 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   }
 
 
+  # Helper functions that I will use on multiple occasions
   logit <- function(x) log(x/(1-x))
   inv_logit <- function(x) exp(x)/(1+exp(x))
 
-  #Old mutation rate estimation
 
-  if((is.null(pnew) | is.null(pold)) & StanRate ){
+  ### Old mutation rate estimation
+  if((is.null(pnew) | is.null(pold)) & StanRate ){ # use Stan
 
 
     mut_fit <- rstan::sampling(stanmodels$Mutrate_est, data = Stan_data, chains = 1)
   }
 
-  #Trim df and name columns
+  ## Make data frame of pnew estimates
   if(is.null(pnew)){
 
+    # Get estimates from Stan fit summary
     if(StanRate){
-      ## Commented out because seemingly redundant
-      #nMT <- max(df$mut)
+
+      # Even if replicates are imbalanced (more replicates of a given experimental condition
+      # than another), the number of mutation rates Stan will estimate = max(nreps)*nMT
+        # nreps = vector containing number of replicates for ith experimental condition
+        # nMT = number of experimental conditions
+      # Therefore, have to remove imputed mutation rates
+
       nrep_mut <- max(nreps)
 
       U_df <- df[(df$type == 1) & (df$XF %in% unique(Stan_data$sdf$XF)),] %>% dplyr::group_by(mut, reps) %>%
@@ -442,6 +455,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                            E = mut_actual)
 
 
+      ## Get final pnew estimate vector
       pnewdf <- dplyr::right_join(pnewdf, truedf, by = c("R", "E"))
 
       pnew <- pnewdf$pnew/U_df$avg_T
@@ -457,7 +471,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
       message(paste0(c("Estimated pnews for each sample are:", capture.output(New_data_estimate)), collapse = "\n"))
 
-    }else{
+    }else{ # Use high mutation rate features to new read estimate mutation rate
+
       message("Estimating labeled mutation rate")
       Mut_data <- df
 
@@ -509,30 +524,25 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     }
 
 
-  }else{ # Need to construct pmut dataframe from User input
-    # nMT <- max(df$mut)
-    # nreps <- max(df$reps)
-    if(length(pnew) == 1){
+  }else{ # Construct pmut data frame from User input
+
+    if(length(pnew) == 1){ # replicate the single pnew provided
 
       pnew_vect <- rep(pnew, times = sum(nreps) )
 
-      ## Compatible with balanced replicates
+      ## Compatible with unbalanced replicates
       rep_vect <- unlist(lapply(nreps, function(x) seq(1, x)))
 
       mut_vect <- rep(1:nMT, times = nreps)
-
-      ## Old code not compatible with unbalanced replicates
-      # rep_vect <- rep(seq(from = 1, to = nreps), times = nMT)
-      #
-      # mut_vect <- rep(seq(from = 1, to = nMT), each = nreps)
 
       New_data_estimate <- data.frame(mut_vect, rep_vect, pnew_vect)
       colnames(New_data_estimate) <- c("mut", "reps", "pnew")
 
     } else if( length(pnew) != sum(nreps)  ){
       stop("User inputted pnew is not of length 1 or of length equal to number of samples")
-    } else{
-      ## Compatible with balanced replicates
+    } else{ # use vector of pnews provided
+
+      ## Compatible with unbalanced replicates
       rep_vect <- unlist(lapply(nreps, function(x) seq(1, x)))
 
       mut_vect <- rep(1:nMT, times = nreps)
@@ -541,22 +551,30 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     }
   }
 
+  ### Estimate mutation rate in old reads
   if(is.null(pold)){
-    if(StanRate){
-      # nMT <- max(df$mut)
+    if(StanRate){ # Use Stan to estimate rates
+
+      ## Extract estimate of mutation rate in old reads from Stan fit
       nrep_mut <- max(df$reps)
 
+      # Calculate U-content
       U_df <- df[(df$type == 1) & (df$XF %in% unique(Stan_data$sdf$XF)),] %>% dplyr::group_by(mut, reps) %>%
         dplyr::summarise(avg_T = sum(nT*n)/sum(n))
 
       U_df <- U_df[order(U_df$mut, U_df$reps),]
 
+      # Vector of pold estimates for each sample
       pold <- exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_o")$summary)$mean)
 
-
+      # Balanced replicate vectors
+        # For matching Stan estimates to a replicate and experimental condition ID
       rep_theory <- rep(seq(from = 1, to = nrep_mut), times = nMT)
       mut_theory <- rep(seq(from = 1, to = nMT), each = nrep_mut)
 
+      # Actual replicate vectors
+        # Will be same as rep_theory and mut_theory if there are the same
+        # number of replicates in each experimental condition
       rep_actual <- unlist(lapply(nreps, function(x) seq(1, x)))
       mut_actual <- rep(1:nMT, times = nreps)
 
@@ -568,8 +586,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                            E = mut_actual)
 
 
+      # Filter out imputed data
       polddf <- dplyr::right_join(polddf, truedf, by = c("R", "E"))
 
+      # Final estimate of mutation rate in old reads
       pold <- mean(polddf$pold/U_df$avg_T)
 
 
@@ -680,39 +700,49 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     stop("All pnew must be > pold; did you input an unusually large pold?")
   }
 
+  # Mutation rate estimates
   pmuts_list <- list(New_data_estimate, pold)
+
+  ## Prep data for analyses
+    # i) Filter out any -s4U control samples
+    # ii) Make lookup table mapping label times to experimental conditions
+    # iii) Make lookup table mapping sample names to experimental conditions and replicate IDs
+    # iv) Make lookup table mapping feature number to feature name
 
   Mut_data <- df
 
+  # Filter out -s4U control samples
   Mut_data <- Mut_data[Mut_data$type == 1,]
 
   tl_df <- Mut_data %>% dplyr::select(mut, tl) %>%
     dplyr::distinct()
 
+  # Label time lookup table
   tl_df <- tl_df[order(tl_df$mut),]
 
   tl <- tl_df$tl
 
   ngene <- max(Mut_data$fnum)
   num_conds <- max(Mut_data$mut)
-  #nreps <- max(Mut_data$reps)
 
   nreps <- rep(0, times = num_conds)
   for(i in 1:num_conds){
     nreps[i] <- max(Mut_data$reps[Mut_data$mut == i & Mut_data$type == 1])
   }
 
-
+  # Sample characteristics lookup table
   sample_lookup <- Mut_data[, c("sample", "mut", "reps")] %>% dplyr::distinct()
+
+  # Feature lookup table
   feature_lookup <- Mut_data[,c("fnum", "XF")] %>% dplyr::distinct()
 
-  # Estimate fraction new in each replicate using binomial model
+  ## Estimate fraction new in each replicate using U-content adjusted Poisson model
   message("Estimating fraction labeled")
 
   Mut_data <- dplyr::left_join(Mut_data, New_data_estimate, by = c("mut", "reps"))
 
   if(!MLE){
-    # Bayesian Hypothesis Testing Method
+    # Bayesian Hypothesis Testing Method (not really useful, should think of getting rid of it)
     Mut_data_est <- Mut_data %>% dplyr::group_by(fnum, mut, reps, TC, nT) %>%
       # mutate(avg_mut = TC/nT) %>%
       # #mutate(prior_new = ifelse(avg_mut >= (pnew_est - 0.01), 0.99, (avg_mut + 0.01)/pnew_est )) %>%
@@ -725,13 +755,15 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       dplyr::summarise(nreads = sum(n), Fn_rep_est = sum(News)/nreads) %>%
       dplyr::mutate(logit_fn_rep = ifelse(Fn_rep_est == 1, logit(0.999), ifelse(Fn_rep_est == 0, logit(0.001), logit(Fn_rep_est)))) %>%
       dplyr::ungroup()
-  }else{
-    # MLE
+  }else{ # MLE
+
+    # Likelihood function for mixture model
     mixed_lik <- function(lam_n, lam_o, TC, n, logit_fn){
       logl <- sum(n*log(inv_logit(logit_fn)*(lam_n^TC)*exp(-lam_n) + (1-inv_logit(logit_fn))*(lam_o^TC)*exp(-lam_o) )) + log(stats::dnorm(logit_fn, mean = p_mean, sd = p_sd))
       return(-logl)
     }
 
+    # Calculate logit(fn) MLE
     Mut_data_est <- Mut_data %>% dplyr::ungroup() %>% dplyr::mutate(lam_n = pnew*nT, lam_o = pold*nT) %>%
       dplyr::group_by(fnum, mut, reps, TC) %>%
       dplyr::summarise(lam_n = sum(lam_n*n)/sum(n), lam_o = sum(lam_o*n)/sum(n),
@@ -749,6 +781,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     mut_instab <- instab_df$mut
     reps_instab <- instab_df$reps
 
+    # Replace unstable estimates with estimate + jitter so as to not underestimate replicate variability
     instab_est <- dplyr::right_join(Mut_data, instab_df, by = c("fnum", "mut", "reps")) %>%
       dplyr::ungroup() %>%
       dplyr::mutate(totTC = TC*n, totU = nT*n) %>%
@@ -760,6 +793,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       dplyr::mutate(logit_fn_rep = logit(Fn_rep_est)) %>%
       dplyr::select(fnum, mut, reps, logit_fn_rep)
 
+    # Generate estimates on other useful scales
     Mut_data_est <- dplyr::left_join(Mut_data_est, instab_est, by = c("fnum", "mut", "reps")) %>%
       dplyr::mutate(logit_fn_rep = ifelse(abs(logit_fn_rep.x) > upper, logit_fn_rep.y, logit_fn_rep.x)) %>%
       dplyr::select(fnum, mut, reps, nreads, logit_fn_rep) %>%
@@ -773,7 +807,6 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   Mut_data <- dplyr::left_join(Mut_data, Mut_data_est[, c("kd_rep_est" ,"logit_fn_rep", "fnum", "mut", "reps")], by = c("fnum", "mut", "reps"))
 
   ## Estimate Fisher Info and uncertainties
-  ## Could make more efficient by summarizing over nT info and using U_content to adjust pnew*avg_U
   Mut_data <- Mut_data %>% dplyr::ungroup() %>%
     dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep, kd_rep_est) %>%
     dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
@@ -800,8 +833,6 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   Mut_data_est <- Mut_data_est %>% dplyr::mutate(log_kd_rep_est = log(kd_rep_est))
 
-  # Mut_data_est$fn_se = Mut_data$Fn_se
-
   ## Now affiliate each fnum, mut with a bin Id based on read counts,
   ## bin data by bin_ID and average log10(reads) and log(sd(logit_fn))
 
@@ -817,10 +848,12 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
     dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
 
-  ## Regress avg_reads vs. avg_sd
+  ## Estimate read count vs. replicate variability trend
+
   lm_list <- vector("list", length = nMT)
   lm_var <- lm_list
 
+  # One linear model for each experimental condition
   for(i in 1:nMT){
     heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
     h_int <- summary(heterosked_lm)$coefficients[1,1]
@@ -830,7 +863,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     lm_var[[i]] <- var(stats::residuals(heterosked_lm))
   }
 
-
+  # Put linear model fit extrapolation into convenient data frame
   true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
     dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
     dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
@@ -840,6 +873,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
   logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
 
+  # Report numerical instabilities from maximum likelihood estimation
   if(!(all(logit_fn < upper) & all(logit_fn > lower))){
     num_unstable <- sum(logit_fn >= upper) + sum(logit_fn <= lower)
     tot_ests <- length(logit_fn)
@@ -847,8 +881,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     warning(paste0(num_unstable, " out of " , tot_ests, " (", prcnt_unstable,"%)", " logit(fn) estimates are at the upper or lower bounds set. These likely represent features with limited data or extremely stable/unstable features. If the number of boundary estimates is concerning, try increasing the magnitude of upper and lower."))
   }
 
+  # Vectors of use
   kd_estimate <- as.vector(Mut_data_est$kd_rep_est)
-  # fn_se <- as.vector(Mut_data_est$fn_se)
   log_kd_se <- as.vector(Mut_data_est$log_kd_se)
   logit_fn_se <- as.vector(Mut_data_est$logit_fn_se)
   Replicate <- as.vector(Mut_data_est$reps)
@@ -858,6 +892,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   rm(Mut_data_est)
 
+  # Create new data frame with kinetic parameter estimates and uncertainties
   df_fn <- data.frame(logit_fn, logit_fn_se, Replicate, Condition, Gene_ID, nreads, log_kd, kd_estimate, log_kd_se)
 
 
@@ -872,14 +907,13 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   df_fn <- df_fn[order(df_fn$Gene_ID, df_fn$Condition, df_fn$Replicate),]
 
 
+  # Relabel logit(fn) as log(kdeg) for steady-state independent analysis
   if(NSS){
     colnames(df_fn) <- c("log_kd", "log_kd_se", "Replicate", "Condition", "Gene_ID", "nreads", "logit_fn", "kd_estimate", "logit_fn_se")
 
     df_fn$kd_estimate <- inv_logit(df_fn$log_kd)
   }
 
-
-  #nreps <- max(df_fn$Replicate)
 
   message("Averaging replicate data and regularizing estimates")
 
@@ -891,36 +925,29 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     dplyr::group_by(Condition) %>%
     dplyr::mutate(sdp = sd(avg_log_kd)) %>%
     dplyr::mutate(theta_o = mean(avg_log_kd)) %>%
-    # mutate(var_pop = mean(sd_logit_fn^2)) %>%
-    # mutate(var_of_var = var(sd_logit_fn^2)) %>%
-    # mutate(two_params = 8*(var_pop^4)/var_of_var) %>%
-    # mutate(roots = RConics::cubic(c(1, -(4 + 2*(var_pop^2)/var_of_var), two_params, two_params))) %>%
-    # mutate(a_hyper = roots[(roots > 2) & (!is.complex(roots))]) %>%
-    # mutate(b_hyper = (var_pop*(a_hyper - 2))/a_hyper) %>%
     dplyr::ungroup()
 
 
 
   #Calcualte population averages
-  # What I need to do is calculate these parameters for each Condition
-  #sdp <- sd(avg_df_fn$avg_logit_fn) # Will be prior sd in regularization of mean
-  #theta_o <- mean(avg_df_fn$avg_logit_fn) # Will be prior mean in regularization of mean
+  # sdp <- sd(avg_df_fn$avg_logit_fn) # Will be prior sd in regularization of mean
+  # theta_o <- mean(avg_df_fn$avg_logit_fn) # Will be prior mean in regularization of mean
 
   var_pop <- mean(avg_df_fn_bayes$sd_log_kd^2) # Will be prior mean in regularization of sd
   var_of_var <- stats::var(avg_df_fn_bayes$sd_log_kd^2) # Will be prior variance in regularization of sd
 
 
   ## Regularize standard deviation estimate
+
   # Estimate hyperpriors with method of moments
 
   a_hyper <- 2*(var_pop^2)/var_of_var + 4
-  # Divide this by 2 to get inverse-gamma hyperprior
   # that serves as prior degrees of freedom
 
   b_hyper <- (var_pop*(a_hyper - 2))/a_hyper
 
 
-  if(BDA_model){
+  if(BDA_model){ # Not yet working well; inverse chi-squared model from BDA3
     avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
       dplyr::mutate(sd_post = (sd_log_kd*nreps[Condition] + a_hyper*exp(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(a_hyper + nreps[Condition] - 2) ) %>%
       dplyr::mutate(log_kd_post = (avg_log_kd*(nreps[Condition]*(1/(sd_post^2))))/(nreps[Condition]/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps[Condition]/(sd_post^2) + (1/sdp^2))) %>%
@@ -958,6 +985,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   message("Assessing statistical significance")
 
+  ## Populate various data frames with important fit information
+
   effects <- avg_df_fn_bayes$effect_size[avg_df_fn_bayes$Condition > 1]
   ses <- avg_df_fn_bayes$effect_std_error[avg_df_fn_bayes$Condition > 1]
 
@@ -987,9 +1016,6 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   Effect_sizes_df <- Effect_sizes_df[order(Effect_sizes_df$Feature_ID, Effect_sizes_df$Exp_ID),]
 
 
-  #hyperpars <- c(sdp, theta_o, var_pop, var_of_var, a_hyper, b_hyper)
-  #names(hyperpars) <- c("Mean Prior sd", "Mean prior mean", "Variance prior mean", "Variance prior variance", "Variance hyperparam a", "Variance hyperparam b")
-
   avg_df_fn_bayes <- avg_df_fn_bayes[,c("Gene_ID", "Condition", "avg_log_kd", "sd_log_kd", "nreads", "sdp", "theta_o", "sd_post",
                                         "log_kd_post", "kdeg", "kdeg_sd", "XF")]
 
@@ -1003,7 +1029,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   }
 
 
-  #fast_list <- list(estimate_df, avg_df_fn_bayes, Effect_sizes_df, pmuts_list, hyperpars)
+  # Convert to tibbles because I like tibbles better
   fast_list <- list(dplyr::as_tibble(df_fn), dplyr::as_tibble(avg_df_fn_bayes), dplyr::as_tibble(Effect_sizes_df), pmuts_list, c(a = a_hyper, b = b_hyper), lm_list)
 
   names(fast_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates", "Hyper_Parameters", "Mean_Variance_lms")

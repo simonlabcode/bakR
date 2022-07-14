@@ -138,7 +138,9 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
   }
 
   ## Check chains
-  if(!is.integer(chains)){
+  if(!is.numeric(chains)){
+    stop("chains must be numeric")
+  }else if(!is.integer(chains)){
     chains <- as.integer(chains)
   }
 
