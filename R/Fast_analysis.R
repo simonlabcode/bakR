@@ -469,7 +469,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       New_data_estimate <- data.frame(mut_actual, rep_actual, pnew)
       colnames(New_data_estimate) <- c("mut", "reps", "pnew")
 
-      message(paste0(c("Estimated pnews for each sample are:", capture.output(New_data_estimate)), collapse = "\n"))
+      message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
 
     }else{ # Use high mutation rate features to new read estimate mutation rate
 
@@ -519,7 +519,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       }else{
         New_data_estimate <- New_data_cutoff %>% dplyr::group_by(mut, reps) %>%
           dplyr::summarise(pnew = mean(avg_mut[1:features_cut]))
-        message(paste0(c("Estimated pnews for each sample are:", capture.output(New_data_estimate)), collapse = "\n"))
+        message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
       }
     }
 
@@ -770,7 +770,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                        n = sum(n), .groups = "keep") %>%
       dplyr::ungroup() %>%
       dplyr::group_by(fnum, mut, reps) %>%
-      dplyr::summarise(logit_fn_rep = optim(0, mixed_lik, TC = TC, n = n, lam_n = sum(lam_n*n)/sum(n), lam_o = sum(lam_o*n)/sum(n), method = "L-BFGS-B", lower = lower, upper = upper)$par, nreads =sum(n), .groups = "keep") %>%
+      dplyr::summarise(logit_fn_rep = stats::optim(0, mixed_lik, TC = TC, n = n, lam_n = sum(lam_n*n)/sum(n), lam_o = sum(lam_o*n)/sum(n), method = "L-BFGS-B", lower = lower, upper = upper)$par, nreads =sum(n), .groups = "keep") %>%
       dplyr::mutate(logit_fn_rep = ifelse(logit_fn_rep == lower, runif(1, lower-0.2, lower), ifelse(logit_fn_rep == upper, runif(1, upper, upper+0.2), logit_fn_rep))) %>%
       dplyr::ungroup()
 
@@ -843,7 +843,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   message("Estimating read count-variance relationship")
 
   Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-    dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
+    dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
     dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
@@ -860,15 +860,15 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     h_slope <- summary(heterosked_lm)$coefficients[2,1]
     lm_list[[i]] <- c(h_int, h_slope)
 
-    lm_var[[i]] <- var(stats::residuals(heterosked_lm))
+    lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
   }
 
   # Put linear model fit extrapolation into convenient data frame
   true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-    dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
+    dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
     dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
     dplyr::group_by(mut) %>%
-    dplyr::summarise(true_var = var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
+    dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
 
   log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
   logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
@@ -920,10 +920,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   #Average over replicates and estimate hyperparameters
   avg_df_fn_bayes <- df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
     dplyr::summarize(avg_log_kd = stats::weighted.mean(log_kd, 1/log_kd_se),
-                     sd_log_kd = sqrt(1/sum(1/((sd(log_kd)^2) + log_kd_se^2 ) ) ),
+                     sd_log_kd = sqrt(1/sum(1/((stats::sd(log_kd)^2) + log_kd_se^2 ) ) ),
                      nreads = sum(nreads)) %>% dplyr::ungroup() %>%
     dplyr::group_by(Condition) %>%
-    dplyr::mutate(sdp = sd(avg_log_kd)) %>%
+    dplyr::mutate(sdp = stats::sd(avg_log_kd)) %>%
     dplyr::mutate(theta_o = mean(avg_log_kd)) %>%
     dplyr::ungroup()
 
