@@ -3,7 +3,9 @@
 #' This function identifies all features (e.g., transcripts, exons, etc.) for which the mutation rate
 #' is below a set threshold in the control (no s4U) sample and which have more reads than a set threshold
 #' in all samples. If there is no -s4U sample, then only the read count cutoff is considered. Additional
-#' filtering options are only relevant if working with short RNA-seq read data.
+#' filtering options are only relevant if working with short RNA-seq read data. This includes filtering out
+#' features with extremely low empirical U-content (i.e., the average number of Us in sequencing reads from
+#' that feature) and those with very few reads having at least 3 Us in them.
 #'
 #' @param obj Object of class bakRData
 #' @param high_p highest mutation rate accepted in control samples
@@ -237,6 +239,16 @@ cBprocess <- function(obj,
     stop("concat must be logical (TRUE or FALSE)")
   }
 
+  ## Create vectors that map sample to important characteristics:
+    # samp_list = vector of sample names
+    # c_list = vector of -s4U control sample names
+    # s4U_list = vector of samples that are treated with s4U
+    # type_list = 1 if sample i in samp_list is s4U treated; 0 if not
+    # mut_list = numerical ID for each experimental condition as in metadf
+      # 1 = reference
+      # > 1 = experimental conditions
+    # rep_list = vector of replicate IDs
+
 
   cB <- obj$cB
   metadf <- obj$metadf
@@ -254,6 +266,7 @@ cBprocess <- function(obj,
     dplyr::group_by(ctl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup() %>% dplyr::select(r_id)
   rep_list <- rep_list$r_id
 
+  # Add replicate ID and s4U treatment status to metadf
   metadf <- metadf[samp_list, ] %>% dplyr::mutate(ctl = ifelse(tl == 0, 0, 1)) %>%
     dplyr::group_by(ctl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup()
 
@@ -261,12 +274,12 @@ cBprocess <- function(obj,
   names(mut_list) <- samp_list
   names(rep_list) <- samp_list
 
+  # Make vector of number of replicates of each condition
   nreps <- rep(0, times = max(mut_list))
   for(i in 1:max(mut_list)){
     nreps[i] <- max(rep_list[mut_list == i])
   }
 
-  #nreps <- max(rep_list)
 
   # Helper function:
   getType <- function(s) type_list[paste(s)]
@@ -290,7 +303,7 @@ cBprocess <- function(obj,
 
   message("Filtering out unwanted or unreliable features")
 
-  # This df is created in both cases
+  # Map each reliable feature to a numerical feature ID (fnum)
   ranked_features_df  <- cB %>%
     dplyr::ungroup() %>%
     dplyr::filter(XF %in% keep) %>%
@@ -303,7 +316,7 @@ cBprocess <- function(obj,
 
   message("Processing data...")
 
-  # Create count dataframe
+  # Make data frame with read count information
   Counts_df <- cB %>%
     dplyr::ungroup() %>%
     dplyr::filter(XF %in% keep) %>%
@@ -312,7 +325,7 @@ cBprocess <- function(obj,
     dplyr::right_join(ranked_features_df, by = 'XF') %>% dplyr::ungroup()
 
 
-  # Make count matrix
+  # Make count matrix that is DESeq2 compatible
   Cnt_mat <- matrix(0, ncol = length(samp_list), nrow = length(unique(Counts_df$XF)))
 
   for(s in seq_along(samp_list)){
@@ -324,7 +337,8 @@ cBprocess <- function(obj,
 
   rm(Counts_df)
 
-  ## U content estimation
+  # Empirical U-content calculations
+    # = average number of Us in sequencing reads originating from each feature
   sdf_U <- cB %>%
     dplyr::ungroup() %>%
     dplyr::group_by(sample, XF, TC, nT) %>%
@@ -340,6 +354,8 @@ cBprocess <- function(obj,
 
 
   kp = keep
+
+  ## Add sample characteristic details to U-content data frame
 
   df_U <- sdf_U %>%
     dplyr::ungroup() %>%
@@ -357,6 +373,9 @@ cBprocess <- function(obj,
   sample_lookup <- df_U[df_U$type == 1, c("sample", "mut", "reps")] %>% dplyr::distinct()
 
 
+  ## Calculate global average U-content so that feature-specific difference
+  ## from average can be calculated
+
   df_global_U <- df_U[df_U$type == 1, ] %>% dplyr::group_by(reps, mut) %>%
     dplyr::summarise(tot_avg_Us = sum(nT*n)/sum(n)) %>% dplyr::ungroup()
 
@@ -365,21 +384,27 @@ cBprocess <- function(obj,
 
   df_U_tot <- dplyr::left_join(df_global_U, df_feature_U, by = c("mut", "reps"))
 
+  # U_factor is log-fold difference in feature specific U-content from global average
+    # Used in Stan model to properly adjust population average Poisson mutation rates
   df_U_tot <- df_U_tot %>% dplyr::mutate(U_factor = log(feature_avg_Us/tot_avg_Us)) %>%
     dplyr::select(mut, reps, fnum, U_factor)
 
   if(Stan){
 
+    # Filter out unreliable features and assign feature ID to each feature
     sdf <- cB %>%
       dplyr::ungroup() %>%
       dplyr::group_by(sample, XF, TC) %>%
       dplyr::summarise(n = sum(n)) %>%
       dplyr::right_join(ranked_features_df, by = 'XF') %>% dplyr::ungroup()
 
-    ##### Run Stan model ---------
+
+    ### Curate data for Stan models
 
     d = sdf
 
+
+    ## Add sample characteristic info to data frame
 
     df <- d %>%
       dplyr::ungroup() %>%
@@ -394,7 +419,7 @@ cBprocess <- function(obj,
     df$reps <- paste(df$sample) %>% purrr::map_dbl(function(x) getRep(x))
     df$reps <- as.integer(df$reps)
 
-
+    ## Remove any unnecessary columns
     df <- df  %>%
       dplyr::group_by(XF, fnum, type, mut, TC, reps) %>%
       dplyr::summarise(n = sum(n)) %>%
@@ -404,19 +429,37 @@ cBprocess <- function(obj,
 
 
 
+    # Add U-content information
     df <- dplyr::left_join(df, df_U_tot, by = c("fnum", "mut", "reps"))
+
     df <- df[order(df$fnum, df$mut, df$reps), ]
 
+    # Feature ID
     FE = df$fnum
+
+    # Number of data points
     NE <- dim(df)[1]
+
+    # Number of features analyzed
     NF <- length(kp)
+
+    # s4U ID (1 = s4U treated, 0 = not)
     TP <- df$type
+
+    # Experimental condition ID
     MT <- df$mut
+
+    # Number of experimental conditions
     nMT <- length(unique(MT))
+
+    # Replicate ID
     R <- df$reps
 
-    num_mut <- df$TC # Number of mutations
-    num_obs <- df$n # Number of times observed
+    # Number of mutations
+    num_mut <- df$TC
+
+    # Number of identical observations
+    num_obs <- df$n
 
     ## Calculate Avg. Read Counts
     Avg_Counts <- df %>% dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>%
@@ -427,6 +470,9 @@ cBprocess <- function(obj,
 
     tls <-rep(0, times = nMT)
 
+    # Calculate average read counts on log10 and natural scales
+      # log10 scale read counts used in Stan model
+      # natural scale read counts used in plotting function (plotMA())
     for(f in 1:NF){
       for(i in 1:nMT){
         Avg_Reads[f,i] <- (mean(log10(Avg_Counts$Avg_Reads[(Avg_Counts$mut == i) & (Avg_Counts$fnum == f)])) - mean(log10(Avg_Counts$Avg_Reads[Avg_Counts$mut == i])))/sd(log10(Avg_Counts$Avg_Reads[Avg_Counts$mut == i]))
@@ -434,6 +480,7 @@ cBprocess <- function(obj,
       }
     }
 
+    # s4U label time in each experimental condition
     for(m in 1:nMT){
       tls[m] <- unique(metadf$tl[(metadf$Exp_ID == m) & (metadf$tl != 0)])
     }
@@ -445,13 +492,12 @@ cBprocess <- function(obj,
     df_U <- dplyr::left_join(df_U, tl_df, by = "mut")
 
 
-    # Will have to change to make Stan models compatible
-    # with a vector or matrix of tls
+    # data passed to Stan model (MCMC implementation)
     data_list <- list(
-      NE = NE, #Number of reads
-      NF = NF, # Number of gene
-      TP = TP, # Flag the control sample EV_0
-      FE = FE, # gene
+      NE = NE,
+      NF = NF,
+      TP = TP,
+      FE = FE,
       num_mut = num_mut,
       MT = MT,
       nMT = nMT,
