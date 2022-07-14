@@ -14,7 +14,7 @@ TL_stan(
 )
 }
 \arguments{
-\item{data_list}{List to pass to Stan of form given by \code{cB_processing}}
+\item{data_list}{List to pass to Stan of form given by \code{cBprocess}}
 
 \item{Hybrid_Fit}{Logical; if TRUE, Hybrid Stan model that takes as data output of \code{fast_analysis} is run.}
 

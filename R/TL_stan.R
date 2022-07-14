@@ -50,7 +50,7 @@
 #'
 #'
 #' @export
-#' @param data_list List to pass to Stan of form given by \code{cB_processing}
+#' @param data_list List to pass to Stan of form given by \code{cBprocess}
 #' @param Hybrid_Fit Logical; if TRUE, Hybrid Stan model that takes as data output of \code{fast_analysis} is run.
 #' @param NSS Logical; if TRUE, models that directly compare logit(fn)s are used to avoid steady-state assumption
 #' @param keep_fit Logical; if TRUE, Stan fit object is included in output; typically large file so default FALSE.
