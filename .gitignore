@@ -1,3 +1,5 @@
 .Rproj.user
 *.Rproj
 inst/doc
+configure
+configure.win
