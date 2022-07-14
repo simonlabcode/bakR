@@ -755,7 +755,7 @@ sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_m
 #' adjustable parameters. Average RNA kinetic parameters are drawn from biologically inspired
 #' distributions. Replicate variability is simulated by drawing a feature's
 #' fraction new in a given replicate from a logit-Normal distribution with a heteroskedastic
-#' variance term with average magnitude given the chosen read count vs. variance relationship.
+#' variance term with average magnitude given by the chosen read count vs. variance relationship.
 #' For each replicate, a feature's ksyn is drawn from a homoskedastic lognormal distribution. Read counts
 #' can either be set to the same value for all simulated features or can be simulated according to
 #' a heterodisperse negative binomial distribution. The latter is the default
@@ -1128,6 +1128,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
 
   #### Simulation function from bakR
 
+  # Average number of Us in reads from each simulated feature
   U_cont <- stats::rbeta(ngene, alpha, beta)
 
   # Define helper functions:
@@ -1150,13 +1151,13 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   kd_mean <- -log(1-fn_mean)/tl
   ks_mean <- stats::rlnorm(n=ngene, meanlog = kslog_c + log(kd_mean), sdlog = kslog_sd)
 
-  #ks_mean <- rexp(n = ngene, rate = (1/kd_mean)*5)
 
   effect_mean <- rep(0, times = ngene*num_conds)
   dim(effect_mean) <- c(ngene, num_conds)
   L2FC_ks_mean <- effect_mean
   L2FC_kd_mean <- effect_mean
 
+  # Simualte true kinetic parameter values
   for(i in 1:ngene){
 
     #Make sure the user didn't input the wrong
@@ -1175,6 +1176,9 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
       }
     }
 
+    # Simulate effect sizes (differences in kinetic parameters)
+      # effect_mean = difference in logit(fraction new)s
+      # L2FC_ks_mean = difference in L2FC(ksyn)
     for(j in 1:num_conds){
       if(j == 1){
         effect_mean[i,1] <- 0
@@ -1199,6 +1203,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
     }
   }
 
+  # Difference in L2FC(kdeg)
   L2FC_kd_mean <- log2(log(1 - inv_logit(fn_mean + effect_mean))/log(1- inv_logit(fn_mean)))
 
 
@@ -1212,8 +1217,8 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
     for(i in 1:ngene){
       for(j in 1:num_conds){
         for(k in 1:nreps){
+          # DESeq2 model of heterodisperse read counts
           Counts[i, j, k] <- stats::rnbinom(n=1, size=1/((a1/(scale_factor*RNA_conc[i,j])) + a0), mu = scale_factor*RNA_conc[i,j])
-          #Counts[i, j, k] <- rpois(n=1, lambda = scale_factor*RNA_conc[i,j,k])
 
           if(Counts[i, j, k] < 5){
             Counts[i, j, k] <- Counts[i, j, k] + stats::rpois(n=1, lambda = 2) + 1
@@ -1233,7 +1238,8 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   mean_RNA <- rep(0, times = num_conds)
   sd_RNA <- rep(0, times = num_conds)
 
-  #SIMULATE L2FC OF DEG AND SYNTH RATE CONSTANTS; REPLICATE VARIABILITY SIMULATED
+  # Simulate kdeg and ksyn for each feature and replicate.
+    # replicate variability is simulated here
   for(j in 1:num_conds){
     mean_RNA[j] <- mean(log10(RNA_conc[,j]*scale_factor))
     sd_RNA[j] <- stats::sd(log10(RNA_conc[,j]*scale_factor))
@@ -1246,7 +1252,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
     }
   }
 
-
+  # kdeg
   kd <- -log(1 - fn)/tl
 
 
@@ -1256,6 +1262,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   p_do <- matrix(rep(0, times = num_conds*nreps), nrow = nreps, ncol = num_conds)
   fn_real <- fn
 
+  # Simulate dropout
   for(j in 1:num_conds){
     for(k in 1:nreps){
       fn_real[,j,k] <- (fn[,j,k]*(1-p_do[k,j]))/(1 - p_do[k,j]*(1 - fn[,j,k]))
@@ -1278,18 +1285,33 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   mt <- c(rep(1:num_conds, each=nreps),seq(from=1,to=num_conds,by=1))
   replicate <- c(rep(seq(from=1, to=nreps), times=num_conds), rep(1, times=num_conds))
 
-  ### Have to simulate for each sequencing read, whether it is new or old
+  ### Simulate for each sequencing read, whether it is new or old
 
+  # Read counts
   Reads_vect <- as.vector(Counts)
+
+  # True average fraction news
   fn_vect <- as.vector(fn_real)
+
+  # Total number of reads
   tot_reads <- sum(Reads_vect)
+
+  # Numerical IDs for feature, experimental condition, replicate, and sample
   Gene_ID <- rep(1:l, times = num_conds*nreps)
   Exp_ID <- rep(rep(1:num_conds, each = l), times = nreps)
   Rep_ID <- rep(1:nreps, each = l*num_conds)
   Samp_ID <- rep(rep(seq(from = 1, to = num_conds*nreps, by = nreps), times = nreps) + rep(0:(nreps-1), each = num_conds), each = l)
+
+  # Avg. number of Us in sequencing reads from each feature
   U_contents <- U_cont[Gene_ID]
 
 
+  # For simulating STL-seq, assume a single pause site. This means that the U-content
+  # is identical for all reads of a given length. To easily simulate this, use U-content
+  # to calculate average number of Us, and add a bit of Poisson noise to the number of Us
+  # to simualte variation about the average due to the polymerase pausing at slightly
+  # different exact positions (i.e., it may go bit past or end up a bit short of the average
+  # pause location, and thus incorporate a couple extra or a couple fewer Us.
   if(STL){
     nU <- abs(rep(round(U_contents*STL_len), times = Reads_vect) + sign(unlist(purrr::map(Reads_vect, stats::runif, min = -0.1, max = 0.1)))*unlist(purrr::map(Reads_vect, stats::rpois, lambda = 0.5)))
   }else{
@@ -1297,6 +1319,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
                              stats::rbinom))
   }
 
+  # 1 = new read; 0 = old read
   newness <- unlist(purrr::pmap(list(n = Reads_vect, p = fn_vect), purrr::rbernoulli))
 
 
@@ -1305,12 +1328,12 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   Rep_ID <- rep(Rep_ID, times = Reads_vect)
   Samp_ID <- rep(Samp_ID, times = Reads_vect)
 
+  # Simulate number of mutations
   nmut <- stats::rbinom(n = length(nU), size = nU, prob = newness*p_new_real_tc[Exp_ID] + (1-newness)*p_old_real_tc[Exp_ID])
 
-  #nmut <- unlist(pmap(list(size = nU, prob = newness*p_new_real_tc[Exp_ID] + (1-newness)*p_old_real_tc[Exp_ID]), rbinom, n = 1))
 
 
-
+  # Create simualted cB file
   cB <- dplyr::tibble(S = Samp_ID,
                R = Rep_ID,
                MT = Exp_ID,
@@ -1320,7 +1343,8 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
                TP = rep(1, times = length(Samp_ID)))
 
 
-  # Then simulate -s4U control data
+  ### Simulate -s4U control data
+
   Gene_ID <- rep(1:l, times = num_conds*nreps)
   Exp_ID <- rep(rep(1:num_conds, each = l), times = nreps)
   Rep_ID <- rep(1:nreps, each = l*num_conds)
@@ -1372,6 +1396,10 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   cB_sim_1$XF <- cB_sim_1$FN
 
 
+  # Map sample list to experimental characteristics
+    # type = whether s4U labeled (1) or not (0)
+    # mut = experimental condition ID
+    # rep = replicate ID
   samp_list <- unique(cB_sim_1$S)
 
   type_list <- rep(0, times=length(samp_list))
@@ -1388,16 +1416,18 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
 
   colnames(cB_sim_1) <- c("sample", "R", "MT", "FN", "TC", "nT", "TP", "n", "XF")
 
+  # metadata data frame for bakR
   metadf <- data.frame(tl = type_list*tl, Exp_ID = as.integer(mut_list))
 
   rownames(metadf) <- unique(cB_sim_1$sample)
 
   cB_sim_1$sample <- as.character(cB_sim_1$sample)
 
+  # Make bakRData object
   bakRData <- bakR::bakRData(cB_sim_1, metadf)
 
 
-  ## Create dataframe for Effect sizes and fn
+  ## Create data frames storing simulated truths
 
   fn_vect <-  c()
   L2FC_kd_vect <- c()
@@ -1420,7 +1450,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
     }
   }
 
-  ## Make dataframes that are similar to Fit outputs
+  # Make data frames similar to bakRFit outputs in terms of ordering
 
   Fn_rep_sim <- data.frame(Feature_ID = rep(rep(1:ngene, each = nreps), times = num_conds),
                            Replicate = rep(1:nreps, times = ngene*num_conds),

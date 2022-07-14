@@ -137,7 +137,7 @@ user, but an extensive list of additional parameters can be adjusted.
 adjustable parameters. Average RNA kinetic parameters are drawn from biologically inspired
 distributions. Replicate variability is simulated by drawing a feature's
 fraction new in a given replicate from a logit-Normal distribution with a heteroskedastic
-variance term with average magnitude given the chosen read count vs. variance relationship.
+variance term with average magnitude given by the chosen read count vs. variance relationship.
 For each replicate, a feature's ksyn is drawn from a homoskedastic lognormal distribution. Read counts
 can either be set to the same value for all simulated features or can be simulated according to
 a heterodisperse negative binomial distribution. The latter is the default
