@@ -30,9 +30,6 @@ around 20 GB. Due to memory demands and time constraints (runtimes for the MCMC 
 means that these models should usually be run in a specialized High Performance Computing (HPC) system.}
 
 \item{...}{Arguments passed to \code{rstan::sampling} (e.g. iter, warmup, etc.).}
-
-\item{iter}{Positive integer; number of iterations for each Markov chain. By default, 1/2 of these will be reserved for warmup
-and thus not used for inference.}
 }
 \value{
 A list of objects:

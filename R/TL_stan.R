@@ -60,8 +60,6 @@
 #' with around 20 million raw (unmapped) reads per sample requires over 100 GB of RAM. With a single chain, this burden drops to
 #' around 20 GB. Due to memory demands and time constraints (runtimes for the MCMC implementation border will likely be around 1-2 days)
 #' means that these models should usually be run in a specialized High Performance Computing (HPC) system.
-#' @param iter Positive integer; number of iterations for each Markov chain. By default, 1/2 of these will be reserved for warmup
-#' and thus not used for inference.
 #' @param ... Arguments passed to `rstan::sampling` (e.g. iter, warmup, etc.).
 #' @return A list of objects:
 #' \itemize{
@@ -134,9 +132,25 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
     stop("keep_fit must be logical (TRUE or FALSE)")
   }
 
+  ## Check NSS
+  if(!is.logical(NSS)){
+    stop("NSS must be logical (TRUE or FALSE)")
+  }
+
+  ## Check chains
+  if(!is.integer(chains)){
+    chains <- as.integer(chains)
+  }
+
+  if(chains < 1){
+    stop("chains must be >= 1")
+  }
 
 
-  if(Hybrid_Fit){
+
+  # If NSS TRUE, runs version of models that does not assume steady-state
+  # relationship between fraction new and degradation rate constan
+  if(Hybrid_Fit){ # Run Hybrid implementation
     if(NSS){
       fit <- rstan::sampling(stanmodels$Hybrid_NSS, data = data_list, chains = chains, ...)
 
@@ -144,7 +158,7 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
       fit <- rstan::sampling(stanmodels$Hybrid, data = data_list, chains = chains, ...)
 
     }
-  }else{
+  }else{ # Run MCMC implementation
     if(NSS){
       fit <- rstan::sampling(stanmodels$MCMC_NSS, data = data_list, chains = chains, ...)
     }else{
@@ -154,6 +168,7 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
 
   }
 
+  # Extract logit(fraction new) replicate estimates
   fn_summary <- rstan::summary(fit, pars = "mu_rep_logit_fn", probs = c(0.5))$summary
 
   fn_summary <- fn_summary[, c("50%","mean", "sd")]
@@ -176,28 +191,27 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
   nconds <- data_list$nMT - 1
 
 
-  #Extract frac_new to get number of replicates
+  # Get number of replicates
+    # If some conditions have more replicates than others, this will be the
+    # largest number of replicates.
   reps <- data_list$nrep
 
   nreps <- rep(reps, times=nconds)
 
-  #Extract L2FC_kdeg
+  # Extract L2FC_kdeg and case as data frame
   L2FC_summary <- rstan::summary(fit, pars = "L2FC_kd", probs = c(0.5))$summary
 
-  #Pull out mean and standard deviation of parameter estimate
   L2FC_summary <- L2FC_summary[, c("50%","mean", "sd")]
 
-
-  #Convert to data frame:
   L2FC_df <- as.data.frame(L2FC_summary)
 
-  # Effects dataframe setup
+  # Effect sizes data frame setup
   F_ID <- rep(seq(from=1, to=ngs), each=nconds) # Feature number vector
   Exp_ID <- rep(seq(from=2, to=nconds+1), times=ngs) # Experimental condition vector
   L2FC_kdeg <- L2FC_df$mean # L2FC(kdeg) vector
   L2FC_kdeg_sd <- L2FC_df$sd # L2FC(kdeg) sd vector
 
-  # Fn dataframe setup
+  # Fn data frame setup
   F_ID_fn <- rep(1:ngs, each = (nconds+1)*reps)
   Exp_ID_fn <- rep(rep(1:(nconds+1), each = reps), times = ngs)
   R_ID_fn <- rep(1:reps, times = (nconds+1)*ngs)
@@ -206,7 +220,7 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
 
   rm(fn_summary)
 
-  # Kdeg dataframe setup
+  # Kdeg data frame setup
   F_ID_kd <- rep(seq(from=1, to=ngs), each=(nconds+1))
   Exp_ID_kd <- rep(seq(from=1, to=(nconds+1)), times=ngs)
   kdeg <- MT_summary$mean # kdeg vector
@@ -226,7 +240,7 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
 
   Fn_df <- Fn_df[order(Fn_df$Feature_ID, Fn_df$Exp_ID, Fn_df$Replicate),]
 
-  ## Add original gene name info
+  ## Add original gene names
   sdf <- data_list$sdf[,c("XF", "fnum")] %>% dplyr::distinct()
 
   Fn_df <- merge(Fn_df, sdf, by.x = c("Feature_ID"), by.y = "fnum")
@@ -235,6 +249,10 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
 
   Effects_df <- merge(Effects_df, sdf, by.x = c("Feature_ID"), by.y = "fnum")
 
+  ## Remove imputed replicate estimates
+    # If the number of replicates is less in some experimental conditions than
+    # others, Stan model will impute the "missing" replicate data. These imputed values
+    # should be removed post-hoc to avoid user confusion.
   r_vect <- data_list$nrep_vect
   rep_actual <- unlist(lapply(r_vect, function(x) seq(1, x)))
   mut_actual <- rep(1:(nconds+1), times = r_vect)
@@ -245,6 +263,7 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
   Fn_df <- dplyr::right_join(Fn_df, truedf, by = c("Exp_ID", "Replicate"))
 
 
+  # Create final Fit objects
   if(keep_fit == FALSE){
     fit_summary <- as.data.frame(rstan::summary(fit)$summary)
 
