@@ -119,7 +119,7 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
     ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = L2FC_kdeg,y = -log10(padj), color = conclusion,  shape = as.factor(Exp_ID))) +
       ggplot2::geom_point(size = 1.5) +
       ggplot2::theme_classic() +
-      ggplot2::ylab(bquote(log[10](p[adj]))) +
+      ggplot2::ylab(bquote(-log[10](p[adj]))) +
       ggplot2::xlab(bquote(L2FC(k[deg]))) +
       ggplot2::scale_color_manual(values = c("#FFC20A", "gray","#0C7BDC")) +
       theme_mds
@@ -127,7 +127,7 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
     ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = L2FC_kdeg,y = -log10(padj), color = conclusion )) +
       ggplot2::geom_point(size = 1.5) +
       ggplot2::theme_classic() +
-      ggplot2::ylab(bquote(log[10](p[adj]))) +
+      ggplot2::ylab(bquote(-log[10](p[adj]))) +
       ggplot2::xlab(bquote(L2FC(k[deg]))) +
       ggplot2::scale_color_manual(values = c("#FFC20A", "gray","#0C7BDC")) +
       theme_mds
