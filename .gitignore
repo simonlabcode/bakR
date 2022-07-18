@@ -1,5 +1,7 @@
 .Rproj.user
 *.Rproj
+.Rhistory
+.travis
 inst/doc
 configure
 configure.win
