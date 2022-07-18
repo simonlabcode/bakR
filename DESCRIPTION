@@ -50,3 +50,4 @@ Suggests:
     DESeq2,
     pheatmap
 VignetteBuilder: knitr
+URL: https://simonlabcode.github.io/bakR/
