@@ -1,8 +1,10 @@
 # Brief Description of bakR
 bakR (Bayesian analysis of the kinetics of RNA) is an R package for performing differential kinetic analysis with nucleotide recoding high-throughput RNA sequencing (NR-seq) data. 
 Kinetic parameter estimation and statistical testing is compatible with mutational data from any enrichment free NR-seq method (e.g., TimeLapse-seq, SLAM-seq, TUC-seq, etc.).
+
 # Why use bakR?
 Differential expression analysis of RNA sequencing (RNA-seq) data can identify changes in cellular RNA levels, but cannot determine the kinetic mechanism underlying such changes. Previously, our lab and others addressed this shortcoming by developing nucleotide-recoding RNA-seq methods (NR-seq; e.g., TimeLapse-seq) to quantify changes in RNA synthesis and degradation kinetics. While advanced statistical models implemented in user-friendly software (e.g., DESeq2) have ensured the statistical rigor of differential expression analyses, no such tools that facilitate differential kinetic analysis with NR-seq exist. To address this need, we developed bakR, an R package that analyzes and compares NR-seq datasets. Differential kinetic analysis with bakR relies on a new statistical model of NR-seq data that shares data across transcripts in a stastistically principled manner using hierarchical modeling. Look out for our paper describing the model and its extensive validation soon!
+
 # Installation
 To install bakR from Github, you need to have a C++ compiler configured to rstan's (the R interface to the probabilistic programming language that bakR uses on the backend) liking. The best way to do this is to follow the Stan team's [helpful documentation](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) on installing rstan for your operating system. Once that is complete, you can install bakR as follows:
 
