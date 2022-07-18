@@ -83,7 +83,7 @@
 <div class="section level2">
 <h2 id="necessary-setup">Necessary Setup<a class="anchor" aria-label="anchor" href="#necessary-setup"></a>
 </h2>
-<p>Of course you will want to load the bakR package for this vignette. Also, you’ll want to set the seed so as to ensure the results you get reproduce those presented in the vignette. Additionally, you will need to install <a href="https://mc-stan.org/" class="external-link">Stan</a>, which is the statistical modeling software that bakR makes use of under the hood for the heavier, higher performance models, as well as the R package rstan to allow interfacing between Stan and R. The biggest challenge is getting a C++ compiler configured to work with your installation of R. Instructions <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started" class="external-link">here</a> will hopefully help with installation of rstan.</p>
+<p>Of course you will want to load the bakR package for this vignette; instructions to do so can be found at this <a href="https://simonlabcode.github.io/bakR/index.html">link</a>. Also, you’ll want to set the seed so as to ensure the results you get reproduce those presented in the vignette.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://simonlabcode.github.io/bakR/">bakR</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span></code></pre></div>
@@ -164,11 +164,11 @@
 <strong>XF</strong>: Name of the feature (gene, exon, etc.) that the read comes from. Kinetic parameters will be estimated for each feature, so this should represent the functional unit who’s metabolic kinetics you are interested in.
 <ul>
 <li>
-<strong>XF</strong> stands for “exonic feature”, since in most cases, you should only be considering reads that map to definitively exonic locations. Introns are typically rapidly turned over and thus will be highly labeled species that will bias estimates of mature transcript stability.</li>
+<strong>XF</strong> stands for “exonic feature”, since in most cases you should only be considering reads that map to definitively exonic locations. Introns are typically rapidly turned over and thus will be highly labeled species that will bias estimates of mature transcript stability.</li>
 </ul>
 </li>
 <li>
-<strong>n</strong>: Number of reads with identical data for the other 4 columns. For example, n = 2 in the 4th row means that there are 2 reads from sample JS181101 that mapped to <strong>XF</strong> EPB41L1, had 0 T to C mutations, and had 14 Ts.</li>
+<strong>n</strong>: Number of reads with identical data for the other 4 columns. For example, n = 3 in the 2nd row means that there are 3 reads from sample WT_cntl (WT cells not treated with s4U) that mapped to <strong>XF</strong> ENSG00000100242 (SUN2), had 0 T to C mutations, and had 11 Ts.</li>
 </ol>
 <p>The structure of the cB file most closely reflects the output of a pipeline for analyzing nucleotide recoding RNA-seq data developed by the Simon lab (available <a href="https://bitbucket.org/mattsimon9/timelapse_pipeline/src/master/" class="external-link">here</a>), but consists of data provided by another published pipeline, SLAMDUNK (see the alleyoop dump function in SLAMDUNK).</p>
 <p>Now let’s look at the corresponding metadf dataframe:</p>
