@@ -2,7 +2,7 @@
 R package for analyzing nucleotide recoding high-throughput RNA sequencing (NR-seq) data. 
 Kinetic parameter estimation and statistical testing is compatible with mutational data from any enrichment free NR-seq method (e.g., TimeLapse-seq, SLAM-seq, TUC-seq, etc.).
 # Installation
-To install bakR from Github, you need to have a C++ compiler configured to Stan's (the probabilistic programming language that bakR uses on the backend) liking. The best way to do this is to go to ``https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started`` and follow the rstan installation instructions for your operating system. Once that is complete, you can install bakR with the following code:
+To install bakR from Github, you need to have a C++ compiler configured to rstan's (the R interface to the probabilistic programming language that bakR uses on the backend) liking. The best way to do this is to go to ``https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started`` and follow the rstan installation instructions for your operating system. Once that is complete, you can install bakR with the following code:
 
     install.packages("devtools") # if you haven't installed devtools already
     devtools::install_github("simonlabcode/bakR")
