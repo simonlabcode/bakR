@@ -12,10 +12,10 @@ To install bakR from Github, you need to have a C++ compiler configured to rstan
     devtools::install_github("simonlabcode/bakR")
 
 # Documentation
-There are currently two published vignettes to help get you up to speed with using bakR:
+There are currently two vignettes to help get you up to speed with using bakR:
 
-  1. An introductory vignette (linked [here](https://rpubs.com/isaacvock/923586)) that walks you through the basic bakR workflow with simulated data.
-  2. A second vignette (linked [here](https://rpubs.com/isaacvock/923576)) that dives into some specific follow-up analyses one can perform after running bakR on a dataset. Currently, the only analysis discussed in this vignette is differential synthesis analysis (i.e., identifiying differences in RNA synthesis rates by combining bakR with differential expression analysis), but more analyses will be added to this vignette as time goes by.
+  1. An introductory vignette (title: Differential Kinetic Analysis with bakR) that walks you through the basic bakR workflow with simulated data.
+  2. A second vignette (title: Going beyond the defaults with bakR) that dives into some specific follow-up analyses one can perform after running bakR on a dataset. Currently, the only analysis discussed in this vignette is differential synthesis analysis (i.e., identifiying differences in RNA synthesis rates by combining bakR with differential expression analysis), but more analyses will be added to this vignette as time goes by.
   
 All vignettes are also available on the [bakR website](https://simonlabcode.github.io/bakR/index.html) under the Articles section.
 
