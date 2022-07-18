@@ -17,7 +17,7 @@ There are currently two vignettes to help get you up to speed with using bakR:
   1. An introductory vignette (title: Differential Kinetic Analysis with bakR) that walks you through the basic bakR workflow with simulated data.
   2. A second vignette (title: Going beyond the defaults with bakR) that dives into some specific follow-up analyses one can perform after running bakR on a dataset. Currently, the only analysis discussed in this vignette is differential synthesis analysis (i.e., identifiying differences in RNA synthesis rates by combining bakR with differential expression analysis), but more analyses will be added to this vignette as time goes by.
   
-All vignettes are also available on the [bakR website](https://simonlabcode.github.io/bakR/index.html) under the Articles section.
+All vignettes are available on the [bakR website](https://simonlabcode.github.io/bakR/index.html) under the Articles section.
 
 # Bug Catching and Further Questions
 Post descriptions of bugs and a simple reproducible example (if possible) in the Issues section of this repo. In fact, you should go to the Issues section with any question you have about bakR, and there are even helpful labels that you can append to your posts to make the nature of your request clear. If you email me (Isaac Vock) with a question/concern/suggestion, I will direct you to the Issues section. If you have basic use questions, I would suggest going through the vignettes linked above. If these do not answer your question, then post your question to Issues.
