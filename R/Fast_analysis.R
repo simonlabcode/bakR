@@ -771,7 +771,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       dplyr::ungroup() %>%
       dplyr::group_by(fnum, mut, reps) %>%
       dplyr::summarise(logit_fn_rep = stats::optim(0, mixed_lik, TC = TC, n = n, lam_n = sum(lam_n*n)/sum(n), lam_o = sum(lam_o*n)/sum(n), method = "L-BFGS-B", lower = lower, upper = upper)$par, nreads =sum(n), .groups = "keep") %>%
-      dplyr::mutate(logit_fn_rep = ifelse(logit_fn_rep == lower, runif(1, lower-0.2, lower), ifelse(logit_fn_rep == upper, runif(1, upper, upper+0.2), logit_fn_rep))) %>%
+      dplyr::mutate(logit_fn_rep = ifelse(logit_fn_rep == lower, stats::runif(1, lower-0.2, lower), ifelse(logit_fn_rep == upper, stats::runif(1, upper, upper+0.2), logit_fn_rep))) %>%
       dplyr::ungroup()
 
     ## Look for numerical instabilities
@@ -789,7 +789,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       dplyr::summarise(tot_mut = sum(totTC), totUs = sum(totU), pnew = mean(pnew), pold = mean(pold)) %>% dplyr::ungroup() %>%
       dplyr::mutate(avg_mut = tot_mut/totUs,
                     Fn_rep_est = (avg_mut - (1-mut_reg)*pold)/((1+mut_reg)*pnew - (1-mut_reg)*pold)) %>%
-      dplyr::mutate(Fn_rep_est = ifelse(Fn_rep_est > 1, runif(1, min = inv_logit(upper-0.1), max = 1) , ifelse(Fn_rep_est < 0, runif(1, min = 0, max = inv_logit(lower+0.1)), Fn_rep_est ) )) %>%
+      dplyr::mutate(Fn_rep_est = ifelse(Fn_rep_est > 1, stats::runif(1, min = inv_logit(upper-0.1), max = 1) , ifelse(Fn_rep_est < 0, stats::runif(1, min = 0, max = inv_logit(lower+0.1)), Fn_rep_est ) )) %>%
       dplyr::mutate(logit_fn_rep = logit(Fn_rep_est)) %>%
       dplyr::select(fnum, mut, reps, logit_fn_rep)
 

@@ -475,7 +475,7 @@ cBprocess <- function(obj,
       # natural scale read counts used in plotting function (plotMA())
     for(f in 1:NF){
       for(i in 1:nMT){
-        Avg_Reads[f,i] <- (mean(log10(Avg_Counts$Avg_Reads[(Avg_Counts$mut == i) & (Avg_Counts$fnum == f)])) - mean(log10(Avg_Counts$Avg_Reads[Avg_Counts$mut == i])))/sd(log10(Avg_Counts$Avg_Reads[Avg_Counts$mut == i]))
+        Avg_Reads[f,i] <- (mean(log10(Avg_Counts$Avg_Reads[(Avg_Counts$mut == i) & (Avg_Counts$fnum == f)])) - mean(log10(Avg_Counts$Avg_Reads[Avg_Counts$mut == i])))/stats::sd(log10(Avg_Counts$Avg_Reads[Avg_Counts$mut == i]))
         Avg_Reads_natural[f,i] <- mean(Avg_Counts$Avg_Reads[(Avg_Counts$mut == i) & (Avg_Counts$fnum == f)])
       }
     }

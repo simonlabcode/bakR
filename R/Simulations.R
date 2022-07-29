@@ -476,10 +476,8 @@ sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_m
       }
     }
   } else{
-    if(sim_from_data == FALSE){
       Counts <- rep(nreads, times= ngene*num_conds*nreps)
       dim(Counts) <- c(ngene, num_conds, nreps)
-    }
 
   }
 
@@ -1227,10 +1225,8 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
       }
     }
   } else{
-    if(sim_from_data == FALSE){
       Counts <- rep(nreads, times= ngene*num_conds*nreps)
       dim(Counts) <- c(ngene, num_conds, nreps)
-    }
 
   }
 

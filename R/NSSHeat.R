@@ -123,7 +123,7 @@ NSSHeat <- function(bakRFit,
 
   ## Calculate mechanism score
   test_stat <- test %>%
-    dplyr::mutate(score_bakR = ifelse(is.na(score_bakR), 0, score_bakR)) %>% rowwise() %>%
+    dplyr::mutate(score_bakR = ifelse(is.na(score_bakR), 0, score_bakR)) %>% dplyr::rowwise() %>%
     dplyr::mutate(mech_stat = ifelse(mech == "ksyn", ifelse( sign(score_bakR) == sign(stat), mean( c(abs(score_bakR), abs(stat)) ), abs(stat)/(abs(score_bakR) + 2) ) ,
                               ifelse(mech == "kdeg", -mean( c(abs(score_bakR), abs(stat)) ) , 0) ))
 
