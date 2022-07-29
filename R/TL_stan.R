@@ -69,10 +69,13 @@
 #'  \itemize{
 #'   \item Feature_ID; Numerical ID of feature
 #'   \item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
-#'   \item L2FC_kdegs; L2FC(kdeg) estimate
-#'   \item effects; Change in logit(fraction) new comparing reference and experimental sample(s)
-#'   \item ses; Uncertainty in effect size
-#'   \item XF; Original feature name
+#'   \item L2FC_kdeg; L2FC(kdeg) posterior mean
+#'   \item L2FC_kd_sd; L2FC(kdeg) posterior sd
+#'   \item effect; identical to L2FC_kdeg (kept for symmetry with MLE fit output)
+#'   \item se; identical to L2FC_kd_sd (kept for symmetry with MLE fit output)
+#'   \item XF; Feature name
+#'   \item pval; p value obtained from effect and se + z-test
+#'   \item padj; p value adjusted for multiple testing using Benjamini-Hochberg procedure
 #'  }
 #'  \item Kdeg_df; dataframe with estimates of the kdeg (RNA degradation rate constant) for each feature, averaged across replicate data.
 #'  The columns of this dataframe are:
@@ -86,9 +89,9 @@
 #'  \item Fn_Estimates; dataframe with estimates of the logit(fraction new) for each feature in each replicate.
 #'  The columns of this dataframe are:
 #'  \itemize{
+#'   \item Feature_ID; Numerical ID for feature
 #'   \item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
 #'   \item Replicate; Numerical ID for replicate
-#'   \item Feature_ID; Numerical ID for feature
 #'   \item logit_fn; Logit(fraction new) posterior mean
 #'   \item logit_fn_se; Logit(fraction new) posterior standard deviation
 #'   \item sample; Sample name
@@ -115,7 +118,15 @@
 #'   than 1 could represent poor model convergence
 #'  }
 #'  \item Stan_Fit; only outputted if keep_fit == TRUE. This is the full Stan fit object, an R6 object of class `stanfit`
+#'  \item Mutation_Rates; data frame with information about mutation rate estimates. Has the same columns as Fit_Summary.
+#'  Each row corresponds to either a background mutation rate (log_lambda_o) or an s4U induced mutation rate (log_lambda_n),
+#'  denoted in the parameter column. The bracketed portion of the parameter name will contain two numbers. The first corresponds
+#'  to the Exp_ID and the second corresponds to the Replicate_ID. For example, if the parameter name is log_lambda_o\[1,2\] then
+#'  that row corresponds to the background mutation rate in the second replicate of experimental condition one. A final point to
+#'  mention is that the estimates are on a log(avg. # of mutations) scale. So a log_lambda_n of 1 means that on average, there
+#'  are an estimated 2.72 (exp(1)) mutations in reads from new RNA (i.e., RNA synthesized during s4U labeling).
 #' }
+#'
 #'
 TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE,
                     chains = 1, ...) {
