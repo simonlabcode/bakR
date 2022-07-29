@@ -17,7 +17,6 @@ RcppExport SEXP _rcpp_module_boot_stan_fit4Hybrid_NSS_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4MCMC_Model_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4MCMC_NSS_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4Mutrate_est_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4lmtest_mod();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_rcpp_module_boot_stan_fit4Hybrid_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Hybrid_mod, 0},
@@ -25,7 +24,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rcpp_module_boot_stan_fit4MCMC_Model_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4MCMC_Model_mod, 0},
     {"_rcpp_module_boot_stan_fit4MCMC_NSS_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4MCMC_NSS_mod, 0},
     {"_rcpp_module_boot_stan_fit4Mutrate_est_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4Mutrate_est_mod, 0},
-    {"_rcpp_module_boot_stan_fit4lmtest_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4lmtest_mod, 0},
     {NULL, NULL, 0}
 };
 
