@@ -1,6 +1,6 @@
 Package: bakR
 Title: Analyze and compare nucleotide recoding RNA-seq (e.g., TimeLapse-seq) data
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: 
     person(given = "Isaac",
            family = "Vock",
