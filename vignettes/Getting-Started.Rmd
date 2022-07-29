@@ -1,5 +1,5 @@
 ---
-title: "Differential Kinetic Analysis with bakR"
+title: "Differential kinetic analysis with bakR"
 author: "Isaac Vock"
 output: rmarkdown::html_vignette
 vignette: >
@@ -294,7 +294,7 @@ I hope that this vignette has provided a useful introduction to using bakR with 
 1. What about estimating and comparing synthesis rates? bakR seems to only automatically perform degradation rate constant comparisons, but you keep calling it differential kinetic analysis, not differential stability analysis. What gives? 
 1. I'm new to Stan and have been getting weird warning messages upon running some of the heavier models. What are rhats and effective sample sizes?
 
-If the first question is of interest to you, head over to the Further-Analyses vignette! 
+If the first question is of interest to you, head over to the "Going beyond the defaults" vignette! 
 
 If the second question is of interest, then I would suggest heading over to some of the amazing documentation written by the Stan team. In short though, warnings from Stan are a sign that the model did not converge. The cause of this is likely anomalies in your data. Some challenges that I have come across that could lead to such warnings include:
 

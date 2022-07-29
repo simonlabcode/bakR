@@ -1,4 +1,10 @@
 url: https://simonlabcode.github.io/bakR/
 template:
   bootstrap: 5
+articles:
+- title: Articles
+  navbar: ~
+  contents:
+  - Getting-Started
+  - Further-Analyses
 
