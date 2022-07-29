@@ -18,7 +18,7 @@ each collection of experimental samples provided."><!-- mathjax --><script src="
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,8 +32,8 @@ each collection of experimental samples provided."><!-- mathjax --><script src="
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
+    <a class="dropdown-item" href="../articles/Getting-Started.html">Differential kinetic analysis with bakR</a>
     <a class="dropdown-item" href="../articles/Further-Analyses.html">Going beyond the defaults with bakR</a>
-    <a class="dropdown-item" href="../articles/Getting-Started.html">Differential Kinetic Analysis with bakR</a>
   </div>
 </li>
 <li class="nav-item">
@@ -113,10 +113,13 @@ means that these models should usually be run in a specialized High Performance 
 reference sample for each feature. This dataframe also includes p-values obtained from a moderated t-test. The columns of this
 dataframe are:</p><ul><li><p>Feature_ID; Numerical ID of feature</p></li>
 <li><p>Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)</p></li>
-<li><p>L2FC_kdegs; L2FC(kdeg) estimate</p></li>
-<li><p>effects; Change in logit(fraction) new comparing reference and experimental sample(s)</p></li>
-<li><p>ses; Uncertainty in effect size</p></li>
-<li><p>XF; Original feature name</p></li>
+<li><p>L2FC_kdeg; L2FC(kdeg) posterior mean</p></li>
+<li><p>L2FC_kd_sd; L2FC(kdeg) posterior sd</p></li>
+<li><p>effect; identical to L2FC_kdeg (kept for symmetry with MLE fit output)</p></li>
+<li><p>se; identical to L2FC_kd_sd (kept for symmetry with MLE fit output)</p></li>
+<li><p>XF; Feature name</p></li>
+<li><p>pval; p value obtained from effect and se + z-test</p></li>
+<li><p>padj; p value adjusted for multiple testing using Benjamini-Hochberg procedure</p></li>
 </ul></li>
 <li><p>Kdeg_df; dataframe with estimates of the kdeg (RNA degradation rate constant) for each feature, averaged across replicate data.
 The columns of this dataframe are:</p><ul><li><p>Feature_ID; Numerical ID of feature</p></li>
@@ -126,9 +129,9 @@ The columns of this dataframe are:</p><ul><li><p>Feature_ID; Numerical ID of fea
 <li><p>XF; Original feature name</p></li>
 </ul></li>
 <li><p>Fn_Estimates; dataframe with estimates of the logit(fraction new) for each feature in each replicate.
-The columns of this dataframe are:</p><ul><li><p>Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)</p></li>
+The columns of this dataframe are:</p><ul><li><p>Feature_ID; Numerical ID for feature</p></li>
+<li><p>Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)</p></li>
 <li><p>Replicate; Numerical ID for replicate</p></li>
-<li><p>Feature_ID; Numerical ID for feature</p></li>
 <li><p>logit_fn; Logit(fraction new) posterior mean</p></li>
 <li><p>logit_fn_se; Logit(fraction new) posterior standard deviation</p></li>
 <li><p>sample; Sample name</p></li>
@@ -153,6 +156,13 @@ iterations (iter x chains). Small values of this could represent poor model conv
 than 1 could represent poor model convergence</p></li>
 </ul></li>
 <li><p>Stan_Fit; only outputted if keep_fit == TRUE. This is the full Stan fit object, an R6 object of class <code>stanfit</code></p></li>
+<li><p>Mutation_Rates; data frame with information about mutation rate estimates. Has the same columns as Fit_Summary.
+Each row corresponds to either a background mutation rate (log_lambda_o) or an s4U induced mutation rate (log_lambda_n),
+denoted in the parameter column. The bracketed portion of the parameter name will contain two numbers. The first corresponds
+to the Exp_ID and the second corresponds to the Replicate_ID. For example, if the parameter name is log_lambda_o[1,2] then
+that row corresponds to the background mutation rate in the second replicate of experimental condition one. A final point to
+mention is that the estimates are on a log(avg. # of mutations) scale. So a log_lambda_n of 1 means that on average, there
+are an estimated 2.72 (exp(1)) mutations in reads from new RNA (i.e., RNA synthesized during s4U labeling).</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
