@@ -262,6 +262,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           NSS = FALSE,
                           BDA_model = FALSE){
 
+  # Check input validity -------------------------------------------------------
+
   ## Check df
   if (!all(c("sample", "XF", "TC", "nT", "n", "fnum", "type", "mut", "reps", "tl") %in% names(df))) {
     stop("`df` must contain `sample`, `XF`, `TC`, `nT`, `n`, `fnum`, `type`, `mut`, `reps`, and `tl` columns")
@@ -403,6 +405,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     warning("You are testing against a null hypothesis |L2FC(kdeg)| greater than 2; this might be too conservative")
   }
 
+
+  # ESTIMATE MUTATION RATES ----------------------------------------------------
 
   # Helper functions that I will use on multiple occasions
   logit <- function(x) log(x/(1-x))
@@ -703,7 +707,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   # Mutation rate estimates
   pmuts_list <- list(New_data_estimate, pold)
 
-  ## Prep data for analyses
+
+
+  # PREP DATA FOR ANALYSES -----------------------------------------------------
     # i) Filter out any -s4U control samples
     # ii) Make lookup table mapping label times to experimental conditions
     # iii) Make lookup table mapping sample names to experimental conditions and replicate IDs
@@ -735,6 +741,11 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   # Feature lookup table
   feature_lookup <- Mut_data[,c("fnum", "XF")] %>% dplyr::distinct()
+
+
+
+  # ESTIMATE FRACTION NEW ------------------------------------------------------
+
 
   ## Estimate fraction new in each replicate using U-content adjusted Poisson model
   message("Estimating fraction labeled")
@@ -802,6 +813,11 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   }
 
+
+
+  # ESTIMATE UNCERTAINTIES WITH FISHER INFORMATION -----------------------------
+
+
   message("Estimating per replicate uncertainties")
 
   Mut_data <- dplyr::left_join(Mut_data, Mut_data_est[, c("kd_rep_est" ,"logit_fn_rep", "fnum", "mut", "reps")], by = c("fnum", "mut", "reps"))
@@ -832,6 +848,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   Mut_data_est$log_kd_se <- Mut_data$log_kd_se
 
   Mut_data_est <- Mut_data_est %>% dplyr::mutate(log_kd_rep_est = log(kd_rep_est))
+
+
+  # ESTIMATE VARIANCE VS. READ COUNT TREND -------------------------------------
+
 
   ## Now affiliate each fnum, mut with a bin Id based on read counts,
   ## bin data by bin_ID and average log10(reads) and log(sd(logit_fn))
@@ -872,6 +892,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
   logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
+
+
+  # PREP DATA FOR REGULARIZATION -----------------------------------------------
 
   # Report numerical instabilities from maximum likelihood estimation
   if(!(all(logit_fn < upper) & all(logit_fn > lower))){
@@ -914,6 +937,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     df_fn$kd_estimate <- inv_logit(df_fn$log_kd)
   }
 
+
+
+  # AVERAGE REPLICATE DATA AND REGULARIZE WITH INFORMATIVE PRIORS --------------
 
   message("Averaging replicate data and regularizing estimates")
 
@@ -981,6 +1007,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
 
 
+  # STATISTICAL TESTING --------------------------------------------------------
 
 
   message("Assessing statistical significance")
@@ -992,6 +1019,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   pval <- avg_df_fn_bayes$pval[avg_df_fn_bayes$Condition > 1]
   padj <- stats::p.adjust(pval, method = "BH")
+
+
+  # ORGANIZE OUTPUT ------------------------------------------------------------
 
   Genes_effects <- avg_df_fn_bayes$Gene_ID[avg_df_fn_bayes$Condition > 1]
   Condition_effects <- avg_df_fn_bayes$Condition[avg_df_fn_bayes$Condition > 1]
