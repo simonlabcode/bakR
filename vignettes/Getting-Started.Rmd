@@ -172,7 +172,7 @@ bakRData <- sim_data$bakRData
 sim_truth <- sim_data$sim_list
 
 # Run the efficient model
-Fit <- bakRFit(bakRData, StanRateEst = FALSE)
+Fit <- bakRFit(bakRData)
 
 ```
 

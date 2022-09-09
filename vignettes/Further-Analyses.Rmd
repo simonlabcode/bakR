@@ -47,7 +47,7 @@ set.seed(123)
 ## Differential synthesis analysis with bakR + DESeq2
 I claim that bakR is a tool for performing differential kinetic analysis, but if you 
 are coming from the Getting-Started vignette then you might think that this is a misnomer.
-All that I showed you how to do in that vignette was differential *stability* analysis. Full-fledged differntial kinetic analysis means performing differential *synthesis* analysis as well, so let's talk about how you can do that with bakR.
+All that I showed you how to do in that vignette was differential *stability* analysis. Full-fledged differential kinetic analysis means performing differential *synthesis* analysis as well, so let's talk about how you can do that with bakR.
 
 As the title of this section suggests though, bakR won't be able to accomplish this task alone. The reason for this is that assessing changes in synthesis means assessing changes in RNA stability and RNA expression. Therefore, we need to perform differential expression analysis in conjunction with differential stability analysis. In theory, I could have implemented my own differential expression analysis in bakR, but with so many popular software tools currently in existence to perform that task, it seemed pointlessly redundant. It also gives you the freedom to use whatever differential expression analysis tool that you are used to using, and to perform whatever kind of DE analysis that you like independent of bakR. 
 
