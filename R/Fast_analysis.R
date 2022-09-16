@@ -478,53 +478,39 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     }else{ # Use high mutation rate features to new read estimate mutation rate
 
       message("Estimating labeled mutation rate")
-      Mut_data <- df
 
-      ##New Mutation rate Estimation
-      # Extract only s4U labeled data to estimate s4U mut rate
-      New_data <- Mut_data[Mut_data$type == 1, ]
+      # Binomial mixture likelihood
+      mixture_lik <- function(param, TC, nT, n){
 
-      # Calculate avg. mut rate at each row
-      New_data$avg_mut <- New_data$TC/New_data$nT
+        logl <- sum(n*log(inv_logit(param[3])*(factorial(nT)/(factorial(nT-TC)*factorial(TC)))*(inv_logit(param[1])^TC)*((1 -inv_logit(param[1]))^(nT-TC)) +  (1-inv_logit(param[3]))*(factorial(nT)/(factorial(nT-TC)*factorial(TC)))*(inv_logit(param[2])^TC)*((1 - inv_logit(param[2]))^(nT-TC)) ) )
 
-      # Remove rows with NAs
-      New_data <- New_data[!is.na(New_data$avg_mut),]
+        return(-logl)
 
-      # calculate total number of mutations
-      # which is the avg. for that row of dataframe times n
-      # the number of reads that had the identical average
-      New_data$weight_mut <- New_data$avg_mut*New_data$n
-
-      # This is to estimate the total mutation rate for each gene in
-      # each replicate and each experimental condition
-      New_data_summary <- New_data %>%
-        dplyr::group_by(reps, mut, fnum) %>% # group by gene, replicate ID, and experiment ID
-        dplyr::summarise(avg_mut = sum(weight_mut)/sum(n), n = sum(n))
-
-      # Order datalist so that it's ordered by sample and then avg mutation rate
-      # Goal is to use the highest avg. mutation rates to estimate s4U mutation rate,
-      # assuming that highest mutation rates are from fast turnover, compeltely
-      # labeled transcripts
-      New_data_ordered <- New_data_summary[order(New_data_summary$mut, New_data_summary$reps, New_data_summary$avg_mut, decreasing=TRUE), ]
-
-      ## This part has some magic numbers I should get rid of
-      ## or move to user input
-
-      New_data_cutoff <- New_data_ordered[New_data_ordered$n > read_cut,]
-
-      # Check to make sure that the number of features that made it past the
-      # read count filter is still more than the total number of features required for
-      # mutation rate estimate
-      check <- New_data_cutoff %>% dplyr::ungroup() %>%
-        dplyr::count(mut, reps, sort = TRUE)
-
-      if(sum(check$n < features_cut) > 0){
-        stop("Not enough features made it past the read cutoff filter in one sample; try decreasing read_cut or features_cut")
-      }else{
-        New_data_estimate <- New_data_cutoff %>% dplyr::group_by(mut, reps) %>%
-          dplyr::summarise(pnew = mean(avg_mut[1:features_cut]))
-        message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
       }
+
+      # Remove unlabeled controls
+      df_pnew <- df[df$type == 1,]
+
+
+      # Summarize out genes
+      df_pnew <- df_pnew %>%
+        dplyr::group_by(TC, nT, mut, reps) %>%
+        dplyr::summarise(n = sum(n))
+
+
+      low_ps <- c(-9, -9, -9)
+      high_ps <- c(0, 0, 9)
+
+
+      # Fit mixture model to each sample
+      df_pnew <- df_pnew %>%
+        dplyr::group_by(mut, reps) %>%
+        dplyr::summarise(pnew = inv_logit(max(stats::optim(par=c(-7, -2, 0), mixture_lik, TC = TC, nT = nT, n = n, method = "L-BFGS-B", lower = low_ps, upper = high_ps)$par[1:2])) )
+
+      New_data_estimate <- df_pnew
+
+      message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(df_pnew)), collapse = "\n"))
+
     }
 
 
@@ -605,48 +591,44 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
     }else{
       if((sum(df$type == 0) == 0) | (no_ctl)){ # Estimate using low mutation rate features
+
         message("Estimating unlabeled mutation rate")
 
-        New_data <- df
+        # Binomial mixture likelihood
+        mixture_lik <- function(param, TC, nT, n){
 
-        # Calculate avg. mut rate at each row
-        New_data$avg_mut <- New_data$TC/New_data$nT
+          logl <- sum(n*log(inv_logit(param[3])*(factorial(nT)/(factorial(nT-TC)*factorial(TC)))*(inv_logit(param[1])^TC)*((1 -inv_logit(param[1]))^(nT-TC)) +  (1-inv_logit(param[3]))*(factorial(nT)/(factorial(nT-TC)*factorial(TC)))*(inv_logit(param[2])^TC)*((1 - inv_logit(param[2]))^(nT-TC)) ) )
 
-        # Remove rows with NAs
-        New_data <- New_data[!is.na(New_data$avg_mut),]
+          return(-logl)
 
-        # calculate total number of mutations
-        # which is the avg. for that row of dataframe times n
-        # the number of reads that had the identical average
-        New_data$weight_mut <- New_data$avg_mut*New_data$n
-
-        # This is to estimate the total mutation rate for each gene in
-        # each replicate and each experimental condition
-        New_data_summary <- New_data %>%
-          dplyr::group_by(fnum) %>% # group by gene, replicate ID, and experiment ID
-          dplyr::summarise(avg_mut = sum(weight_mut)/sum(n), n = sum(n), .groups = "keep")
-
-        # Order datalist so that it's ordered by sample and then avg mutation rate
-        # Goal is to use the lowest avg. mutation rates to estimate s4U mutation rate,
-        # assuming that highest mutation rates are from fast turnover, completely
-        # labeled transcripts
-        New_data_ordered <- New_data_summary[order(New_data_summary$avg_mut, decreasing=FALSE), ]
-
-
-        # Filter out for high read depth features
-        New_data_cutoff <- New_data_ordered[New_data_ordered$n > read_cut,]
-
-        # Check to make sure that the number of features that made it past the
-        # read count filter is still more than the total number of features required for
-        # mutation rate estimate
-        check <- nrow(New_data_cutoff)
-
-        if(check < features_cut){
-          stop("Not enough features made it past the read cutoff filter in one sample; try decreasing read_cut or features_cut")
-        }else{
-          pold <- stats::weighted.mean(New_data_cutoff$avg_mut[1:features_cut], w = New_data_cutoff$n[1:features_cut])
-          message(paste(c("Estimated pold is: ", pold), collapse = " "))
         }
+
+        # Remove unlabeled controls
+        df_pold <- df[df$type == 1,]
+
+
+        # Summarize out genes
+        df_pold <- df_pold %>%
+          dplyr::group_by(TC, nT, mut, reps) %>%
+          dplyr::summarise(n = sum(n))
+
+
+        low_ps <- c(-9, -9, -9)
+        high_ps <- c(0, 0, 9)
+
+
+        # Fit mixture model to each sample
+        df_pold <- df_pold %>%
+          dplyr::group_by(mut,reps) %>%
+          dplyr::summarise(pold = inv_logit(min(stats::optim(par=c(-7, -2, 0), mixture_lik, TC = TC, nT = nT, n = n, method = "L-BFGS-B", lower = lower, upper = upper)$par[1:2])) ) %>%
+          dplyr::ungroup() %>%
+          dplyr::summarise(pold = mean(pold))
+
+
+
+        pold <- df_pold$pold
+        message(paste(c("Estimated pold is: ", pold), collapse = " "))
+
 
 
       }else{ # Estimate using -s4U data
