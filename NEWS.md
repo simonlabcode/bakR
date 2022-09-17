@@ -1,3 +1,5 @@
+# bakR 0.2.0
+
 # bakR 0.1.1
 
 * Changed ordering of vignettes on website
