@@ -248,7 +248,7 @@ cBtofast <- function(cB_raw,
 #' @importFrom magrittr %>%
 #' @export
 fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
-                          read_cut = 50, features_cut = 10,
+                          read_cut = 50, features_cut = 50,
                           nbin = NULL, prior_weight = 2,
                           MLE = TRUE,
                           lower = -7, upper = 7,
@@ -475,7 +475,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
       message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
 
-    }else{ # Use high mutation rate features to new read estimate mutation rate
+    }else{ # Use binomial mixture model to estimate new read estimate mutation rate
 
       message("Estimating labeled mutation rate")
 
@@ -590,7 +590,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       message(paste(c("Estimated pold is: ", pold), collapse = " "))
 
     }else{
-      if((sum(df$type == 0) == 0) | (no_ctl)){ # Estimate using low mutation rate features
+      if((sum(df$type == 0) == 0) | (no_ctl)){ # Estimate pold using binomial mixture model
 
         message("Estimating unlabeled mutation rate")
 
