@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -255,7 +255,7 @@
 <span><span class="va">sim_truth</span> <span class="op">&lt;-</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">sim_list</span></span>
 <span></span>
 <span><span class="co"># Run the efficient model</span></span>
-<span><span class="va">Fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bakRFit.html">bakRFit</a></span><span class="op">(</span><span class="va">bakRData</span>, StanRateEst <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">Fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bakRFit.html">bakRFit</a></span><span class="op">(</span><span class="va">bakRData</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Finding reliable Features</span></span>
 <span><span class="co">#&gt; Filtering out unwanted or unreliable features</span></span>
 <span><span class="co">#&gt; Processing data...</span></span>
@@ -265,21 +265,21 @@
 <span><span class="co">#&gt; <span style="color: #949494;"># Groups:   mut [2]</span></span></span>
 <span><span class="co">#&gt;     mut  reps   pnew</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1     1 0.046<span style="text-decoration: underline;">9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     1     2 0.047<span style="text-decoration: underline;">2</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     1     3 0.047<span style="text-decoration: underline;">1</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     2     1 0.048<span style="text-decoration: underline;">2</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     2     2 0.048<span style="text-decoration: underline;">4</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     2     3 0.048<span style="text-decoration: underline;">7</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1     1 0.050<span style="text-decoration: underline;">1</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     1     2 0.049<span style="text-decoration: underline;">9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     1     3 0.050<span style="text-decoration: underline;">0</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     2     1 0.050<span style="text-decoration: underline;">1</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     2     2 0.050<span style="text-decoration: underline;">2</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     2     3 0.050<span style="text-decoration: underline;">0</span></span></span>
 <span><span class="co">#&gt; Estimating unlabeled mutation rate</span></span>
-<span><span class="co">#&gt; Estimated pold is:  0.000967252648026643</span></span>
+<span><span class="co">#&gt; Estimated pold is:  0.00101175389179681</span></span>
 <span><span class="co">#&gt; Estimating fraction labeled</span></span>
 <span><span class="co">#&gt; Estimating per replicate uncertainties</span></span>
 <span><span class="co">#&gt; Estimating read count-variance relationship</span></span>
 <span><span class="co">#&gt; Averaging replicate data and regularizing estimates</span></span>
 <span><span class="co">#&gt; Assessing statistical significance</span></span></code></pre></div>
 <p>bakRFit() is used here as a wrapper for two functions in bakR: cBprocess() and fast_analysis(). cBprocess() will extract and properly format the information needed for all statistical models from the bakRData object and fast_analysis() will perform the efficient analysis. This should take no more than a minute to run. Messages are printed along the way to keep you updated as to the progress of the analysis.</p>
-<p>One of the most important messages is that regarding the estimated pnews and pold. The pnews are the estimated mutation rates of reads from new RNAs (new meaning RNAs synthesized after the start of 4sU labeling) in each sample (muts = Exp_ID, and reps = a numerical replicate ID that corresponds to the order replicates appear in the cB), and pold is a global estimate of the background mutation rate used in all analyses. The simulated mutation rates are 0.05 for new reads and 0.001 for old reads in all samples this simulation, so the estimates are pretty close. “But Isaac, why are the pnews consistently underestimated”? Good question, its because this is a small simulated dataset with a somewhat tight distribution of fraction news. fast_analysis() makes lots of assumptions to assure maximum efficiency, and one is that the highest mutation rates in 4sU fed samples come from features with almost 100% labeling (fraction new = 1). That won’t be true in small simulated datasets, but it’s still not that bad, everything considered. If you have better mutation rate estimates from elsewhere (say a run of the full Stan model implemented in bakR), you can pass these estimates to bakRFit():</p>
+<p>One of the most important messages is that regarding the estimated pnews and pold. The pnews are the estimated mutation rates of reads from new RNAs (new meaning RNAs synthesized after the start of 4sU labeling) in each sample (muts = Exp_ID, and reps = a numerical replicate ID that corresponds to the order replicates appear in the cB), and pold is a global estimate of the background mutation rate used in all analyses. The simulated mutation rates are 0.05 for new reads and 0.001 for old reads in all samples this simulation, so the estimates are pretty darn close. You can also input mutation rate estimates from elsewhere (say a run of the full Stan model implemented in bakR) to bakRFit():</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Run efficient model with known mutation rates</span></span>
 <span><span class="co"># Pass the Fit object rather than the bakRData object and set FastRerun to TRUE</span></span>
@@ -293,7 +293,7 @@
 <span><span class="co">#&gt; Averaging replicate data and regularizing estimates</span></span>
 <span><span class="co">#&gt; Assessing statistical significance</span></span></code></pre></div>
 <p>Since we’ve already run the fast_analysis once, we can speed up the analysis by passing the Fit object from the first run rather than the bakRData object. This allows bakR to skip the time consuming pre-processing steps. Just make sure to set FastRerun to TRUE.</p>
-<p>An even better, though slightly less efficient solution is to use a more rigorous statistical model implemented in Stan to estimate mutation rates. The idea is to run this model on only a small subset of features with sufficient sequencing depth and a fraction new moderately close to 0.5 so that there is representation of both labeled and unlabeled reads. This should be your go-to strategy for mutation rate estimation if you don’t have -4sU controls or if your label times are unusually short (so that no transcripts are close to being 100% labeled):</p>
+<p>If you run into problems with the default mutation rate strategy (e.g., the mutation rate estimates don’t seem to make sense) another slightly less efficient solution is to use MCMC implemented in Stan to estimate mutation rates. The idea is to fit a binomial mixture model to only a small subset of features with sufficient sequencing depth so that the model has enough data to work with. This strategy used to be my go-to strategy, but after I made improvements to the default mutation rate strategy I found myself using this approach less and less. Still, here is an example of its use for posterity’s sake:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Set StanRateEst to TRUE to use Stan to estimate rates</span></span>
 <span><span class="co"># low_reads and high_reads defines the read count cutoffs used to select features</span></span>

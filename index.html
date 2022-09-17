@@ -40,7 +40,7 @@
     
     <a class="navbar-brand me-2" href="index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,7 +82,7 @@
 <div class="section level1">
 <h1 id="why-use-bakr">Why use bakR?<a class="anchor" aria-label="anchor" href="#why-use-bakr"></a>
 </h1>
-<p>Differential expression analysis of RNA sequencing (RNA-seq) data can identify changes in cellular RNA levels, but cannot determine the kinetic mechanism underlying such changes. Previously, <a href="https://simonlab.yale.edu/research/transcriptome-dynamics/timelapse-chemistry/" class="external-link">our lab</a> and others addressed this shortcoming by developing nucleotide-recoding RNA-seq methods (NR-seq; e.g., TimeLapse-seq) to quantify changes in RNA synthesis and degradation kinetics. While advanced statistical models implemented in user-friendly software (e.g., DESeq2) have ensured the statistical rigor of differential expression analyses, no such tools that facilitate differential kinetic analysis with NR-seq exist. To address this need, we developed bakR, an R package that analyzes and compares NR-seq datasets. Differential kinetics analysis with bakR relies on a new statistical model of NR-seq data that shares data across transcripts in a stastistically principled manner using hierarchical modeling. bakR outperforms attempts to use single sample analysis tools (e.g., pulseR and GRAND-SLAM) for differential kinetics analyis. Check out <a href="https://www.biorxiv.org/content/10.1101/2022.09.02.505697v1" class="external-link">our preprint</a> to learn more about the model and its extensive validation!</p>
+<p>Differential expression analysis of RNA sequencing (RNA-seq) data can identify changes in cellular RNA levels, but cannot determine the kinetic mechanism underlying such changes. Previously, <a href="https://simonlab.yale.edu/research/transcriptome-dynamics/timelapse-chemistry/" class="external-link">our lab</a> and others addressed this shortcoming by developing nucleotide-recoding RNA-seq methods (NR-seq; e.g., TimeLapse-seq) to quantify changes in RNA synthesis and degradation kinetics. While advanced statistical models implemented in user-friendly software (e.g., DESeq2) have ensured the statistical rigor of differential expression analyses, no such tools that facilitate differential kinetic analysis with NR-seq exist. To address this need, we developed bakR, an R package that analyzes and compares NR-seq datasets. Differential kinetics analysis with bakR relies on a Bayesian hierarchical model of NR-seq data to increase statistical power by sharing information across transcripts. bakR outperforms attempts to use single sample analysis tools (e.g., pulseR and GRAND-SLAM) for differential kinetics analyis. Check out <a href="https://www.biorxiv.org/content/10.1101/2022.09.02.505697v1" class="external-link">our preprint</a> to learn more about the model and its extensive validation!</p>
 </div>
 <div class="section level1">
 <h1 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>

@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,6 +81,7 @@
 <p>Welcome! This vignette discusses an exciting hodge-podge of additional analyses that can be done with bakR. The assumption is that at this point you have worked through the Getting-Started vignette. If that is not the case, I would highly suggest starting there and then coming back here once you’re familiar with the standard use cases of bakR. The topics to be addressed are as follows:</p>
 <ol style="list-style-type: decimal">
 <li>Performing differential synthesis analysis with bakR (and DESeq2, as you will see)</li>
+<li>Assessing the mechanisms of differential expression in non-steady state systems</li>
 <li>TBD (Keep your eyes for announcements about updates to this vignette with more to come!)</li>
 </ol>
 <p>These are the packages you are going to have to install and load in order to do everything presented in this vignette:</p>
@@ -152,6 +153,7 @@
 <span><span class="co">#&gt; The following objects are masked from 'package:matrixStats':</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     anyMissing, rowMedians</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">pheatmap</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Packages which are installed when bakR is installed</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span> </span>
@@ -199,7 +201,7 @@
 <div class="section level2">
 <h2 id="differential-synthesis-analysis-with-bakr-deseq2">Differential synthesis analysis with bakR + DESeq2<a class="anchor" aria-label="anchor" href="#differential-synthesis-analysis-with-bakr-deseq2"></a>
 </h2>
-<p>I claim that bakR is a tool for performing differential kinetic analysis, but if you are coming from the Getting-Started vignette then you might think that this is a misnomer. All that I showed you how to do in that vignette was differential <em>stability</em> analysis. Full-fledged differntial kinetic analysis means performing differential <em>synthesis</em> analysis as well, so let’s talk about how you can do that with bakR.</p>
+<p>I claim that bakR is a tool for performing differential kinetic analysis, but if you are coming from the Getting-Started vignette then you might think that this is a misnomer. All that I showed you how to do in that vignette was differential <em>stability</em> analysis. Full-fledged differential kinetic analysis means performing differential <em>synthesis</em> analysis as well, so let’s talk about how you can do that with bakR.</p>
 <p>As the title of this section suggests though, bakR won’t be able to accomplish this task alone. The reason for this is that assessing changes in synthesis means assessing changes in RNA stability and RNA expression. Therefore, we need to perform differential expression analysis in conjunction with differential stability analysis. In theory, I could have implemented my own differential expression analysis in bakR, but with so many popular software tools currently in existence to perform that task, it seemed pointlessly redundant. It also gives you the freedom to use whatever differential expression analysis tool that you are used to using, and to perform whatever kind of DE analysis that you like independent of bakR.</p>
 <p>To show you how to perform differential synthesis analysis, I will be using DESeq2 for the purpose of differential expression analysis. Why? Because I like DESeq2. It’s a good model, it’s a good piece of software, and it was an early source of inspiration for me in my PhD. Also, you’ll see that some of the output of bakR is specifically designed with DESeq2 in mind, so it will facilitate the process of performing differential expression analysis a bit.</p>
 <p>First things first, let’s simulate some data! We’ll simulate 1000 genes, with 200 observing differential synthesis and no changes in stability. Let’s also run the efficient implementation while we are at it.</p>
@@ -391,6 +393,158 @@ L2FC(ksyn) = L2FC(RNA) + L2FC(kdeg)
 <span><span class="va">ksyn_results</span></span></code></pre></div>
 <p><img src="Further-Analyses_files/figure-html/unnamed-chunk-11-1.png" width="576" style="display: block; margin: auto;"></p>
 <p>FP is a false positive, FN is a false negative, TP is a true positive, and TN is a true negative. All in all, I’d say it went pretty well! You now know how to perform differential synthesis analysis with bakR + DEseq2.</p>
+</div>
+<div class="section level2">
+<h2 id="going-beyond-the-steady-state-assumption">Going beyond the steady-state assumption<a class="anchor" aria-label="anchor" href="#going-beyond-the-steady-state-assumption"></a>
+</h2>
+<p>You may have noticed an assumption that continually crops up in the analyses presented in bakR vignettes: steady-state. In the Getting-Started vignette, it was a necessary part of relating the fraction new to the more interesting <span class="math inline">\(kdeg\)</span>. In this vignette, it was additionally a key part of assessing synthesis kinetics. It therefore underlies all of the differential kinetic analysis discussed so far. What happens if it is a bad assumption? “Dogs and cats living together! Mass hysteria!”? No Dr. Venkman, there’s a way out, and that’s what we’re going to talk about next.</p>
+<div class="section level3">
+<h3 id="violating-the-steady-state-assumption">Violating the steady-state assumption<a class="anchor" aria-label="anchor" href="#violating-the-steady-state-assumption"></a>
+</h3>
+<p>Before we talk about what to do when the steady-state assumption is questionable, it’s worth briefly mentioning <em>when</em> the steady-state assumption is worth throwing out. Assuming steady-state RNA dynamics means that you are assuming the rate at which RNA synthesized is the same as the rate at which it is degraded. “Wait, does that mean we are assuming <span class="math inline">\(ksyn = kdeg\)</span>?” No. The degradation rate constant <span class="math inline">\(kdeg\)</span> is not the rate of degradation. The rate of degradation (i.e., the number of RNA molecules degraded per unit time) depends on <span class="math inline">\(kdeg\)</span> AND the amount of RNA present. So steady-state actually means that <span class="math inline">\(ksyn = kdeg*[RNA]\)</span>. In the context of NR-seq experiments, assuming steady-state means that we are assuming this relationship holds throughout the entire metabolic label feed time. Therefore, another way to phrase this assumption is to say that we are assuming that our population of cells aren’t actively responding to some stimulus and regulating <span class="math inline">\(ksyn\)</span> and/or <span class="math inline">\(kdeg\)</span>. RNA levels remain constant during the experiment.</p>
+<p>Here’s a fun question: are cells ever at steady-state? Yes and no. An individual cell is NEVER at steady-state. Gene expression is constantly regulated as the cell progresses through the cell cycle and performs all of the biochemical functions necessary to stay alive. BUT, bakR is designed to analyze <em>bulk</em> nucleotide recoding RNA-seq data. This means the data comes from a population of cells, not a single cell. Thus, when I say that I am assuming steady-state, what I really mean is that I am assuming the population average is at steady-state. If the population of cells are asynchronous (so they aren’t all going through the exact same cell cycle stages at the same time) and haven’t been perturbed recently (e.g., treated with a drug), then this is probably a pretty solid assumption.</p>
+<p>Lots of cool experiments are done with cells far from steady-state though. When using nucleotide recoding RNA-seq, it is increasingly popular to perform rapid degradation of a protein of interest, treatment with a specific drug, or some other acute perturbation leading up to and during metabolic labeling. Therefore, we need a way to analyze data without the helpful steady-state assumption. This is challenging though, because if we can’t assume steady-state, how do we relate what we measure (the fraction new) to the RNA metabolic kinetics we care about? The answer: keep it non-parametric.</p>
+</div>
+<div class="section level3">
+<h3 id="analyzing-nr-seq-data-far-from-steady-state">Analyzing NR-seq data far from steady-state<a class="anchor" aria-label="anchor" href="#analyzing-nr-seq-data-far-from-steady-state"></a>
+</h3>
+<p>I am using the term non-parametric here to suggest getting away from using explicit mathematical functions to model RNA metabolism. Rather, we can think very generally about what effects changes in RNA synthesis and degradation kinetics can have on the fraction new in an NR-seq experiment. Let’s say we compare an unperturbed, steady-state population of cells to a cells that have been treated with a drug of interest. If the fraction new for a particular transcript is higher in the drug treated cells than the untreated cells, how could that have come about? Well, generally speaking, there are two possibilities:</p>
+<ol style="list-style-type: decimal">
+<li>The RNA may have been destabilized by the drug treatment. This is the same explanation you would give for the change if everything were steady-state.</li>
+<li>The synthesis rate of the RNA may have been ramped up following drug treatment. This is an intuitive explanation that is surprisingly only possible away from steady-state. At steady-state, changes in synthesis kinetics affect the amount of new and old RNA equally, leading to no change in the fraction new.</li>
+</ol>
+<p>Here is the key realization: these two possibilities have different impacts on the LEVELS of RNA. If synthesis is increasing upon drug treatment, then the amount of that transcript will also increase. If the transcript is destabilized though, then there will be less of it around at the end of the experiment. Therefore, <strong>combining differential expression with differential fraction new analyses reveals the kinetic differences</strong>. More generally, here is a diagram that covers the range of possible kinetic mechanisms and conclusions:</p>
+<div class="figure">
+<img src="NSS_Analysis.png" alt=""><p class="caption">Diagram of NR-seq NSS analysis strategy.</p>
+</div>
+</div>
+<div class="section level3">
+<h3 id="performing-steady-state-indepedent-comparisons-with-bakr-deseq2">Performing steady-state indepedent comparisons with bakR + DESeq2<a class="anchor" aria-label="anchor" href="#performing-steady-state-indepedent-comparisons-with-bakr-deseq2"></a>
+</h3>
+<p>The goal of the steady-state independent analysis that I am putting forth is to identify the <strong>major</strong> kinetic mechanism of any differential expression observed. The analysis strategy is as follows:</p>
+<ol style="list-style-type: decimal">
+<li>Compare NR-seq with bakR (but with one small parameter tweak)</li>
+<li>Perform differential expression analysis</li>
+<li>Use the NSSHeat() function in bakR to combine the results and come to a mechanistic conclusion.</li>
+</ol>
+<p>Simple enough! As usual, let’s start out by simulating some data. Unfortunately, since non-steady state (NSS) is such a broad term, there is no NSS simulation option. That’s okay though, as the analysis strategy will still work even if the steady-state assumption isn’t invalid. To make it interesting though, we’ll simulate a mix of synthesis and degradation changes:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Simulate a nucleotide recoding dataset</span></span>
+<span><span class="va">sim_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Simulate_bakRData.html">Simulate_bakRData</a></span><span class="op">(</span><span class="fl">1000</span>,</span>
+<span>                         num_kd_DE <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">200</span><span class="op">)</span>,</span>
+<span>                         num_ks_DE <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="co"># This will simulate 1000 features, 2 experimental conditions</span></span>
+<span>  <span class="co"># and 3 replicates for each experimental condition.</span></span>
+<span>  <span class="co"># See ?Simulate_bakRData for details regarding tunable parameters</span></span>
+<span></span>
+<span><span class="co"># Extract simulated bakRData object</span></span>
+<span><span class="va">bakRData</span> <span class="op">&lt;-</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">bakRData</span></span>
+<span></span>
+<span><span class="co"># Extract simualted ground truths</span></span>
+<span><span class="va">sim_truth</span> <span class="op">&lt;-</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">sim_list</span></span>
+<span></span>
+<span><span class="co">## Run the efficient model</span></span>
+<span><span class="co"># We'll tell it what the mutation rates are just for efficiency's sake</span></span>
+<span><span class="co"># Major change: NSS is set to TRUE</span></span>
+<span><span class="va">Fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bakRFit.html">bakRFit</a></span><span class="op">(</span><span class="va">bakRData</span>, pnew <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.05</span>, times <span class="op">=</span> <span class="fl">6</span><span class="op">)</span>, pold <span class="op">=</span> <span class="fl">0.001</span>, NSS <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Finding reliable Features</span></span>
+<span><span class="co">#&gt; Filtering out unwanted or unreliable features</span></span>
+<span><span class="co">#&gt; Processing data...</span></span>
+<span><span class="co">#&gt; Estimating fraction labeled</span></span>
+<span><span class="co">#&gt; Estimating per replicate uncertainties</span></span>
+<span><span class="co">#&gt; Estimating read count-variance relationship</span></span>
+<span><span class="co">#&gt; Averaging replicate data and regularizing estimates</span></span>
+<span><span class="co">#&gt; Assessing statistical significance</span></span></code></pre></div>
+<p>What’s interesting about this simulation is that all transcripts which are differentially stable are also differentially synthesized, so our goal is to identify the major source of kinetic regulation. Also, note the change to the bakRFit() call; a parameter called NSS is set to TRUE. This will make it so that bakR compares logit(fraction new)s rather than log(kdeg)s, since the relationship between fraction new and <span class="math inline">\(kdeg\)</span> may no longer hold.</p>
+<p>Next, we can perform differential expression analysis just as we did before:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># Get the count matrix from bakR</span></span>
+<span><span class="va">Counts</span> <span class="op">&lt;-</span> <span class="va">Fit</span><span class="op">$</span><span class="va">Data_lists</span><span class="op">$</span><span class="va">Count_Matrix</span></span>
+<span></span>
+<span><span class="co"># Experimental conditions for each sample</span></span>
+<span><span class="co"># There are 6 s4U treated samples (3 replicates of each condition)</span></span>
+<span><span class="co"># In addition, there are 2 -s4U control samples (1 for each condition)</span></span>
+<span></span>
+<span><span class="co">## s4U conditions</span></span>
+<span><span class="co"># 1st three samples are reference (ref) samples</span></span>
+<span><span class="co"># Next three samples are experimental (exp) samples</span></span>
+<span><span class="va">conditions_s4U</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ref"</span>, <span class="st">"exp"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## -s4U control conditions</span></span>
+<span><span class="co"># 1st sample is reference, next is experimental</span></span>
+<span><span class="va">conditions_ctl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ref"</span>, <span class="st">"exp"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Combined s4U and -s4U control conditions</span></span>
+<span><span class="va">conditions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">conditions_s4U</span>, <span class="va">conditions_ctl</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Make the colData input for DESeq2</span></span>
+<span><span class="va">colData</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>conditions <span class="op">=</span> <span class="va">conditions</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">colData</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">Counts</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Make DESeq2 data object</span></span>
+<span><span class="va">dds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/DESeqDataSet.html" class="external-link">DESeqDataSetFromMatrix</a></span><span class="op">(</span>countData <span class="op">=</span> <span class="va">Counts</span>,</span>
+<span>                              colData <span class="op">=</span> <span class="va">colData</span>,</span>
+<span>                              design <span class="op">=</span> <span class="op">~</span><span class="va">conditions</span><span class="op">)</span></span>
+<span><span class="co">#&gt; converting counts to integer mode</span></span>
+<span></span>
+<span><span class="co"># Fit DESeq2 model</span></span>
+<span><span class="va">ddso</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/DESeq.html" class="external-link">DESeq</a></span><span class="op">(</span><span class="va">dds</span><span class="op">)</span></span>
+<span><span class="co">#&gt; estimating size factors</span></span>
+<span><span class="co">#&gt; estimating dispersions</span></span>
+<span><span class="co">#&gt; gene-wise dispersion estimates</span></span>
+<span><span class="co">#&gt; mean-dispersion relationship</span></span>
+<span><span class="co">#&gt; final dispersion estimates</span></span>
+<span><span class="co">#&gt; fitting model and testing</span></span>
+<span></span>
+<span><span class="co"># Extract results of experimental vs. reference comparison</span></span>
+<span><span class="va">reso</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/results.html" class="external-link">results</a></span><span class="op">(</span><span class="va">ddso</span>, contrast <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"conditions"</span>, <span class="st">"exp"</span>, <span class="st">"ref"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>We’re almost ready to use bakR’s special NSSHeat() function. NSSHeat() has two required inputs:</p>
+<ol style="list-style-type: decimal">
+<li>A bakR fit object (preferably fit with NSS set to TRUE)</li>
+<li>A data frame containing differential expression analysis results</li>
+</ol>
+<p>In particular, the differential expression data frame must contain four columns named as follows:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>XF</strong>: Name of the feature (gene, exon, etc.) that the read comes from.</li>
+<li>
+<strong>log2FoldChange</strong>: L2FC(RNA) estimated by the differential expression analysis.</li>
+<li>
+<strong>stat</strong>: L2FC(RNA)/se[L2FC(RNA)]; so like a differential expression z-score.</li>
+<li>
+<strong>padj</strong>: Multiple test adjusted p-value from differential expression analysis.</li>
+</ol>
+<p>Conveniently, our DESeq2 results object has all the information we need! We can make the differential expression data frame like so:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Convert to data frame</span></span>
+<span><span class="va">reso</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">reso</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Make data frame</span></span>
+<span><span class="va">DE_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>XF <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/row.names.html" class="external-link">row.names</a></span><span class="op">(</span><span class="va">reso</span><span class="op">)</span>,</span>
+<span>                    log2FoldChange <span class="op">=</span> <span class="va">reso</span><span class="op">$</span><span class="va">log2FoldChange</span>,</span>
+<span>                    stat <span class="op">=</span> <span class="va">reso</span><span class="op">$</span><span class="va">stat</span>,</span>
+<span>                    padj <span class="op">=</span> <span class="va">reso</span><span class="op">$</span><span class="va">padj</span><span class="op">)</span></span></code></pre></div>
+<p>We are ready to perform the steady-state independent analysis now!</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="va">NSSheatmap</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/NSSHeat.html">NSSHeat</a></span><span class="op">(</span><span class="va">Fit</span>, <span class="va">DE_df</span><span class="op">)</span></span></code></pre></div>
+<p>See ?NSSHeat for information about the additional parameters that can be specified. Most importantly, there is the bakRModel parameter, which tells NSSHeat which fit to use in the bakRFit model, if multiple exist. The default setting is to just use the MLE fit, which should always be there.</p>
+<p>So what can you do with the output of NSSHeat? Well, as the name implies, this function is specifically designed to help you make heatmaps. NSSheatmap will have three columns:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>bakR_score</strong>: The logit(fraction new) change z-score from bakR</li>
+<li>
+<strong>DE_score</strong>: The L2FC(RNA) z-score from DESeq2</li>
+<li>
+<strong>Mech_score</strong>: A mechanism z-score that quantifies the extent to which significant changes in gene expression are synthesis or degradation driven. Synthesis driven = positive numbers; degradation driven = negative numbers.</li>
+</ol>
+<p>You can quickly make the heatmap using the lovely pheatmap package:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># NSS heatmap</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="va">NSSheatmap</span>, cluster_cols <span class="op">=</span> <span class="cn">FALSE</span>, show_rownames <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Further-Analyses_files/figure-html/unnamed-chunk-16-1.png" width="576" style="display: block; margin: auto;"></p>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
