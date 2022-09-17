@@ -1,5 +1,9 @@
 # bakR 0.2.0
 
+* Improved default mutation rate estimation strategy
+* Updated vignettes and added back non-steady state analysis strategy discussion
+* Better commenting of fast_analysis (instead of opting for refactorization)
+
 # bakR 0.1.1
 
 * Changed ordering of vignettes on website
