@@ -639,41 +639,13 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
         Old_data <- Mut_data[Mut_data$type == 0, ]
 
-        Old_data$avg_mut <- Old_data$TC/Old_data$nT
+        Old_data <- Old_data %>% dplyr::ungroup() %>%
+          dplyr::summarise(mutrate = sum(n*TC)/sum(n*nT))
 
-        # Remove rows with NAs
-        Old_data <- Old_data[!is.na(Old_data$avg_mut),]
+        pold <- Old_data$mutrate
+        message(paste(c("Estimated pold is: ", pold), collapse = " "))
 
-        Old_data$weight_mut <- Old_data$avg_mut*Old_data$n
 
-        #Old_data$n <- rep(1, times=nrow(Old_data))
-
-        Old_data_summary <- Old_data %>%
-          dplyr::group_by(reps, mut, fnum) %>% # group by gene, replicate ID, and experiment ID
-          dplyr::summarise(avg_mut = sum(weight_mut)/sum(n), n = sum(n))
-
-        # Order data differently than for s4U mut rate estimation
-        # Difference is that every mutation is a background mutation in these samples
-        # So we just want the highest confidence estimation, meaning we should only
-        # order by read counts
-        Old_data_ordered <- Old_data_summary[order(Old_data_summary$n, decreasing=TRUE), ]
-
-        ## This part has some magic numbers I should get rid of
-        ## or move to user input
-
-        Old_data_cutoff <- Old_data_ordered[Old_data_ordered$n > read_cut,]
-
-        # Check to make sure that the number of features that made it past the
-        # read count filter is still more than the total number of features required for
-        # mutation rate estimate
-        check <- nrow(Old_data_cutoff)
-
-        if(check < features_cut){
-          stop("Not enough features made it past the read cutoff filter in one sample; try decreasing read_cut or features_cut")
-        }else{
-          pold <- stats::weighted.mean(Old_data_cutoff$avg_mut[1:features_cut], w = Old_data_cutoff$n[1:features_cut])
-          message(paste(c("Estimated pold is: ", pold), collapse = " "))
-        }
       }
     }
 
