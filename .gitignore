@@ -3,9 +3,6 @@
 .Rhistory
 .travis.yml
 inst/doc
-*.o
-*.h
-*.cc
 vignettes/rsconnect
 docs
 configure*
