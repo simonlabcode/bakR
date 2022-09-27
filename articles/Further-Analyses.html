@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -444,12 +444,24 @@ L2FC(ksyn) = L2FC(RNA) + L2FC(kdeg)
 <span><span class="va">sim_truth</span> <span class="op">&lt;-</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">sim_list</span></span>
 <span></span>
 <span><span class="co">## Run the efficient model</span></span>
-<span><span class="co"># We'll tell it what the mutation rates are just for efficiency's sake</span></span>
-<span><span class="co"># Major change: NSS is set to TRUE</span></span>
-<span><span class="va">Fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bakRFit.html">bakRFit</a></span><span class="op">(</span><span class="va">bakRData</span>, pnew <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.05</span>, times <span class="op">=</span> <span class="fl">6</span><span class="op">)</span>, pold <span class="op">=</span> <span class="fl">0.001</span>, NSS <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">Fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bakRFit.html">bakRFit</a></span><span class="op">(</span><span class="va">bakRData</span>, NSS <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Finding reliable Features</span></span>
 <span><span class="co">#&gt; Filtering out unwanted or unreliable features</span></span>
 <span><span class="co">#&gt; Processing data...</span></span>
+<span><span class="co">#&gt; Estimating labeled mutation rate</span></span>
+<span><span class="co">#&gt; Estimated pnews for each sample are:</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Groups:   mut [2]</span></span></span>
+<span><span class="co">#&gt;     mut  reps   pnew</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1     1 0.050<span style="text-decoration: underline;">0</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">1</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     1     3 0.050<span style="text-decoration: underline;">0</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     2     1 0.050<span style="text-decoration: underline;">0</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     2     2 0.050<span style="text-decoration: underline;">1</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     2     3 0.049<span style="text-decoration: underline;">8</span></span></span>
+<span><span class="co">#&gt; Estimating unlabeled mutation rate</span></span>
+<span><span class="co">#&gt; Estimated pold is:  0.00100146098140918</span></span>
 <span><span class="co">#&gt; Estimating fraction labeled</span></span>
 <span><span class="co">#&gt; Estimating per replicate uncertainties</span></span>
 <span><span class="co">#&gt; Estimating read count-variance relationship</span></span>
@@ -544,6 +556,7 @@ L2FC(ksyn) = L2FC(RNA) + L2FC(kdeg)
 <code class="sourceCode R"><span><span class="co"># NSS heatmap</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="va">NSSheatmap</span>, cluster_cols <span class="op">=</span> <span class="cn">FALSE</span>, show_rownames <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Further-Analyses_files/figure-html/unnamed-chunk-16-1.png" width="576" style="display: block; margin: auto;"></p>
+<p>Each row in the data frame output by NSSHeat corresponds to a feature that was differentially expressed in the experimental condition. Features that were not identified as differentially expressed can either be the result of an underpowered analysis (i.e., they really are differentially expressed in the two conditions but more replicates/sequencing depth would have been required to identify this confidently) or of complicated concomitant modulation of synthesis and degradation kinetics. This makes non-differentially expressed features more difficult to analyze with this strategy, which is why bakR focuses on the differentially expressed features.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
