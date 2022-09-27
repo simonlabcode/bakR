@@ -11,6 +11,7 @@ data {
   real logit_fn_rep[NE]; //Replicate fn estimate
   real fn_se[NE] ; //Standard error of replicate fn estimate
   real Avg_Reads[NF, nMT]; // Average read counts in transcript i and sample j (avg. across replicates)
+  int<lower=0, upper=1> Chase;
 }
 
 parameters {
@@ -95,15 +96,31 @@ model {
    vector[nMT] kd[NF]; // decay rate
    vector[nMT-1] L2FC_kd[NF]; // change in decay rate
 
- for (i in 1:NF) {
+  for (i in 1:NF) {
     for (j in 1:nMT) {
 
-      kd[i,j] = -log(1 - inv_logit(alpha[i,j]))/tl[j];  // divide by time if not 1
+      if(Chase == 1){
+
+        kd[i,j] = -log(inv_logit(alpha[i,j]))/tl[j];  // divide by time if not 1
+
+      }else{
+
+        kd[i,j] = -log(1 - inv_logit(alpha[i,j]))/tl[j];  // divide by time if not 1
+
+      }
 
     } // treatment type
     for(k in 1:nMT-1){
-      L2FC_kd[i,k] = alpha[i,k+1] - alpha[i,1];
-    }
- }
+      if(Chase == 1){
 
- }
+        L2FC_kd[i,k] = -alpha[i,k+1] + alpha[i,1];
+
+      }else{
+
+        L2FC_kd[i,k] = alpha[i,k+1] - alpha[i,1];
+
+      }
+    }
+  }
+
+}

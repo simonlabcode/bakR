@@ -426,7 +426,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if((is.null(pnew) | is.null(pold)) & StanRate ){ # use Stan
 
 
-    mut_fit <- rstan::sampling(stanmodels$Mutrate_est, data = Stan_data, chains = 1)
+    mut_fit <- rstan::sampling(stanmodels$Mutrate_est2, data = Stan_data, chains = 1)
   }
 
   ## Make data frame of pnew estimates

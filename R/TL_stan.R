@@ -165,7 +165,7 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
   # relationship between fraction new and degradation rate constan
   if(Hybrid_Fit){ # Run Hybrid implementation
     if(NSS){
-      fit <- rstan::sampling(stanmodels$Hybrid_NSS, data = data_list, chains = chains, ...)
+      fit <- rstan::sampling(stanmodels$Hybrid_NSS2, data = data_list, chains = chains, ...)
 
     }else{
       fit <- rstan::sampling(stanmodels$Hybrid2, data = data_list, chains = chains, ...)
@@ -173,7 +173,7 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
     }
   }else{ # Run MCMC implementation
     if(NSS){
-      fit <- rstan::sampling(stanmodels$MCMC_NSS, data = data_list, chains = chains, ...)
+      fit <- rstan::sampling(stanmodels$MCMC_NSS2, data = data_list, chains = chains, ...)
     }else{
       fit <- rstan::sampling(stanmodels$MCMC, data = data_list, chains = chains, ...)
 
