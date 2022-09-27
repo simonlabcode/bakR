@@ -1,5 +1,7 @@
 # bakR 0.2.3
 
+* Expanded discussion of NSS analysis in vignette
+
 # bakR 0.2.2
 
 * Fixed non-steady-state (NSS) uncertainty quantification
