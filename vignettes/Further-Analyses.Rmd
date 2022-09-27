@@ -324,9 +324,7 @@ bakRData <- sim_data$bakRData
 sim_truth <- sim_data$sim_list
 
 ## Run the efficient model
-# We'll tell it what the mutation rates are just for efficiency's sake
-# Major change: NSS is set to TRUE
-Fit <- bakRFit(bakRData, pnew = rep(0.05, times = 6), pold = 0.001, NSS = TRUE)
+Fit <- bakRFit(bakRData, NSS = TRUE)
 
 
 ```
@@ -422,3 +420,5 @@ You can quickly make the heatmap using the lovely pheatmap package:
 pheatmap(NSSheatmap, cluster_cols = FALSE, show_rownames = FALSE)
 
 ```
+
+Each row in the data frame output by NSSHeat corresponds to a feature that was differentially expressed in the experimental condition. Features that were not identified as differentially expressed can either be the result of an underpowered analysis (i.e., they really are differentially expressed in the two conditions but more replicates/sequencing depth would have been required to identify this confidently) or of complicated concomitant modulation of synthesis and degradation kinetics. This makes non-differentially expressed features more difficult to analyze with this strategy, which is why bakR focuses on the differentially expressed features.
