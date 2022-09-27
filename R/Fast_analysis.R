@@ -189,6 +189,8 @@ cBtofast <- function(cB_raw,
 #' wrapper of \code{fast_analysis}, then this is created automatically.
 #' @param null_cutoff bakR will test the null hypothesis of |effect size| < |null_cutoff|
 #' @param NSS Logical; if TRUE, logit(fn)s are compared rather than log(kdeg) so as to avoid steady-state assumption.
+#' @param Chase Logical; Set to TRUE if analyzing a pulse-chase experiment. If TRUE, kdeg = -ln(fn)/tl where fn is the fraction of
+#' reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment)
 #' @param BDA_model Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 #' model is used.
 #' @return List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
@@ -260,6 +262,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           Stan_data = NULL,
                           null_cutoff = 0,
                           NSS = FALSE,
+                          Chase = FALSE,
                           BDA_model = FALSE){
 
   # Check input validity -------------------------------------------------------
@@ -403,6 +406,12 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     stop("null_cutoff must be 0 or positive")
   }else if(null_cutoff > 2){
     warning("You are testing against a null hypothesis |L2FC(kdeg)| greater than 2; this might be too conservative")
+  }
+
+
+  ## Check Chase
+  if(!is.logical(Chase)){
+    stop("Chase must be logical (TRUE or FALSE)")
   }
 
 
@@ -759,11 +768,20 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       dplyr::select(fnum, mut, reps, logit_fn_rep)
 
     # Generate estimates on other useful scales
-    Mut_data_est <- dplyr::left_join(Mut_data_est, instab_est, by = c("fnum", "mut", "reps")) %>%
-      dplyr::mutate(logit_fn_rep = ifelse(abs(logit_fn_rep.x) > upper, logit_fn_rep.y, logit_fn_rep.x)) %>%
-      dplyr::select(fnum, mut, reps, nreads, logit_fn_rep) %>%
-      dplyr::mutate(Fn_rep_est = inv_logit(logit_fn_rep)) %>%
-      dplyr::mutate(kd_rep_est = -log(1 - Fn_rep_est)/tl[mut])
+
+    if(Chase){
+      Mut_data_est <- dplyr::left_join(Mut_data_est, instab_est, by = c("fnum", "mut", "reps")) %>%
+        dplyr::mutate(logit_fn_rep = ifelse(abs(logit_fn_rep.x) > upper, logit_fn_rep.y, logit_fn_rep.x)) %>%
+        dplyr::select(fnum, mut, reps, nreads, logit_fn_rep) %>%
+        dplyr::mutate(Fn_rep_est = inv_logit(logit_fn_rep)) %>%
+        dplyr::mutate(kd_rep_est = -log(Fn_rep_est)/tl[mut])
+    }else{
+      Mut_data_est <- dplyr::left_join(Mut_data_est, instab_est, by = c("fnum", "mut", "reps")) %>%
+        dplyr::mutate(logit_fn_rep = ifelse(abs(logit_fn_rep.x) > upper, logit_fn_rep.y, logit_fn_rep.x)) %>%
+        dplyr::select(fnum, mut, reps, nreads, logit_fn_rep) %>%
+        dplyr::mutate(Fn_rep_est = inv_logit(logit_fn_rep)) %>%
+        dplyr::mutate(kd_rep_est = -log(1 - Fn_rep_est)/tl[mut])
+    }
 
   }
 

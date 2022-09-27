@@ -67,6 +67,8 @@
 #' @param chains Number of Markov chains to sample from. 1 should suffice since these are validated models. Running more chains is generally
 #' preferable, but memory constraints can make this unfeasible.
 #' @param NSS Logical; if TRUE, logit(fn)s are directly compared to avoid assuming steady-state
+#' @param Chase Logical; Set to TRUE if analyzing a pulse-chase experiment. If TRUE, kdeg = -ln(fn)/tl where fn is the fraction of
+#' reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment).
 #' @param BDA_model Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 #' model is used.
 #' @param ... Arguments passed to either \code{fast_analysis} (if a bakRData object)
@@ -91,7 +93,8 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           RateEst_size = 25,
                           low_reads = 1000,
                           high_reads = 5000,
-                          chains = 1, NSS = FALSE, BDA_model = FALSE,
+                          chains = 1, NSS = FALSE,
+                          Chase = FALSE, BDA_model = FALSE,
                           ...){
 
   ## Check StanFit
@@ -160,6 +163,11 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   ## Check StanRateEst
   if(!is.logical(StanRateEst)){
     stop("StanRateEst must be logical (TRUE or FALSE)")
+  }
+
+  ## Check Chase
+  if(!is.logical(Chase)){
+    stop("Chase must be logical (TRUE or FALSE)")
   }
 
   ## Check RateEst_size
@@ -260,13 +268,13 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       # Run MLE implementation
       fast_list <- bakR::fast_analysis(data_list$Fast_df, Stan_data = mutrate_list$Stan_data, StanRate = TRUE,
-                                       BDA_model = BDA_model,
+                                       BDA_model = BDA_model, Chase = Chase,
                                        NSS = NSS, ...)
 
     }else{
       # Run MLE implementation
       fast_list <- bakR::fast_analysis(data_list$Fast_df,
-                                       BDA_model = BDA_model,
+                                       BDA_model = BDA_model, Chase = Chase,
                                        NSS = NSS, ...)
     }
 
@@ -339,13 +347,17 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
         # Run MLE implementation
         fast_list <- bakR::fast_analysis(obj$Data_lists$Fast_df, Stan_data = mutrate_list, StanRate = TRUE,
                                          NSS = NSS,
-                                         BDA_model = BDA_model, ...)
+                                         BDA_model = BDA_model,
+                                         Chase = Chase,
+                                         ...)
 
       }else{
         # Run MLE implementation
         fast_list <- bakR::fast_analysis(obj$Data_lists$Fast_df,
                                          NSS = NSS,
-                                         BDA_model = BDA_model, ...)
+                                         BDA_model = BDA_model,
+                                         Chase = Chase,
+                                         ...)
 
       }
 
@@ -357,6 +369,8 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
     # Run MCMC implementation
     if(StanFit){
+
+      obj$Data_lists$Stan_data$Chase <- as.integer(Chase)
 
       Stan_list <- bakR::TL_stan(obj$Data_lists$Stan_data, NSS = NSS, chains = chains, ...)
 
@@ -398,7 +412,8 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
         sample_lookup = obj$Data_lists$Stan_data$sample_lookup,
         sdf = obj$Data_lists$Stan_data$sdf,
         mutrates = obj$Fast_Fit$Mut_rates,
-        nrep_vect = obj$Data_lists$Stan_data$nrep_vect
+        nrep_vect = obj$Data_lists$Stan_data$nrep_vect,
+        Chase = as.integer(Chase)
       )
 
 

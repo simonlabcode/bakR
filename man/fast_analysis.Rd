@@ -10,7 +10,7 @@ fast_analysis(
   pold = NULL,
   no_ctl = FALSE,
   read_cut = 50,
-  features_cut = 10,
+  features_cut = 50,
   nbin = NULL,
   prior_weight = 2,
   MLE = TRUE,
@@ -24,6 +24,7 @@ fast_analysis(
   Stan_data = NULL,
   null_cutoff = 0,
   NSS = FALSE,
+  Chase = FALSE,
   BDA_model = FALSE
 )
 }
@@ -71,6 +72,9 @@ wrapper of \code{fast_analysis}, then this is created automatically.}
 \item{null_cutoff}{bakR will test the null hypothesis of |effect size| < |null_cutoff|}
 
 \item{NSS}{Logical; if TRUE, logit(fn)s are compared rather than log(kdeg) so as to avoid steady-state assumption.}
+
+\item{Chase}{Logical; Set to TRUE if analyzing a pulse-chase experiment. If TRUE, kdeg = -ln(fn)/tl where fn is the fraction of
+reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment)}
 
 \item{BDA_model}{Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 model is used.}

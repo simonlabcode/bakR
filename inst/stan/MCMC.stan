@@ -13,6 +13,7 @@ data {
   int nrep;  // Number of replicates
   real tl[nMT];   // Label time
   real Avg_Reads[NF, nMT]; // Average read counts in transcript i and sample j (avg. across replicates)
+  int<lower = 0, upper = 1> Chase;
 }
 
 parameters {
@@ -110,7 +111,14 @@ generated quantities {
   for (i in 1:NF) {
     for (j in 1:nMT) {
 
-      kd[i,j] = -log(1-inv_logit(alpha[i,j]))/tl[j];  // divide by time if not 1
+      if(Chase == 1){
+        kd[i,j] = -log(inv_logit(alpha[i,j]))/tl[j];  // divide by time if not 1
+
+      }else{
+        kd[i,j] = -log(1-inv_logit(alpha[i,j]))/tl[j];  // divide by time if not 1
+
+      }
+
 
     } // treatment type
     for(k in 1:nMT-1){

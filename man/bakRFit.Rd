@@ -21,6 +21,7 @@ bakRFit(
   high_reads = 5000,
   chains = 1,
   NSS = FALSE,
+  Chase = FALSE,
   BDA_model = FALSE,
   ...
 )
@@ -66,6 +67,9 @@ extreme (e.g., close to 0 or 1), and high read count features are likely low fra
 preferable, but memory constraints can make this unfeasible.}
 
 \item{NSS}{Logical; if TRUE, logit(fn)s are directly compared to avoid assuming steady-state}
+
+\item{Chase}{Logical; Set to TRUE if analyzing a pulse-chase experiment. If TRUE, kdeg = -ln(fn)/tl where fn is the fraction of
+reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment).}
 
 \item{BDA_model}{Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 model is used.}
