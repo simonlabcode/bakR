@@ -1,3 +1,5 @@
+# bakR 0.2.1
+
 # bakR 0.2.0
 
 * Improved default mutation rate estimation strategy
