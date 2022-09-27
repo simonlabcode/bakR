@@ -771,10 +771,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
     if(Chase){
       Mut_data_est <- dplyr::left_join(Mut_data_est, instab_est, by = c("fnum", "mut", "reps")) %>%
-        dplyr::mutate(logit_fn_rep = ifelse(abs(logit_fn_rep.x) > upper, logit_fn_rep.y, logit_fn_rep.x)) %>%
+        dplyr::mutate(logit_fn_rep = ifelse(abs(logit_fn_rep.x) > upper, -logit_fn_rep.y, -logit_fn_rep.x)) %>%
         dplyr::select(fnum, mut, reps, nreads, logit_fn_rep) %>%
         dplyr::mutate(Fn_rep_est = inv_logit(logit_fn_rep)) %>%
-        dplyr::mutate(kd_rep_est = -log(Fn_rep_est)/tl[mut])
+        dplyr::mutate(kd_rep_est = -log(1 - Fn_rep_est)/tl[mut])
     }else{
       Mut_data_est <- dplyr::left_join(Mut_data_est, instab_est, by = c("fnum", "mut", "reps")) %>%
         dplyr::mutate(logit_fn_rep = ifelse(abs(logit_fn_rep.x) > upper, logit_fn_rep.y, logit_fn_rep.x)) %>%
@@ -795,25 +795,50 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   Mut_data <- dplyr::left_join(Mut_data, Mut_data_est[, c("kd_rep_est" ,"logit_fn_rep", "fnum", "mut", "reps")], by = c("fnum", "mut", "reps"))
 
   ## Estimate Fisher Info and uncertainties
-  Mut_data <- Mut_data %>% dplyr::ungroup() %>%
-    dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep, kd_rep_est) %>%
-    dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
-    dplyr::mutate(Exp_l_fn = exp(logit_fn_rep)) %>%
-    dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
-    dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
-    dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
-    dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
-    dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
-    dplyr::ungroup() %>%
-    dplyr::group_by(fnum, mut, reps) %>%
-    dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
-                     Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
-                     tot_n = sum(n)) %>% #,
-    #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
-    dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
-                  Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
-    dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
-                  Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
+  if(Chase){
+    Mut_data <- Mut_data %>% dplyr::ungroup() %>%
+      dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep, kd_rep_est) %>%
+      dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
+      dplyr::mutate(Exp_l_fn = exp(-logit_fn_rep)) %>%
+      dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
+      dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
+      dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
+      dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
+      dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
+      dplyr::ungroup() %>%
+      dplyr::group_by(fnum, mut, reps) %>%
+      dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
+                       Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
+                       tot_n = sum(n)) %>% #,
+      #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
+      dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
+                    Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
+      dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
+                    Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
+
+  }else{
+    Mut_data <- Mut_data %>% dplyr::ungroup() %>%
+      dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep, kd_rep_est) %>%
+      dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
+      dplyr::mutate(Exp_l_fn = exp(logit_fn_rep)) %>%
+      dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
+      dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
+      dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
+      dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
+      dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
+      dplyr::ungroup() %>%
+      dplyr::group_by(fnum, mut, reps) %>%
+      dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
+                       Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
+                       tot_n = sum(n)) %>% #,
+      #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
+      dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
+                    Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
+      dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
+                    Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
+
+  }
+
 
 
   Mut_data_est$logit_fn_se <- Mut_data$Logit_fn_se
@@ -834,36 +859,73 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   message("Estimating read count-variance relationship")
 
-  Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-    dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
-    dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
 
-  ## Estimate read count vs. replicate variability trend
+  if(NSS){
+    Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(logit_fn_rep)^2) +logit_fn_se^2 ) ) ) )) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
+      dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
 
-  lm_list <- vector("list", length = nMT)
-  lm_var <- lm_list
+    ## Estimate read count vs. replicate variability trend
 
-  # One linear model for each experimental condition
-  for(i in 1:nMT){
-    heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
-    h_int <- summary(heterosked_lm)$coefficients[1,1]
-    h_slope <- summary(heterosked_lm)$coefficients[2,1]
-    lm_list[[i]] <- c(h_int, h_slope)
+    lm_list <- vector("list", length = nMT)
+    lm_var <- lm_list
 
-    lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
+    # One linear model for each experimental condition
+    for(i in 1:nMT){
+      heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
+      h_int <- summary(heterosked_lm)$coefficients[1,1]
+      h_slope <- summary(heterosked_lm)$coefficients[2,1]
+      lm_list[[i]] <- c(h_int, h_slope)
+
+      lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
+    }
+
+    # Put linear model fit extrapolation into convenient data frame
+    true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(logit_fn_rep)^2) + logit_fn_se^2 ) ) ) )) %>%
+      dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
+      dplyr::group_by(mut) %>%
+      dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
+
+    log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
+    logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
+
+  }else{
+    Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
+      dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
+
+    ## Estimate read count vs. replicate variability trend
+
+    lm_list <- vector("list", length = nMT)
+    lm_var <- lm_list
+
+    # One linear model for each experimental condition
+    for(i in 1:nMT){
+      heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
+      h_int <- summary(heterosked_lm)$coefficients[1,1]
+      h_slope <- summary(heterosked_lm)$coefficients[2,1]
+      lm_list[[i]] <- c(h_int, h_slope)
+
+      lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
+    }
+
+    # Put linear model fit extrapolation into convenient data frame
+    true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
+      dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
+      dplyr::group_by(mut) %>%
+      dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
+
+    log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
+    logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
+
   }
 
-  # Put linear model fit extrapolation into convenient data frame
-  true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-    dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
-    dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
-    dplyr::group_by(mut) %>%
-    dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
-
-  log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
-  logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
 
 
   # PREP DATA FOR REGULARIZATION -----------------------------------------------
