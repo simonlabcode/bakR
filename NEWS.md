@@ -1,3 +1,5 @@
+# bakR 0.2.3
+
 # bakR 0.2.2
 
 * Fixed non-steady-state (NSS) uncertainty quantification
