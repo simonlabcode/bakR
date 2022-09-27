@@ -1,5 +1,9 @@
 # bakR 0.2.2
 
+* Fixed non-steady-state (NSS) uncertainty quantification
+* Fixed uncertainty quantification for pulse-chase analysis
+* Fixed fraction new estimation for pulse-chase analysis
+
 # bakR 0.2.1
 
 * Added pulse-chase analysis option
