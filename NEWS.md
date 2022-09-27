@@ -1,3 +1,5 @@
+# bakR 0.2.2
+
 # bakR 0.2.1
 
 * Added pulse-chase analysis option
