@@ -16,7 +16,7 @@ models of varying efficiency and accuracy can be used to fit data."><!-- mathjax
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,6 +78,7 @@ models of varying efficiency and accuracy can be used to fit data.</p>
 <span>  high_reads <span class="op">=</span> <span class="fl">5000</span>,</span>
 <span>  chains <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  NSS <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  Chase <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  BDA_model <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -156,6 +157,11 @@ preferable, but memory constraints can make this unfeasible.</p></dd>
 
 <dt>NSS</dt>
 <dd><p>Logical; if TRUE, logit(fn)s are directly compared to avoid assuming steady-state</p></dd>
+
+
+<dt>Chase</dt>
+<dd><p>Logical; Set to TRUE if analyzing a pulse-chase experiment. If TRUE, kdeg = -ln(fn)/tl where fn is the fraction of
+reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment).</p></dd>
 
 
 <dt>BDA_model</dt>

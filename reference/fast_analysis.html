@@ -22,7 +22,7 @@ shrunk towards population means and that uncertainties are shrunk towards a mean
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,7 @@ shrunk towards population means and that uncertainties are shrunk towards a mean
 <span>  pold <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  no_ctl <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  read_cut <span class="op">=</span> <span class="fl">50</span>,</span>
-<span>  features_cut <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  features_cut <span class="op">=</span> <span class="fl">50</span>,</span>
 <span>  nbin <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  prior_weight <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  MLE <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -90,6 +90,7 @@ shrunk towards population means and that uncertainties are shrunk towards a mean
 <span>  Stan_data <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  null_cutoff <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  NSS <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  Chase <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  BDA_model <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -176,6 +177,11 @@ wrapper of <code>fast_analysis</code>, then this is created automatically.</p></
 
 <dt>NSS</dt>
 <dd><p>Logical; if TRUE, logit(fn)s are compared rather than log(kdeg) so as to avoid steady-state assumption.</p></dd>
+
+
+<dt>Chase</dt>
+<dd><p>Logical; Set to TRUE if analyzing a pulse-chase experiment. If TRUE, kdeg = -ln(fn)/tl where fn is the fraction of
+reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment)</p></dd>
 
 
 <dt>BDA_model</dt>
