@@ -97,6 +97,9 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           Chase = FALSE, BDA_model = FALSE,
                           ...){
 
+  # Bind variables locally to resolve devtools::check() Notes
+  old_fnum <- effect <- se <- pval <- NULL
+
   ## Check StanFit
   if(!is.logical(StanFit)){
     stop("StanFit must be logical (TRUE or FALSE)")

@@ -99,6 +99,9 @@ sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_m
 
   .Deprecated("Simulate_bakRData")
 
+  # Bind variables locally to resolve devtools::check() Notes
+  S <- TP <- R <- MIR <- TC <- MT <- num_us <- NULL
+
   ### Catch non-sensical values in all inputs
 
   # STL
@@ -841,6 +844,13 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
                          sim_read_counts = TRUE, a1 = 5, a0 = 0.01,
                          nreads = 50L, alpha = 25, beta = 75,
                          STL = FALSE, STL_len = 40){
+
+
+
+  # Bind variables locally to resolve devtools::check() Notes
+  S <- R <- MT <- FN <- TC <- nT <- TP <- NULL
+  `.` <- list
+
 
   #### Parameter checks
   # STL

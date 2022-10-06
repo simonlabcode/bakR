@@ -26,6 +26,9 @@ cBtofast <- function(cB_raw,
 
   .Deprecated("cBprocess")
 
+  # Bind variables locally to resolve devtools::check() Notes
+  XF <- TC <- n <- nT <- fnum <- NULL
+
 
   cB <- cB_raw %>%
     dplyr::select(sample, XF, TC, n, nT)
@@ -264,6 +267,19 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           NSS = FALSE,
                           Chase = FALSE,
                           BDA_model = FALSE){
+
+
+  # Bind variables locally to resolve devtools::check() Notes
+  nT <- n <- TC <- mut <- reps <- fnum <- New_prob <- Old_prob <- NULL
+  News <- Fn_rep_est <- lam_n <- lam_o <- logit_fn_rep <- totTC <- NULL
+  totU <- tot_mut <- totUs <- avg_mut <- logit_fn_rep.x <- logit_fn_rep.y <- NULL
+  kd_rep_est <- U_cont <- Exp_l_fn <- Fisher_lkd_num <- Fisher_lkd_den <- NULL
+  Inv_Fisher_Logit_1 <- Inv_Fisher_Logit_2 <- Inv_Fisher_Logit_3 <- NULL
+  tot_n <- Fisher_kdeg <- Fisher_Logit <- Logit_fn_se <- bin_ID <- kd_sd_log <- NULL
+  intercept <- slope <- log_kd_rep_est <- avg_log_kd <- sd_log_kd <- NULL
+  sd_post <- sdp <- theta_o <- log_kd_post <- effect_size <- effect_std_error <- NULL
+
+
 
   # Check input validity -------------------------------------------------------
 

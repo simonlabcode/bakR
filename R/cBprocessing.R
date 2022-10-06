@@ -21,6 +21,10 @@ reliableFeatures <- function(obj,
                              Ucut = 0.25,
                              AvgU = 4){
 
+  # Bind variables locally to resolve devtools::check() Notes
+  XF <- TC <- n <- totTC <- nT <- n2U <- nmore <- totcounts <- NULL
+  tot_mut <- f2U <- avgU <- counts <- NULL
+
   cB <- obj$cB
   nsamps <- length(unique(cB$sample))
 
@@ -168,6 +172,12 @@ cBprocess <- function(obj,
                        Fast = TRUE,
                        FOI = c(),
                        concat = TRUE){
+
+
+  # Bind variables locally to resolve devtools::check() Notes
+  tl <- ctl <- Exp_ID <- r_id <- XF <- n <- fnum <- TC <- nT <- reps <- NULL
+  mut <- feature_avg_Us <- tot_avg_Us <- U_factor <- type <- NULL
+
 
   ## Check obj
   if(class(obj) != "bakRData"){

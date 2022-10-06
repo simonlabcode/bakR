@@ -29,6 +29,10 @@ NSSHeat <- function(bakRFit,
   bakRModel <- match.arg(bakRModel)
 
 
+  # Bind variables locally to resolve devtools::check() Notes
+  padj <- log2FoldChange <- effect <- se <- Sig <- Sig_bakR <- score_bakR <- NULL
+  mech <- stat <- DE_score <- Mech_score <- bakR_score <- NULL
+
   ### Checks
   if(sum(c("XF", "log2FoldChange", "stat", "padj") %in% colnames(DE_df)) < 4){
     stop("You are missing necessary columns in DE_df. Columns named XF, log2FoldChange,

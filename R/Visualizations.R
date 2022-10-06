@@ -8,6 +8,11 @@
 #' only compatible with Fast_Fit
 #' @export
 FnPCA <- function(obj, log_kdeg = FALSE){
+
+
+  # Bind variables locally to resolve devtools::check() Notes
+  PC1 <- PC2 <- NULL
+
   ### Extract logit(fn)
 
   if(log_kdeg){
@@ -87,6 +92,9 @@ FnPCA <- function(obj, log_kdeg = FALSE){
 #' @export
 plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
 
+  # Bind variables locally to resolve devtools::check() Notes
+  padj <- L2FC_kdeg <- conclusion <- Exp_ID <- NULL
+
   # Pretty plotting theme
   theme_mds <-    ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
                                  panel.grid.minor = ggplot2::element_blank(),
@@ -152,6 +160,10 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
 #' @export
 #'
 plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
+
+  # Bind variables locally to resolve devtools::check() Notes
+  padj <- L2FC_kdeg <- Feature_ID <- Exp_ID <- Read_ct <- conclusion <- NULL
+
 
   Model <- match.arg(Model)
 
@@ -241,6 +253,11 @@ plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = N
 #' @param FDR Numeric; False discovery to control at if filter_sig is TRUE.
 #' @export
 Heatmap_kdeg <- function(obj, zscore = FALSE, filter_sig = FALSE, FDR = 0.05){
+
+
+  # Bind variables locally to resolve devtools::check() Notes
+  effect <- padj <- Feature_ID <- Sig <- NULL
+
   ## Extract L2FC(kdeg) and padj
   if(zscore){
 
