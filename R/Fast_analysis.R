@@ -185,7 +185,7 @@ cBtofast <- function(cB_raw,
 #' abnormally high standard errors due to transcripts with extreme kinetics
 #' @param mut_reg If MLE has instabilities, empircal mut rate will be used to estimate fn, multiplying pnew by 1+mut_reg and pold by 1-mut_reg to regularize fn
 #' @param p_mean Mean of normal distribution used as prior penalty in MLE of logit(fn)
-#' @param p_sd Standard deviation of normal distribution used as prior peanlty in MLE of logit(fn)
+#' @param p_sd Standard deviation of normal distribution used as prior penalty in MLE of logit(fn)
 #' @param StanRate Logical; if TRUE, a simple Stan model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
 #' to the runtime of the analysis.
 #' @param Stan_data List; if StanRate is TRUE, then this is the data passed to the Stan model to estimate mutation rates. If using the \code{bakRFit}
