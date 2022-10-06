@@ -5,5 +5,4 @@
 ^docs$
 ^pkgdown$
 ^\.github$
-^NEWS\.md$
 ^cran-comments\.md$
