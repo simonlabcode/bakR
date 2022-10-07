@@ -103,7 +103,7 @@ FnPCA <- function(obj, log_kdeg = FALSE){
 #' Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)
 #' @param FDR False discovery rate to control at for significance assessment
 #' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
-#' @param Exp_shape Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot
+#' @param Exp_shape Logical indicating whether to use Experimental ID as factor determining point shape in volcano plot
 #' @examples
 #' \donttest{
 #' # Simulate data
@@ -183,7 +183,7 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
 #' @param Model String identifying implementation for which you want to generate an MA plot
 #' @param FDR False discovery rate to control at for significance assessment
 #' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
-#' @param Exp_shape Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot
+#' @param Exp_shape Logical indicating whether to use Experimental ID as factor determining point shape in volcano plot
 #' @examples
 #' \donttest{
 #' # Simulate data

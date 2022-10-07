@@ -57,7 +57,7 @@ etc.}
 \item{se_max}{Uncertainty given to those transcripts with estimates at the upper or lower bound sets. This prevents downstream errors due to
 abnormally high standard errors due to transcripts with extreme kinetics}
 
-\item{mut_reg}{If MLE has instabilities, empircal mut rate will be used to estimate fn, multiplying pnew by 1+mut_reg and pold by 1-mut_reg to regularize fn}
+\item{mut_reg}{If MLE has instabilities, empirical mut rate will be used to estimate fn, multiplying pnew by 1+mut_reg and pold by 1-mut_reg to regularize fn}
 
 \item{p_mean}{Mean of normal distribution used as prior penalty in MLE of logit(fn)}
 

@@ -21,7 +21,7 @@ plotMA(
 
 \item{Exps}{Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)}
 
-\item{Exp_shape}{Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot}
+\item{Exp_shape}{Logical indicating whether to use Experimental ID as factor determining point shape in volcano plot}
 }
 \description{
 This function outputs a L2FC(kdeg) MA plot. Plots are colored according to statistical

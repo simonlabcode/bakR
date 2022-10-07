@@ -829,7 +829,7 @@ sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_m
 #' drawn for each gene.
 #' @param beta shape2 parameter of the beta distribution from which U-contents (probability that a nucleotide in a read from a transcript is a U) are
 #' drawn for each gene.
-#' @param STL logical; if TRUE, simulation is of STL-seq rather than a standard TL-seq experiment. The two big changes are that a short read lenght is required
+#' @param STL logical; if TRUE, simulation is of STL-seq rather than a standard TL-seq experiment. The two big changes are that a short read length is required
 #' (< 60 nt) and that every read for a particular feature will have the same number of Us. Only one read length is simulated for simplicity.
 #' @param STL_len Average length of simulated STL-seq length. Since Pol II typically pauses about 20-60 bases
 #' from the promoter, this should be around 40

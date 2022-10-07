@@ -127,7 +127,7 @@ reliableFeatures <- function(obj,
 #' @param concat Boolean; If TRUE, FOI is concatenated with output of reliableFeatures
 #' @return returns list of objects that can be passed to \code{TL_stan} and/or \code{fast_analysis}. Those objects are:
 #' \itemize{
-#'  \item Stan_data; list that can be passed to \code{TL_stan} with Hybrid_Fit = FALSE. Consistents of metadata as well as data that
+#'  \item Stan_data; list that can be passed to \code{TL_stan} with Hybrid_Fit = FALSE. Consists of metadata as well as data that
 #'  Stan will analyze. Data to be analyzed consists of equal length vectors. The contents of Stan_data are:
 #'  \itemize{
 #'   \item NE; Number of datapoints for Stan to analyze (NE = Number of Elements)

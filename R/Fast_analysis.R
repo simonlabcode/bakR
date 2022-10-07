@@ -85,7 +85,7 @@
 #' @param upper Upper bound for MLE with L-BFGS-B algorithm
 #' @param se_max Uncertainty given to those transcripts with estimates at the upper or lower bound sets. This prevents downstream errors due to
 #' abnormally high standard errors due to transcripts with extreme kinetics
-#' @param mut_reg If MLE has instabilities, empircal mut rate will be used to estimate fn, multiplying pnew by 1+mut_reg and pold by 1-mut_reg to regularize fn
+#' @param mut_reg If MLE has instabilities, empirical mut rate will be used to estimate fn, multiplying pnew by 1+mut_reg and pold by 1-mut_reg to regularize fn
 #' @param p_mean Mean of normal distribution used as prior penalty in MLE of logit(fn)
 #' @param p_sd Standard deviation of normal distribution used as prior penalty in MLE of logit(fn)
 #' @param StanRate Logical; if TRUE, a simple Stan model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
