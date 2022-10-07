@@ -1,3 +1,21 @@
+## Comments for second submission (Date: 2022-10-07 15:24:38 UTC)
+
+* The Description field contains <bioRxiv:https://doi.org/10.1101/2022.09.02.505697>). NR-seq is a
+  Please write DOIs as <doi:10.prefix/suffix>.
+
+  I edited the citation accordingly.
+
+* It seems like you have too many spaces in your description field. Please remove them. This is cause by the fact that line breaks counts as spaces too. So please no spaces before linebreaks.
+
+  I removed unnecessary spaces in the description field.
+
+* In your LICENSE file you claim 'COPYRIGHT HOLDER: trystan authors'. If
+they consist only of yourself please make that clearer in your LICENSE
+file.
+
+  I am the only author of this package. "trystan" was what I called my first attempt to build an R package using 'Stan' on the backend and I forgot to edit the license information. I updated the LICENSE accordingly to make it clear that I am the only copyright holder and package author. 
+
+
 ## Comments for first submission (Date: 2022-10-07 03:53:58 UTC)
 
 * Please do not start the description with "This package", package name, title or similar
