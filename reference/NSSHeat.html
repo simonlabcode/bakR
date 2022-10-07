@@ -113,15 +113,55 @@ aesthetics of any heatmap generated with the output.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>returns dataframe that can be passed to pheatmap::pheatmap()</p>
+<p>returns data frame that can be passed to pheatmap::pheatmap()</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span><span class="co"># See vignettes for example of this function in action</span></span></span>
-<span class="r-in"><span><span class="va">NSSHeatmap</span> <span class="op">&lt;-</span> <span class="fu">NSSHeat</span><span class="op">(</span><span class="va">bakRFit</span>, <span class="va">DESeq2_df</span>, bakRModel <span class="op">=</span> <span class="st">"MLE"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="co"># Simulate small dataset</span></span></span>
+<span class="r-in"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="Simulate_bakRData.html">Simulate_bakRData</a></span><span class="op">(</span><span class="fl">100</span>, nreps <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Analyze data with bakRFit</span></span></span>
+<span class="r-in"><span><span class="va">Fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="bakRFit.html">bakRFit</a></span><span class="op">(</span><span class="va">sim</span><span class="op">$</span><span class="va">bakRData</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finding reliable Features</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Filtering out unwanted or unreliable features</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Processing data...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating labeled mutation rate</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pnews for each sample are:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Groups:   mut [2]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.049<span style="text-decoration: underline;">8</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">2</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.049<span style="text-decoration: underline;">9</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.049<span style="text-decoration: underline;">7</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating unlabeled mutation rate</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pold is:  0.000969771122515824</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating fraction labeled</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating per replicate uncertainties</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating read count-variance relationship</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Averaging replicate data and regularizing estimates</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Assessing statistical significance</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Number of features that made it past filtering</span></span></span>
+<span class="r-in"><span><span class="va">NF</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">Fit</span><span class="op">$</span><span class="va">Fast_Fit</span><span class="op">$</span><span class="va">Effects_df</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Simulate mock differential expression data frame</span></span></span>
+<span class="r-in"><span><span class="va">DE_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>XF <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">NF</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                       log2FoldChange <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">NF</span>, <span class="fl">0</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">DE_df</span><span class="op">$</span><span class="va">stat</span> <span class="op">&lt;-</span> <span class="va">DE_df</span><span class="op">$</span><span class="va">log2FoldChange</span><span class="op">/</span><span class="fl">0.5</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">DE_df</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;-</span> <span class="fl">2</span><span class="op">*</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">DE_df</span><span class="op">$</span><span class="va">stat</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># make heatmap matrix</span></span></span>
+<span class="r-in"><span><span class="va">Heatmap</span> <span class="op">&lt;-</span> <span class="fu">NSSHeat</span><span class="op">(</span>bakRFit <span class="op">=</span> <span class="va">Fit</span>,</span></span>
+<span class="r-in"><span>               DE_df <span class="op">=</span> <span class="va">DE_df</span>,</span></span>
+<span class="r-in"><span>               bakRModel <span class="op">=</span> <span class="st">"MLE"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

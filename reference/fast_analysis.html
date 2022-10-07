@@ -168,12 +168,12 @@ abnormally high standard errors due to transcripts with extreme kinetics</p></dd
 
 
 <dt>StanRate</dt>
-<dd><p>Logical; if TRUE, a simple Stan model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
+<dd><p>Logical; if TRUE, a simple 'Stan' model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
 to the runtime of the analysis.</p></dd>
 
 
 <dt>Stan_data</dt>
-<dd><p>List; if StanRate is TRUE, then this is the data passed to the Stan model to estimate mutation rates. If using the <code>bakRFit</code>
+<dd><p>List; if StanRate is TRUE, then this is the data passed to the 'Stan' model to estimate mutation rates. If using the <code>bakRFit</code>
 wrapper of <code>fast_analysis</code>, then this is created automatically.</p></dd>
 
 
@@ -262,7 +262,7 @@ and that background is assumed to be constant for all samples. If a -s4U control
 to estimate s4U induced mutation rates is used. In this case, the lowest mutation rate features with sufficient read depths are used,
 and there average mutation rate is the background mutation rate estimate, as these features are assumed to be almost entirely unlabeled.
 Another slightly more computationally intensive but more accurate strategy to estimate mutation rates is to set <code>StanRate</code> = TRUE.
-This will fit a non-hierarchical mixture model to a small subset of transcripts using Stan. The default in <code>bakRFit</code> is to use
+This will fit a non-hierarchical mixture model to a small subset of transcripts using 'Stan'. The default in <code>bakRFit</code> is to use
 25 transcripts. If <code>StanRate</code> is TRUE, then a data list must be passed to <code>Stan_data</code> of the form that appears in the
 bakRFit object's Data_list$Stan_data entry.</p>
 <p>Once mutation rates are estimated, fraction news for each feature in each sample are estimated. The approach utilized is MLE
@@ -304,9 +304,54 @@ logit(fraction new) could stem from differences in kinetics or label times.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span><span class="va">Fast_Fit</span> <span class="op">&lt;-</span> <span class="fu">fast_analysis</span><span class="op">(</span><span class="va">fast_df</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Simulate small dataset</span></span></span>
+<span class="r-in"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="Simulate_bakRData.html">Simulate_bakRData</a></span><span class="op">(</span><span class="fl">300</span>, nreps <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Fit fast model to get fast_df</span></span></span>
+<span class="r-in"><span><span class="va">Fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="bakRFit.html">bakRFit</a></span><span class="op">(</span><span class="va">sim</span><span class="op">$</span><span class="va">bakRData</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finding reliable Features</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Filtering out unwanted or unreliable features</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Processing data...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating labeled mutation rate</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pnews for each sample are:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Groups:   mut [2]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.050<span style="text-decoration: underline;">2</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.050<span style="text-decoration: underline;">4</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.049<span style="text-decoration: underline;">9</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating unlabeled mutation rate</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pold is:  0.00100717158856117</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating fraction labeled</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating per replicate uncertainties</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating read count-variance relationship</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Averaging replicate data and regularizing estimates</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Assessing statistical significance</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Fit fast model with fast_analysis</span></span></span>
+<span class="r-in"><span><span class="va">Fast_Fit</span> <span class="op">&lt;-</span> <span class="fu">fast_analysis</span><span class="op">(</span><span class="va">Fit</span><span class="op">$</span><span class="va">Data_lists</span><span class="op">$</span><span class="va">Fast_df</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating labeled mutation rate</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pnews for each sample are:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Groups:   mut [2]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.050<span style="text-decoration: underline;">2</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.050<span style="text-decoration: underline;">4</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.049<span style="text-decoration: underline;">9</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating unlabeled mutation rate</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pold is:  0.00100717158856117</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating fraction labeled</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating per replicate uncertainties</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating read count-variance relationship</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Averaging replicate data and regularizing estimates</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Assessing statistical significance</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

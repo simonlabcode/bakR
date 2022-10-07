@@ -104,7 +104,7 @@ samples are filtered out</p></dd>
 
 
 <dt>Stan</dt>
-<dd><p>Boolean; if TRUE, then data_list that can be passed to Stan is curated</p></dd>
+<dd><p>Boolean; if TRUE, then data_list that can be passed to 'Stan' is curated</p></dd>
 
 
 <dt>Fast</dt>
@@ -124,7 +124,7 @@ samples are filtered out</p></dd>
     
 
 <p>returns list of objects that can be passed to <code>TL_stan</code> and/or <code>fast_analysis</code>. Those objects are:</p><ul><li><p>Stan_data; list that can be passed to <code>TL_stan</code> with Hybrid_Fit = FALSE. Consists of metadata as well as data that
-Stan will analyze. Data to be analyzed consists of equal length vectors. The contents of Stan_data are:</p><ul><li><p>NE; Number of datapoints for Stan to analyze (NE = Number of Elements)</p></li>
+'Stan' will analyze. Data to be analyzed consists of equal length vectors. The contents of Stan_data are:</p><ul><li><p>NE; Number of datapoints for 'Stan' to analyze (NE = Number of Elements)</p></li>
 <li><p>NF; Number of features in dataset</p></li>
 <li><p>TP; Numerical indicator of s4U feed (0 = no s4U feed, 1 = s4U fed)</p></li>
 <li><p>FE; Numerical indicator of feature</p></li>
@@ -182,9 +182,23 @@ If FOI is null and concat == FALSE, an error will be thrown.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span><span class="fu">cBprocess</span><span class="op">(</span><span class="va">bakRDataobj</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Load cB</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"cB_small"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Load metadf</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"metadf"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Create bakRData</span></span></span>
+<span class="r-in"><span><span class="va">bakRData</span> <span class="op">&lt;-</span> <span class="fu"><a href="bakRData.html">bakRData</a></span><span class="op">(</span><span class="va">cB_small</span>, <span class="va">metadf</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Preprocess data</span></span></span>
+<span class="r-in"><span><span class="va">data_for_bakR</span> <span class="op">&lt;-</span> <span class="fu">cBprocess</span><span class="op">(</span>obj <span class="op">=</span> <span class="va">bakRData</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finding reliable Features</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Filtering out unwanted or unreliable features</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Processing data...</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

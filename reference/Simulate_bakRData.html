@@ -272,7 +272,7 @@ of mutation = <code>p_old</code>. <code>p_new</code> must be greater than <code>
 arise from both background mutations that occur with probability <code>p_old</code> as well as metabolic label induced mutations</p>
 <p>Simulated read counts should be treated as if they are spike-in and RPKM normalized, so the same scale factor can be applied
 to each sample when comparing the sequencing reads (e.g., if you are performing differential expression analysis).</p>
-<p>Function to simulate a bakRData object according to a realistic generative model</p>
+<p>Function to simulate a <code>bakRData</code> object according to a realistic generative model</p>
     </div>
 
     <div class="section level2">
@@ -285,7 +285,7 @@ to each sample when comparing the sequencing reads (e.g., if you are performing 
 <span class="r-in"><span><span class="co"># with 100 instances of differential degradation kinetics</span></span></span>
 <span class="r-in"><span><span class="va">sim_3reps</span> <span class="op">&lt;-</span> <span class="fu">Simulate_bakRData</span><span class="op">(</span>ngene <span class="op">=</span> <span class="fl">1000</span>, num_kd_DE <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># 2 replicates, 3 experimental condition, 10000 gene simulation</span></span></span>
+<span class="r-in"><span><span class="co"># 2 replicates, 3 experimental condition, 1000 gene simulation</span></span></span>
 <span class="r-in"><span><span class="co"># with 100 instances of differential degradation kinetics in the 1st</span></span></span>
 <span class="r-in"><span><span class="co"># condition and no instances of differential degradation kinetics in the</span></span></span>
 <span class="r-in"><span><span class="co"># 2nd condition</span></span></span>

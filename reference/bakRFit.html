@@ -125,7 +125,7 @@ samples (i.e., samples that were not treated with s4U) are filtered out</p></dd>
 
 <dt>FastRerun</dt>
 <dd><p>Logical; only matters if a bakRFit object is passed to <code>bakRFit</code>. If TRUE, then the Stan-free
-model implemented in <code>fast_analysis</code> is rerun on data, foregoing fitting of either of the Stan models.</p></dd>
+model implemented in <code>fast_analysis</code> is rerun on data, foregoing fitting of either of the 'Stan' models.</p></dd>
 
 
 <dt>FOI</dt>
@@ -137,7 +137,7 @@ model implemented in <code>fast_analysis</code> is rerun on data, foregoing fitt
 
 
 <dt>StanRateEst</dt>
-<dd><p>Logical; if TRUE, a simple Stan model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
+<dd><p>Logical; if TRUE, a simple 'Stan' model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
 to the runtime of the analysis.</p></dd>
 
 
@@ -214,11 +214,11 @@ Linear regression is used to estimate the relationship between read depths and r
 estimation regularization, again performed using analytic solutions to Bayesian models.</p>
 <p><code>TL_Stan</code> with Hybrid_Fit set to TRUE (referred to as the Hybrid implementation in the bakR paper)
 takes as input estimates of the logit(fraction new) and uncertainty provided by <code>fast_analysis</code>.
-It then uses Stan on the backend to implement a hierarchical model that pools data across replicates and the dataset
+It then uses 'Stan' on the backend to implement a hierarchical model that pools data across replicates and the dataset
 to estimate effect sizes (L2FC(kdeg)) and uncertainties. Replicate variability information is pooled across each experimental
 condition to regularize variance estimates using a hierarchical linear regression model.</p>
 <p>The default behavior of <code>TL_Stan</code> (referred to as the MCMC implementation in the bakR paper)
-is to use Stan on the back end to implement a U-content exposure adjusted Poisson mixture model
+is to use 'Stan' on the back end to implement a U-content exposure adjusted Poisson mixture model
 to estimate fraction news from the mutational data. Partial pooling of replicate variability estimates
 is performed as with the Hybrid implementation.</p>
     </div>
@@ -242,10 +242,10 @@ is performed as with the Hybrid implementation.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.050<span style="text-decoration: underline;">0</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">0</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.050<span style="text-decoration: underline;">2</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.050<span style="text-decoration: underline;">0</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.050<span style="text-decoration: underline;">0</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating unlabeled mutation rate</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pold is:  0.00100763844749973</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pold is:  0.000999719666722721</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating fraction labeled</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating per replicate uncertainties</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating read count-variance relationship</span>

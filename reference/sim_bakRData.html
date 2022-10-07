@@ -242,10 +242,10 @@ from the promoter, this should be around 40</p></dd>
     
 
 <p>A list containing a simulated <code>bakRData</code> object as well as a list of simulated kinetic parameters of interest.
-The contents of the latter list are:</p><ul><li><p>Effect_sim; Dataframe meant to mimic formatting of Effect_df that are part of <code>TL_stan</code> and <code>fast_analysis</code> output.</p></li>
-<li><p>Fn_mean_sim; Dataframe meant to mimic formatting of Regularized_ests that is part of <code>fast_analysis</code> output. Contains information
+The contents of the latter list are:</p><ul><li><p>Effect_sim; Data frame meant to mimic formatting of Effect_df that are part of <code>TL_stan</code> and <code>fast_analysis</code> output.</p></li>
+<li><p>Fn_mean_sim; Data frame meant to mimic formatting of Regularized_ests that is part of <code>fast_analysis</code> output. Contains information
 about the true fraction new simulated in each condition (the mean of the normal distribution from which replicate fraction news are simulated)</p></li>
-<li><p>Fn_rep_sim; Dataframe meant to mimic formatting of Fn_Estimates that is part of <code>fast_analysis</code> output. Contains information
+<li><p>Fn_rep_sim; Data frame meant to mimic formatting of Fn_Estimates that is part of <code>fast_analysis</code> output. Contains information
 about the fraction new simulated for each feature in each replicate of each condition.</p></li>
 <li><p>L2FC_ks_mean; The true L2FC(ksyn) for each feature in each experimental condition. The ith column corresponds to the L2FC(ksyn) when comparing
 the ith condition to the reference condition (defined as the 1st condition) so the 1st column is always all 0s</p></li>
@@ -277,21 +277,30 @@ of the fraction new.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="co"># 2 replicate, 2 experimental condition, 1000 gene simulation</span></span></span>
 <span class="r-in"><span><span class="va">sim_2reps</span> <span class="op">&lt;-</span> <span class="fu">sim_bakRData</span><span class="op">(</span>ngene <span class="op">=</span> <span class="fl">1000</span>, nreps <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>'sim_bakRData' is deprecated.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Use 'Simulate_bakRData' instead.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> See help("Deprecated")</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># 3 replicate, 2 experimental condition, 1000 gene simulation</span></span></span>
 <span class="r-in"><span><span class="co"># with 100 instances of differential degradation kinetics</span></span></span>
 <span class="r-in"><span><span class="va">sim_3reps</span> <span class="op">&lt;-</span> <span class="fu">sim_bakRData</span><span class="op">(</span>ngene <span class="op">=</span> <span class="fl">1000</span>, num_kd_DE <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>'sim_bakRData' is deprecated.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Use 'Simulate_bakRData' instead.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> See help("Deprecated")</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># 2 replicates, 3 experimental condition, 1000 gene simulation</span></span></span>
 <span class="r-in"><span><span class="co"># with 100 instances of differential degradation kinetics in the 1st</span></span></span>
 <span class="r-in"><span><span class="co"># condition and no instances of differential degradation kinetics in the</span></span></span>
 <span class="r-in"><span><span class="co"># 2nd condition</span></span></span>
 <span class="r-in"><span><span class="va">sim_3conditions</span> <span class="op">&lt;-</span> <span class="fu">sim_bakRData</span><span class="op">(</span>ngene <span class="op">=</span> <span class="fl">1000</span>, nreps <span class="op">=</span> <span class="fl">2</span>, num_conds <span class="op">=</span> <span class="fl">3</span>, num_kd_DE <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">100</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>'sim_bakRData' is deprecated.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Use 'Simulate_bakRData' instead.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> See help("Deprecated")</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
