@@ -335,14 +335,14 @@ L2FC(ksyn) = L2FC(RNA) + L2FC(kdeg)
 <code class="sourceCode R"><span><span class="va">ksyn_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>L2FC <span class="op">=</span> <span class="va">reso</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">+</span> <span class="va">Fit</span><span class="op">$</span><span class="va">Fast_Fit</span><span class="op">$</span><span class="va">Effects_df</span><span class="op">$</span><span class="va">L2FC_kdeg</span>,</span>
 <span>                      Gene <span class="op">=</span> <span class="va">Fit</span><span class="op">$</span><span class="va">Fast_Fit</span><span class="op">$</span><span class="va">Effects_df</span><span class="op">$</span><span class="va">XF</span><span class="op">)</span></span>
 <span>                </span></code></pre></div>
-<p>We are missing one key componenet though: the uncertainty (or standard error). How can we get that from bakR and DESeq2? Well the easiest and most conservative thing to do is to assume independence of <span class="math inline">\(L2FC(RNA)\)</span> and <span class="math inline">\(L2FC(kdeg)\)</span>. That’s because the variances of independent random variables add, so that:</p>
+<p>We are missing one key component though: the uncertainty (or standard error). How can we get that from bakR and DESeq2? Well the easiest and most conservative thing to do is to assume independence of <span class="math inline">\(L2FC(RNA)\)</span> and <span class="math inline">\(L2FC(kdeg)\)</span>. That’s because the variances of independent random variables add, so that:</p>
 <p><span class="math display">\[
 \begin{align}
 \text{Var}[L2FC(ksyn)] &amp;= \text{Var}[L2FC(kdeg) + L2FC(RNA)] \\
 &amp;= \text{Var}[L2FC(kdeg)] + \text{Var}[L2FC(RNA)]
 \end{align}
 \]</span></p>
-<p>where <span class="math inline">\(\text{Var}[X]\)</span> is the variance of random variable <span class="math inline">\(X\)</span>. We can then calcualte the standard error as the square root of the variance, meaning:</p>
+<p>where <span class="math inline">\(\text{Var}[X]\)</span> is the variance of random variable <span class="math inline">\(X\)</span>. We can then calculate the standard error as the square root of the variance, meaning:</p>
 <p><span class="math display">\[ 
 \text{se}[L2FC(ksyn)] = \sqrt{se[L2FC(kdeg)]^2 + se[L2FC(RNA)]^2}
 \]</span> where I am using the non-standard notation <span class="math inline">\(\text{se}[X]\)</span> to mean the standard error of <span class="math inline">\(X\)</span>. With this, we can fill out the final component of the L2FC(ksyn) dataframe:</p>
@@ -379,7 +379,7 @@ L2FC(ksyn) = L2FC(RNA) + L2FC(kdeg)
 <span><span class="co"># Observe volcano plot</span></span>
 <span><span class="va">ksyn_volc</span></span></code></pre></div>
 <p><img src="Further-Analyses_files/figure-html/unnamed-chunk-10-1.png" width="576" style="display: block; margin: auto;"></p>
-<p>The simulation is such that features nubmer 1-800 will be the non-differentially synthesized RNA and features 801-1000 will be the 200 differentially synthesized RNA. Therefore, we can also see how the analysis performed</p>
+<p>The simulation is such that features number 1-800 will be the non-differentially synthesized RNA and features 801-1000 will be the 200 differentially synthesized RNA. Therefore, we can also see how the analysis performed</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Add conclusion at 0.01 FDR control</span></span>
@@ -426,7 +426,7 @@ L2FC(ksyn) = L2FC(RNA) + L2FC(kdeg)
 </div>
 </div>
 <div class="section level3">
-<h3 id="performing-steady-state-indepedent-comparisons-with-bakr-deseq2">Performing steady-state indepedent comparisons with bakR + DESeq2<a class="anchor" aria-label="anchor" href="#performing-steady-state-indepedent-comparisons-with-bakr-deseq2"></a>
+<h3 id="performing-steady-state-independent-comparisons-with-bakr-deseq2">Performing steady-state independent comparisons with bakR + DESeq2<a class="anchor" aria-label="anchor" href="#performing-steady-state-independent-comparisons-with-bakr-deseq2"></a>
 </h3>
 <p>The goal of the steady-state independent analysis that I am putting forth is to identify the <strong>major</strong> kinetic mechanism of any differential expression observed. The analysis strategy is as follows:</p>
 <ol style="list-style-type: decimal">
