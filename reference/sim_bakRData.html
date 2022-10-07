@@ -228,7 +228,7 @@ drawn for each gene.</p></dd>
 
 
 <dt>STL</dt>
-<dd><p>logical; if TRUE, simulation is of STL-seq rather than a standard TL-seq experiment. The two big changes are that a short read lenght is required
+<dd><p>logical; if TRUE, simulation is of STL-seq rather than a standard TL-seq experiment. The two big changes are that a short read length is required
 (&lt; 60 nt) and that every read for a particular feature will have the same number of Us. Only one read length is simulated for simplicity.</p></dd>
 
 
@@ -275,6 +275,25 @@ to each sample when comparing the sequencing reads (like if you are performing d
 of the fraction new.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="co"># 2 replicate, 2 experimental condition, 1000 gene simulation</span></span></span>
+<span class="r-in"><span><span class="va">sim_2reps</span> <span class="op">&lt;-</span> <span class="fu">sim_bakRData</span><span class="op">(</span>ngene <span class="op">=</span> <span class="fl">1000</span>, nreps <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># 3 replicate, 2 experimental condition, 1000 gene simulation</span></span></span>
+<span class="r-in"><span><span class="co"># with 100 instances of differential degradation kinetics</span></span></span>
+<span class="r-in"><span><span class="va">sim_3reps</span> <span class="op">&lt;-</span> <span class="fu">sim_bakRData</span><span class="op">(</span>ngene <span class="op">=</span> <span class="fl">1000</span>, num_kd_DE <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># 2 replicates, 3 experimental condition, 1000 gene simulation</span></span></span>
+<span class="r-in"><span><span class="co"># with 100 instances of differential degradation kinetics in the 1st</span></span></span>
+<span class="r-in"><span><span class="co"># condition and no instances of differential degradation kinetics in the</span></span></span>
+<span class="r-in"><span><span class="co"># 2nd condition</span></span></span>
+<span class="r-in"><span><span class="va">sim_3conditions</span> <span class="op">&lt;-</span> <span class="fu">sim_bakRData</span><span class="op">(</span>ngene <span class="op">=</span> <span class="fl">1000</span>, nreps <span class="op">=</span> <span class="fl">2</span>, num_conds <span class="op">=</span> <span class="fl">3</span>, num_kd_DE <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">100</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
 

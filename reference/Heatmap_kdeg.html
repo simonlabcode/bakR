@@ -70,7 +70,7 @@ experimental ID j+1 to the reference sample</p>
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>obj</dt>
-<dd><p>Object of class FastFit or HMCFit outputted by respective analysis functions</p></dd>
+<dd><p>Object outputted by <code>bakRFit</code></p></dd>
 
 
 <dt>zscore</dt>
@@ -88,6 +88,43 @@ are kept</p></dd>
 
 </dl></div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="co"># Simulate data</span></span></span>
+<span class="r-in"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="Simulate_bakRData.html">Simulate_bakRData</a></span><span class="op">(</span><span class="fl">1000</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Fit data with fast implementation</span></span></span>
+<span class="r-in"><span><span class="va">Fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="bakRFit.html">bakRFit</a></span><span class="op">(</span><span class="va">sim</span><span class="op">$</span><span class="va">bakRData</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finding reliable Features</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Filtering out unwanted or unreliable features</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Processing data...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating labeled mutation rate</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pnews for each sample are:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Groups:   mut [2]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.049<span style="text-decoration: underline;">8</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.049<span style="text-decoration: underline;">9</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     1     3 0.049<span style="text-decoration: underline;">9</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     1 0.050<span style="text-decoration: underline;">0</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>     2     2 0.049<span style="text-decoration: underline;">8</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>     2     3 0.050<span style="text-decoration: underline;">0</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating unlabeled mutation rate</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pold is:  0.00100377352109818</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating fraction labeled</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating per replicate uncertainties</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating read count-variance relationship</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Averaging replicate data and regularizing estimates</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Assessing statistical significance</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># L2FC(kdeg) heatmap matrix</span></span></span>
+<span class="r-in"><span><span class="va">L2FC_kdeg_heat</span> <span class="op">&lt;-</span> <span class="fu">Heatmap_kdeg</span><span class="op">(</span><span class="va">Fit</span><span class="op">$</span><span class="va">Fast_Fit</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
 

@@ -123,7 +123,7 @@ samples are filtered out</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>returns list of objects that can be passed to <code>TL_stan</code> and/or <code>fast_analysis</code>. Those objects are:</p><ul><li><p>Stan_data; list that can be passed to <code>TL_stan</code> with Hybrid_Fit = FALSE. Consistents of metadata as well as data that
+<p>returns list of objects that can be passed to <code>TL_stan</code> and/or <code>fast_analysis</code>. Those objects are:</p><ul><li><p>Stan_data; list that can be passed to <code>TL_stan</code> with Hybrid_Fit = FALSE. Consists of metadata as well as data that
 Stan will analyze. Data to be analyzed consists of equal length vectors. The contents of Stan_data are:</p><ul><li><p>NE; Number of datapoints for Stan to analyze (NE = Number of Elements)</p></li>
 <li><p>NF; Number of features in dataset</p></li>
 <li><p>TP; Numerical indicator of s4U feed (0 = no s4U feed, 1 = s4U fed)</p></li>
@@ -180,6 +180,13 @@ filtering. If FOI is non-null and concat == FALSE, the features listed in FOI wi
 If FOI is null and concat == FALSE, an error will be thrown.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="fu">cBprocess</span><span class="op">(</span><span class="va">bakRDataobj</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
 

@@ -156,7 +156,7 @@ abnormally high standard errors due to transcripts with extreme kinetics</p></dd
 
 
 <dt>mut_reg</dt>
-<dd><p>If MLE has instabilities, empircal mut rate will be used to estimate fn, multiplying pnew by 1+mut_reg and pold by 1-mut_reg to regularize fn</p></dd>
+<dd><p>If MLE has instabilities, empirical mut rate will be used to estimate fn, multiplying pnew by 1+mut_reg and pold by 1-mut_reg to regularize fn</p></dd>
 
 
 <dt>p_mean</dt>
@@ -269,7 +269,7 @@ bakRFit object's Data_list$Stan_data entry.</p>
 using the L-BFGS-B algorithm implemented in <code><a href="https://rdrr.io/r/stats/optim.html" class="external-link">stats::optim</a></code>. The assumed likelihood function is derived from a Poisson mixture
 model with rates adjusted according to each feature's empirical U-content (the average number of Us present in sequencing reads mapping
 to that feature in a particular sample). Fraction new estimates are then converted to degradation rate constant estimates using
-a solution to a simple ordinary differntial equation model of RNA metabolism.</p>
+a solution to a simple ordinary differential equation model of RNA metabolism.</p>
 <p>Once fraction new and kdegs are estimated, the uncertainty in these parameters is estimated using the Fisher Information. In the limit of
 large datasets, the variance of the MLE is inversely proportional to the Fisher Information evaluated at the MLE. Mixture models are
 typically singular, meaning that the Fisher information matrix is not positive definite and asymptotic results for the variance
@@ -302,6 +302,13 @@ data from WT cells and a 2 hour label time was used in KO cells, this comparison
 logit(fraction new) could stem from differences in kinetics or label times.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="va">Fast_Fit</span> <span class="op">&lt;-</span> <span class="fu">fast_analysis</span><span class="op">(</span><span class="va">fast_df</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
 
