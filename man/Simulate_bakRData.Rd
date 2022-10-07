@@ -170,7 +170,10 @@ sim_3reps <- Simulate_bakRData(ngene = 10000, num_kd_DE = c(0, 1000))
 # with 1000 instances of differential degradation kinetics in the 1st
 # condition and no instances of differential degradation kinetics in the
 # 2nd condition
-sim_3conditions <- Simulate_bakRData(ngene = 10000, nreps = 4, num_conds = 3, num_kd_DE = c(0, 1000, 0))
+sim_3es <- Simulate_bakRData(ngene = 10000,
+                             nreps = 4,
+                             num_conds = 3,
+                             num_kd_DE = c(0, 1000, 0))
 
 }
 

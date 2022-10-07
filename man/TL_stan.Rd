@@ -153,7 +153,4 @@ identify the source of problems in your data. Summary statistics describing how 
 HybridFit <- TL_stan(Stan_data, Hybrid_Fit = TRUE)
 StanFit <- TL_stan(Stan_data, Hybrid_Fit = FALSE)
 }
-
-
-
 }

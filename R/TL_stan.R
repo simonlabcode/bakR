@@ -130,7 +130,7 @@
 #' HybridFit <- TL_stan(Stan_data, Hybrid_Fit = TRUE)
 #' StanFit <- TL_stan(Stan_data, Hybrid_Fit = FALSE)
 #' }
-#'
+#' @export
 #'
 #'
 TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE,
