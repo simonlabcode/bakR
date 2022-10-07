@@ -285,7 +285,7 @@ FnPCA(Fit$Fast_Fit)
 
 ```
 
-In this case, replicates separate from eachother fairly well, which is promising and the difference between the red point in the lower left and those in the upper left is not significant enough to cause concern. I have found that clustering is improved with the full MCMC fit, so if you've taken the time to run that model, I suggest using it for any PCA plots.
+In this case, replicates separate from each other fairly well, which is promising and the difference between the red point in the lower left and those in the upper left is not significant enough to cause concern. I have found that clustering is improved with the full MCMC fit, so if you've taken the time to run that model, I suggest using it for any PCA plots.
 
 ## Step 4: Where to go from here
 

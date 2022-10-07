@@ -1,3 +1,7 @@
+# bakR 0.2.4
+
+* Addressed NOTEs to prepare for CRAN submission
+
 # bakR 0.2.3
 
 * Expanded discussion of NSS analysis in vignette
