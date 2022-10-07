@@ -131,8 +131,8 @@ is performed as with the Hybrid implementation.
 }
 \examples{
 \donttest{
-# Simulate data for 1000 genes, 3 replicates, 2 conditions
-simdata <- Simulate_bakRData(1000)
+# Simulate data for 1000 genes, 2 replicates, 2 conditions
+simdata <- Simulate_bakRData(1000, nreps = 2)
 
 # You always must fit fast implementation before any others
 Fit <- bakRFit(simdata$bakRData)
