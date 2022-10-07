@@ -84,22 +84,21 @@
 #'  \item RNA_conc; The average number of normalized read counts expected for each feature in each sample.
 #' }
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # 2 replicate, 2 experimental condition, 1000 gene simulation
 #' sim_2reps <- sim_bakRData(ngene = 1000, nreps = 2)
 #'
-#' # 3 replicate, 2 experimental condition, 10000 gene simulation
-#' # with 1000 instances of differential degradation kinetics
-#' sim_3reps <- sim_bakRData(ngene = 10000, num_kd_DE = c(0, 1000))
+#' # 3 replicate, 2 experimental condition, 1000 gene simulation
+#' # with 100 instances of differential degradation kinetics
+#' sim_3reps <- sim_bakRData(ngene = 1000, num_kd_DE = c(0, 100))
 #'
-#' # 4 replicate, 3 experimental condition, 10000 gene simulation
-#' # with 1000 instances of differential degradation kinetics in the 1st
+#' # 2 replicates, 3 experimental condition, 1000 gene simulation
+#' # with 100 instances of differential degradation kinetics in the 1st
 #' # condition and no instances of differential degradation kinetics in the
 #' # 2nd condition
-#' sim_3conditions <- sim_bakRData(ngene = 10000, nreps = 4, num_conds = 3, num_kd_DE = c(0, 1000, 0))
+#' sim_3conditions <- sim_bakRData(ngene = 1000, nreps = 2, num_conds = 3, num_kd_DE = c(0, 100, 0))
 #'
 #' }
-#' @export
 sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_mean = 0,
                                fn_mean = 0, fn_sd = 1, kslog_c = 0.8, kslog_sd = 0.95,
                                tl = 60, p_new = 0.05, p_old = 0.001, read_lengths = 200L,
@@ -835,7 +834,6 @@ sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_m
 #' from the promoter, this should be around 40
 #' @importFrom magrittr %>%
 #' @import data.table
-#' @export
 #' @return A list containing a simulated `bakRData` object as well as a list of simulated kinetic parameters of interest.
 #' The contents of the latter list are:
 #' \itemize{
@@ -853,21 +851,21 @@ sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_m
 #' # 2 replicate, 2 experimental condition, 1000 gene simulation
 #' sim_2reps <- Simulate_bakRData(ngene = 1000, nreps = 2)
 #'
-#' # 3 replicate, 2 experimental condition, 10000 gene simulation
-#' # with 1000 instances of differential degradation kinetics
-#' sim_3reps <- Simulate_bakRData(ngene = 10000, num_kd_DE = c(0, 1000))
+#' # 3 replicate, 2 experimental condition, 1000 gene simulation
+#' # with 100 instances of differential degradation kinetics
+#' sim_3reps <- Simulate_bakRData(ngene = 1000, num_kd_DE = c(0, 100))
 #'
-#' # 4 replicate, 3 experimental condition, 10000 gene simulation
-#' # with 1000 instances of differential degradation kinetics in the 1st
+#' # 2 replicates, 3 experimental condition, 10000 gene simulation
+#' # with 100 instances of differential degradation kinetics in the 1st
 #' # condition and no instances of differential degradation kinetics in the
 #' # 2nd condition
-#' sim_3es <- Simulate_bakRData(ngene = 10000,
-#'                              nreps = 4,
+#' sim_3es <- Simulate_bakRData(ngene = 1000,
+#'                              nreps = 2,
 #'                              num_conds = 3,
-#'                              num_kd_DE = c(0, 1000, 0))
+#'                              num_kd_DE = c(0, 100, 0))
 #'
 #' }
-#'
+#' @export
 #'
 Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_mean = 0,
                          fn_mean = 0, fn_sd = 1, kslog_c = 0.8, kslog_sd = 0.95,
