@@ -173,7 +173,7 @@ ksyn_df <- data.frame(L2FC = reso$log2FoldChange + Fit$Fast_Fit$Effects_df$L2FC_
                 
 ```
 
-We are missing one key componenet though: the uncertainty (or standard error). How can we get that from bakR and DESeq2? Well the easiest and most conservative thing to do is to assume independence of $L2FC(RNA)$ and $L2FC(kdeg)$. That's because the variances of independent random variables add, so that:
+We are missing one key component though: the uncertainty (or standard error). How can we get that from bakR and DESeq2? Well the easiest and most conservative thing to do is to assume independence of $L2FC(RNA)$ and $L2FC(kdeg)$. That's because the variances of independent random variables add, so that:
 
 $$
 \begin{align}
@@ -182,7 +182,7 @@ $$
 \end{align}
 $$
 
-where $\text{Var}[X]$ is the variance of random variable $X$. We can then calcualte the standard error as the square root of the variance, meaning:
+where $\text{Var}[X]$ is the variance of random variable $X$. We can then calculate the standard error as the square root of the variance, meaning:
 
 $$ 
 \text{se}[L2FC(ksyn)] = \sqrt{se[L2FC(kdeg)]^2 + se[L2FC(RNA)]^2}
@@ -232,7 +232,7 @@ ksyn_volc
 
 ```
 
-The simulation is such that features nubmer 1-800 will be the non-differentially synthesized RNA and features 801-1000 will be the 200 differentially synthesized RNA. Therefore, we can also see how the analysis performed
+The simulation is such that features number 1-800 will be the non-differentially synthesized RNA and features 801-1000 will be the 200 differentially synthesized RNA. Therefore, we can also see how the analysis performed
 
 ```{r, fig.align='center'}
 
@@ -299,7 +299,7 @@ here is a diagram that covers the range of possible kinetic mechanisms and concl
 
 ![Diagram of NR-seq NSS analysis strategy.](NSS_Analysis.png)
 
-### Performing steady-state indepedent comparisons with bakR + DESeq2
+### Performing steady-state independent comparisons with bakR + DESeq2
 The goal of the steady-state independent analysis that I am putting forth is to identify the **major** kinetic mechanism of any differential expression observed. The analysis strategy is as follows:
 
 1. Compare NR-seq with bakR (but with one small parameter tweak)

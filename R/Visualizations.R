@@ -16,7 +16,7 @@ FnPCA <- function(obj, log_kdeg = FALSE){
   ### Extract logit(fn)
 
   if(log_kdeg){
-    if(class(obj) != "FastFit"){
+    if(!inherits(obj, "FastFit")){
       stop("log(kdeg) PCA is curently only compatible with Fast_Fit.")
     }
 
@@ -264,7 +264,7 @@ Heatmap_kdeg <- function(obj, zscore = FALSE, filter_sig = FALSE, FDR = 0.05){
 
     L2FC_df <- obj$Effects_df[,c("effect", "se", "Exp_ID", "Feature_ID", "padj")]
 
-    if(class(obj) == "FastFit"){
+    if(inherits(obj, "FastFit")){
       df <- obj$Hyper_Parameters[1] + 2*max(obj$Fn_Estimates$Replicate) - 2
 
       L2FC_df <- L2FC_df %>% dplyr::mutate(zscore = ifelse(effect < 0, 1, -1)*stats::qt(padj, df = df) )
@@ -291,7 +291,7 @@ Heatmap_kdeg <- function(obj, zscore = FALSE, filter_sig = FALSE, FDR = 0.05){
     L2FC_mat <- matrix(0, nrow = length(unique(L2FC_df$Feature_ID)), ncol = max(L2FC_df$Exp_ID)-1)
 
     for(i in seq_along(unique(L2FC_df$Exp_ID))){
-      if(class(obj) == "FastFit"){
+      if(inherits(obj, "FastFit")){
         L2FC_mat[,i] <- L2FC_df$zscore[L2FC_df$Exp_ID == (i+1)]
 
       }else{
