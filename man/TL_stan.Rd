@@ -99,7 +99,7 @@ are an estimated 2.72 (exp(1)) mutations in reads from new RNA (i.e., RNA synthe
 }
 }
 \description{
-\code{TL_stan} analyzes nucleotide recoding RNA-seq data with a fully
+\code{TL_stan} is an internal function to analyze nucleotide recoding RNA-seq data with a fully
 Bayesian hierarchical model implemented in the PPL Stan. \code{TL_stan} estimates
 kinetic parameters and differences in kinetic parameters between experimental
 conditions. When assessing differences, a single reference sample is compared to
@@ -147,10 +147,4 @@ ran. Because the models implemented by \code{TL_stan} are extensively validated,
 but often anomalies on your data can lead to poor model convergence, in which case assessing model diagnostics can help you
 identify the source of problems in your data. Summary statistics describing how well the model was able to estimate each parameter
 (n_eff and rhat) are provided in the fit summaries, but can often obscure some of the nuanced details of model fitting.
-}
-\examples{
-\dontrun{
-HybridFit <- TL_stan(Stan_data, Hybrid_Fit = TRUE)
-StanFit <- TL_stan(Stan_data, Hybrid_Fit = FALSE)
-}
 }

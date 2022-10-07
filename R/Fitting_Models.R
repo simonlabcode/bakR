@@ -82,8 +82,8 @@
 #' }
 #' @examples
 #' \donttest{
-#' # Simulate data for 1000 genes, 3 replicates, 2 conditions
-#' simdata <- Simulate_bakRData(1000)
+#' # Simulate data for 1000 genes, 2 replicates, 2 conditions
+#' simdata <- Simulate_bakRData(1000, nreps = 2)
 #'
 #' # You always must fit fast implementation before any others
 #' Fit <- bakRFit(simdata$bakRData)
@@ -385,7 +385,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       obj$Data_lists$Stan_data$Chase <- as.integer(Chase)
 
-      Stan_list <- bakR::TL_stan(obj$Data_lists$Stan_data, NSS = NSS, chains = chains, ...)
+      Stan_list <- bakR:::TL_stan(obj$Data_lists$Stan_data, NSS = NSS, chains = chains, ...)
 
       ## Calculate and adjust p-values
       Effects <- Stan_list$Effects_df
@@ -433,7 +433,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
       rm(Rep_Fn)
 
       # Run Hybrid implementation
-      Stan_list <- bakR::TL_stan(data_list, Hybrid_Fit = TRUE, NSS = NSS, chains = chains, ...)
+      Stan_list <- bakR:::TL_stan(data_list, Hybrid_Fit = TRUE, NSS = NSS, chains = chains, ...)
 
       ## Calculate and adjust p-values
 

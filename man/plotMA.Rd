@@ -23,14 +23,19 @@ plotMA(
 
 \item{Exp_shape}{Logical indicating whether to use Experimental ID as factor determining point shape in volcano plot}
 }
+\value{
+A ggplot object. Each point represents a transcript. The
+x-axis is log-10 transformed replicate average read counts,
+y-axis is the log-2 fold-change in the degradation rate constant.
+}
 \description{
 This function outputs a L2FC(kdeg) MA plot. Plots are colored according to statistical
 significance and the sign of L2FC(kdeg)
 }
 \examples{
 \donttest{
-# Simulate data
-sim <- Simulate_bakRData(1000)
+# Simulate data for 500 genes and 2 replicates
+sim <- Simulate_bakRData(500, nreps = 2)
 
 # Fit data with fast implementation
 Fit <- bakRFit(sim$bakRData)

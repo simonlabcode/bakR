@@ -1,6 +1,6 @@
 #' Fit Stan models to nucleotide recoding RNA-seq data analysis
 #'
-#' \code{TL_stan} analyzes nucleotide recoding RNA-seq data with a fully
+#' \code{TL_stan} is an internal function to analyze nucleotide recoding RNA-seq data with a fully
 #' Bayesian hierarchical model implemented in the PPL Stan. \code{TL_stan} estimates
 #' kinetic parameters and differences in kinetic parameters between experimental
 #' conditions. When assessing differences, a single reference sample is compared to
@@ -125,12 +125,6 @@
 #'  mention is that the estimates are on a log(avg. # of mutations) scale. So a log_lambda_n of 1 means that on average, there
 #'  are an estimated 2.72 (exp(1)) mutations in reads from new RNA (i.e., RNA synthesized during s4U labeling).
 #' }
-#' @examples
-#' \dontrun{
-#' HybridFit <- TL_stan(Stan_data, Hybrid_Fit = TRUE)
-#' StanFit <- TL_stan(Stan_data, Hybrid_Fit = FALSE)
-#' }
-#' @export
 #'
 #'
 TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE,
