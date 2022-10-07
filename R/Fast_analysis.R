@@ -157,6 +157,7 @@
 #' \dontrun{
 #' Fast_Fit <- fast_analysis(fast_df)
 #' }
+#' @export
 fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           read_cut = 50, features_cut = 50,
                           nbin = NULL, prior_weight = 2,
