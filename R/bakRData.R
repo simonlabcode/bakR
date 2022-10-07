@@ -15,7 +15,6 @@ new_bakRData <- function(cB, metadf){
 #' This functions ensures that input for bakRData object construction is valid
 #'
 #' @param obj An object of class bakRData
-#' @export
 validate_bakRData <- function(obj){
 
   vals <- unclass(obj)
@@ -134,6 +133,8 @@ validate_bakRData <- function(obj){
 #' This function creates an object of class bakRData
 #' @param cB Dataframe with columns corresponding to feature ID, number of Ts, number of mutations, sample ID, and number of identical observations
 #' @param metadf Dataframe detailing s4U label time and experimental ID of each sample
+#' @return A bakRData object. This has two components: a data frame describing experimental
+#' details (metadf) and a data frame containing the NR-seq data (cB).
 #' @examples
 #' # Load cB
 #' data("cB_small")
@@ -142,7 +143,7 @@ validate_bakRData <- function(obj){
 #' data("metadf")
 #'
 #' # Create bakRData object
-#' bakRDataobj <- bakRData(cB_small, metadf)
+#' bakRData <- bakRData(cB_small, metadf)
 #'
 #' @export
 bakRData <- function(cB, metadf){
@@ -195,7 +196,7 @@ bakRData <- function(cB, metadf){
     of data.")
   }
 
-  validate_bakRData(new_bakRData(cB, metadf))
+  bakR:::validate_bakRData(bakR:::new_bakRData(cB, metadf))
 
 
 }

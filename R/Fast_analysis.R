@@ -24,7 +24,7 @@
 #' to estimate s4U induced mutation rates is used. In this case, the lowest mutation rate features with sufficient read depths are used,
 #' and there average mutation rate is the background mutation rate estimate, as these features are assumed to be almost entirely unlabeled.
 #' Another slightly more computationally intensive but more accurate strategy to estimate mutation rates is to set \code{StanRate} = TRUE.
-#' This will fit a non-hierarchical mixture model to a small subset of transcripts using Stan. The default in \code{bakRFit} is to use
+#' This will fit a non-hierarchical mixture model to a small subset of transcripts using 'Stan'. The default in \code{bakRFit} is to use
 #' 25 transcripts. If \code{StanRate} is TRUE, then a data list must be passed to \code{Stan_data} of the form that appears in the
 #' bakRFit object's Data_list$Stan_data entry.
 #'
@@ -88,9 +88,9 @@
 #' @param mut_reg If MLE has instabilities, empirical mut rate will be used to estimate fn, multiplying pnew by 1+mut_reg and pold by 1-mut_reg to regularize fn
 #' @param p_mean Mean of normal distribution used as prior penalty in MLE of logit(fn)
 #' @param p_sd Standard deviation of normal distribution used as prior penalty in MLE of logit(fn)
-#' @param StanRate Logical; if TRUE, a simple Stan model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
+#' @param StanRate Logical; if TRUE, a simple 'Stan' model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
 #' to the runtime of the analysis.
-#' @param Stan_data List; if StanRate is TRUE, then this is the data passed to the Stan model to estimate mutation rates. If using the \code{bakRFit}
+#' @param Stan_data List; if StanRate is TRUE, then this is the data passed to the 'Stan' model to estimate mutation rates. If using the \code{bakRFit}
 #' wrapper of \code{fast_analysis}, then this is created automatically.
 #' @param null_cutoff bakR will test the null hypothesis of |effect size| < |null_cutoff|
 #' @param NSS Logical; if TRUE, logit(fn)s are compared rather than log(kdeg) so as to avoid steady-state assumption.
@@ -154,8 +154,16 @@
 #' }
 #' @importFrom magrittr %>%
 #' @examples
-#' \dontrun{
-#' Fast_Fit <- fast_analysis(fast_df)
+#' \donttest{
+#'
+#' # Simulate small dataset
+#' sim <- Simulate_bakRData(300, nreps = 2)
+#'
+#' # Fit fast model to get fast_df
+#' Fit <- bakRFit(sim$bakRData)
+#'
+#' # Fit fast model with fast_analysis
+#' Fast_Fit <- fast_analysis(Fit$Data_lists$Fast_df)
 #' }
 #' @export
 fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,

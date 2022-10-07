@@ -11,6 +11,10 @@ bakRData(cB, metadf)
 
 \item{metadf}{Dataframe detailing s4U label time and experimental ID of each sample}
 }
+\value{
+A bakRData object. This has two components: a data frame describing experimental
+details (metadf) and a data frame containing the NR-seq data (cB).
+}
 \description{
 This function creates an object of class bakRData
 }
@@ -22,6 +26,6 @@ data("cB_small")
 data("metadf")
 
 # Create bakRData object
-bakRDataobj <- bakRData(cB_small, metadf)
+bakRData <- bakRData(cB_small, metadf)
 
 }

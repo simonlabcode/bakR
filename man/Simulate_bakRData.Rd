@@ -155,7 +155,7 @@ arise from both background mutations that occur with probability \code{p_old} as
 Simulated read counts should be treated as if they are spike-in and RPKM normalized, so the same scale factor can be applied
 to each sample when comparing the sequencing reads (e.g., if you are performing differential expression analysis).
 
-Function to simulate a bakRData object according to a realistic generative model
+Function to simulate a \code{bakRData} object according to a realistic generative model
 }
 \examples{
 \donttest{
@@ -166,7 +166,7 @@ sim_2reps <- Simulate_bakRData(ngene = 1000, nreps = 2)
 # with 100 instances of differential degradation kinetics
 sim_3reps <- Simulate_bakRData(ngene = 1000, num_kd_DE = c(0, 100))
 
-# 2 replicates, 3 experimental condition, 10000 gene simulation
+# 2 replicates, 3 experimental condition, 1000 gene simulation
 # with 100 instances of differential degradation kinetics in the 1st
 # condition and no instances of differential degradation kinetics in the
 # 2nd condition

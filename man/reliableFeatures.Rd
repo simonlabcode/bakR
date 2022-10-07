@@ -29,7 +29,18 @@ features with extremely low empirical U-content (i.e., the average number of Us 
 that feature) and those with very few reads having at least 3 Us in them.
 }
 \examples{
-\dontrun{
-reliableFeatures(obj = bakRDataobj)
+\donttest{
+
+# Load cB
+data("cB_small")
+
+# Load metadf
+data("metadf")
+
+# Create bakRData
+bakRData <- bakRData(cB_small, metadf)
+
+# Find reliable features
+features_to_keep <- reliableFeatures(obj = bakRData)
 }
 }

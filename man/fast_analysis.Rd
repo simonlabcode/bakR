@@ -63,10 +63,10 @@ abnormally high standard errors due to transcripts with extreme kinetics}
 
 \item{p_sd}{Standard deviation of normal distribution used as prior penalty in MLE of logit(fn)}
 
-\item{StanRate}{Logical; if TRUE, a simple Stan model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
+\item{StanRate}{Logical; if TRUE, a simple 'Stan' model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
 to the runtime of the analysis.}
 
-\item{Stan_data}{List; if StanRate is TRUE, then this is the data passed to the Stan model to estimate mutation rates. If using the \code{bakRFit}
+\item{Stan_data}{List; if StanRate is TRUE, then this is the data passed to the 'Stan' model to estimate mutation rates. If using the \code{bakRFit}
 wrapper of \code{fast_analysis}, then this is created automatically.}
 
 \item{null_cutoff}{bakR will test the null hypothesis of |effect size| < |null_cutoff|}
@@ -161,7 +161,7 @@ and that background is assumed to be constant for all samples. If a -s4U control
 to estimate s4U induced mutation rates is used. In this case, the lowest mutation rate features with sufficient read depths are used,
 and there average mutation rate is the background mutation rate estimate, as these features are assumed to be almost entirely unlabeled.
 Another slightly more computationally intensive but more accurate strategy to estimate mutation rates is to set \code{StanRate} = TRUE.
-This will fit a non-hierarchical mixture model to a small subset of transcripts using Stan. The default in \code{bakRFit} is to use
+This will fit a non-hierarchical mixture model to a small subset of transcripts using 'Stan'. The default in \code{bakRFit} is to use
 25 transcripts. If \code{StanRate} is TRUE, then a data list must be passed to \code{Stan_data} of the form that appears in the
 bakRFit object's Data_list$Stan_data entry.
 
@@ -206,7 +206,15 @@ data from WT cells and a 2 hour label time was used in KO cells, this comparison
 logit(fraction new) could stem from differences in kinetics or label times.
 }
 \examples{
-\dontrun{
-Fast_Fit <- fast_analysis(fast_df)
+\donttest{
+
+# Simulate small dataset
+sim <- Simulate_bakRData(300, nreps = 2)
+
+# Fit fast model to get fast_df
+Fit <- bakRFit(sim$bakRData)
+
+# Fit fast model with fast_analysis
+Fast_Fit <- fast_analysis(Fit$Data_lists$Fast_df)
 }
 }

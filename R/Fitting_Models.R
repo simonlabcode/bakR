@@ -32,12 +32,12 @@
 #'
 #' \code{TL_Stan} with Hybrid_Fit set to TRUE (referred to as the Hybrid implementation in the bakR paper)
 #' takes as input estimates of the logit(fraction new) and uncertainty provided by \code{fast_analysis}.
-#' It then uses Stan on the backend to implement a hierarchical model that pools data across replicates and the dataset
+#' It then uses 'Stan' on the backend to implement a hierarchical model that pools data across replicates and the dataset
 #' to estimate effect sizes (L2FC(kdeg)) and uncertainties. Replicate variability information is pooled across each experimental
 #' condition to regularize variance estimates using a hierarchical linear regression model.
 #'
 #' The default behavior of \code{TL_Stan} (referred to as the MCMC implementation in the bakR paper)
-#' is to use Stan on the back end to implement a U-content exposure adjusted Poisson mixture model
+#' is to use 'Stan' on the back end to implement a U-content exposure adjusted Poisson mixture model
 #' to estimate fraction news from the mutational data. Partial pooling of replicate variability estimates
 #' is performed as with the Hybrid implementation.
 #'
@@ -53,10 +53,10 @@
 #' @param Ucut Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples
 #' @param AvgU Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples
 #' @param FastRerun Logical; only matters if a bakRFit object is passed to \code{bakRFit}. If TRUE, then the Stan-free
-#' model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the Stan models.
+#' model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the 'Stan' models.
 #' @param FOI Features of interest; character vector containing names of features to analyze
 #' @param concat Logical; If TRUE, FOI is concatenated with output of reliableFeatures
-#' @param StanRateEst Logical; if TRUE, a simple Stan model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
+#' @param StanRateEst Logical; if TRUE, a simple 'Stan' model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
 #' to the runtime of the analysis.
 #' @param RateEst_size Numeric; if StanRateEst is TRUE, then data from RateEst_size genes are used for mutation rate estimation. This can be as low
 #' as 1 and should be kept low to ensure maximum efficiency
@@ -275,7 +275,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       cB_small <- obj$cB[obj$cB$XF %in% XF_choose,]
 
-      bakRData2 <- new_bakRData(cB_small, obj$metadf)
+      bakRData2 <- bakR:::new_bakRData(cB_small, obj$metadf)
 
       mutrate_list <- bakR::cBprocess(bakRData2)
 

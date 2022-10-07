@@ -16,11 +16,31 @@
 #' @param lid Maximum absolute value for standardized score present in output. This is for improving
 #' aesthetics of any heatmap generated with the output.
 #' @importFrom magrittr %>%
-#' @return returns dataframe that can be passed to pheatmap::pheatmap()
+#' @return returns data frame that can be passed to pheatmap::pheatmap()
 #' @examples
-#' \dontrun{
-#' # See vignettes for example of this function in action
-#' NSSHeatmap <- NSSHeat(bakRFit, DESeq2_df, bakRModel = "MLE")
+#' \donttest{
+#' # Simulate small dataset
+#' sim <- Simulate_bakRData(100, nreps = 2)
+#'
+#' # Analyze data with bakRFit
+#' Fit <- bakRFit(sim$bakRData)
+#'
+#' # Number of features that made it past filtering
+#' NF <- nrow(Fit$Fast_Fit$Effects_df)
+#'
+#' # Simulate mock differential expression data frame
+#' DE_df <- data.frame(XF = as.character(1:NF),
+#'                        log2FoldChange = stats::rnorm(NF, 0, 2))
+#'
+#' DE_df$stat <- DE_df$log2FoldChange/0.5
+#'
+#' DE_df$padj <- 2*stats::dnorm(-abs(DE_df$stat))
+#'
+#' # make heatmap matrix
+#' Heatmap <- NSSHeat(bakRFit = Fit,
+#'                DE_df = DE_df,
+#'                bakRModel = "MLE")
+#'
 #' }
 #' @export
 NSSHeat <- function(bakRFit,

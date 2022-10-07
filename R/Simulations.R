@@ -74,17 +74,17 @@
 #' @return A list containing a simulated `bakRData` object as well as a list of simulated kinetic parameters of interest.
 #' The contents of the latter list are:
 #' \itemize{
-#'  \item Effect_sim; Dataframe meant to mimic formatting of Effect_df that are part of \code{TL_stan} and \code{fast_analysis} output.
-#'  \item Fn_mean_sim; Dataframe meant to mimic formatting of Regularized_ests that is part of \code{fast_analysis} output. Contains information
+#'  \item Effect_sim; Data frame meant to mimic formatting of Effect_df that are part of \code{TL_stan} and \code{fast_analysis} output.
+#'  \item Fn_mean_sim; Data frame meant to mimic formatting of Regularized_ests that is part of \code{fast_analysis} output. Contains information
 #'  about the true fraction new simulated in each condition (the mean of the normal distribution from which replicate fraction news are simulated)
-#'  \item Fn_rep_sim; Dataframe meant to mimic formatting of Fn_Estimates that is part of \code{fast_analysis} output. Contains information
+#'  \item Fn_rep_sim; Data frame meant to mimic formatting of Fn_Estimates that is part of \code{fast_analysis} output. Contains information
 #'  about the fraction new simulated for each feature in each replicate of each condition.
 #'  \item L2FC_ks_mean; The true L2FC(ksyn) for each feature in each experimental condition. The ith column corresponds to the L2FC(ksyn) when comparing
 #'  the ith condition to the reference condition (defined as the 1st condition) so the 1st column is always all 0s
 #'  \item RNA_conc; The average number of normalized read counts expected for each feature in each sample.
 #' }
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # 2 replicate, 2 experimental condition, 1000 gene simulation
 #' sim_2reps <- sim_bakRData(ngene = 1000, nreps = 2)
 #'
@@ -789,7 +789,7 @@ sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_m
 #' Simulated read counts should be treated as if they are spike-in and RPKM normalized, so the same scale factor can be applied
 #' to each sample when comparing the sequencing reads (e.g., if you are performing differential expression analysis).
 #'
-#' Function to simulate a bakRData object according to a realistic generative model
+#' Function to simulate a `bakRData` object according to a realistic generative model
 #' @param ngene Number of genes to simulate data for
 #' @param num_conds Number of experimental conditions (including the reference condition) to simulate
 #' @param nreps Number of replicates to simulate
@@ -855,7 +855,7 @@ sim_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_m
 #' # with 100 instances of differential degradation kinetics
 #' sim_3reps <- Simulate_bakRData(ngene = 1000, num_kd_DE = c(0, 100))
 #'
-#' # 2 replicates, 3 experimental condition, 10000 gene simulation
+#' # 2 replicates, 3 experimental condition, 1000 gene simulation
 #' # with 100 instances of differential degradation kinetics in the 1st
 #' # condition and no instances of differential degradation kinetics in the
 #' # 2nd condition

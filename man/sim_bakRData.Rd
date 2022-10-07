@@ -117,10 +117,10 @@ from the promoter, this should be around 40}
 A list containing a simulated \code{bakRData} object as well as a list of simulated kinetic parameters of interest.
 The contents of the latter list are:
 \itemize{
-\item Effect_sim; Dataframe meant to mimic formatting of Effect_df that are part of \code{TL_stan} and \code{fast_analysis} output.
-\item Fn_mean_sim; Dataframe meant to mimic formatting of Regularized_ests that is part of \code{fast_analysis} output. Contains information
+\item Effect_sim; Data frame meant to mimic formatting of Effect_df that are part of \code{TL_stan} and \code{fast_analysis} output.
+\item Fn_mean_sim; Data frame meant to mimic formatting of Regularized_ests that is part of \code{fast_analysis} output. Contains information
 about the true fraction new simulated in each condition (the mean of the normal distribution from which replicate fraction news are simulated)
-\item Fn_rep_sim; Dataframe meant to mimic formatting of Fn_Estimates that is part of \code{fast_analysis} output. Contains information
+\item Fn_rep_sim; Data frame meant to mimic formatting of Fn_Estimates that is part of \code{fast_analysis} output. Contains information
 about the fraction new simulated for each feature in each replicate of each condition.
 \item L2FC_ks_mean; The true L2FC(ksyn) for each feature in each experimental condition. The ith column corresponds to the L2FC(ksyn) when comparing
 the ith condition to the reference condition (defined as the 1st condition) so the 1st column is always all 0s
@@ -158,7 +158,7 @@ Function to simulate a bakRData object according to a heteroskedastic beta-binom
 of the fraction new.
 }
 \examples{
-\dontrun{
+\donttest{
 # 2 replicate, 2 experimental condition, 1000 gene simulation
 sim_2reps <- sim_bakRData(ngene = 1000, nreps = 2)
 

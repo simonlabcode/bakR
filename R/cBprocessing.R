@@ -15,8 +15,19 @@
 #' @importFrom magrittr %>%
 #' @return vector of gene names that passed reliability filter
 #' @examples
-#' \dontrun{
-#' reliableFeatures(obj = bakRDataobj)
+#' \donttest{
+#'
+#' # Load cB
+#' data("cB_small")
+#'
+#' # Load metadf
+#' data("metadf")
+#'
+#' # Create bakRData
+#' bakRData <- bakRData(cB_small, metadf)
+#'
+#' # Find reliable features
+#' features_to_keep <- reliableFeatures(obj = bakRData)
 #' }
 #' @export
 reliableFeatures <- function(obj,
@@ -121,16 +132,16 @@ reliableFeatures <- function(obj,
 #' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
 #' @param Ucut Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples
 #' @param AvgU Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples
-#' @param Stan Boolean; if TRUE, then data_list that can be passed to Stan is curated
+#' @param Stan Boolean; if TRUE, then data_list that can be passed to 'Stan' is curated
 #' @param Fast Boolean; if TRUE, then dataframe that can be passed to fast_analysis() is curated
 #' @param FOI Features of interest; character vector containing names of features to analyze
 #' @param concat Boolean; If TRUE, FOI is concatenated with output of reliableFeatures
 #' @return returns list of objects that can be passed to \code{TL_stan} and/or \code{fast_analysis}. Those objects are:
 #' \itemize{
 #'  \item Stan_data; list that can be passed to \code{TL_stan} with Hybrid_Fit = FALSE. Consists of metadata as well as data that
-#'  Stan will analyze. Data to be analyzed consists of equal length vectors. The contents of Stan_data are:
+#'  'Stan' will analyze. Data to be analyzed consists of equal length vectors. The contents of Stan_data are:
 #'  \itemize{
-#'   \item NE; Number of datapoints for Stan to analyze (NE = Number of Elements)
+#'   \item NE; Number of datapoints for 'Stan' to analyze (NE = Number of Elements)
 #'   \item NF; Number of features in dataset
 #'   \item TP; Numerical indicator of s4U feed (0 = no s4U feed, 1 = s4U fed)
 #'   \item FE; Numerical indicator of feature
@@ -167,8 +178,19 @@ reliableFeatures <- function(obj,
 #' }
 #' @importFrom magrittr %>%
 #' @examples
-#' \dontrun{
-#' cBprocess(bakRDataobj)
+#' \donttest{
+#'
+#' # Load cB
+#' data("cB_small")
+#'
+#' # Load metadf
+#' data("metadf")
+#'
+#' # Create bakRData
+#' bakRData <- bakRData(cB_small, metadf)
+#'
+#' # Preprocess data
+#' data_for_bakR <- cBprocess(obj = bakRData)
 #' }
 #' @export
 cBprocess <- function(obj,
@@ -417,7 +439,7 @@ cBprocess <- function(obj,
       dplyr::right_join(ranked_features_df, by = 'XF') %>% dplyr::ungroup()
 
 
-    ### Curate data for Stan models
+    ### Curate data for 'Stan' models
 
     d = sdf
 
@@ -489,7 +511,7 @@ cBprocess <- function(obj,
     tls <-rep(0, times = nMT)
 
     # Calculate average read counts on log10 and natural scales
-      # log10 scale read counts used in Stan model
+      # log10 scale read counts used in 'Stan' model
       # natural scale read counts used in plotting function (plotMA())
     for(f in 1:NF){
       for(i in 1:nMT){
@@ -510,7 +532,7 @@ cBprocess <- function(obj,
     df_U <- dplyr::left_join(df_U, tl_df, by = "mut")
 
 
-    # data passed to Stan model (MCMC implementation)
+    # data passed to 'Stan' model (MCMC implementation)
     data_list <- list(
       NE = NE,
       NF = NF,
