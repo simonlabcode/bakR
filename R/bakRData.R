@@ -196,7 +196,7 @@ bakRData <- function(cB, metadf){
     of data.")
   }
 
-  bakR:::validate_bakRData(bakR:::new_bakRData(cB, metadf))
+  validate_bakRData(new_bakRData(cB, metadf))
 
 
 }

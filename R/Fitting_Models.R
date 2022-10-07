@@ -275,7 +275,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       cB_small <- obj$cB[obj$cB$XF %in% XF_choose,]
 
-      bakRData2 <- bakR:::new_bakRData(cB_small, obj$metadf)
+      bakRData2 <- new_bakRData(cB_small, obj$metadf)
 
       mutrate_list <- bakR::cBprocess(bakRData2)
 
@@ -385,7 +385,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       obj$Data_lists$Stan_data$Chase <- as.integer(Chase)
 
-      Stan_list <- bakR:::TL_stan(obj$Data_lists$Stan_data, NSS = NSS, chains = chains, ...)
+      Stan_list <- TL_stan(obj$Data_lists$Stan_data, NSS = NSS, chains = chains, ...)
 
       ## Calculate and adjust p-values
       Effects <- Stan_list$Effects_df
@@ -433,7 +433,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
       rm(Rep_Fn)
 
       # Run Hybrid implementation
-      Stan_list <- bakR:::TL_stan(data_list, Hybrid_Fit = TRUE, NSS = NSS, chains = chains, ...)
+      Stan_list <- TL_stan(data_list, Hybrid_Fit = TRUE, NSS = NSS, chains = chains, ...)
 
       ## Calculate and adjust p-values
 

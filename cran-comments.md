@@ -1,3 +1,41 @@
+## Comments for first submission (Date: 2022-10-07 03:53:58 UTC)
+
+* Please do not start the description with "This package", package name, title or similar
+
+  Changed DESCRIPTION accordingly.
+
+* Please always write package names, software names and API names in single quotes in title and description
+
+  Changed DESCRIPTION accordingly.
+
+* If there are references describing the methods in your package, please
+  add these in the description field of your DESCRIPTION file in the form
+  authors (year) <doi:...>
+  authors (year) <arXiv:...>
+  authors (year, ISBN:...)
+  or if those are not available: <https:...>
+  with no space after 'doi:', 'arXiv:', 'https:' and angle brackets for
+  auto-linking.
+
+  Added citation and link to preprint describing methods.
+
+* The Title field should be in title case
+
+  Changed title so that strict title case did not conflict with common casing standards in the field of RNA sequencing.
+
+* Please add \value to .Rd files regarding exported methods and explain
+  the functions results in the documentation.
+
+  Added details of function return values to all exported functions, and converted unnecessarily exported functions to imported functions.
+
+* \dontrun{} should only be used if the example really cannot be executed
+  (e.g. because of missing additional software, missing API keys, ...) by
+  the user. That's why wrapping examples in \dontrun{} adds the comment
+  ("# Not run:") as a warning for the user.
+
+  Previous uses of \dontrun{} replaced with runnable examples and wrapped in donttest{} due to their > 5 second execution times. One instance of \dontrun{} remains as it is an example for a recently
+  deprecated function and thus throws a warning if run.
+
 ## R CMD check results
 
 There were no ERRORs or WARNINGs.
