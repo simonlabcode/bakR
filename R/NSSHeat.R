@@ -1,7 +1,7 @@
 #' Construct heatmap for non-steady state (NSS) analysis
 #'
 #' This uses the output of bakR and a differential expression analysis software to construct
-#' a dataframe that can be passed to pheatmap::pheatmap(). This heatmap will disply the
+#' a dataframe that can be passed to pheatmap::pheatmap(). This heatmap will display the
 #' result of a steady-state quasi-independent analysis of NR-seq data.
 #'
 #' @param bakRFit bakRFit object
@@ -44,7 +44,7 @@ NSSHeat <- function(bakRFit,
          names are unique and that each column is correctly labeled and try again.")
   }
 
-  if(class(bakRFit) != "bakRFit"){
+  if(!inherits(bakRFit, "bakRFit")){
     stop("Input for bakRFit is not an object of class bakRFit.")
   }
 

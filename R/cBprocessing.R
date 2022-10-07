@@ -180,7 +180,7 @@ cBprocess <- function(obj,
 
 
   ## Check obj
-  if(class(obj) != "bakRData"){
+  if(!inherits(obj, "bakRData")){
     stop("obj must be of class bakRData")
   }
 

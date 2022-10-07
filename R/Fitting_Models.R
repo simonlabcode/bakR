@@ -234,7 +234,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   }
 
 
-  if(class(obj) == "bakRData"){
+  if(inherits(obj, "bakRData")){
 
     # Preprocess data
     data_list <- bakR::cBprocess(obj, high_p = high_p, totcut = totcut, Ucut = Ucut,
@@ -290,7 +290,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     class(Fit_lists) <- "bakRFit"
     return(Fit_lists)
 
-  }else if(class(obj) == "bakRFit"){
+  }else if(inherits(obj, "bakRFit")){
 
     if(FastRerun & (StanFit | HybridFit)){
       stop("Can only rerun MLE implementation or run Hybrid/MCMC implementation, not both. If you want to rerun the MLE implementation

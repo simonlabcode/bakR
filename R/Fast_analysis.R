@@ -130,7 +130,7 @@ cBtofast <- function(cB_raw,
 #' using the L-BFGS-B algorithm implemented in \code{stats::optim}. The assumed likelihood function is derived from a Poisson mixture
 #' model with rates adjusted according to each feature's empirical U-content (the average number of Us present in sequencing reads mapping
 #' to that feature in a particular sample). Fraction new estimates are then converted to degradation rate constant estimates using
-#' a solution to a simple ordinary differntial equation model of RNA metabolism.
+#' a solution to a simple ordinary differential equation model of RNA metabolism.
 #'
 #' Once fraction new and kdegs are estimated, the uncertainty in these parameters is estimated using the Fisher Information. In the limit of
 #' large datasets, the variance of the MLE is inversely proportional to the Fisher Information evaluated at the MLE. Mixture models are
