@@ -44,7 +44,8 @@ NSSHeat <- function(bakRFit,
          names are unique and that each column is correctly labeled and try again.")
   }
 
-  if(class(bakRFit) != "bakRFit"){
+
+  if(!inherits(bakRFit, "bakRFit")){
     stop("Input for bakRFit is not an object of class bakRFit.")
   }
 

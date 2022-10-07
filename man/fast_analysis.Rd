@@ -61,7 +61,7 @@ abnormally high standard errors due to transcripts with extreme kinetics}
 
 \item{p_mean}{Mean of normal distribution used as prior penalty in MLE of logit(fn)}
 
-\item{p_sd}{Standard deviation of normal distribution used as prior peanlty in MLE of logit(fn)}
+\item{p_sd}{Standard deviation of normal distribution used as prior penalty in MLE of logit(fn)}
 
 \item{StanRate}{Logical; if TRUE, a simple Stan model is used to estimate mutation rates for fast_analysis; this may add a couple minutes
 to the runtime of the analysis.}

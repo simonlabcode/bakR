@@ -1,5 +1,5 @@
 Package: bakR
-Title: Analyze and compare nucleotide recoding RNA-seq (e.g., TimeLapse-seq) data
+Title: Analyze and Compare Nucleotide Recoding RNA-seq (e.g., TimeLapse-seq) Data
 Version: 0.2.4
 Authors@R: 
     person(given = "Isaac",
@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "isaac.vock@gmail.com",
            comment = c(ORCID = "0000-0002-7178-6886"))
-Description: 'bakR' (short for Bayesian analysis of the kinetics of RNA) 
+Description: This package, 'bakR' (short for Bayesian analysis of the kinetics of RNA), 
 	consists of several implementations of a novel Bayesian hierarchical statistical model of nucleotide 
 	recoding RNA-seq experiments (NR-seq; TimeLapse-seq, SLAM-seq, TUC-seq, etc.) for analyzing and
 	comparing NR-seq datasets. NR-seq is a powerful extension of RNA-seq that provides
@@ -19,7 +19,7 @@ Description: 'bakR' (short for Bayesian analysis of the kinetics of RNA)
 	also provides more highly powered implementations using the probabilistic programming language
 	Stan to sample from the full posterior distribution. 'bakR' performs multiple-test 
 	adjusted statistical inference with the output of these model implementations to 
-	help biolgists separate signal from noise. Methods to automatically visualize key 
+	help biologists separate signal from noise. Methods to automatically visualize key 
 	results and detect batch effects are also provided.	
 License: MIT + file LICENSE
 Encoding: UTF-8
