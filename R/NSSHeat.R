@@ -17,6 +17,11 @@
 #' aesthetics of any heatmap generated with the output.
 #' @importFrom magrittr %>%
 #' @return returns dataframe that can be passed to pheatmap::pheatmap()
+#' @examples
+#' \dontrun{
+#' # See vignettes for example of this function in action
+#' NSSHeatmap <- NSSHeat(bakRFit, DESeq2_df, bakRModel = "MLE")
+#' }
 #' @export
 NSSHeat <- function(bakRFit,
                     DE_df,

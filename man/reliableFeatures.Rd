@@ -28,3 +28,8 @@ filtering options are only relevant if working with short RNA-seq read data. Thi
 features with extremely low empirical U-content (i.e., the average number of Us in sequencing reads from
 that feature) and those with very few reads having at least 3 Us in them.
 }
+\examples{
+\dontrun{
+reliableFeatures(obj = bakRDataobj)
+}
+}

@@ -49,7 +49,6 @@
 #' (n_eff and rhat) are provided in the fit summaries, but can often obscure some of the nuanced details of model fitting.
 #'
 #'
-#' @export
 #' @param data_list List to pass to Stan of form given by \code{cBprocess}
 #' @param Hybrid_Fit Logical; if TRUE, Hybrid Stan model that takes as data output of \code{fast_analysis} is run.
 #' @param NSS Logical; if TRUE, models that directly compare logit(fn)s are used to avoid steady-state assumption
@@ -126,6 +125,12 @@
 #'  mention is that the estimates are on a log(avg. # of mutations) scale. So a log_lambda_n of 1 means that on average, there
 #'  are an estimated 2.72 (exp(1)) mutations in reads from new RNA (i.e., RNA synthesized during s4U labeling).
 #' }
+#' @examples
+#' \dontrun{
+#' HybridFit <- TL_stan(Stan_data, Hybrid_Fit = TRUE)
+#' StanFit <- TL_stan(Stan_data, Hybrid_Fit = FALSE)
+#' }
+#'
 #'
 #'
 TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE,

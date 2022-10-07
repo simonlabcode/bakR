@@ -80,6 +80,30 @@
 #'  \item Stan_Fit; Only present if StanFit = TRUE. Output of \code{TL_stan}
 #'  \item Data_lists; Always will be present. Output of \code{cBprocess} with Fast and Stan == TRUE
 #' }
+#' @examples
+#' \donttest{
+#' # Simulate data for 1000 genes, 3 replicates, 2 conditions
+#' simdata <- Simulate_bakRData(1000)
+#'
+#' # You always must fit fast implementation before any others
+#' Fit <- bakRFit(simdata$bakRData)
+#'
+#' ## Run bakRFit on the Fit object to run other implementations
+#'
+#' # Run Hybrid implementation
+#' Fit <- bakRFit(Fit, HybridFit = TRUE)
+#'
+#' # Run full Stan MCMC implementation
+#' Fit <- bakRFit(Fit, StanFit = TRUE)
+#'
+#' ## You can rerun the fast implementation with the FastRerun parameter
+#'
+#' # Nice if you want to rerun fast implementation with new settings
+#' # without reprocessing your data (which can take awhile):
+#' Fit <- bakRFit(Fit, FastRerun = TRUE, StanRateEst = TRUE)
+#'
+#' }
+#'
 #' @export
 bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           high_p = 0.2,

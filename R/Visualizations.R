@@ -6,6 +6,21 @@
 #' Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)
 #' @param log_kdeg Boolean; if TRUE, then log(kdeg) estimates used for PCA rather than logit(fn). Currently
 #' only compatible with Fast_Fit
+#' @examples
+#' \donttest{
+#' # Simulate data
+#' sim <- Simulate_bakRData(1000)
+#'
+#' # Fit data with fast implementation
+#' Fit <- bakRFit(sim$bakRData)
+#'
+#' # Fn PCA
+#' FnPCA(Fit$Fast_Fit)
+#'
+#' # log(kdeg) PCA
+#' FnPCA(Fit$Fast_Fit, log_kdeg = TRUE)
+#'
+#' }
 #' @export
 FnPCA <- function(obj, log_kdeg = FALSE){
 
@@ -89,6 +104,18 @@ FnPCA <- function(obj, log_kdeg = FALSE){
 #' @param FDR False discovery rate to control at for significance assessment
 #' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
 #' @param Exp_shape Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot
+#' @examples
+#' \donttest{
+#' # Simulate data
+#' sim <- Simulate_bakRData(1000)
+#'
+#' # Fit data with fast implementation
+#' Fit <- bakRFit(sim$bakRData)
+#'
+#' # Volcano plot
+#' plotVolcano(Fit$Fast_Fit)
+#'
+#' }
 #' @export
 plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
 
@@ -157,6 +184,18 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
 #' @param FDR False discovery rate to control at for significance assessment
 #' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
 #' @param Exp_shape Logical indicating whether to use Expeirmental ID as factor determining point shape in volcano plot
+#' @examples
+#' \donttest{
+#' # Simulate data
+#' sim <- Simulate_bakRData(1000)
+#'
+#' # Fit data with fast implementation
+#' Fit <- bakRFit(sim$bakRData)
+#'
+#' # Volcano plot
+#' plotMA(Fit, Model = "MLE")
+#'
+#' }
 #' @export
 #'
 plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
@@ -245,12 +284,24 @@ plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = N
 #' row represents a feature. The entry in the ith row and jth column is the L2FC(kdeg) for feature i when comparing sample with
 #' experimental ID j+1 to the reference sample
 #'
-#' @param obj Object of class FastFit or HMCFit outputted by respective analysis functions
+#' @param obj Object outputted by \code{bakRFit}
 #' @param zscore Logical; if TRUE, then each matrix entry is log-odds fold change in the fraction new (a.k.a the effect size) divided by
 #' the uncertainty in the effect size
 #' @param filter_sig Logical; if TRUE, then only features which have a statistically significant L2FC(kdeg) in at least one comparison
 #' are kept
 #' @param FDR Numeric; False discovery to control at if filter_sig is TRUE.
+#' @examples
+#' \donttest{
+#' # Simulate data
+#' sim <- Simulate_bakRData(1000)
+#'
+#' # Fit data with fast implementation
+#' Fit <- bakRFit(sim$bakRData)
+#'
+#' # L2FC(kdeg) heatmap matrix
+#' L2FC_kdeg_heat <- Heatmap_kdeg(Fit$Fast_Fit)
+#'
+#' }
 #' @export
 Heatmap_kdeg <- function(obj, zscore = FALSE, filter_sig = FALSE, FDR = 0.05){
 

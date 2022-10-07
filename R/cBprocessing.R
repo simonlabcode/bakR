@@ -14,6 +14,10 @@
 #' @param AvgU Must have an average number of Us greater than this
 #' @importFrom magrittr %>%
 #' @return vector of gene names that passed reliability filter
+#' @examples
+#' \dontrun{
+#' reliableFeatures(obj = bakRDataobj)
+#' }
 #' @export
 reliableFeatures <- function(obj,
                              high_p = 0.2,
@@ -162,6 +166,10 @@ reliableFeatures <- function(obj,
 #'  sample names and row names are the corresponding feature names.
 #' }
 #' @importFrom magrittr %>%
+#' @examples
+#' \dontrun{
+#' cBprocess(bakRDataobj)
+#' }
 #' @export
 cBprocess <- function(obj,
                        high_p = 0.2,

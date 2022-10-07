@@ -134,6 +134,16 @@ validate_bakRData <- function(obj){
 #' This function creates an object of class bakRData
 #' @param cB Dataframe with columns corresponding to feature ID, number of Ts, number of mutations, sample ID, and number of identical observations
 #' @param metadf Dataframe detailing s4U label time and experimental ID of each sample
+#' @examples
+#' # Load cB
+#' data("cB_small")
+#'
+#' # Load metadf
+#' data("metadf")
+#'
+#' # Create bakRData object
+#' bakRDataobj <- bakRData(cB_small, metadf)
+#'
 #' @export
 bakRData <- function(cB, metadf){
 

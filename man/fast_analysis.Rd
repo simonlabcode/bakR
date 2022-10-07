@@ -169,7 +169,7 @@ Once mutation rates are estimated, fraction news for each feature in each sample
 using the L-BFGS-B algorithm implemented in \code{stats::optim}. The assumed likelihood function is derived from a Poisson mixture
 model with rates adjusted according to each feature's empirical U-content (the average number of Us present in sequencing reads mapping
 to that feature in a particular sample). Fraction new estimates are then converted to degradation rate constant estimates using
-a solution to a simple ordinary differntial equation model of RNA metabolism.
+a solution to a simple ordinary differential equation model of RNA metabolism.
 
 Once fraction new and kdegs are estimated, the uncertainty in these parameters is estimated using the Fisher Information. In the limit of
 large datasets, the variance of the MLE is inversely proportional to the Fisher Information evaluated at the MLE. Mixture models are
@@ -204,4 +204,9 @@ This analysis strategy is implemented when \code{NSS} is set to TRUE. Comparing 
 If a single metabolic label time has been used for all samples. For example, if a label time of 1 hour was used for NR-seq
 data from WT cells and a 2 hour label time was used in KO cells, this comparison is no longer valid as differences in
 logit(fraction new) could stem from differences in kinetics or label times.
+}
+\examples{
+\dontrun{
+Fast_Fit <- fast_analysis(fast_df)
+}
 }

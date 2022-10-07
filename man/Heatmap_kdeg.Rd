@@ -7,7 +7,7 @@
 Heatmap_kdeg(obj, zscore = FALSE, filter_sig = FALSE, FDR = 0.05)
 }
 \arguments{
-\item{obj}{Object of class FastFit or HMCFit outputted by respective analysis functions}
+\item{obj}{Object outputted by \code{bakRFit}}
 
 \item{zscore}{Logical; if TRUE, then each matrix entry is log-odds fold change in the fraction new (a.k.a the effect size) divided by
 the uncertainty in the effect size}
@@ -21,4 +21,17 @@ are kept}
 \code{Heatmap_kdeg} creates a matrix where each column represents a pair of samples (reference and experimental) and each
 row represents a feature. The entry in the ith row and jth column is the L2FC(kdeg) for feature i when comparing sample with
 experimental ID j+1 to the reference sample
+}
+\examples{
+\donttest{
+# Simulate data
+sim <- Simulate_bakRData(1000)
+
+# Fit data with fast implementation
+Fit <- bakRFit(sim$bakRData)
+
+# L2FC(kdeg) heatmap matrix
+L2FC_kdeg_heat <- Heatmap_kdeg(Fit$Fast_Fit)
+
+}
 }

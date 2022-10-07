@@ -148,3 +148,12 @@ but often anomalies on your data can lead to poor model convergence, in which ca
 identify the source of problems in your data. Summary statistics describing how well the model was able to estimate each parameter
 (n_eff and rhat) are provided in the fit summaries, but can often obscure some of the nuanced details of model fitting.
 }
+\examples{
+\dontrun{
+HybridFit <- TL_stan(Stan_data, Hybrid_Fit = TRUE)
+StanFit <- TL_stan(Stan_data, Hybrid_Fit = FALSE)
+}
+
+
+
+}

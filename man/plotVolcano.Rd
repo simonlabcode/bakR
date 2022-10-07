@@ -20,3 +20,16 @@ Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)}
 This function creates a L2FC(kdeg) volcano plot.
 Plots are colored according to statistical significance and sign of L2FC(kdeg).
 }
+\examples{
+\donttest{
+# Simulate data
+sim <- Simulate_bakRData(1000)
+
+# Fit data with fast implementation
+Fit <- bakRFit(sim$bakRData)
+
+# Volcano plot
+plotVolcano(Fit$Fast_Fit)
+
+}
+}

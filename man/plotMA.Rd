@@ -27,3 +27,16 @@ plotMA(
 This function outputs a L2FC(kdeg) MA plot. Plots are colored according to statistical
 significance and the sign of L2FC(kdeg)
 }
+\examples{
+\donttest{
+# Simulate data
+sim <- Simulate_bakRData(1000)
+
+# Fit data with fast implementation
+Fit <- bakRFit(sim$bakRData)
+
+# Volcano plot
+plotMA(Fit, Model = "MLE")
+
+}
+}

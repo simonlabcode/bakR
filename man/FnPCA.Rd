@@ -16,3 +16,19 @@ only compatible with Fast_Fit}
 \description{
 This function creates a 2-component PCA plot using logit(fn) estimates.
 }
+\examples{
+\donttest{
+# Simulate data
+sim <- Simulate_bakRData(1000)
+
+# Fit data with fast implementation
+Fit <- bakRFit(sim$bakRData)
+
+# Fn PCA
+FnPCA(Fit$Fast_Fit)
+
+# log(kdeg) PCA
+FnPCA(Fit$Fast_Fit, log_kdeg = TRUE)
+
+}
+}

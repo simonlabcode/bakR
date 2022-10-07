@@ -107,3 +107,8 @@ If FOI is non-null and concat == TRUE, the features listed in FOI will be includ
 filtering. If FOI is non-null and concat == FALSE, the features listed in FOI will be the only reliable features that make it past filtering.
 If FOI is null and concat == FALSE, an error will be thrown.
 }
+\examples{
+\dontrun{
+cBprocess(bakRDataobj)
+}
+}

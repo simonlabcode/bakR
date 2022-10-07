@@ -129,3 +129,28 @@ is to use Stan on the back end to implement a U-content exposure adjusted Poisso
 to estimate fraction news from the mutational data. Partial pooling of replicate variability estimates
 is performed as with the Hybrid implementation.
 }
+\examples{
+\donttest{
+# Simulate data for 1000 genes, 3 replicates, 2 conditions
+simdata <- Simulate_bakRData(1000)
+
+# You always must fit fast implementation before any others
+Fit <- bakRFit(simdata$bakRData)
+
+## Run bakRFit on the Fit object to run other implementations
+
+# Run Hybrid implementation
+Fit <- bakRFit(Fit, HybridFit = TRUE)
+
+# Run full Stan MCMC implementation
+Fit <- bakRFit(Fit, StanFit = TRUE)
+
+## You can rerun the fast implementation with the FastRerun parameter
+
+# Nice if you want to rerun fast implementation with new settings
+# without reprocessing your data (which can take awhile):
+Fit <- bakRFit(Fit, FastRerun = TRUE, StanRateEst = TRUE)
+
+}
+
+}

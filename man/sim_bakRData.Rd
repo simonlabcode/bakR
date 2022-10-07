@@ -107,7 +107,7 @@ drawn for each gene.}
 \item{beta}{shape2 parameter of the beta distribution from which U-contents (probability that a nucleotide in a read from a transcript is a U) are
 drawn for each gene.}
 
-\item{STL}{logical; if TRUE, simulation is of STL-seq rather than a standard TL-seq experiment. The two big changes are that a short read lenght is required
+\item{STL}{logical; if TRUE, simulation is of STL-seq rather than a standard TL-seq experiment. The two big changes are that a short read length is required
 (< 60 nt) and that every read for a particular feature will have the same number of Us. Only one read length is simulated for simplicity.}
 
 \item{STL_len}{Average length of simulated STL-seq length. Since Pol II typically pauses about 20-60 bases
@@ -156,4 +156,21 @@ to each sample when comparing the sequencing reads (like if you are performing d
 
 Function to simulate a bakRData object according to a heteroskedastic beta-binomial model
 of the fraction new.
+}
+\examples{
+\donttest{
+# 2 replicate, 2 experimental condition, 1000 gene simulation
+sim_2reps <- sim_bakRData(ngene = 1000, nreps = 2)
+
+# 3 replicate, 2 experimental condition, 10000 gene simulation
+# with 1000 instances of differential degradation kinetics
+sim_3reps <- sim_bakRData(ngene = 10000, num_kd_DE = c(0, 1000))
+
+# 4 replicate, 3 experimental condition, 10000 gene simulation
+# with 1000 instances of differential degradation kinetics in the 1st
+# condition and no instances of differential degradation kinetics in the
+# 2nd condition
+sim_3conditions <- sim_bakRData(ngene = 10000, nreps = 4, num_conds = 3, num_kd_DE = c(0, 1000, 0))
+
+}
 }

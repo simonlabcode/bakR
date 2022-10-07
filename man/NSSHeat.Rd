@@ -38,6 +38,12 @@ returns dataframe that can be passed to pheatmap::pheatmap()
 }
 \description{
 This uses the output of bakR and a differential expression analysis software to construct
-a dataframe that can be passed to pheatmap::pheatmap(). This heatmap will disply the
+a dataframe that can be passed to pheatmap::pheatmap(). This heatmap will display the
 result of a steady-state quasi-independent analysis of NR-seq data.
+}
+\examples{
+\dontrun{
+# See vignettes for example of this function in action
+NSSHeatmap <- NSSHeat(bakRFit, DESeq2_df, bakRModel = "MLE")
+}
 }
