@@ -15,6 +15,7 @@ new_bakRData <- function(cB, metadf){
 #' This functions ensures that input for bakRData object construction is valid
 #'
 #' @param obj An object of class bakRData
+#' @importFrom magrittr %>%
 #' @export
 validate_bakRData <- function(obj){
 
