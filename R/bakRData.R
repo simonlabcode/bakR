@@ -15,6 +15,7 @@ new_bakRData <- function(cB, metadf){
 #' This functions ensures that input for bakRData object construction is valid
 #'
 #' @param obj An object of class bakRData
+#' @importFrom magrittr %>%
 #' @export
 validate_bakRData <- function(obj){
 
@@ -122,6 +123,32 @@ validate_bakRData <- function(obj){
       "4th column of cB contains values < 0. This column should tally the number of Ts (Us in RNA)
         in each read and thus should be >= 0."
     )
+  }
+
+  ## Check to make sure that all Exp_IDs have at least 2 s4U samples
+  nMT <- length(unique(metadf$Exp_ID))
+  replicate_check <- metadf %>%
+    dplyr::filter(tl > 0) %>%
+    dplyr::mutate(check = 1) %>%
+    dplyr::group_by(Exp_ID) %>%
+    dplyr::summarise(check = sum(check))
+
+  if(any(replicate_check$check < 2) | (nrow(replicate_check) != nMT)){
+    stop("All experimental IDs must have at least 2 s4U fed replicates.")
+  }
+
+  ## Check that Exp_ID ranges from 1 to the max Exp_ID, hitting all integers in between
+  Exp_min <- min(replicate_check$Exp_ID)
+  Exp_max <- max(replicate_check$Exp_ID)
+  Exp_ID_actual <- replicate_check$Exp_ID
+
+
+  if(Exp_min != 1){
+    stop("The minimum Exp_ID in metadf must be 1!")
+  }else if(!all(Exp_min:Exp_max %in% Exp_ID_actual)){ # Hard to see how this could ever be the case
+    stop("Exp_ID must contain all integers from 1 to the max Exp_ID.")
+  }else if(!all(Exp_ID_actual %in% Exp_min:Exp_max)){
+    stop("Exp_ID must contain all integers from 1 to the max Exp_ID. Did you skip an integer?")
   }
 
   obj

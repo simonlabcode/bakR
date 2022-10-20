@@ -551,7 +551,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
         # Fit mixture model to each sample
         df_pold <- df_pold %>%
           dplyr::group_by(mut,reps) %>%
-          dplyr::summarise(pold = inv_logit(min(stats::optim(par=c(-7, -2, 0), mixture_lik, TC = TC, nT = nT, n = n, method = "L-BFGS-B", lower = lower, upper = upper)$par[1:2])) ) %>%
+          dplyr::summarise(pold = inv_logit(min(stats::optim(par=c(-7, -2, 0), mixture_lik, TC = TC, nT = nT, n = n, method = "L-BFGS-B", lower = low_ps, upper = high_ps)$par[1:2])) ) %>%
           dplyr::ungroup() %>%
           dplyr::summarise(pold = mean(pold))
 

@@ -100,13 +100,13 @@ NSSHeat <- function(bakRFit,
     dplyr::mutate(Sig = ifelse(padj < DE_cutoff, ifelse(log2FoldChange < 0, "Down", "Up"), "NS"))
 
 
-  DE_reso <-  DE_df[DE_df$padj < 0.05 & !is.na(DE_df$padj),]
+  DE_reso <-  DE_df[DE_df$padj < DE_cutoff & !is.na(DE_df$padj),]
 
   DE_XF <- DE_reso$XF
 
 
   NSS_eff_DE <- NSS_eff %>%
-    dplyr::mutate(Sig_bakR = ifelse(padj < 0.05, ifelse(effect < 0, "Down", "Up"), "NS"),
+    dplyr::mutate(Sig_bakR = ifelse(padj < bakR_cutoff, ifelse(effect < 0, "Down", "Up"), "NS"),
            score_bakR = effect/se)
 
 
