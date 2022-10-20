@@ -1,5 +1,9 @@
 # bakR 0.2.5
 
+* More checks when creating bakRData object
+* Fixed bug in NSSHeat that prevented changing padj cutoffs
+* Fixed bug in mutation rate estimation in fast_analysis() that didn't use custom boundaries for optimization
+
 # bakR 0.2.4
 
 * Addressed NOTEs to prepare for CRAN submission
