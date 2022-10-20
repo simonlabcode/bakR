@@ -13,13 +13,16 @@ Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)}
 \item{log_kdeg}{Boolean; if TRUE, then log(kdeg) estimates used for PCA rather than logit(fn). Currently
 only compatible with Fast_Fit}
 }
+\value{
+A ggplot2 object.
+}
 \description{
 This function creates a 2-component PCA plot using logit(fn) estimates.
 }
 \examples{
 \donttest{
-# Simulate data
-sim <- Simulate_bakRData(1000)
+# Simulate data for 500 genes and 2 replicates
+sim <- Simulate_bakRData(500, nreps = 2)
 
 # Fit data with fast implementation
 Fit <- bakRFit(sim$bakRData)

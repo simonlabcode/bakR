@@ -6,10 +6,11 @@
 #' Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)
 #' @param log_kdeg Boolean; if TRUE, then log(kdeg) estimates used for PCA rather than logit(fn). Currently
 #' only compatible with Fast_Fit
+#' @return A ggplot2 object.
 #' @examples
 #' \donttest{
-#' # Simulate data
-#' sim <- Simulate_bakRData(1000)
+#' # Simulate data for 500 genes and 2 replicates
+#' sim <- Simulate_bakRData(500, nreps = 2)
 #'
 #' # Fit data with fast implementation
 #' Fit <- bakRFit(sim$bakRData)
@@ -104,10 +105,13 @@ FnPCA <- function(obj, log_kdeg = FALSE){
 #' @param FDR False discovery rate to control at for significance assessment
 #' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
 #' @param Exp_shape Logical indicating whether to use Experimental ID as factor determining point shape in volcano plot
+#' @return A ggplot object. Each point represents a transcript. The x-axis is the
+#' log-2 fold change in the degradation rate constant and the y-axis is the log-10
+#' transformed multiple test adjusted p value.
 #' @examples
 #' \donttest{
-#' # Simulate data
-#' sim <- Simulate_bakRData(1000)
+#' # Simulate data for 500 genes and 2 replicates
+#' sim <- Simulate_bakRData(500, nreps = 2)
 #'
 #' # Fit data with fast implementation
 #' Fit <- bakRFit(sim$bakRData)
@@ -184,10 +188,13 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
 #' @param FDR False discovery rate to control at for significance assessment
 #' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
 #' @param Exp_shape Logical indicating whether to use Experimental ID as factor determining point shape in volcano plot
+#' @return A ggplot object. Each point represents a transcript. The
+#' x-axis is log-10 transformed replicate average read counts,
+#' y-axis is the log-2 fold-change in the degradation rate constant.
 #' @examples
 #' \donttest{
-#' # Simulate data
-#' sim <- Simulate_bakRData(1000)
+#' # Simulate data for 500 genes and 2 replicates
+#' sim <- Simulate_bakRData(500, nreps = 2)
 #'
 #' # Fit data with fast implementation
 #' Fit <- bakRFit(sim$bakRData)
@@ -290,6 +297,10 @@ plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = N
 #' @param filter_sig Logical; if TRUE, then only features which have a statistically significant L2FC(kdeg) in at least one comparison
 #' are kept
 #' @param FDR Numeric; False discovery to control at if filter_sig is TRUE.
+#' @return A matrix. Rows represent transcripts which were differentially expressed
+#' and columns represent (from left to right) differential kinetics z-score,
+#' differential expression z-score, and a mechanism score where positive represents
+#' synthesis driven and negative degradation driven changes in expression.
 #' @examples
 #' \donttest{
 #' # Simulate data

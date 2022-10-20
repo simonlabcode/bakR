@@ -1,6 +1,7 @@
 # bakR 0.2.4
 
 * Addressed NOTEs to prepare for CRAN submission
+* Removed previously deprecated function sim_bakRData()
 
 # bakR 0.2.3
 

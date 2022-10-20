@@ -17,6 +17,12 @@ are kept}
 
 \item{FDR}{Numeric; False discovery to control at if filter_sig is TRUE.}
 }
+\value{
+A matrix. Rows represent transcripts which were differentially expressed
+and columns represent (from left to right) differential kinetics z-score,
+differential expression z-score, and a mechanism score where positive represents
+synthesis driven and negative degradation driven changes in expression.
+}
 \description{
 \code{Heatmap_kdeg} creates a matrix where each column represents a pair of samples (reference and experimental) and each
 row represents a feature. The entry in the ith row and jth column is the L2FC(kdeg) for feature i when comparing sample with

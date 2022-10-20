@@ -16,14 +16,19 @@ Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)}
 
 \item{Exp_shape}{Logical indicating whether to use Experimental ID as factor determining point shape in volcano plot}
 }
+\value{
+A ggplot object. Each point represents a transcript. The x-axis is the
+log-2 fold change in the degradation rate constant and the y-axis is the log-10
+transformed multiple test adjusted p value.
+}
 \description{
 This function creates a L2FC(kdeg) volcano plot.
 Plots are colored according to statistical significance and sign of L2FC(kdeg).
 }
 \examples{
 \donttest{
-# Simulate data
-sim <- Simulate_bakRData(1000)
+# Simulate data for 500 genes and 2 replicates
+sim <- Simulate_bakRData(500, nreps = 2)
 
 # Fit data with fast implementation
 Fit <- bakRFit(sim$bakRData)

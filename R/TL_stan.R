@@ -1,6 +1,6 @@
-#' Fit Stan models to nucleotide recoding RNA-seq data analysis
+#' Fit 'Stan' models to nucleotide recoding RNA-seq data analysis
 #'
-#' \code{TL_stan} analyzes nucleotide recoding RNA-seq data with a fully
+#' \code{TL_stan} is an internal function to analyze nucleotide recoding RNA-seq data with a fully
 #' Bayesian hierarchical model implemented in the PPL Stan. \code{TL_stan} estimates
 #' kinetic parameters and differences in kinetic parameters between experimental
 #' conditions. When assessing differences, a single reference sample is compared to
@@ -32,7 +32,7 @@
 #' limit of large dataset sizes (where the dataset size for the per-replicate-and-feature fraction new estimate is the raw number
 #' of sequencing reads mapping to the feature in that replicate).
 #'
-#' Users also have the option to save or discard the Stan fit object. Fit objects can be exceedingly large (> 10 GB) for most
+#' Users also have the option to save or discard the 'Stan' fit object. Fit objects can be exceedingly large (> 10 GB) for most
 #' nucleotide recoding RNA-seq datasets. Therefore, if you don't want to store such a large object, a summary object will be saved instead,
 #' which greatly reduces the size of the output (~ 10-50 MB) while still retaining much of the important information. In addition,
 #' the output of \code{TL_stan} provides the estimates and uncertainties for key parameters (L2FC(kdeg), kdeg, and fraction new)
@@ -49,10 +49,10 @@
 #' (n_eff and rhat) are provided in the fit summaries, but can often obscure some of the nuanced details of model fitting.
 #'
 #'
-#' @param data_list List to pass to Stan of form given by \code{cBprocess}
-#' @param Hybrid_Fit Logical; if TRUE, Hybrid Stan model that takes as data output of \code{fast_analysis} is run.
+#' @param data_list List to pass to 'Stan' of form given by \code{cBprocess}
+#' @param Hybrid_Fit Logical; if TRUE, Hybrid 'Stan' model that takes as data output of \code{fast_analysis} is run.
 #' @param NSS Logical; if TRUE, models that directly compare logit(fn)s are used to avoid steady-state assumption
-#' @param keep_fit Logical; if TRUE, Stan fit object is included in output; typically large file so default FALSE.
+#' @param keep_fit Logical; if TRUE, 'Stan' fit object is included in output; typically large file so default FALSE.
 #' @param chains Number of Markov chains to sample from. The default is to only run a single chain. Typical NR-seq datasets
 #' yield very memory intensive analyses, but running a single chain should decrease this burden. For reference, running
 #' the MCMC implementation (Hybrid_Fit = FALSE) with 3 chains on an NR-seq dataset with 3 replicates of 2 experimental conditions
@@ -96,7 +96,7 @@
 #'   \item sample; Sample name
 #'   \item XF; Original feature name
 #'  }
-#'  \item Fit_Summary; only outputted if keep_fit == FALSE. Summary of Stan fit object with each row corresponding to a particular
+#'  \item Fit_Summary; only outputted if keep_fit == FALSE. Summary of 'Stan' fit object with each row corresponding to a particular
 #'  parameter. All posterior point descriptions are descriptions of the marginal posterior distribution for the parameter in that row.
 #'  For example, the posterior mean is the average value for the parameter when averaging over all other parameter values.
 #'  The columns of this dataframe are:
@@ -116,7 +116,7 @@
 #'   \item Rhat; Describes how well separate Markov chains mixed. This is preferably as close to 1 as possible, and values higher
 #'   than 1 could represent poor model convergence
 #'  }
-#'  \item Stan_Fit; only outputted if keep_fit == TRUE. This is the full Stan fit object, an R6 object of class `stanfit`
+#'  \item Stan_Fit; only outputted if keep_fit == TRUE. This is the full 'Stan' fit object, an R6 object of class `stanfit`
 #'  \item Mutation_Rates; data frame with information about mutation rate estimates. Has the same columns as Fit_Summary.
 #'  Each row corresponds to either a background mutation rate (log_lambda_o) or an s4U induced mutation rate (log_lambda_n),
 #'  denoted in the parameter column. The bracketed portion of the parameter name will contain two numbers. The first corresponds
@@ -125,12 +125,6 @@
 #'  mention is that the estimates are on a log(avg. # of mutations) scale. So a log_lambda_n of 1 means that on average, there
 #'  are an estimated 2.72 (exp(1)) mutations in reads from new RNA (i.e., RNA synthesized during s4U labeling).
 #' }
-#' @examples
-#' \dontrun{
-#' HybridFit <- TL_stan(Stan_data, Hybrid_Fit = TRUE)
-#' StanFit <- TL_stan(Stan_data, Hybrid_Fit = FALSE)
-#' }
-#' @export
 #'
 #'
 TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE,

@@ -2,7 +2,7 @@
 % Please edit documentation in R/TL_stan.R
 \name{TL_stan}
 \alias{TL_stan}
-\title{Fit Stan models to nucleotide recoding RNA-seq data analysis}
+\title{Fit 'Stan' models to nucleotide recoding RNA-seq data analysis}
 \usage{
 TL_stan(
   data_list,
@@ -14,11 +14,11 @@ TL_stan(
 )
 }
 \arguments{
-\item{data_list}{List to pass to Stan of form given by \code{cBprocess}}
+\item{data_list}{List to pass to 'Stan' of form given by \code{cBprocess}}
 
-\item{Hybrid_Fit}{Logical; if TRUE, Hybrid Stan model that takes as data output of \code{fast_analysis} is run.}
+\item{Hybrid_Fit}{Logical; if TRUE, Hybrid 'Stan' model that takes as data output of \code{fast_analysis} is run.}
 
-\item{keep_fit}{Logical; if TRUE, Stan fit object is included in output; typically large file so default FALSE.}
+\item{keep_fit}{Logical; if TRUE, 'Stan' fit object is included in output; typically large file so default FALSE.}
 
 \item{NSS}{Logical; if TRUE, models that directly compare logit(fn)s are used to avoid steady-state assumption}
 
@@ -68,7 +68,7 @@ The columns of this dataframe are:
 \item sample; Sample name
 \item XF; Original feature name
 }
-\item Fit_Summary; only outputted if keep_fit == FALSE. Summary of Stan fit object with each row corresponding to a particular
+\item Fit_Summary; only outputted if keep_fit == FALSE. Summary of 'Stan' fit object with each row corresponding to a particular
 parameter. All posterior point descriptions are descriptions of the marginal posterior distribution for the parameter in that row.
 For example, the posterior mean is the average value for the parameter when averaging over all other parameter values.
 The columns of this dataframe are:
@@ -88,7 +88,7 @@ iterations (iter x chains). Small values of this could represent poor model conv
 \item Rhat; Describes how well separate Markov chains mixed. This is preferably as close to 1 as possible, and values higher
 than 1 could represent poor model convergence
 }
-\item Stan_Fit; only outputted if keep_fit == TRUE. This is the full Stan fit object, an R6 object of class \code{stanfit}
+\item Stan_Fit; only outputted if keep_fit == TRUE. This is the full 'Stan' fit object, an R6 object of class \code{stanfit}
 \item Mutation_Rates; data frame with information about mutation rate estimates. Has the same columns as Fit_Summary.
 Each row corresponds to either a background mutation rate (log_lambda_o) or an s4U induced mutation rate (log_lambda_n),
 denoted in the parameter column. The bracketed portion of the parameter name will contain two numbers. The first corresponds
@@ -99,7 +99,7 @@ are an estimated 2.72 (exp(1)) mutations in reads from new RNA (i.e., RNA synthe
 }
 }
 \description{
-\code{TL_stan} analyzes nucleotide recoding RNA-seq data with a fully
+\code{TL_stan} is an internal function to analyze nucleotide recoding RNA-seq data with a fully
 Bayesian hierarchical model implemented in the PPL Stan. \code{TL_stan} estimates
 kinetic parameters and differences in kinetic parameters between experimental
 conditions. When assessing differences, a single reference sample is compared to
@@ -132,7 +132,7 @@ loses some accuracy by relying on point estimates and uncertainty quantification
 limit of large dataset sizes (where the dataset size for the per-replicate-and-feature fraction new estimate is the raw number
 of sequencing reads mapping to the feature in that replicate).
 
-Users also have the option to save or discard the Stan fit object. Fit objects can be exceedingly large (> 10 GB) for most
+Users also have the option to save or discard the 'Stan' fit object. Fit objects can be exceedingly large (> 10 GB) for most
 nucleotide recoding RNA-seq datasets. Therefore, if you don't want to store such a large object, a summary object will be saved instead,
 which greatly reduces the size of the output (~ 10-50 MB) while still retaining much of the important information. In addition,
 the output of \code{TL_stan} provides the estimates and uncertainties for key parameters (L2FC(kdeg), kdeg, and fraction new)
@@ -147,10 +147,4 @@ ran. Because the models implemented by \code{TL_stan} are extensively validated,
 but often anomalies on your data can lead to poor model convergence, in which case assessing model diagnostics can help you
 identify the source of problems in your data. Summary statistics describing how well the model was able to estimate each parameter
 (n_eff and rhat) are provided in the fit summaries, but can often obscure some of the nuanced details of model fitting.
-}
-\examples{
-\dontrun{
-HybridFit <- TL_stan(Stan_data, Hybrid_Fit = TRUE)
-StanFit <- TL_stan(Stan_data, Hybrid_Fit = FALSE)
-}
 }

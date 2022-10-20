@@ -28,7 +28,7 @@ samples are filtered out}
 
 \item{AvgU}{Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples}
 
-\item{Stan}{Boolean; if TRUE, then data_list that can be passed to Stan is curated}
+\item{Stan}{Boolean; if TRUE, then data_list that can be passed to 'Stan' is curated}
 
 \item{Fast}{Boolean; if TRUE, then dataframe that can be passed to fast_analysis() is curated}
 
@@ -40,9 +40,9 @@ samples are filtered out}
 returns list of objects that can be passed to \code{TL_stan} and/or \code{fast_analysis}. Those objects are:
 \itemize{
 \item Stan_data; list that can be passed to \code{TL_stan} with Hybrid_Fit = FALSE. Consists of metadata as well as data that
-Stan will analyze. Data to be analyzed consists of equal length vectors. The contents of Stan_data are:
+'Stan' will analyze. Data to be analyzed consists of equal length vectors. The contents of Stan_data are:
 \itemize{
-\item NE; Number of datapoints for Stan to analyze (NE = Number of Elements)
+\item NE; Number of datapoints for 'Stan' to analyze (NE = Number of Elements)
 \item NF; Number of features in dataset
 \item TP; Numerical indicator of s4U feed (0 = no s4U feed, 1 = s4U fed)
 \item FE; Numerical indicator of feature
@@ -108,7 +108,18 @@ filtering. If FOI is non-null and concat == FALSE, the features listed in FOI wi
 If FOI is null and concat == FALSE, an error will be thrown.
 }
 \examples{
-\dontrun{
-cBprocess(bakRDataobj)
+\donttest{
+
+# Load cB
+data("cB_small")
+
+# Load metadf
+data("metadf")
+
+# Create bakRData
+bakRData <- bakRData(cB_small, metadf)
+
+# Preprocess data
+data_for_bakR <- cBprocess(obj = bakRData)
 }
 }
