@@ -137,7 +137,7 @@ degrees of freedom provided by the sharing of uncertainty information across the
 }
 \description{
 \code{fast_analysis} analyzes nucleotide recoding data maximum likelihood estimation with the L-BFGS-B algorithm
-implemented by \code{stats::optim} combined with analytic solutions to simple Bayesian models to perform
+implemented by \code{stats::optim} combined with analytic solutations to simple Bayesian models to perform
 approximate partial pooling. Output includes kinetic parameter estimates in each replicate, kinetic parameter estimates
 averaged across replicates, and log-2 fold changes in the degradation rate constant (L2FC(kdeg)).
 Averaging takes into account uncertainties estimated using the Fisher Information and estimates
