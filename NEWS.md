@@ -1,3 +1,5 @@
+# bakR 0.2.5
+
 # bakR 0.2.4
 
 * Addressed NOTEs to prepare for CRAN submission
