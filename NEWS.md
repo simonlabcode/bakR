@@ -1,5 +1,8 @@
 # bakR 0.2.5
 
+* Added checks to bakRData validator
+* Fixed bug in NSSHeatmap that prevented adjusting padj cutoff
+
 # bakR 0.2.4
 
 * Addressed NOTEs to prepare for CRAN submission
