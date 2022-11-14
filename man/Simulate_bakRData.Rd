@@ -36,7 +36,8 @@ Simulate_bakRData(
   alpha = 25,
   beta = 75,
   STL = FALSE,
-  STL_len = 40
+  STL_len = 40,
+  lprob_U_sd = 0
 )
 }
 \arguments{
@@ -112,6 +113,9 @@ drawn for each gene.}
 
 \item{STL_len}{Average length of simulated STL-seq length. Since Pol II typically pauses about 20-60 bases
 from the promoter, this should be around 40}
+
+\item{lprob_U_sd}{Standard deviation of the logit(probability nt is a U) for each sequencing read. The number of Us in a
+sequencing read are drawn from a binomial distribution with prob drawn from a logit-Normal distribution with this logit-sd.}
 }
 \value{
 A list containing a simulated \code{bakRData} object as well as a list of simulated kinetic parameters of interest.

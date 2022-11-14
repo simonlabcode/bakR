@@ -69,6 +69,8 @@
 #' (< 60 nt) and that every read for a particular feature will have the same number of Us. Only one read length is simulated for simplicity.
 #' @param STL_len Average length of simulated STL-seq length. Since Pol II typically pauses about 20-60 bases
 #' from the promoter, this should be around 40
+#' @param lprob_U_sd Standard deviation of the logit(probability nt is a U) for each sequencing read. The number of Us in a
+#' sequencing read are drawn from a binomial distribution with prob drawn from a logit-Normal distribution with this logit-sd.
 #' @importFrom magrittr %>%
 #' @import data.table
 #' @return A list containing a simulated `bakRData` object as well as a list of simulated kinetic parameters of interest.
@@ -114,7 +116,8 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
                          scale_factor = 150,
                          sim_read_counts = TRUE, a1 = 5, a0 = 0.01,
                          nreads = 50L, alpha = 25, beta = 75,
-                         STL = FALSE, STL_len = 40){
+                         STL = FALSE, STL_len = 40,
+                         lprob_U_sd = 0){
 
 
 
@@ -582,6 +585,14 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   # Avg. number of Us in sequencing reads from each feature
   U_contents <- U_cont[Gene_ID]
 
+  # Need function to draw each prob from a logit-normal for binomial
+  lnorm_binom <- function(n, size, lprob_mean, lprob_sd){
+    stats::rbinom(n = n,
+                  size = size,
+                  prob = inv_logit(stats::rnorm(n = n, mean = lprob_mean,
+                                                sd = lprob_sd)))
+  }
+
 
   # For simulating STL-seq, assume a single pause site. This means that the U-content
   # is identical for all reads of a given length. To easily simulate this, use U-content
@@ -592,8 +603,9 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   if(STL){
     nU <- abs(rep(round(U_contents*STL_len), times = Reads_vect) + sign(unlist(purrr::map(Reads_vect, stats::runif, min = -0.1, max = 0.1)))*unlist(purrr::map(Reads_vect, stats::rpois, lambda = 0.5)))
   }else{
-    nU <- unlist(purrr::pmap(list(n = Reads_vect, size = read_length[Exp_ID], prob = U_contents),
-                             stats::rbinom))
+    nU <- unlist(purrr::pmap(list(n = Reads_vect, size = read_length[Exp_ID], lprob_mean = logit(U_contents),
+                                  lprob_sd = rep(lprob_U_sd, times = length(Reads_vect))),
+                             lnorm_binom))
   }
 
   # 1 = new read; 0 = old read
