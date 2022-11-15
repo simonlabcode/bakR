@@ -147,13 +147,21 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   # alpha parameter of beta distribution
   if(!is.numeric(alpha)){
     stop("alpha must be numeric!")
-  }else if(alpha <= 1){
-    stop("alpha must be > 1")
-  }else if(!is.numeric(beta)){
+  }else if(alpha <= 0){
+    stop("alpha must be > 0")
+  }
+
+  if(!is.numeric(beta)){
     stop("beta must be numeric!")
-  }else if(beta <=1){
-    stop("beta must be > 1")
-  }else if(alpha/(alpha + beta) < 0.1){
+  }else if(beta <= 0){
+    stop("beta must be > 0")
+  }
+
+  if(beta < 1 & alpha < 1){
+    warning("beta and alpha are both less than 1. This will lead to an unusual bimodality in the distribution of transcript U-contents")
+  }
+
+  if(alpha/(alpha + beta) < 0.1){
     warning("alpha and beta are such that the average U-content is less than 0.1. That is unreasonably low and may make many simulated transcripts unanalyzable.")
   }else if(alpha/(alpha + beta) > 0.75){
     warning("alpha and beta are such that the average U-content is > 0.75. I wish U-contents were this high, your simulation may not reflect real data though.")
@@ -201,8 +209,8 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   # Effect size distribution standard deviation
   if(!is.numeric(eff_sd)){
     stop("eff_sd must be numeric")
-  }else if(eff_sd <= 0){
-    stop("eff_sd must be > 0; it will be the sd parameter of a call to rnorm when simulating effect sizes")
+  }else if(eff_sd < 0){
+    stop("eff_sd must be >= 0; it will be the sd parameter of a call to rnorm when simulating effect sizes")
   }else if (eff_sd > 4){
     warning("You are simulating an unusually large eff_sd (> 4)")
   }
@@ -240,8 +248,8 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   # Background mutation rate
   if(!all(is.numeric(p_old))){
     stop("p_old must be numeric")
-  }else if(!all(p_old > 0)){
-    stop("p_old must be > 0; it represents the background mutation rate")
+  }else if(!all(p_old >= 0)){
+    stop("p_old must be >= 0; it represents the background mutation rate")
   }else if(!all(p_old <= 1)){
     stop("p_old must be <= 1; it represents the background mutation rate")
   }else if(!all(p_old < 0.01)){
@@ -275,8 +283,8 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   # Heteroskedastic Slope
   if(!is.numeric(noise_deg_a)){
     stop("noise_deg_a must be numeric")
-  }else if(noise_deg_a > 0){
-    stop("noise_deg_a must be < 0; it represents the slope of the log10(read depth) vs. log(replicate variability) trend")
+  }else if(noise_deg_a >= 0){
+    stop("noise_deg_a must be >= 0; it represents the slope of the log10(read depth) vs. log(replicate variability) trend")
   }else if(noise_deg_a == 0){
     warning("You are simulating fraction new homoskedasticity, which is not reflective of actual nucleotide recoding data")
   }
