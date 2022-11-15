@@ -37,7 +37,8 @@ Simulate_bakRData(
   beta = 75,
   STL = FALSE,
   STL_len = 40,
-  lprob_U_sd = 0
+  lprob_U_sd = 0,
+  lp_sd = 0
 )
 }
 \arguments{
@@ -116,6 +117,10 @@ from the promoter, this should be around 40}
 
 \item{lprob_U_sd}{Standard deviation of the logit(probability nt is a U) for each sequencing read. The number of Us in a
 sequencing read are drawn from a binomial distribution with prob drawn from a logit-Normal distribution with this logit-sd.}
+
+\item{lp_sd}{Standard deviation of logit(probability a U is mutated) for each U. The number of mutations in a given read is the sum of
+nU Bernoulli random variables, where nU is the number of Us, and p is drawn from a logit-normal distribution with lp_sd standard deviation
+on logit scale.}
 }
 \value{
 A list containing a simulated \code{bakRData} object as well as a list of simulated kinetic parameters of interest.
