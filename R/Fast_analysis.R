@@ -436,6 +436,19 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
         dplyr::group_by(TC, nT, mut, reps) %>%
         dplyr::summarise(n = sum(n))
 
+      # Check to make sure likelihood is evalutable
+      df_check <- df_pnew %>%
+        dplyr::mutate(fn = mixture_lik(param = c(-7, -2, 0),
+                                       TC = TC,
+                                       nT = nT,
+                                       n = n))
+
+      if(sum(!is.finite(df_check$fn)) > 0){
+        stop("The binomial log-likelihood is not computable for some of your data, meaning the default mutation rate estimation strategy won't work. Rerun bakRFit with StanRateEst set to TRUE to remedy this problem.")
+      }
+
+      rm(df_check)
+
 
       low_ps <- c(-9, -9, -9)
       high_ps <- c(0, 0, 9)
