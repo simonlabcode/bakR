@@ -207,6 +207,7 @@ cBprocess <- function(obj,
   # Bind variables locally to resolve devtools::check() Notes
   tl <- ctl <- Exp_ID <- r_id <- XF <- n <- fnum <- TC <- nT <- reps <- NULL
   mut <- feature_avg_Us <- tot_avg_Us <- U_factor <- type <- NULL
+  `.` <- list
 
 
   ## Check obj
@@ -306,6 +307,13 @@ cBprocess <- function(obj,
     dplyr::group_by(ctl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup() %>% dplyr::select(r_id)
   rep_list <- rep_list$r_id
 
+  # Create mut and reps dictionary
+  ID_dict <- data.frame(sample = rownames(metadf),
+                        reps = rep_list,
+                        mut = mut_list,
+                        type = type_list)
+
+
   # Add replicate ID and s4U treatment status to metadf
   metadf <- metadf[samp_list, ] %>% dplyr::mutate(ctl = ifelse(tl == 0, 0, 1)) %>%
     dplyr::group_by(ctl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup()
@@ -319,12 +327,6 @@ cBprocess <- function(obj,
   for(i in 1:max(mut_list)){
     nreps[i] <- max(rep_list[mut_list == i])
   }
-
-
-  # Helper function:
-  getType <- function(s) type_list[paste(s)]
-  getMut <- function(s) mut_list[paste(s)]
-  getRep <- function(s) rep_list[paste(s)]
 
   # Get reliable features:
   if(concat == TRUE | is.null(FOI)){
@@ -379,18 +381,17 @@ cBprocess <- function(obj,
 
   # Empirical U-content calculations
     # = average number of Us in sequencing reads originating from each feature
-  sdf_U <- cB %>%
-    dplyr::ungroup() %>%
-    dplyr::group_by(sample, XF, TC, nT) %>%
-    dplyr::summarise(n = sum(n)) %>%
+  cB <- data.table::setDT(cB[cB$XF %in% ranked_features_df$XF, ])
+
+  sdf_U <- cB[, .(n = sum(n)), by = .(sample, XF, TC, nT)]
+
+  cB <- dplyr::as_tibble(cB)
+
+  colnames(sdf_U) <- c("sample", "XF", "TC", "nT", "n")
+
+  sdf_U <- dplyr::as_tibble(sdf_U) %>%
     dplyr::right_join(ranked_features_df, by = 'XF') %>%
     dplyr::ungroup()
-
-  slist = samp_list
-  tlist = type_list
-  mlist = mut_list
-  rlist = rep_list
-
 
 
   kp = keep
@@ -401,14 +402,7 @@ cBprocess <- function(obj,
     dplyr::ungroup() %>%
     dplyr::filter(sample %in% slist)
 
-  df_U$type <- paste(df_U$sample) %>% purrr::map_dbl(function(x) getType(x))
-  df_U$type <- as.integer(df_U$type)
-
-  df_U$mut <- paste(df_U$sample) %>% purrr::map_dbl(function(x) getMut(x))
-  df_U$mut <- as.integer(df_U$mut)
-
-  df_U$reps <- paste(df_U$sample) %>% purrr::map_dbl(function(x) getRep(x))
-  df_U$reps <- as.integer(df_U$reps)
+  df_U <- dplyr::left_join(df_U, ID_dict, by = "sample")
 
   sample_lookup <- df_U[df_U$type == 1, c("sample", "mut", "reps")] %>% dplyr::distinct()
 
@@ -450,14 +444,8 @@ cBprocess <- function(obj,
       dplyr::ungroup() %>%
       dplyr::filter(sample %in% slist)
 
-    df$type <- paste(df$sample) %>% purrr::map_dbl(function(x) getType(x))
-    df$type <- as.integer(df$type)
+    df <- dplyr::left_join(df, ID_dict, by = "sample")
 
-    df$mut <- paste(df$sample) %>% purrr::map_dbl(function(x) getMut(x))
-    df$mut <- as.integer(df$mut)
-
-    df$reps <- paste(df$sample) %>% purrr::map_dbl(function(x) getRep(x))
-    df$reps <- as.integer(df$reps)
 
     ## Remove any unnecessary columns
     df <- df  %>%
@@ -502,23 +490,27 @@ cBprocess <- function(obj,
     num_obs <- df$n
 
     ## Calculate Avg. Read Counts
-    Avg_Counts <- df %>% dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>%
-      dplyr::summarise(Avg_Reads = sum(n)/nreps) %>% dplyr::ungroup()
+    Avg_Counts <- df %>% dplyr::ungroup() %>% dplyr::group_by(fnum, mut, reps) %>%
+      dplyr::summarise(Avg_Reads = sum(n)) %>%
+      dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(Avg_Reads = mean(Avg_Reads)) %>%
+      dplyr::ungroup()
 
-    Avg_Reads <- matrix(0, ncol = nMT, nrow = NF)
-    Avg_Reads_natural <- Avg_Reads
 
     tls <-rep(0, times = nMT)
 
     # Calculate average read counts on log10 and natural scales
       # log10 scale read counts used in 'Stan' model
       # natural scale read counts used in plotting function (plotMA())
-    for(f in 1:NF){
-      for(i in 1:nMT){
-        Avg_Reads[f,i] <- (mean(log10(Avg_Counts$Avg_Reads[(Avg_Counts$mut == i) & (Avg_Counts$fnum == f)])) - mean(log10(Avg_Counts$Avg_Reads[Avg_Counts$mut == i])))/stats::sd(log10(Avg_Counts$Avg_Reads[Avg_Counts$mut == i]))
-        Avg_Reads_natural[f,i] <- mean(Avg_Counts$Avg_Reads[(Avg_Counts$mut == i) & (Avg_Counts$fnum == f)])
-      }
-    }
+    Avg_Counts <- Avg_Counts[order(Avg_Counts$mut, Avg_Counts$fnum),]
+
+
+    Avg_Reads <- matrix(log10(Avg_Counts$Avg_Reads), ncol = nMT, nrow = NF)
+    Avg_Reads_natural <- matrix(Avg_Counts$Avg_Reads, ncol = nMT, nrow = NF)
+
+
+    # standardize
+    Avg_Reads <- scale(Avg_Reads)
 
     # s4U label time in each experimental condition
     for(m in 1:nMT){
