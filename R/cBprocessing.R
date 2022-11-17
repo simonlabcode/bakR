@@ -38,58 +38,85 @@ reliableFeatures <- function(obj,
 
   # Bind variables locally to resolve devtools::check() Notes
   XF <- TC <- n <- totTC <- nT <- n2U <- nmore <- totcounts <- NULL
-  tot_mut <- f2U <- avgU <- counts <- NULL
+  tot_mut <- f2U <- avgU <- counts <- type <- NULL
+  `.` <- list
 
-  cB <- obj$cB
-  nsamps <- length(unique(cB$sample))
+  cBdt <- as.data.frame(obj$cB)
+  metadf <- obj$metadf
 
+  nsamps <- length(unique(cBdt$sample))
+
+
+  samp_list <- unique(cBdt$sample)
+
+  c_list <- rownames(metadf[metadf$tl == 0,])
+
+  s4U_list <- samp_list[!(samp_list %in% c_list)]
+
+  type_list <- ifelse(metadf[samp_list, "tl"] == 0, 0, 1)
+
+  # Create mut and reps dictionary
+  ID_dict <- data.frame(sample = rownames(metadf),
+                        type = type_list)
+
+
+  cBdt <- dplyr::left_join(cBdt, ID_dict, by = "sample") %>%
+    dplyr::ungroup()
+
+
+  cBdt <- data.table::setDT(cBdt)
 
 
   if(sum(obj$metadf$tl == 0) > 0){
-    y <- obj$cB %>%
-      dplyr::ungroup() %>%
-      dplyr::filter(sample %in% unique(sample),
-                    !grepl('__', XF)) %>%
-      dplyr::mutate(totTC = TC*n*ifelse(obj$metadf[sample, "tl"]==0, 1, 0) ) %>%
-      dplyr::group_by(sample, XF) %>%
-      dplyr::summarize(tot_mut = sum(totTC),
-                       totcounts = sum(n),
-                       avgU = sum(nT*n)/sum(n),
-                       n2U = sum(n[nT <= 2]),
-                       nmore = sum(n[nT > 2])) %>%
-      dplyr::mutate(f2U = n2U/(nmore + n2U)) %>%
-      dplyr::filter(totcounts >= totcut) %>%
-      dplyr::filter(tot_mut/totcounts < high_p) %>%
-      dplyr::filter(f2U < Ucut) %>%
-      dplyr::filter(avgU > AvgU) %>%
-      dplyr::ungroup( ) %>%
-      dplyr::group_by(XF) %>%
-      dplyr::summarize(counts = dplyr::n()) %>%
-      dplyr::filter(counts == nsamps) %>%
-      dplyr::select(XF) %>%
-      unlist() %>%
-      unique()
+
+    cBdt <- cBdt[sample %in% unique(sample) & !grepl("__", XF)]
+
+
+    cBdt <- cBdt[, `:=`(totTC = TC * n * abs(type - 1))]
+
+
+    cBdt <- cBdt[, .(tot_mut = sum(totTC), totcounts = sum(n),
+                     avgU = sum(nT * n)/sum(n), n2U = sum(n[nT <=2]),
+                     nmore = sum(n[nT > 2])), keyby = .(sample,XF)]
+
+    cBdt <- cBdt[, `:=`(f2U = n2U/(nmore + n2U))]
+
+    cBdt <- cBdt[(totcounts >= totcut) & (tot_mut/totcounts < high_p) &
+                   (f2U < Ucut) & (avgU > AvgU)]
+
+    cBdt <- cBdt[, .(counts = .N), keyby = .(XF)]
+
+    cBdt <- dplyr::as_tibble(cBdt)
+
+    cBdt <- cBdt[cBdt$counts == nsamps,]
+
+    y <- unique(unlist(cBdt$XF))
+
+
+
   }else{
-    y <- obj$cB %>%
-      dplyr::ungroup() %>%
-      dplyr::filter(sample %in% unique(sample),
-                    !grepl('__', XF)) %>%
-      dplyr::group_by(sample, XF) %>%
-      dplyr::summarize(totcounts = sum(n),
-                       avgU = sum(nT*n)/sum(n),
-                       n2U = sum(n[nT <= 2]),
-                       nmore = sum(n[nT > 2])) %>%
-      dplyr::mutate(f2U = n2U/(nmore + n2U)) %>%
-      dplyr::filter(totcounts >= totcut,
-                    f2U < Ucut) %>%
-      dplyr::filter(avgU > AvgU) %>%
-      dplyr::ungroup( ) %>%
-      dplyr::group_by(XF) %>%
-      dplyr::summarize(counts = dplyr::n()) %>%
-      dplyr::filter(counts == nsamps) %>%
-      dplyr::select(XF) %>%
-      unlist() %>%
-      unique()
+
+    cBdt <- cBdt[sample %in% unique(sample) & !grepl("__", XF)]
+
+
+    cBdt <- cBdt[, .(totcounts = sum(n),
+                     avgU = sum(nT * n)/sum(n), n2U = sum(n[nT <=2]),
+                     nmore = sum(n[nT > 2])), keyby = .(sample,XF)]
+
+    cBdt <- cBdt[, `:=`(f2U = n2U/(nmore + n2U))]
+
+    cBdt <- cBdt[(totcounts >= totcut) &
+                   (f2U < Ucut) & (avgU > AvgU)]
+
+    cBdt <- cBdt[, .(counts = .N), keyby = .(XF)]
+
+    cBdt <- dplyr::as_tibble(cBdt)
+
+    cBdt <- cBdt[cBdt$counts == nsamps,]
+
+    y <- unique(unlist(cBdt$XF))
+
+
   }
 
 
@@ -291,8 +318,8 @@ cBprocess <- function(obj,
     # rep_list = vector of replicate IDs
 
 
-  cB <- obj$cB
-  metadf <- obj$metadf
+  cB <- dplyr::as_tibble(obj$cB)
+  metadf <- as.data.frame(obj$metadf)
 
   samp_list <- unique(cB$sample)
 
@@ -386,6 +413,13 @@ cBprocess <- function(obj,
   sdf_U <- cB[, .(n = sum(n)), by = .(sample, XF, TC, nT)]
 
   cB <- dplyr::as_tibble(cB)
+
+
+  slist = samp_list
+  tlist = type_list
+  mlist = mut_list
+  rlist = rep_list
+
 
   colnames(sdf_U) <- c("sample", "XF", "TC", "nT", "n")
 

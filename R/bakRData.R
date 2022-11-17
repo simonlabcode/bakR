@@ -17,6 +17,8 @@ new_bakRData <- function(cB, metadf){
 #' @param obj An object of class bakRData
 validate_bakRData <- function(obj){
 
+  tl <- Exp_ID <- check <- NULL
+
   vals <- unclass(obj)
   cB <- vals$cB
   metadf <- vals$metadf
