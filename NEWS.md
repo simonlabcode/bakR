@@ -1,5 +1,9 @@
 # bakR 0.3.0
 
+* Optimized data preprocessing with data.table
+* Increased simulation flexibility
+* Added edge case error catching
+
 # bakR 0.2.5
 
 * Added checks to bakRData validator
