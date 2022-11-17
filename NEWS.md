@@ -1,3 +1,5 @@
+# bakR 0.3.0
+
 # bakR 0.2.5
 
 * Added checks to bakRData validator
