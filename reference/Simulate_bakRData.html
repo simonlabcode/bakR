@@ -14,7 +14,7 @@ user, but an extensive list of additional parameters can be adjusted."><!-- math
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -96,7 +96,9 @@ user, but an extensive list of additional parameters can be adjusted.</p>
 <span>  alpha <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>  beta <span class="op">=</span> <span class="fl">75</span>,</span>
 <span>  STL <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  STL_len <span class="op">=</span> <span class="fl">40</span></span>
+<span>  STL_len <span class="op">=</span> <span class="fl">40</span>,</span>
+<span>  lprob_U_sd <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  lp_sd <span class="op">=</span> <span class="fl">0</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -235,6 +237,17 @@ drawn for each gene.</p></dd>
 <dt>STL_len</dt>
 <dd><p>Average length of simulated STL-seq length. Since Pol II typically pauses about 20-60 bases
 from the promoter, this should be around 40</p></dd>
+
+
+<dt>lprob_U_sd</dt>
+<dd><p>Standard deviation of the logit(probability nt is a U) for each sequencing read. The number of Us in a
+sequencing read are drawn from a binomial distribution with prob drawn from a logit-Normal distribution with this logit-sd.</p></dd>
+
+
+<dt>lp_sd</dt>
+<dd><p>Standard deviation of logit(probability a U is mutated) for each U. The number of mutations in a given read is the sum of
+nU Bernoulli random variables, where nU is the number of Us, and p is drawn from a logit-normal distribution with lp_sd standard deviation
+on logit scale.</p></dd>
 
 </dl></div>
     <div class="section level2">
