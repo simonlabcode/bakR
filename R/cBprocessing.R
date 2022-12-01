@@ -444,18 +444,22 @@ cBprocess <- function(obj,
   ## Calculate global average U-content so that feature-specific difference
   ## from average can be calculated
 
-  df_global_U <- df_U[df_U$type == 1, ] %>% dplyr::group_by(reps, mut) %>%
+  # df_global_U <- df_U[df_U$type == 1, ] %>% dplyr::group_by(reps, mut) %>%
+  #   dplyr::summarise(tot_avg_Us = sum(nT*n)/sum(n)) %>% dplyr::ungroup()
+  #
+  # df_feature_U <- df_U[df_U$type == 1, ] %>% dplyr::group_by(reps, mut, fnum) %>%
+  #   dplyr::summarise(feature_avg_Us = sum(nT*n)/sum(n)) %>% dplyr::ungroup()
+  #
+  # df_U_tot <- dplyr::left_join(df_global_U, df_feature_U, by = c("mut", "reps"))
+  #
+  # # U_factor is log-fold difference in feature specific U-content from global average
+  #   # Used in Stan model to properly adjust population average Poisson mutation rates
+  # df_U_tot <- df_U_tot %>% dplyr::mutate(U_factor = log(feature_avg_Us/tot_avg_Us)) %>%
+  #   dplyr::select(mut, reps, fnum, U_factor)
+
+  df_U_tot <- df_U[df_U$type == 1, ] %>% dplyr::group_by(reps, mut) %>%
     dplyr::summarise(tot_avg_Us = sum(nT*n)/sum(n)) %>% dplyr::ungroup()
 
-  df_feature_U <- df_U[df_U$type == 1, ] %>% dplyr::group_by(reps, mut, fnum) %>%
-    dplyr::summarise(feature_avg_Us = sum(nT*n)/sum(n)) %>% dplyr::ungroup()
-
-  df_U_tot <- dplyr::left_join(df_global_U, df_feature_U, by = c("mut", "reps"))
-
-  # U_factor is log-fold difference in feature specific U-content from global average
-    # Used in Stan model to properly adjust population average Poisson mutation rates
-  df_U_tot <- df_U_tot %>% dplyr::mutate(U_factor = log(feature_avg_Us/tot_avg_Us)) %>%
-    dplyr::select(mut, reps, fnum, U_factor)
 
   if(Stan){
 
@@ -463,7 +467,8 @@ cBprocess <- function(obj,
     sdf <- cB %>%
       dplyr::ungroup() %>%
       dplyr::group_by(sample, XF, TC) %>%
-      dplyr::summarise(n = sum(n)) %>%
+      dplyr::summarise(Ucont = sum(nT*n)/sum(n),
+                       n = sum(n)) %>%
       dplyr::right_join(ranked_features_df, by = 'XF') %>% dplyr::ungroup()
 
 
@@ -483,16 +488,14 @@ cBprocess <- function(obj,
 
     ## Remove any unnecessary columns
     df <- df  %>%
-      dplyr::group_by(XF, fnum, type, mut, TC, reps) %>%
-      dplyr::summarise(n = sum(n)) %>%
-      dplyr::ungroup() %>%
       dplyr::group_by(fnum) %>%
       dplyr::arrange(type, .by_group = TRUE)
 
 
 
     # Add U-content information
-    df <- dplyr::left_join(df, df_U_tot, by = c("fnum", "mut", "reps"))
+    df <- dplyr::left_join(df, df_U_tot, by = c("mut", "reps")) %>%
+      dplyr::mutate(U_factor = log(Ucont/tot_avg_Us))
 
     df <- df[order(df$fnum, df$mut, df$reps), ]
 
