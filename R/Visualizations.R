@@ -154,13 +154,38 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
     Exps <- 2:max(as.integer(L2FC_df$Exp_ID))
   }
 
+  ## Check which results are present and plan color scheme appropriately
+  conclusions <- unique(L2FC_df$conclusion)
+
+  if(length(conclusions) == 3){
+    colors <- c("#FFC20A", "gray","#0C7BDC")
+  }else if(length(conclusions) == 2){
+    if(all(c("Stabilized", "Destabilized") %in% conclusions)){
+      colors <- c("#FFC20A", "#0C7BDC")
+    }else if(all(c("Stabilized", "Not Sig.") %in% conclusions)){
+      colors <- c("gray","#0C7BDC")
+    }else if(all(c("Destabilized", "Not Sig.") %in% conclusions)){
+      colors <- c("#FFC20A", "gray")
+    }
+  }else{
+    if(conclusions == "Stabilized"){
+      colors <- c("#0C7BDC")
+    }else if(conclusions == "Destabilized"){
+      colors <- c("#FFC20A")
+    }else{
+      colors <- "gray"
+    }
+
+  }
+
+
   if(Exp_shape){ # Plot different experimental conditions together using different shapes
     ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = L2FC_kdeg,y = -log10(padj), color = conclusion,  shape = as.factor(Exp_ID))) +
       ggplot2::geom_point(size = 1.5) +
       ggplot2::theme_classic() +
       ggplot2::ylab(bquote(-log[10](p[adj]))) +
       ggplot2::xlab(bquote(L2FC(k[deg]))) +
-      ggplot2::scale_color_manual(values = c("#FFC20A", "gray","#0C7BDC")) +
+      ggplot2::scale_color_manual(values = colors) +
       theme_mds
   }else{ # Plot a subset of experimental conditions
     ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = L2FC_kdeg,y = -log10(padj), color = conclusion )) +
@@ -168,7 +193,7 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
       ggplot2::theme_classic() +
       ggplot2::ylab(bquote(-log[10](p[adj]))) +
       ggplot2::xlab(bquote(L2FC(k[deg]))) +
-      ggplot2::scale_color_manual(values = c("#FFC20A", "gray","#0C7BDC")) +
+      ggplot2::scale_color_manual(values = colors) +
       theme_mds
 
 
@@ -260,6 +285,31 @@ plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = N
     Reads[,i] <- log10(rowMeans(Avg_reads_natural[,c(1,i+1)]))
   }
 
+  ## Check which results are present and plan color scheme appropriately
+  conclusions <- unique(L2FC_df$conclusion)
+
+  if(length(conclusions) == 3){
+    colors <- c("#FFC20A", "gray","#0C7BDC")
+  }else if(length(conclusions) == 2){
+    if(all(c("Stabilized", "Destabilized") %in% conclusions)){
+      colors <- c("#FFC20A", "#0C7BDC")
+    }else if(all(c("Stabilized", "Not Sig.") %in% conclusions)){
+      colors <- c("gray","#0C7BDC")
+    }else if(all(c("Destabilized", "Not Sig.") %in% conclusions)){
+      colors <- c("#FFC20A", "gray")
+    }
+  }else{
+    if(conclusions == "Stabilized"){
+      colors <- c("#0C7BDC")
+    }else if(conclusions == "Destabilized"){
+      colors <- c("#FFC20A")
+
+    }else{
+      colors <- "gray"
+    }
+
+  }
+
   ## Add read cnt info to L2FC_df
 
   L2FC_df <- L2FC_df %>% dplyr::group_by(Feature_ID, Exp_ID)  %>% dplyr::mutate(Read_ct = Reads[Feature_ID, Exp_ID-1]) %>% dplyr::ungroup()
@@ -270,7 +320,7 @@ plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = N
       ggplot2::theme_classic() +
       ggplot2::xlab(expression(log[10](Avg.~read~count))) +
       ggplot2::ylab(bquote(L2FC(k[deg]))) +
-      ggplot2::scale_color_manual(values = c("#FFC20A", "gray","#0C7BDC")) +
+      ggplot2::scale_color_manual(values = colors) +
       theme_mds
   }else{
     ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = Read_ct,y = L2FC_kdeg, color = conclusion )) +
@@ -278,7 +328,7 @@ plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = N
       ggplot2::theme_classic() +
       ggplot2::xlab(expression(log[10](Avg.~read~count))) +
       ggplot2::ylab(bquote(L2FC(k[deg]))) +
-      ggplot2::scale_color_manual(values = c("#FFC20A", "gray","#0C7BDC")) +
+      ggplot2::scale_color_manual(values = colors) +
       theme_mds
   }
 
