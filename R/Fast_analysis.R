@@ -1057,6 +1057,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   class(fast_list) <- "FastFit"
 
+  message("All done! Run QC_checks() on your bakRFit object to assess the quality of your data and get recommendations for next steps.")
+
   return(fast_list)
 
 }
