@@ -3,6 +3,7 @@
 export(FnPCA)
 export(Heatmap_kdeg)
 export(NSSHeat)
+export(QC_checks)
 export(Simulate_bakRData)
 export(bakRData)
 export(bakRFit)
