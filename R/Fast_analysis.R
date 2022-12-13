@@ -539,7 +539,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
       rm(U_df)
 
-      message(paste(c("Estimated pold is: ", pold), collapse = " "))
+      message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
 
     }else{
       if((sum(df$type == 0) == 0) | (no_ctl)){ # Estimate pold using binomial mixture model
@@ -593,7 +593,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
 
         pold <- df_pold$pold
-        message(paste(c("Estimated pold is: ", pold), collapse = " "))
+        message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
 
 
 
@@ -609,7 +609,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
           dplyr::summarise(mutrate = sum(n*TC)/sum(n*nT))
 
         pold <- Old_data$mutrate
-        message(paste(c("Estimated pold is: ", pold), collapse = " "))
+        message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
 
 
       }
