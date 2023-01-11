@@ -185,11 +185,15 @@ NSSHeat <- function(bakRFit,
   max_mech <- max(heatmap_df$Mech_score)
   min_mech <- min(heatmap_df$Mech_score)
 
-  heatmap_df <- heatmap_df %>%
-    dplyr::mutate(Mech_score = ifelse(Mech_score < 0, Mech_score*(lid/-min_mech), Mech_score*(lid/max_mech))) %>%
-    dplyr::mutate(DE_score = ifelse(DE_score < 0, DE_score*(lid/-min_DE), DE_score*(lid/max_DE)) ) %>%
-    dplyr::mutate(bakR_score = ifelse(bakR_score < 0, bakR_score*(lid/-min_bakR), bakR_score*(lid/max_bakR)) )
+  abs_max_DE <- max(c(abs(c(max_DE, min_DE))))
+  abs_max_bakR <- max(c(abs(c(max_bakR, min_bakR))))
+  abs_max_mech <- max(c(abs(c(max_mech, min_mech))))
 
+  # Changed to leave mechanism score completely unperturbed
+  heatmap_df <- heatmap_df %>%
+    #dplyr::mutate(Mech_score = ifelse(Mech_score < 0, Mech_score*(lid/-min_mech), Mech_score*(lid/max_mech))) %>%
+    dplyr::mutate(DE_score = DE_score*(abs_max_mech/abs_max_DE)) %>%
+    dplyr::mutate(bakR_score =  bakR_score*(abs_max_mech/abs_max_bakR))
 
   heatmap_df <- as.data.frame(heatmap_df)
   row.names(heatmap_df) <- heatmap_df$XF
