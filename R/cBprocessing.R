@@ -352,7 +352,7 @@ cBprocess <- function(obj,
   # Make vector of number of replicates of each condition
   nreps <- rep(0, times = max(mut_list))
   for(i in 1:max(mut_list)){
-    nreps[i] <- max(rep_list[mut_list == i])
+    nreps[i] <- max(rep_list[mut_list == i & type_list == 1])
   }
 
   # Get reliable features:
