@@ -86,14 +86,18 @@ QC_checks <- function(obj){
 
   if(any(dplyr::between(avg_fns, 2, 4))){
     warning("Fraction news are high in one or more samples, suggesting your label time was a big long. This will limit bakR's ability to identify kinetic differences")
+    message("Low fraction news impair bakR's default mutation rate estimation strategy. I suggest rerunning bakRFit with FastRerun and StanRateEst = TRUE.")
   }
 
   if(any(avg_fns < -4)){
     warning("Fraction news are extremely low in one or more samples, suggesting your label time was too short. It will be difficult for bakR to identify any kinetic differences.")
+    message("Low fraction news impair bakR's default mutation rate estimation strategy. I suggest rerunning bakRFit with FastRerun and StanRateEst = TRUE.")
+    Bad_data <- TRUE
   }
 
   if(any(avg_fns > 4)){
     warning("Fraction news are extremely high in one or more samples, suggesting your label time was too long. It will be difficult for bakR to identify any kinetic differences.")
+    Bad_data <- TRUE
   }
 
 
