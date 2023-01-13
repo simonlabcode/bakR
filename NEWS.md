@@ -1,3 +1,5 @@
+# bakR 1.0.0
+
 # bakR 0.3.0
 
 * Optimized data preprocessing with data.table
