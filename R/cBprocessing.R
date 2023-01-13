@@ -233,7 +233,7 @@ cBprocess <- function(obj,
 
   # Bind variables locally to resolve devtools::check() Notes
   tl <- ctl <- Exp_ID <- r_id <- XF <- n <- fnum <- TC <- nT <- reps <- NULL
-  mut <- feature_avg_Us <- tot_avg_Us <- U_factor <- type <- NULL
+  mut <- feature_avg_Us <- tot_avg_Us <- U_factor <- type <- Ucont <- NULL
   `.` <- list
 
 

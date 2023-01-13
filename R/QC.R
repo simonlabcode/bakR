@@ -12,6 +12,10 @@
 #' @export
 QC_checks <- function(obj){
 
+  Exp_ID <- Replicate <- logit_fn <- fn_1 <- fn_2 <- NULL
+  type <- mut <- reps <- pnew <- mutrate <- TC <- n <- nT <- ctl <- NULL
+
+
   ### Extract Fast_Fit to be used for diagnostic analyses
   Fit <- obj$Fast_Fit
 
@@ -130,13 +134,13 @@ QC_checks <- function(obj){
         Exps[count] <- i
 
 
-        fn_cors[count] <- cor(Fns$logit_fn[Fns$Exp_ID == i & Fns$Replicate == j],
+        fn_cors[count] <- stats::cor(Fns$logit_fn[Fns$Exp_ID == i & Fns$Replicate == j],
                               Fns$logit_fn[Fns$Exp_ID == i & Fns$Replicate == k])
 
         cor_df <- data.frame(fn_1 = Fns$logit_fn[Fns$Exp_ID == i & Fns$Replicate == j],
                              fn_2 = Fns$logit_fn[Fns$Exp_ID == i & Fns$Replicate == k])
 
-        coeff <- cor(cor_df$fn_1,
+        coeff <- stats::cor(cor_df$fn_1,
                      cor_df$fn_2)
 
         cor_plots[[count]] <- ggplot2::ggplot(cor_df, ggplot2::aes(x = fn_1, y = fn_2)) +
@@ -212,7 +216,7 @@ QC_checks <- function(obj){
 
   pnews$sample <- as.factor(pnews$sample)
 
-  pnews$sample <- relevel(pnews$sample, "pold")
+  pnews$sample <- stats::relevel(pnews$sample, "pold")
 
   # Pretty plotting theme
   theme_mds <-    ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
