@@ -330,8 +330,28 @@ cBprocess <- function(obj,
   type_list <- ifelse(metadf[samp_list, "tl"] == 0, 0, 1)
   mut_list <- metadf[samp_list, "Exp_ID"]
 
+  # If number of -s4U controls > +s4U controls, wrap R_ID for -s4Us
+    # So if there are 3 -s4U replicates and 2 + s4U, -s4U R_ID should be: 1, 2, 1
+    # Let R_raw but R_ID for -s4U calculated as with +s4U samples (so 1, 2, 3 in above example)
+    # Then R_ID = ((R_raw - 1) %% nreps_+s4U) + 1, where nreps_+s4U is number of replicates in +s4U sample
   rep_list <- metadf[samp_list,] %>% dplyr::mutate(ctl = ifelse(tl == 0, 0, 1)) %>%
-    dplyr::group_by(ctl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup() %>% dplyr::select(r_id)
+    dplyr::group_by(ctl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup()
+
+  ### Calculate -s4U adjusted r_id
+  # 1) Determine number of +s4U replicates in each sample
+  nrep_s4U <- rep_list %>% dplyr::filter(ctl == 1) %>%
+    dplyr::group_by(Exp_ID) %>%
+    dplyr::summarise(nreps = max(r_id)) %>% dplyr::ungroup()
+
+  nrep_s4U <- nrep_s4U$nreps
+
+  # 2) Adjust -s4U replicate ID accordingly
+  rep_list <- rep_list %>%
+    dplyr::group_by(ctl, Exp_ID) %>%
+    dplyr::mutate(r_id = ifelse(ctl == 0, ((r_id - 1) %% nrep_s4U[Exp_ID]) + 1, r_id)) %>%
+    dplyr::ungroup()
+
+
   rep_list <- rep_list$r_id
 
   # Create mut and reps dictionary
