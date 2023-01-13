@@ -1,4 +1,11 @@
 # bakR 1.0.0
+* Added QC_check(), a function to perform quality control analysis with bakRFit objects. Looks for any problems in your data that will impair bakR's performance, generates a number of diagnostic visualizations, and makes suggestions about what to do next.
+* Fixed plot coloring bug in plotMA() and plotVolcano().
+* Fixed bug that led to problems when the number of -s4U replicates > +s4U replicates in one or more Exp_IDs
+* Implemented improved U-content adjustment for MCMC implementation. Also impacts accuracy of StanRateEst = TRUE mutation rate estimation strategy.
+* Increased default number of features to use for StanRateEst mutation rate estimation strategy.
+* Improved scaling of NSSHeat() output matrix columns.
+* Created a new function NSSHeat2() that implements a different mechanism scoring function than NSSHeat().
 
 # bakR 0.3.0
 

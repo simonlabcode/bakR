@@ -100,9 +100,9 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           FOI = c(),
                           concat = TRUE,
                           StanRateEst = FALSE,
-                          RateEst_size = 25,
-                          low_reads = 1000,
-                          high_reads = 5000,
+                          RateEst_size = 30,
+                          low_reads = 100,
+                          high_reads = 500000,
                           chains = 1, NSS = FALSE,
                           Chase = FALSE, BDA_model = FALSE,
                           ...){
@@ -190,8 +190,8 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     RateEst_size <- as.integer(RateEst_size)
     if(RateEst_size < 1){
       stop("RateEst_size must be greater than 0")
-    }else if(RateEst_size > 30){
-      warning("You have set RateEst_size to a number greater than 30. This will reduce efficiency without much benefit to estimate accuracy.")
+    }else if(RateEst_size > 100){
+      warning("You have set RateEst_size to a number greater than 100. This will reduce efficiency without much benefit to estimate accuracy.")
     }else if(RateEst_size < 10){
       warning("You have set RateEst_size to a number less than 10. This may lead to inaccurate mutation rate estimates")
     }
@@ -204,10 +204,10 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     stop("low_reads must be greater than 0")
   }
 
-  if(low_reads < 100){
-    warning("low_reads is less than 100. This may lead to inaccurate mutation rate estimation; tread lightly")
-  }else if(low_reads > 10000){
-    warning("low_reads is greater than 10000. There may not be enough features meeting this criterion.")
+  if(low_reads < 50){
+    warning("low_reads is less than 50. This may lead to inaccurate mutation rate estimation; tread lightly")
+  }else if(low_reads > 1000){
+    warning("low_reads is greater than 1000. There may not be enough features meeting this criterion.")
   }
 
   ## Check high_reads
@@ -219,8 +219,8 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
   if(high_reads < 1000){
     warning("high_reads is less than 1000. This may lead to inaccurate mutation rate estimation; tread lightly")
-  }else if(high_reads > 50000){
-    warning("high reads is greater than 50000. This may mean that chosen features are almost completely unlabeled; tread lightly")
+  }else if(high_reads > 1000000){
+    warning("high reads is greater than 1000000. This may mean that chosen features are almost completely unlabeled; tread lightly")
   }
 
   ## Check low_reads vs. high_reads

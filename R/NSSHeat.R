@@ -360,7 +360,7 @@ NSSHeat2 <- function(bakRFit,
 
 
   ## Calculate zf and zde
-  if(sum(NSS_eff_DE$bakR_padj < 0.05) > 0){
+  if(sum(NSS_eff_DE$bakR_padj < bakR_cutoff) > 0){
     zfn <- min(abs(NSS_eff_DE$score_bakR[NSS_eff_DE$bakR_padj < bakR_cutoff]))
 
   }else{
@@ -372,8 +372,8 @@ NSSHeat2 <- function(bakRFit,
   ## Calculate mechanism score
   test_stat <- test %>%
     dplyr::mutate(mech_stat = ifelse(stat > 0,
-                                     -a*(score_bakR + zfn)*(1 + (stat - zde)),
-                                     a*(score_bakR - zfn)*(1 - (stat + zde))))
+                                     a*(score_bakR + zfn)*(1 + (stat - zde)),
+                                     -a*(score_bakR - zfn)*(1 - (stat + zde))))
 
   heatmap_df <- dplyr::tibble(DE_score = test_stat$stat,
                               Mech_score = test_stat$mech_stat,
