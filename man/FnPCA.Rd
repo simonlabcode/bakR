@@ -14,7 +14,7 @@ Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)}
 only compatible with Fast_Fit}
 }
 \value{
-A ggplot2 object.
+A ggplot object.
 }
 \description{
 This function creates a 2-component PCA plot using logit(fn) estimates.

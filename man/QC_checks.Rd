@@ -9,6 +9,22 @@ QC_checks(obj)
 \arguments{
 \item{obj}{bakRFit object}
 }
+\value{
+A list with 3 components:
+\itemize{
+\item raw_mutrates. This is a plot of the raw T-to-C mutation rates in all samples
+analyzed by bakR. It includes horizontal lines as reference for what could be
+considered "too low" to be useful in s4U fed samples.
+\item conversion_rates. This is a plot of the estimated T-to-C mutation rates
+in new and old reads. Thus, each bar represents the probability that a U in
+a new/old read is mutated. It includes horizontal lines as reference for what could
+be considered good mutation rates.
+\item correlation_plots. This is a list of ggplot objects. Each is a scatter plot
+comparing estimates of the fraction new in one replicate to another replicate
+in the same experimental condition. A y=x guide line is included to reveal any
+estimation biases.
+}
+}
 \description{
 \code{QC_checks} takes as input a bakRFit object and uses the Fast_Fit object to assess
 data quality and make suggestions about which implementation to run next. QC_checks
@@ -16,4 +32,17 @@ takes into account the mutation rates in all samples, the fraction new distribut
 of fraction new estimates, and the read lengths. It then outputs a number of
 diagnostic plots that might alert users to problems in their data. It also
 outputs messages informing users what implementation is best used next.
+}
+\examples{
+\donttest{
+# Simulate data for 500 genes and 2 replicates
+sim <- Simulate_bakRData(500, nreps = 2)
+
+# Fit data with fast implementation
+Fit <- bakRFit(sim$bakRData)
+
+# Run QC
+QC <- QC_checks(Fit)
+
+}
 }

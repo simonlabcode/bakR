@@ -8,6 +8,32 @@
 #' outputs messages informing users what implementation is best used next.
 #'
 #' @param obj bakRFit object
+#' @return A list with 3 components:
+#' \itemize{
+#'  \item raw_mutrates. This is a plot of the raw T-to-C mutation rates in all samples
+#'  analyzed by bakR. It includes horizontal lines as reference for what could be
+#'  considered "too low" to be useful in s4U fed samples.
+#'  \item conversion_rates. This is a plot of the estimated T-to-C mutation rates
+#'  in new and old reads. Thus, each bar represents the probability that a U in
+#'  a new/old read is mutated. It includes horizontal lines as reference for what could
+#'  be considered good mutation rates.
+#'  \item correlation_plots. This is a list of ggplot objects. Each is a scatter plot
+#'  comparing estimates of the fraction new in one replicate to another replicate
+#'  in the same experimental condition. A y=x guide line is included to reveal any
+#'  estimation biases.
+#' }
+#' @examples
+#' \donttest{
+#' # Simulate data for 500 genes and 2 replicates
+#' sim <- Simulate_bakRData(500, nreps = 2)
+#'
+#' # Fit data with fast implementation
+#' Fit <- bakRFit(sim$bakRData)
+#'
+#' # Run QC
+#' QC <- QC_checks(Fit)
+#'
+#' }
 #' @importFrom magrittr %>%
 #' @export
 QC_checks <- function(obj){
@@ -60,7 +86,7 @@ QC_checks <- function(obj){
   }else if(polds < 0.01){
     warning("Background mutation rate is a bit high. Did you account for SNPs when counting mutations?")
   }else{
-    warning("Background mutation rate is extremely high. Did you properly identify -s4U control samples in the metadf of your bakRData object?")
+    warning("Background mutation rate is extremely high (>= 1%). Did you properly identify -s4U control samples in the metadf of your bakRData object?")
 
     Bad_data <- TRUE
   }
@@ -81,26 +107,26 @@ QC_checks <- function(obj){
   avg_fns <- avg_fns$avg_logit_fn
 
   if(all(dplyr::between(avg_fns, -2, 2))){
-    message("Fraction news look good, suggesting an appropriate label time!")
+    message("The average logit(fraction news) in all samples are between -2 and 2, suggesting an appropriate label time!")
   }
 
   if(any(dplyr::between(avg_fns, -4, -2) )){
-    warning("Fraction news are low in one or more samples, suggesting your label time was a bit short. This will limit bakR's ability to identify kinetic differences")
+    warning("The average logit(fraction news) are relatively low (between -4 and -2) in one or more samples, suggesting your label time was a bit short. This will limit bakR's ability to identify kinetic differences")
+    message("Low fraction news impair bakR's default mutation rate estimation strategy. I suggest rerunning bakRFit with FastRerun and StanRateEst = TRUE, particularly if some of the estimated mutation rates are oddly low (< 0.01) in a subset of samples.")
   }
 
   if(any(dplyr::between(avg_fns, 2, 4))){
-    warning("Fraction news are high in one or more samples, suggesting your label time was a big long. This will limit bakR's ability to identify kinetic differences")
-    message("Low fraction news impair bakR's default mutation rate estimation strategy. I suggest rerunning bakRFit with FastRerun and StanRateEst = TRUE.")
+    warning("The average logit(fraction news) are relatively high (between 2 and 4) in one or more samples, suggesting your label time was a big long. This will limit bakR's ability to identify kinetic differences")
   }
 
   if(any(avg_fns < -4)){
-    warning("Fraction news are extremely low in one or more samples, suggesting your label time was too short. It will be difficult for bakR to identify any kinetic differences.")
-    message("Low fraction news impair bakR's default mutation rate estimation strategy. I suggest rerunning bakRFit with FastRerun and StanRateEst = TRUE.")
+    warning("The average logit(fraction news) are extremely low (less than -4) in one or more samples, suggesting your label time was too short. It will be difficult for bakR to identify any kinetic differences.")
+    message("Low fraction news impair bakR's default mutation rate estimation strategy. I suggest rerunning bakRFit with FastRerun and StanRateEst = TRUE, particularly if some of the estimated mutation rates are oddly low (< 0.01) in a subset of samples.")
     Bad_data <- TRUE
   }
 
   if(any(avg_fns > 4)){
-    warning("Fraction news are extremely high in one or more samples, suggesting your label time was too long. It will be difficult for bakR to identify any kinetic differences.")
+    warning("The average logit(fraction news) are extremely high (greater than 4) in one or more samples, suggesting your label time was too long. It will be difficult for bakR to identify any kinetic differences.")
     Bad_data <- TRUE
   }
 

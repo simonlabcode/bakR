@@ -6,7 +6,7 @@
 #' Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)
 #' @param log_kdeg Boolean; if TRUE, then log(kdeg) estimates used for PCA rather than logit(fn). Currently
 #' only compatible with Fast_Fit
-#' @return A ggplot2 object.
+#' @return A ggplot object.
 #' @examples
 #' \donttest{
 #' # Simulate data for 500 genes and 2 replicates
