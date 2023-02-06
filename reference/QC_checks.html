@@ -82,7 +82,78 @@ outputs messages informing users what implementation is best used next.</p>
 <dd><p>bakRFit object</p></dd>
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    
 
+<p>A list with 3 components:</p><ul><li><p>raw_mutrates. This is a plot of the raw T-to-C mutation rates in all samples
+analyzed by bakR. It includes horizontal lines as reference for what could be
+considered "too low" to be useful in s4U fed samples.</p></li>
+<li><p>conversion_rates. This is a plot of the estimated T-to-C mutation rates
+in new and old reads. Thus, each bar represents the probability that a U in
+a new/old read is mutated. It includes horizontal lines as reference for what could
+be considered good mutation rates.</p></li>
+<li><p>correlation_plots. This is a list of ggplot objects. Each is a scatter plot
+comparing estimates of the fraction new in one replicate to another replicate
+in the same experimental condition. A y=x guide line is included to reveal any
+estimation biases.</p></li>
+</ul></div>
+
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="co"># Simulate data for 500 genes and 2 replicates</span></span></span>
+<span class="r-in"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="Simulate_bakRData.html">Simulate_bakRData</a></span><span class="op">(</span><span class="fl">500</span>, nreps <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Fit data with fast implementation</span></span></span>
+<span class="r-in"><span><span class="va">Fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="bakRFit.html">bakRFit</a></span><span class="op">(</span><span class="va">sim</span><span class="op">$</span><span class="va">bakRData</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finding reliable Features</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Filtering out unwanted or unreliable features</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Processing data...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating labeled mutation rate</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pnews for each sample are:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Groups:   mut [2]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.049<span style="text-decoration: underline;">9</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">1</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.049<span style="text-decoration: underline;">9</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.050<span style="text-decoration: underline;">1</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating unlabeled mutation rate</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pold is:  0.001</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating fraction labeled</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating per replicate uncertainties</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating read count-variance relationship</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Averaging replicate data and regularizing estimates</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Assessing statistical significance</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> All done! Run QC_checks() on your bakRFit object to assess the quality of your data and get recommendations for next steps.</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Run QC</span></span></span>
+<span class="r-in"><span><span class="va">QC</span> <span class="op">&lt;-</span> <span class="fu">QC_checks</span><span class="op">(</span><span class="va">Fit</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Mutation rates in new reads looks good!</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Background mutation rate looks good!</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Average logit(fraction news) for each sample are:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Groups:   Exp_ID [2]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Exp_ID Replicate avg_logit_fn</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1         1      0.007<span style="text-decoration: underline;">44</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      1         2      0.009<span style="text-decoration: underline;">65</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      2         1      0.033<span style="text-decoration: underline;">3</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>      2         2      0.030<span style="text-decoration: underline;">2</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Reminder: a logit fraction new of 0 means a fraction new of 0.5, which would be ideal.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> The average logit(fraction news) in all samples are between -2 and 2, suggesting an appropriate label time!</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> logit(fn) correlations for each pair of replicates are:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Exp_ID Rep_ID1 Rep_ID2 correlation</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 1      1       1       2   0.9386607</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 2      2       1       2   0.9368499</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> logit(fn) correlations are high, suggesting good reproducibility!</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> I suggest running the Hybrid implementation next. This can be done with bakRFit(Fit, HybridFit = TRUE), where Fit is your bakRFit object.</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
 
