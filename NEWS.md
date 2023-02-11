@@ -1,4 +1,4 @@
-# bakR 1.0.0
+# bakR 0.4.0
 * Added QC_check(), a function to perform quality control analysis with bakRFit objects. Looks for any problems in your data that will impair bakR's performance, generates a number of diagnostic visualizations, and makes suggestions about what to do next.
 * Fixed plot coloring bug in plotMA() and plotVolcano().
 * Fixed bug that led to problems when the number of -s4U replicates > +s4U replicates in one or more Exp_IDs
