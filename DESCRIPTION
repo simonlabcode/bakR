@@ -60,3 +60,4 @@ Suggests:
 VignetteBuilder: knitr
 URL: https://simonlabcode.github.io/bakR/
 BugReports: https://github.com/simonlabcode/bakR/issues/
+NeedsCompilation: yes
