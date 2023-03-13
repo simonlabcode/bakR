@@ -277,7 +277,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       bakRData2 <- new_bakRData(cB_small, obj$metadf)
 
-      mutrate_list <- bakR::cBprocess(bakRData2)
+      mutrate_list <- bakR::cBprocess(bakRData2, FOI = XF_choose, concat = FALSE)
 
       # Run MLE implementation
       fast_list <- bakR::fast_analysis(data_list$Fast_df, Stan_data = mutrate_list$Stan_data, StanRate = TRUE,
