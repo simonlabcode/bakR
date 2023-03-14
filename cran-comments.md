@@ -2,7 +2,7 @@
 
 There were no ERRORs or WARNINGs.
 
-There were 4 NOTEs:
+There were 3 NOTEs:
 
 * checking to-level files ... NOTE
     Installed size 6.9Mb. 
@@ -11,13 +11,6 @@ There were 4 NOTEs:
 
   bakR uses Rcpp to compile Stan (a probabilistic progamming language) models and the compiled
   model objects are stored in Libs.
-
-* checking compilation flags used ... NOTE
-    Compilation used the following non-portable flag(s):
-        '-mmmx', '-msse', '-msse3', '-msse4.1', '-msse4.2', '-mssse3'
-
-  These flags only apply to my particular system setup and thus do not need to be portable.
-  This NOTE does not show up when running checks on other platforms with the rhub package.
 
 * Checking for GNU extensions in Makefiles ... NOTE
     GNU make is a SystemRequirements
