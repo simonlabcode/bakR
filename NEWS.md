@@ -1,4 +1,5 @@
 # bakR 0.4.1
+* Fixed bug in cBprocess that didn't properly check that features of interest provided by the FOI argument were valid.
 
 # bakR 0.4.0
 * Added QC_check(), a function to perform quality control analysis with bakRFit objects. Looks for any problems in your data that will impair bakR's performance, generates a number of diagnostic visualizations, and makes suggestions about what to do next.
