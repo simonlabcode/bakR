@@ -376,13 +376,13 @@ cBprocess <- function(obj,
   }
 
   # Get reliable features:
-  if(concat == TRUE | is.null(FOI)){
-    message("Finding reliable Features")
+  message("Finding reliable Features")
+  reliables <- bakR::reliableFeatures(obj, high_p = high_p, totcut = totcut, Ucut = Ucut, AvgU = AvgU)
 
-    reliables <- bakR::reliableFeatures(obj, high_p = high_p, totcut = totcut, Ucut = Ucut, AvgU = AvgU)
-    keep <- c(FOI, reliables[!(reliables %in% FOI)])
+  if(concat == TRUE){
+    keep <- unique(c(intersect(FOI, reliables), reliables))
   }else{
-    keep <- FOI
+    keep <- intersect(FOI, reliables)
   }
 
   if((length(keep) == 0) | (is.null(keep))){
