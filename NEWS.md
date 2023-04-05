@@ -1,5 +1,6 @@
 # bakR 0.4.2
 * Fixed bug in reliableFeatures. high_p was supposed to be the maximum allowable mutation rate (# of mutations/# of Ts) in reads from -s4U controls, but was instead the maximum allowable average number of T-to-C mutations in reads from these controls.
+
 # bakR 0.4.1
 * Fixed bug in cBprocess that didn't properly check that features of interest provided by the FOI argument were valid.
 
