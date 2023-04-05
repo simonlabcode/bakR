@@ -22,7 +22,7 @@ shrunk towards population means and that uncertainties are shrunk towards a mean
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,7 +97,9 @@ shrunk towards population means and that uncertainties are shrunk towards a mean
 <span>  null_cutoff <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  NSS <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  Chase <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  BDA_model <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  BDA_model <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  Long <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  kmeans <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -193,6 +195,14 @@ reads that are s4U (more properly referred to as the fraction old in the context
 <dt>BDA_model</dt>
 <dd><p>Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 model is used.</p></dd>
+
+
+<dt>Long</dt>
+<dd><p>Logical; if TRUE, long read optimized fraction new estimation strategy is used.</p></dd>
+
+
+<dt>kmeans</dt>
+<dd><p>Logical; if TRUE, kmeans clustering on read-specific mutation rates is used to estimate pnews and pold.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -321,11 +331,11 @@ logit(fraction new) could stem from differences in kinetics or label times.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.050<span style="text-decoration: underline;">1</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">2</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.049<span style="text-decoration: underline;">6</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.049<span style="text-decoration: underline;">9</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.049<span style="text-decoration: underline;">8</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.050<span style="text-decoration: underline;">4</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.050<span style="text-decoration: underline;">4</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating unlabeled mutation rate</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pold is:  0.001</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pold is:  0.00099</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating fraction labeled</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating per replicate uncertainties</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating read count-variance relationship</span>
@@ -342,11 +352,11 @@ logit(fraction new) could stem from differences in kinetics or label times.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.050<span style="text-decoration: underline;">1</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">2</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.049<span style="text-decoration: underline;">6</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.049<span style="text-decoration: underline;">9</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.049<span style="text-decoration: underline;">8</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.050<span style="text-decoration: underline;">4</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.050<span style="text-decoration: underline;">4</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating unlabeled mutation rate</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pold is:  0.001</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pold is:  0.00099</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating fraction labeled</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating per replicate uncertainties</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating read count-variance relationship</span>
