@@ -99,6 +99,7 @@
 #' @param BDA_model Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 #' model is used.
 #' @param Long Logical; if TRUE, long read optimized fraction new estimation strategy is used.
+#' @param kmeans Logical; if TRUE, kmeans clustering on read-specific mutation rates is used to estimate pnews and pold.
 #' @return List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
 #' \itemize{
 #'  \item Fn_Estimates; dataframe with estimates for the fraction new and fraction new uncertainty for each feature in each replicate.
@@ -182,7 +183,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           NSS = FALSE,
                           Chase = FALSE,
                           BDA_model = FALSE,
-                          Long = FALSE){
+                          Long = FALSE,
+                          kmeans = FALSE){
 
 
   # Bind variables locally to resolve devtools::check() Notes
@@ -358,199 +360,111 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   inv_logit <- function(x) exp(x)/(1+exp(x))
 
 
-  ### Old mutation rate estimation
-  if((is.null(pnew) | is.null(pold)) & StanRate ){ # use Stan
+  if(Long | kmeans){
+
+    # Make sure package for clustering is installed
+    if (!requireNamespace("Ckmeans.1d.dp", quietly = TRUE))
+      stop("To use kmeans estimation strategy requires 'Ckmeans.1d.dp' package which cannot be found. Please install 'Ckmeans.1d.dp' using 'install.packages('Ckmeans.1d.dp')'.")
+
+    # Filter out -s4U data, wont' use that here
+    df <- df[df$type == 1,]
+
+    # Find all combos of mut and reps
+    id_dict <- df %>%
+      dplyr::select(mut, reps) %>%
+      dplyr::distinct()
+
+    New_data_estimate <- data.frame(pnew = 0, pold = 0, mut = id_dict$mut,
+                                    reps = id_dict$reps)
+    # Loop throw rows of id_dict
+    for(i in 1:nrow(id_dict)){
+      rows <- which(df$mut == id_dict$mut[i] & df$reps == id_dict$reps[i])
+      rates <- rep(df$TC[rows]/df$nT[rows], times = df$n[rows])
+
+      means <- Ckmeans.1d.dp::Ckmeans.1d.dp(rates, k = 2)$centers
 
 
-    mut_fit <- rstan::sampling(stanmodels$Mutrate_est2, data = Stan_data, chains = 1)
-  }
+      New_data_estimate$pnew[i] <- max(means)
+      New_data_estimate$pold[i] <- min(means)
 
-  ## Make data frame of pnew estimates
-  if(is.null(pnew)){
+    }
 
-    # Get estimates from Stan fit summary
-    if(StanRate){
+    # average out pold
+    pold <- mean(New_data_estimate$pold)
+    New_data_estimate <- New_data_estimate[,c("pnew", "mut", "reps")]
 
-      # Even if replicates are imbalanced (more replicates of a given experimental condition
-      # than another), the number of mutation rates Stan will estimate = max(nreps)*nMT
+
+    message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
+
+    message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
+
+
+  }else{
+    ### Old mutation rate estimation
+    if((is.null(pnew) | is.null(pold)) & StanRate ){ # use Stan
+
+
+      mut_fit <- rstan::sampling(stanmodels$Mutrate_est2, data = Stan_data, chains = 1)
+    }
+
+    ## Make data frame of pnew estimates
+    if(is.null(pnew)){
+
+      # Get estimates from Stan fit summary
+      if(StanRate){
+
+        # Even if replicates are imbalanced (more replicates of a given experimental condition
+        # than another), the number of mutation rates Stan will estimate = max(nreps)*nMT
         # nreps = vector containing number of replicates for ith experimental condition
         # nMT = number of experimental conditions
-      # Therefore, have to remove imputed mutation rates
+        # Therefore, have to remove imputed mutation rates
 
-      nrep_mut <- max(nreps)
+        nrep_mut <- max(nreps)
 
-      U_df <- df[(df$type == 1) & (df$XF %in% unique(Stan_data$sdf$XF)),] %>% dplyr::group_by(mut, reps) %>%
-        dplyr::summarise(avg_T = sum(nT*n)/sum(n))
+        U_df <- df[(df$type == 1) & (df$XF %in% unique(Stan_data$sdf$XF)),] %>% dplyr::group_by(mut, reps) %>%
+          dplyr::summarise(avg_T = sum(nT*n)/sum(n))
 
-      U_df <- U_df[order(U_df$mut, U_df$reps),]
+        U_df <- U_df[order(U_df$mut, U_df$reps),]
 
-      # In theory this may have too many entries; some could be imputed
-      # So going to need to associate a replicate/experimental ID with
-      # each row and remove those that are not real
-      # Especially important since I am dividing by U_df$avg_T
-      pnew <- exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_n")$summary)$mean)
+        # In theory this may have too many entries; some could be imputed
+        # So going to need to associate a replicate/experimental ID with
+        # each row and remove those that are not real
+        # Especially important since I am dividing by U_df$avg_T
+        pnew <- exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_n")$summary)$mean)
 
-      rep_theory <- rep(seq(from = 1, to = nrep_mut), times = nMT)
-      mut_theory <- rep(seq(from = 1, to = nMT), each = nrep_mut)
+        rep_theory <- rep(seq(from = 1, to = nrep_mut), times = nMT)
+        mut_theory <- rep(seq(from = 1, to = nMT), each = nrep_mut)
 
-      rep_actual <- unlist(lapply(nreps, function(x) seq(1, x)))
-      mut_actual <- rep(1:nMT, times = nreps)
+        rep_actual <- unlist(lapply(nreps, function(x) seq(1, x)))
+        mut_actual <- rep(1:nMT, times = nreps)
 
-      pnewdf <- data.frame(pnew = pnew,
-                           R = rep_theory,
-                           E = mut_theory)
+        pnewdf <- data.frame(pnew = pnew,
+                             R = rep_theory,
+                             E = mut_theory)
 
-      truedf <- data.frame(R = rep_actual,
-                           E = mut_actual)
-
-
-      ## Get final pnew estimate vector
-      pnewdf <- dplyr::right_join(pnewdf, truedf, by = c("R", "E"))
-
-      pnew <- pnewdf$pnew/U_df$avg_T
+        truedf <- data.frame(R = rep_actual,
+                             E = mut_actual)
 
 
-      if(!is.null(pold)){
-        rm(mut_fit)
-      }
+        ## Get final pnew estimate vector
+        pnewdf <- dplyr::right_join(pnewdf, truedf, by = c("R", "E"))
+
+        pnew <- pnewdf$pnew/U_df$avg_T
 
 
-      New_data_estimate <- data.frame(mut_actual, rep_actual, pnew)
-      colnames(New_data_estimate) <- c("mut", "reps", "pnew")
-
-      message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
-
-    }else{ # Use binomial mixture model to estimate new read estimate mutation rate
-
-      message("Estimating labeled mutation rate")
-
-      # Binomial mixture likelihood
-      mixture_lik <- function(param, TC, nT, n){
-
-        logl <- sum(n*log(inv_logit(param[3])*(factorial(nT)/(factorial(nT-TC)*factorial(TC)))*(inv_logit(param[1])^TC)*((1 -inv_logit(param[1]))^(nT-TC)) +  (1-inv_logit(param[3]))*(factorial(nT)/(factorial(nT-TC)*factorial(TC)))*(inv_logit(param[2])^TC)*((1 - inv_logit(param[2]))^(nT-TC)) ) )
-
-        return(-logl)
-
-      }
-
-      # Remove unlabeled controls
-      df_pnew <- df[df$type == 1,]
+        if(!is.null(pold)){
+          rm(mut_fit)
+        }
 
 
-      # Summarize out genes
-      df_pnew <- df_pnew %>%
-        dplyr::group_by(TC, nT, mut, reps) %>%
-        dplyr::summarise(n = sum(n))
+        New_data_estimate <- data.frame(mut_actual, rep_actual, pnew)
+        colnames(New_data_estimate) <- c("mut", "reps", "pnew")
 
-      # Check to make sure likelihood is evalutable
-      df_check <- df_pnew %>%
-        dplyr::mutate(fn = mixture_lik(param = c(-7, -2, 0),
-                                       TC = TC,
-                                       nT = nT,
-                                       n = n))
+        message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
 
-      if(sum(!is.finite(df_check$fn)) > 0){
-        stop("The binomial log-likelihood is not computable for some of your data, meaning the default mutation rate estimation strategy won't work. Rerun bakRFit with StanRateEst set to TRUE to remedy this problem.")
-      }
+      }else{ # Use binomial mixture model to estimate new read estimate mutation rate
 
-      rm(df_check)
-
-
-      low_ps <- c(-9, -9, -9)
-      high_ps <- c(0, 0, 9)
-
-
-      # Fit mixture model to each sample
-      df_pnew <- df_pnew %>%
-        dplyr::group_by(mut, reps) %>%
-        dplyr::summarise(pnew = inv_logit(max(stats::optim(par=c(-7, -2, 0), mixture_lik, TC = TC, nT = nT, n = n, method = "L-BFGS-B", lower = low_ps, upper = high_ps)$par[1:2])) )
-
-      New_data_estimate <- df_pnew
-
-      message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(df_pnew)), collapse = "\n"))
-
-    }
-
-
-  }else{ # Construct pmut data frame from User input
-
-    if(length(pnew) == 1){ # replicate the single pnew provided
-
-      pnew_vect <- rep(pnew, times = sum(nreps) )
-
-      ## Compatible with unbalanced replicates
-      rep_vect <- unlist(lapply(nreps, function(x) seq(1, x)))
-
-      mut_vect <- rep(1:nMT, times = nreps)
-
-      New_data_estimate <- data.frame(mut_vect, rep_vect, pnew_vect)
-      colnames(New_data_estimate) <- c("mut", "reps", "pnew")
-
-    } else if( length(pnew) != sum(nreps)  ){
-      stop("User inputted pnew is not of length 1 or of length equal to number of samples")
-    } else{ # use vector of pnews provided
-
-      ## Compatible with unbalanced replicates
-      rep_vect <- unlist(lapply(nreps, function(x) seq(1, x)))
-
-      mut_vect <- rep(1:nMT, times = nreps)
-      New_data_estimate <- data.frame(mut_vect, rep_vect, pnew)
-      colnames(New_data_estimate) <- c("mut", "reps", "pnew")
-    }
-  }
-
-  ### Estimate mutation rate in old reads
-  if(is.null(pold)){
-    if(StanRate){ # Use Stan to estimate rates
-
-      ## Extract estimate of mutation rate in old reads from Stan fit
-      nrep_mut <- max(df$reps)
-
-      # Calculate U-content
-      U_df <- df[(df$type == 1) & (df$XF %in% unique(Stan_data$sdf$XF)),] %>% dplyr::group_by(mut, reps) %>%
-        dplyr::summarise(avg_T = sum(nT*n)/sum(n))
-
-      U_df <- U_df[order(U_df$mut, U_df$reps),]
-
-      # Vector of pold estimates for each sample
-      pold <- exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_o")$summary)$mean)
-
-      # Balanced replicate vectors
-        # For matching Stan estimates to a replicate and experimental condition ID
-      rep_theory <- rep(seq(from = 1, to = nrep_mut), times = nMT)
-      mut_theory <- rep(seq(from = 1, to = nMT), each = nrep_mut)
-
-      # Actual replicate vectors
-        # Will be same as rep_theory and mut_theory if there are the same
-        # number of replicates in each experimental condition
-      rep_actual <- unlist(lapply(nreps, function(x) seq(1, x)))
-      mut_actual <- rep(1:nMT, times = nreps)
-
-      polddf <- data.frame(pold = pold,
-                           R = rep_theory,
-                           E = mut_theory)
-
-      truedf <- data.frame(R = rep_actual,
-                           E = mut_actual)
-
-
-      # Filter out imputed data
-      polddf <- dplyr::right_join(polddf, truedf, by = c("R", "E"))
-
-      # Final estimate of mutation rate in old reads
-      pold <- mean(polddf$pold/U_df$avg_T)
-
-
-      rm(mut_fit)
-
-      rm(U_df)
-
-      message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
-
-    }else{
-      if((sum(df$type == 0) == 0) | (no_ctl)){ # Estimate pold using binomial mixture model
-
-        message("Estimating unlabeled mutation rate")
+        message("Estimating labeled mutation rate")
 
         # Binomial mixture likelihood
         mixture_lik <- function(param, TC, nT, n){
@@ -562,17 +476,16 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
         }
 
         # Remove unlabeled controls
-        df_pold <- df[df$type == 1,]
+        df_pnew <- df[df$type == 1,]
 
 
         # Summarize out genes
-        df_pold <- df_pold %>%
+        df_pnew <- df_pnew %>%
           dplyr::group_by(TC, nT, mut, reps) %>%
           dplyr::summarise(n = sum(n))
 
-
         # Check to make sure likelihood is evalutable
-        df_check <- df_pold %>%
+        df_check <- df_pnew %>%
           dplyr::mutate(fn = mixture_lik(param = c(-7, -2, 0),
                                          TC = TC,
                                          nT = nT,
@@ -590,41 +503,173 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
 
         # Fit mixture model to each sample
-        df_pold <- df_pold %>%
-          dplyr::group_by(mut,reps) %>%
-          dplyr::summarise(pold = inv_logit(min(stats::optim(par=c(-7, -2, 0), mixture_lik, TC = TC, nT = nT, n = n, method = "L-BFGS-B", lower = low_ps, upper = high_ps)$par[1:2])) ) %>%
-          dplyr::ungroup() %>%
-          dplyr::summarise(pold = mean(pold))
+        df_pnew <- df_pnew %>%
+          dplyr::group_by(mut, reps) %>%
+          dplyr::summarise(pnew = inv_logit(max(stats::optim(par=c(-7, -2, 0), mixture_lik, TC = TC, nT = nT, n = n, method = "L-BFGS-B", lower = low_ps, upper = high_ps)$par[1:2])) )
+
+        New_data_estimate <- df_pnew
+
+        message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(df_pnew)), collapse = "\n"))
+
+      }
 
 
+    }else{ # Construct pmut data frame from User input
 
-        pold <- df_pold$pold
-        message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
+      if(length(pnew) == 1){ # replicate the single pnew provided
 
+        pnew_vect <- rep(pnew, times = sum(nreps) )
 
+        ## Compatible with unbalanced replicates
+        rep_vect <- unlist(lapply(nreps, function(x) seq(1, x)))
 
-      }else{ # Estimate using -s4U data
-        message("Estimating unlabeled mutation rate")
+        mut_vect <- rep(1:nMT, times = nreps)
 
-        #Old mutation rate estimation
-        Mut_data <- df
+        New_data_estimate <- data.frame(mut_vect, rep_vect, pnew_vect)
+        colnames(New_data_estimate) <- c("mut", "reps", "pnew")
 
-        Old_data <- Mut_data[Mut_data$type == 0, ]
+      } else if( length(pnew) != sum(nreps)  ){
+        stop("User inputted pnew is not of length 1 or of length equal to number of samples")
+      } else{ # use vector of pnews provided
 
-        Old_data <- Old_data %>% dplyr::ungroup() %>%
-          dplyr::summarise(mutrate = sum(n*TC)/sum(n*nT))
+        ## Compatible with unbalanced replicates
+        rep_vect <- unlist(lapply(nreps, function(x) seq(1, x)))
 
-        pold <- Old_data$mutrate
-        message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
-
-
+        mut_vect <- rep(1:nMT, times = nreps)
+        New_data_estimate <- data.frame(mut_vect, rep_vect, pnew)
+        colnames(New_data_estimate) <- c("mut", "reps", "pnew")
       }
     }
 
+    ### Estimate mutation rate in old reads
+    if(is.null(pold)){
+      if(StanRate){ # Use Stan to estimate rates
+
+        ## Extract estimate of mutation rate in old reads from Stan fit
+        nrep_mut <- max(df$reps)
+
+        # Calculate U-content
+        U_df <- df[(df$type == 1) & (df$XF %in% unique(Stan_data$sdf$XF)),] %>% dplyr::group_by(mut, reps) %>%
+          dplyr::summarise(avg_T = sum(nT*n)/sum(n))
+
+        U_df <- U_df[order(U_df$mut, U_df$reps),]
+
+        # Vector of pold estimates for each sample
+        pold <- exp(as.data.frame(rstan::summary(mut_fit, pars = "log_lambda_o")$summary)$mean)
+
+        # Balanced replicate vectors
+        # For matching Stan estimates to a replicate and experimental condition ID
+        rep_theory <- rep(seq(from = 1, to = nrep_mut), times = nMT)
+        mut_theory <- rep(seq(from = 1, to = nMT), each = nrep_mut)
+
+        # Actual replicate vectors
+        # Will be same as rep_theory and mut_theory if there are the same
+        # number of replicates in each experimental condition
+        rep_actual <- unlist(lapply(nreps, function(x) seq(1, x)))
+        mut_actual <- rep(1:nMT, times = nreps)
+
+        polddf <- data.frame(pold = pold,
+                             R = rep_theory,
+                             E = mut_theory)
+
+        truedf <- data.frame(R = rep_actual,
+                             E = mut_actual)
+
+
+        # Filter out imputed data
+        polddf <- dplyr::right_join(polddf, truedf, by = c("R", "E"))
+
+        # Final estimate of mutation rate in old reads
+        pold <- mean(polddf$pold/U_df$avg_T)
+
+
+        rm(mut_fit)
+
+        rm(U_df)
+
+        message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
+
+      }else{
+        if((sum(df$type == 0) == 0) | (no_ctl)){ # Estimate pold using binomial mixture model
+
+          message("Estimating unlabeled mutation rate")
+
+          # Binomial mixture likelihood
+          mixture_lik <- function(param, TC, nT, n){
+
+            logl <- sum(n*log(inv_logit(param[3])*(factorial(nT)/(factorial(nT-TC)*factorial(TC)))*(inv_logit(param[1])^TC)*((1 -inv_logit(param[1]))^(nT-TC)) +  (1-inv_logit(param[3]))*(factorial(nT)/(factorial(nT-TC)*factorial(TC)))*(inv_logit(param[2])^TC)*((1 - inv_logit(param[2]))^(nT-TC)) ) )
+
+            return(-logl)
+
+          }
+
+          # Remove unlabeled controls
+          df_pold <- df[df$type == 1,]
+
+
+          # Summarize out genes
+          df_pold <- df_pold %>%
+            dplyr::group_by(TC, nT, mut, reps) %>%
+            dplyr::summarise(n = sum(n))
+
+
+          # Check to make sure likelihood is evalutable
+          df_check <- df_pold %>%
+            dplyr::mutate(fn = mixture_lik(param = c(-7, -2, 0),
+                                           TC = TC,
+                                           nT = nT,
+                                           n = n))
+
+          if(sum(!is.finite(df_check$fn)) > 0){
+            stop("The binomial log-likelihood is not computable for some of your data, meaning the default mutation rate estimation strategy won't work. Rerun bakRFit with StanRateEst set to TRUE to remedy this problem.")
+          }
+
+          rm(df_check)
+
+
+          low_ps <- c(-9, -9, -9)
+          high_ps <- c(0, 0, 9)
+
+
+          # Fit mixture model to each sample
+          df_pold <- df_pold %>%
+            dplyr::group_by(mut,reps) %>%
+            dplyr::summarise(pold = inv_logit(min(stats::optim(par=c(-7, -2, 0), mixture_lik, TC = TC, nT = nT, n = n, method = "L-BFGS-B", lower = low_ps, upper = high_ps)$par[1:2])) ) %>%
+            dplyr::ungroup() %>%
+            dplyr::summarise(pold = mean(pold))
 
 
 
+          pold <- df_pold$pold
+          message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
+
+
+
+        }else{ # Estimate using -s4U data
+          message("Estimating unlabeled mutation rate")
+
+          #Old mutation rate estimation
+          Mut_data <- df
+
+          Old_data <- Mut_data[Mut_data$type == 0, ]
+
+          Old_data <- Old_data %>% dplyr::ungroup() %>%
+            dplyr::summarise(mutrate = sum(n*TC)/sum(n*nT))
+
+          pold <- Old_data$mutrate
+          message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
+
+
+        }
+      }
+
+
+
+
+    }
   }
+
+
 
   if(!all(New_data_estimate$pnew - pold > 0)){
     stop("All pnew must be > pold; did you input an unusually large pold?")
@@ -679,7 +724,65 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   Mut_data <- dplyr::left_join(Mut_data, New_data_estimate, by = c("mut", "reps"))
 
   if(Long){
-    stop("Long = TRUE functionality is not yet implemented.")
+
+    # Calculate variance with delta approximation using beta distribution
+    var_calc <- function(alpha, beta){
+
+      EX <- alpha/(alpha + beta)
+      VX <- (alpha*beta)/(((alpha + beta)^2)*(alpha + beta + 1))
+
+
+      var1 <- (((1/EX) + 1/(1 - EX))^2)*VX
+      var2 <- -(-1/(4*(EX^2)) + 1/(4*((1-EX)^2)))^2
+      var3 <- VX^2
+
+      totvar <- var1 - var2*var3
+
+      return(totvar)
+    }
+
+    # convert logit(fn) se -> log(kdeg) se
+    logit_to_log <- function(lfn, varx){
+
+      ## composition strategy
+      #se <- sqrt(((((1 + exp(lfn))^-2)*varx)/(-log(1 - inv_logit(lfn))))*varx)
+
+      ## full monte
+      part1 <- 1/(log( (exp(-lfn))/(1 + exp(-lfn)))*(1 + exp(-lfn)))
+      se <- sqrt((part1^2)*varx)
+
+      return(se)
+
+    }
+
+
+    # 1) Add new read identifier
+    cutoff <- function(pnew, pold){
+      return(((logit(pnew) + logit(pold))/2 + logit((pnew + pold)/2))/2 )
+    }
+
+
+    Mut_data <- Mut_data %>%
+      dplyr::mutate(new = ifelse(logit(TC/nT) > cutoff(pnew, pold), TRUE, FALSE))
+
+    # 2) Calculate number of new reads and total number of reads in each replicate for each feature
+    Mut_data <- Mut_data %>%
+      dplyr::group_by(fnum, mut, reps) %>%
+      dplyr::summarise(nreads = sum(n),
+                       n_new = sum(new))
+
+
+    # 3) Calculate fraction new and uncertainty
+    Mut_data_est <- Mut_data %>%
+      dplyr::mutate(Fn_rep_est = (n_new + 1)/(nreads + 1),
+                    logit_fn_rep = logit(Fn_rep_est),
+                    logit_fn_se = sqrt(var_calc(n_new + 1, nreads + 1)),
+                    kd_rep_est = -log(1 - Fn_rep_est)/tl[mut],
+                    log_kd_rep_est = log(kd_rep_est),
+                    log_kd_se = logit_to_log(logit_fn_rep, logit_fn_se^2))
+
+
+
   }else{ # MLE
 
     # Likelihood function for mixture model
@@ -734,68 +837,67 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
         dplyr::mutate(kd_rep_est = -log(1 - Fn_rep_est)/tl[mut])
     }
 
+    message("Estimating per replicate uncertainties")
+
+    Mut_data <- dplyr::left_join(Mut_data, Mut_data_est[, c("kd_rep_est" ,"logit_fn_rep", "fnum", "mut", "reps")], by = c("fnum", "mut", "reps"))
+
+    ## Estimate Fisher Info and uncertainties
+    if(Chase){
+      Mut_data <- Mut_data %>% dplyr::ungroup() %>%
+        dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep, kd_rep_est) %>%
+        dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
+        dplyr::mutate(Exp_l_fn = exp(-logit_fn_rep)) %>%
+        dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
+        dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
+        dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
+        dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
+        dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
+        dplyr::ungroup() %>%
+        dplyr::group_by(fnum, mut, reps) %>%
+        dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
+                         Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
+                         tot_n = sum(n)) %>% #,
+        #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
+        dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
+                      Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
+        dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
+                      Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
+
+    }else{
+      Mut_data <- Mut_data %>% dplyr::ungroup() %>%
+        dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep, kd_rep_est) %>%
+        dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
+        dplyr::mutate(Exp_l_fn = exp(logit_fn_rep)) %>%
+        dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
+        dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
+        dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
+        dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
+        dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
+        dplyr::ungroup() %>%
+        dplyr::group_by(fnum, mut, reps) %>%
+        dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
+                         Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
+                         tot_n = sum(n)) %>% #,
+        #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
+        dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
+                      Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
+        dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
+                      Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
+
+    }
+
+
+
+    Mut_data_est$logit_fn_se <- Mut_data$Logit_fn_se
+    Mut_data_est$log_kd_se <- Mut_data$log_kd_se
+
+    Mut_data_est <- Mut_data_est %>% dplyr::mutate(log_kd_rep_est = log(kd_rep_est))
+
+
   }
 
 
 
-  # ESTIMATE UNCERTAINTIES WITH FISHER INFORMATION -----------------------------
-
-
-  message("Estimating per replicate uncertainties")
-
-  Mut_data <- dplyr::left_join(Mut_data, Mut_data_est[, c("kd_rep_est" ,"logit_fn_rep", "fnum", "mut", "reps")], by = c("fnum", "mut", "reps"))
-
-  ## Estimate Fisher Info and uncertainties
-  if(Chase){
-    Mut_data <- Mut_data %>% dplyr::ungroup() %>%
-      dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep, kd_rep_est) %>%
-      dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
-      dplyr::mutate(Exp_l_fn = exp(-logit_fn_rep)) %>%
-      dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
-      dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
-      dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
-      dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
-      dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
-      dplyr::ungroup() %>%
-      dplyr::group_by(fnum, mut, reps) %>%
-      dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
-                       Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
-                       tot_n = sum(n)) %>% #,
-      #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
-      dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
-                    Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
-      dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
-                    Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
-
-  }else{
-    Mut_data <- Mut_data %>% dplyr::ungroup() %>%
-      dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep, kd_rep_est) %>%
-      dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
-      dplyr::mutate(Exp_l_fn = exp(logit_fn_rep)) %>%
-      dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
-      dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
-      dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
-      dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
-      dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
-      dplyr::ungroup() %>%
-      dplyr::group_by(fnum, mut, reps) %>%
-      dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
-                       Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
-                       tot_n = sum(n)) %>% #,
-      #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
-      dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
-                    Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
-      dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
-                    Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
-
-  }
-
-
-
-  Mut_data_est$logit_fn_se <- Mut_data$Logit_fn_se
-  Mut_data_est$log_kd_se <- Mut_data$log_kd_se
-
-  Mut_data_est <- Mut_data_est %>% dplyr::mutate(log_kd_rep_est = log(kd_rep_est))
 
 
   # ESTIMATE VARIANCE VS. READ COUNT TREND -------------------------------------

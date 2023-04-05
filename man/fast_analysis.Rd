@@ -25,7 +25,9 @@ fast_analysis(
   null_cutoff = 0,
   NSS = FALSE,
   Chase = FALSE,
-  BDA_model = FALSE
+  BDA_model = FALSE,
+  Long = FALSE,
+  kmeans = FALSE
 )
 }
 \arguments{
@@ -78,6 +80,10 @@ reads that are s4U (more properly referred to as the fraction old in the context
 
 \item{BDA_model}{Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 model is used.}
+
+\item{Long}{Logical; if TRUE, long read optimized fraction new estimation strategy is used.}
+
+\item{kmeans}{Logical; if TRUE, kmeans clustering on read-specific mutation rates is used to estimate pnews and pold.}
 }
 \value{
 List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:

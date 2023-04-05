@@ -23,6 +23,8 @@ bakRFit(
   NSS = FALSE,
   Chase = FALSE,
   BDA_model = FALSE,
+  Long = FALSE,
+  kmeans = FALSE,
   ...
 )
 }
@@ -73,6 +75,10 @@ reads that are s4U (more properly referred to as the fraction old in the context
 
 \item{BDA_model}{Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 model is used.}
+
+\item{Long}{Logical; if TRUE, long read optimized fraction new estimation strategy is used.}
+
+\item{kmeans}{Logical; if TRUE, kmeans clustering on read-specific mutation rates is used to estimate pnews and pold.}
 
 \item{...}{Arguments passed to either \code{fast_analysis} (if a bakRData object)
 or \code{TL_Stan} and \code{Hybrid_fit} (if a bakRFit object)}
