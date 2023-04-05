@@ -1,3 +1,5 @@
+# bakR 0.4.2
+
 # bakR 0.4.1
 * Fixed bug in cBprocess that didn't properly check that features of interest provided by the FOI argument were valid.
 
