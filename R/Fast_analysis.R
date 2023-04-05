@@ -98,6 +98,7 @@
 #' reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment)
 #' @param BDA_model Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 #' model is used.
+#' @param Long Logical; if TRUE, long read optimized fraction new estimation strategy is used.
 #' @return List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
 #' \itemize{
 #'  \item Fn_Estimates; dataframe with estimates for the fraction new and fraction new uncertainty for each feature in each replicate.
@@ -180,7 +181,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           null_cutoff = 0,
                           NSS = FALSE,
                           Chase = FALSE,
-                          BDA_model = FALSE){
+                          BDA_model = FALSE,
+                          Long = FALSE){
 
 
   # Bind variables locally to resolve devtools::check() Notes
@@ -290,6 +292,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   ## Check MLE
   if(!is.logical(MLE)){
     stop("MLE must be logical (TRUE or FALSE)")
+  }
+
+  if(!MLE){
+    stop("Bayesian hypothesis estimation strategy has been removed, set MLE to TRUE.")
   }
 
   ## Check lower and upper
@@ -672,20 +678,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
   Mut_data <- dplyr::left_join(Mut_data, New_data_estimate, by = c("mut", "reps"))
 
-  if(!MLE){
-    # Bayesian Hypothesis Testing Method (not really useful, should think of getting rid of it)
-    Mut_data_est <- Mut_data %>% dplyr::group_by(fnum, mut, reps, TC, nT) %>%
-      # mutate(avg_mut = TC/nT) %>%
-      # #mutate(prior_new = ifelse(avg_mut >= (pnew_est - 0.01), 0.99, (avg_mut + 0.01)/pnew_est )) %>%
-      # mutate(prior_new = 0.9)%>%
-      dplyr::mutate(New_prob = stats::dbinom(TC, size=nT, prob=pnew)) %>%
-      dplyr::mutate(Old_prob = stats::dbinom(TC, size = nT, prob = pold)) %>%
-      dplyr::mutate(News = n*(New_prob/(New_prob + Old_prob))) %>%
-      dplyr::ungroup() %>%
-      dplyr::group_by(fnum, mut, reps) %>%
-      dplyr::summarise(nreads = sum(n), Fn_rep_est = sum(News)/nreads) %>%
-      dplyr::mutate(logit_fn_rep = ifelse(Fn_rep_est == 1, logit(0.999), ifelse(Fn_rep_est == 0, logit(0.001), logit(Fn_rep_est)))) %>%
-      dplyr::ungroup()
+  if(Long){
+    stop("Long = TRUE functionality is not yet implemented.")
   }else{ # MLE
 
     # Likelihood function for mixture model

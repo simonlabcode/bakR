@@ -75,13 +75,13 @@ reliableFeatures <- function(obj,
     cBdt <- cBdt[, `:=`(totTC = TC * n * abs(type - 1))]
 
 
-    cBdt <- cBdt[, .(tot_mut = sum(totTC), totcounts = sum(n),
+    cBdt <- cBdt[, .(tot_mut = sum(totTC), totcounts = sum(n), totTs = sum(n*nT),
                      avgU = sum(nT * n)/sum(n), n2U = sum(n[nT <=2]),
                      nmore = sum(n[nT > 2])), keyby = .(sample,XF)]
 
     cBdt <- cBdt[, `:=`(f2U = n2U/(nmore + n2U))]
 
-    cBdt <- cBdt[(totcounts >= totcut) & (tot_mut/totcounts < high_p) &
+    cBdt <- cBdt[(totcounts >= totcut) & (tot_mut/totTs < high_p) &
                    (f2U < Ucut) & (avgU > AvgU)]
 
     cBdt <- cBdt[, .(counts = .N), keyby = .(XF)]
