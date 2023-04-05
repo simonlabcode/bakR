@@ -1,4 +1,5 @@
 # bakR 0.4.3
+* Implemented long read sequencing data analysis strategy. Run bakRFit() with Long = TRUE to use k-means clustering (k = 2) for mutation rate and fraction new estimation. Need to have Ckmeans.1d.dp package installed to do this (not installed during bakR installation).
 
 # bakR 0.4.2
 * Fixed bug in reliableFeatures. high_p was supposed to be the maximum allowable mutation rate (# of mutations/# of Ts) in reads from -s4U controls, but was instead the maximum allowable average number of T-to-C mutations in reads from these controls.

@@ -56,7 +56,8 @@ Suggests:
     rmarkdown,
     knitr,
     DESeq2,
-    pheatmap
+    pheatmap,
+	Ckmeans.1d.dp
 VignetteBuilder: knitr
 URL: https://simonlabcode.github.io/bakR/
 BugReports: https://github.com/simonlabcode/bakR/issues/
