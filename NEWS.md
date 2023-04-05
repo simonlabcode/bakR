@@ -1,3 +1,5 @@
+# bakR 0.4.3
+
 # bakR 0.4.2
 * Fixed bug in reliableFeatures. high_p was supposed to be the maximum allowable mutation rate (# of mutations/# of Ts) in reads from -s4U controls, but was instead the maximum allowable average number of T-to-C mutations in reads from these controls.
 

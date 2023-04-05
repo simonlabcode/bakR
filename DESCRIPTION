@@ -1,6 +1,6 @@
 Package: bakR
 Title: Analyze and Compare Nucleotide Recoding RNA Sequencing Datasets
-Version: 0.4.2
+Version: 0.4.3
 Authors@R:
     person(given = "Isaac",
            family = "Vock",
