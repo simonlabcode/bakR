@@ -1,4 +1,4 @@
-# Brief Description of bakR <img src='man/figures/logo.png' align="right" height="130" />
+# Brief Description of bakR <img src='man/figures/logo.png' align="right" height="200" />
 bakR (Bayesian analysis of the kinetics of RNA) is an R package for performing differential kinetics analysis with nucleotide recoding high-throughput RNA sequencing (NR-seq) data. 
 Kinetic parameter estimation and statistical testing is compatible with mutational data from any enrichment free NR-seq method (e.g., TimeLapse-seq, SLAM-seq, TUC-seq, etc.).
 
