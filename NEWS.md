@@ -1,3 +1,5 @@
+# bakR 0.4.4
+
 # bakR 0.4.3
 * Implemented long read sequencing data analysis strategy. Run bakRFit() with Long = TRUE to use k-means clustering (k = 2) for mutation rate and fraction new estimation. Need to have Ckmeans.1d.dp package installed to do this (not installed during bakR installation).
 
