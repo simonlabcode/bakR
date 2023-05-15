@@ -497,7 +497,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   }
 
   # Difference in L2FC(kdeg)
-  L2FC_kd_mean <- log2(log(1 - inv_logit(fn_mean + effect_mean))/log(1- inv_logit(fn_mean)))
+  L2FC_kd_mean <- log2(log(1 - inv_logit(logit(fn_mean) + effect_mean))/log(1- fn_mean))
 
 
   #Simulate read counts
@@ -941,7 +941,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
 #' @export
 #'
 Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L, eff_sd = 0.75, eff_mean = 0,
-                              kdlog_mean = -3.75, kdlog_sd = 0.8, kslog_mean = -2, kslog_sd = 0.8,
+                              kdlog_mean = -1.8, kdlog_sd = 0.65, kslog_mean = 1, kslog_sd = 0.65,
                               tl = 2, p_new = 0.05, p_old = 0.001, read_lengths = 200L,
                               p_do = 0, noise_deg_a = -0.3, noise_deg_b = -1.5, noise_synth = 0.1, sd_rep = 0.05,
                               low_L2FC_ks = -1, high_L2FC_ks = 1,
@@ -1311,7 +1311,7 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
   fn_mean <- 1 - exp(-kd_mean*tl)
   
   # Difference in L2FC(kdeg)
-  L2FC_kd_mean <- log2(log(1 - inv_logit(fn_mean + effect_mean))/log(1- inv_logit(fn_mean)))
+  L2FC_kd_mean <- log2(log(1 - inv_logit(logit(fn_mean) + effect_mean))/log(1- fn_mean))
   
   
   # RNA concentration assuming steady-state
@@ -1319,12 +1319,9 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
   RNA_conc <- (ks_mean*2^(L2FC_ks_mean))/(kd_mean*2^(L2FC_kd_mean))
   
   # # Simulate dropout
-  # for(j in 1:num_conds){
-  #   for(k in 1:nreps){
-  #     fn_real[,j,k] <- (fn[,j,k]*(1-p_do[k,j]))/(1 - p_do[k,j]*(1 - fn[,j,k]))
-  #     Counts[,j,k] <- Counts[,j,k] - Counts[,j,k]*fn[,j,k]*p_do[k,j]
-  #   }
-  # }
+  # fn_mean_matrix <- fn_mean
+  # RNA_conc <- RNA_conc*fn_mean_matrix
+  # 
   
   rel_RNA_c <- RNA_conc/matrix(colSums(RNA_conc), nrow = ngene, ncol = num_conds, byrow = TRUE)
   
@@ -1366,7 +1363,6 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
     }
   }
   
-  browser()
   # kdeg
   kd <- -log(1 - fn)/tl
   
