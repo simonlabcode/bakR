@@ -1246,6 +1246,10 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
   
   Counts <- fn
   
+  # 1 replicate of -s4U control data (could in theory make number of replicates a parameter)
+  Counts_ctl <- rep(0, times = ngene*num_conds)
+  dim(Counts_ctl) <- c(ngene, num_conds)
+  
   
   kd <- fn
   ks <- fn
@@ -1318,13 +1322,14 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
   L2FC_tot_mean <- L2FC_ks_mean - L2FC_kd_mean
   RNA_conc <- (ks_mean*2^(L2FC_ks_mean))/(kd_mean*2^(L2FC_kd_mean))
   
-  # # Simulate dropout
-  # fn_mean_matrix <- fn_mean
-  # RNA_conc <- RNA_conc*fn_mean_matrix
-  # 
+  # Simulate dropout
+  fn_mean_matrix <- inv_logit(logit(fn_mean) + effect_mean)
+  RNA_conc_s4U <- RNA_conc*fn_mean_matrix*(1-p_do) + RNA_conc*(1-fn_mean)
+  RNA_conc_ctl <- RNA_conc
   
-  rel_RNA_c <- RNA_conc/matrix(colSums(RNA_conc), nrow = ngene, ncol = num_conds, byrow = TRUE)
-  
+  # Relative amount of each RNA species
+  rel_RNA_c_s4U <- RNA_conc_s4U/matrix(colSums(RNA_conc_s4U), nrow = ngene, ncol = num_conds, byrow = TRUE)
+  rel_RNA_c_ctl <- RNA_conc/matrix(colSums(RNA_conc_ctl), nrow = ngene, ncol = num_conds, byrow = TRUE)
 
   
   # Simulate read counts
@@ -1333,10 +1338,21 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
 
   for(i in 1:ngene){
     for(j in 1:num_conds){
+      
+      ## -s4U control data
+      Counts_ctl[i, j] <- stats::rnbinom(n=1, size=1/((a1/(depth*rel_RNA_c_ctl[i,j])) + a0), mu = depth*rel_RNA_c_ctl[i,j])
+      
+      if(Counts_ctl[i, j] < 5){
+        Counts_ctl[i, j] <- Counts_ctl[i, j] + stats::rpois(n=1, lambda = 2) + 1
+      }
+      
       for(k in 1:nreps){
+        ## +s4U data
+        
         # DESeq2 model of heterodisperse read counts
-        Counts[i, j, k] <- stats::rnbinom(n=1, size=1/((a1/(depth*rel_RNA_c[i,j])) + a0), mu = depth*rel_RNA_c[i,j])
-
+        Counts[i, j, k] <- stats::rnbinom(n=1, size=1/((a1/(depth*rel_RNA_c_s4U[i,j])) + a0), mu = depth*rel_RNA_c_s4U[i,j])
+        
+        
         if(Counts[i, j, k] < 5){
           Counts[i, j, k] <- Counts[i, j, k] + stats::rpois(n=1, lambda = 2) + 1
         }
@@ -1352,10 +1368,10 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
   # Simulate kdeg and ksyn for each feature and replicate.
   # replicate variability is simulated here
   for(j in 1:num_conds){
-    mean_RNA[j] <- mean(log10(rel_RNA_c[,j]*depth))
-    sd_RNA[j] <- stats::sd(log10(rel_RNA_c[,j]*depth))
+    mean_RNA[j] <- mean(log10(rel_RNA_c_s4U[,j]*depth))
+    sd_RNA[j] <- stats::sd(log10(rel_RNA_c_s4U[,j]*depth))
     for(i in 1:ngene){
-      standard_RNA[i,j] <- (log10(rel_RNA_c[i,j]*depth) - mean_RNA[j])/sd_RNA[j]
+      standard_RNA[i,j] <- (log10(rel_RNA_c_s4U[i,j]*depth) - mean_RNA[j])/sd_RNA[j]
       for(k in 1:nreps){
         fn[i, j, k] <- inv_logit(stats::rnorm(1, mean=(logit(fn_mean[i]) + effect_mean[i,j]), sd = stats::rlnorm(1, noise_deg_a*standard_RNA[i,j] + noise_deg_b, sd_rep )))
         ks[i,j,k] <- exp(stats::rnorm(1, mean=log((2^L2FC_ks_mean[i,j])*ks_mean[i]), sd=noise_synth))
@@ -1370,9 +1386,8 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
   
   l <- ngene
   
-  # No dropout for now
-  p_do <- matrix(rep(0, times = num_conds*nreps), nrow = nreps, ncol = num_conds)
-  fn_real <- fn
+  # Simulate dropout
+  fn_real <- (fn*(1-p_do))/((fn*(1-p_do)) + (1-fn))
 
   
   
@@ -1496,7 +1511,7 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
   
   ctl_data <- which(Rep_ID == 1)
   
-  Reads_ctl <- Reads_vect[ctl_data]
+  Reads_ctl <- as.vector(Counts_ctl)
   Gene_ctl <- Gene_ID[ctl_data]
   Exp_ctl <- Exp_ID[ctl_data]
   Rep_ctl <- Rep_ID[ctl_data]
@@ -1587,7 +1602,7 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
     fn_mean_vect <- c(fn_mean_vect, logit(fn_mean) + effect_mean[,j])
     
     for(i in 1:ngene){
-      fn_vect <- c(fn_vect, fn_real[i,j,])
+      fn_vect <- c(fn_vect, fn[i,j,])
       
       
     }
@@ -1623,8 +1638,10 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
                                      Fn_mean_sim = Fn_mean_sim,
                                      Fn_rep_sim = Fn_rep_sim,
                                      L2FC_ks_mean = L2FC_ks_mean,
-                                     RNA_conc = RNA_conc,
-                                     rel_RNA_c = rel_RNA_c,
+                                     RNA_conc_s4U = RNA_conc_s4U,
+                                     RNA_conc_ctl = RNA_conc_ctl,
+                                     rel_RNA_c_s4U = rel_RNA_c_s4U,
+                                     rel_RNA_c_ctl = rel_RNA_c_ctl,
                                      Counts = Counts) )
     
   }else{
@@ -1637,8 +1654,10 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
                      sim_list = list(Fn_mean_sim = Fn_mean_sim,
                                      Fn_rep_sim = Fn_rep_sim,
                                      L2FC_ks_mean = L2FC_ks_mean,
-                                     RNA_conc = RNA_conc,
-                                     rel_RNA_c = rel_RNA_c,
+                                     RNA_conc_s4U = RNA_conc_s4U,
+                                     RNA_conc_ctl = RNA_conc_ctl,
+                                     rel_RNA_c_s4U = rel_RNA_c_s4U,
+                                     rel_RNA_c_ctl = rel_RNA_c_ctl,
                                      Counts = Counts) )
   }
   

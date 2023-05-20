@@ -895,93 +895,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
 
   }
-
-
-
-
-
-  # ESTIMATE VARIANCE VS. READ COUNT TREND -------------------------------------
-
-
-  ## Now affiliate each fnum, mut with a bin Id based on read counts,
-  ## bin data by bin_ID and average log10(reads) and log(sd(logit_fn))
-
-  if(is.null(nbin)){
-    nbin <- max(c(round(ngene*sum(nreps)/100), 10))
-  }
-
-  message("Estimating read count-variance relationship")
-
-
-  if(NSS){
-    Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(logit_fn_rep)^2) +logit_fn_se^2 ) ) ) )) %>%
-      dplyr::ungroup() %>%
-      dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
-      dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
-
-    ## Estimate read count vs. replicate variability trend
-
-    lm_list <- vector("list", length = nMT)
-    lm_var <- lm_list
-
-    # One linear model for each experimental condition
-    for(i in 1:nMT){
-      heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
-      h_int <- summary(heterosked_lm)$coefficients[1,1]
-      h_slope <- summary(heterosked_lm)$coefficients[2,1]
-      lm_list[[i]] <- c(h_int, h_slope)
-
-      lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
-    }
-
-    # Put linear model fit extrapolation into convenient data frame
-    true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(logit_fn_rep)^2) + logit_fn_se^2 ) ) ) )) %>%
-      dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
-      dplyr::group_by(mut) %>%
-      dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
-
-    log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
-    logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
-
-  }else{
-    Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
-      dplyr::ungroup() %>%
-      dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
-      dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
-
-    ## Estimate read count vs. replicate variability trend
-
-    lm_list <- vector("list", length = nMT)
-    lm_var <- lm_list
-
-    # One linear model for each experimental condition
-    for(i in 1:nMT){
-      heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
-      h_int <- summary(heterosked_lm)$coefficients[1,1]
-      h_slope <- summary(heterosked_lm)$coefficients[2,1]
-      lm_list[[i]] <- c(h_int, h_slope)
-
-      lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
-    }
-
-    # Put linear model fit extrapolation into convenient data frame
-    true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
-      dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
-      dplyr::group_by(mut) %>%
-      dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
-
-    log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
-    logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
-
-  }
-
-
-
-  # PREP DATA FOR REGULARIZATION -----------------------------------------------
+  
+  logit_fn <- Mut_data_est$logit_fn_rep
 
   # Report numerical instabilities from maximum likelihood estimation
   if(!(all(logit_fn < upper) & all(logit_fn > lower))){
@@ -991,6 +906,488 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     warning(paste0(num_unstable, " out of " , tot_ests, " (", prcnt_unstable,"%)", " logit(fn) estimates are at the upper or lower bounds set. These likely represent features with limited data or extremely stable/unstable features. If the number of boundary estimates is concerning, try increasing the magnitude of upper and lower."))
   }
 
+
+  # ESTIMATE VARIANCE VS. READ COUNT TREND -------------------------------------
+
+  
+  out <- avg_and_regularize(Mut_data_est, nreps,
+                            nbin = nbin, NSS = NSS, 
+                            BDA_model = BDA_model, null_cutoff = null_cutoff,
+                            Mutrates = pmuts_list)
+  
+  return(out)
+
+  # ## Now affiliate each fnum, mut with a bin Id based on read counts,
+  # ## bin data by bin_ID and average log10(reads) and log(sd(logit_fn))
+  # 
+  # if(is.null(nbin)){
+  #   nbin <- max(c(round(ngene*sum(nreps)/100), 10))
+  # }
+  # 
+  # message("Estimating read count-variance relationship")
+  # 
+  # 
+  # if(NSS){
+  #   Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+  #     dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(logit_fn_rep)^2) +logit_fn_se^2 ) ) ) )) %>%
+  #     dplyr::ungroup() %>%
+  #     dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
+  #     dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
+  # 
+  #   ## Estimate read count vs. replicate variability trend
+  # 
+  #   lm_list <- vector("list", length = nMT)
+  #   lm_var <- lm_list
+  # 
+  #   # One linear model for each experimental condition
+  #   for(i in 1:nMT){
+  #     heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
+  #     h_int <- summary(heterosked_lm)$coefficients[1,1]
+  #     h_slope <- summary(heterosked_lm)$coefficients[2,1]
+  #     lm_list[[i]] <- c(h_int, h_slope)
+  # 
+  #     lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
+  #   }
+  # 
+  #   # Put linear model fit extrapolation into convenient data frame
+  #   true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+  #     dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(logit_fn_rep)^2) + logit_fn_se^2 ) ) ) )) %>%
+  #     dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
+  #     dplyr::group_by(mut) %>%
+  #     dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
+  # 
+  #   log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
+  #   logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
+  # 
+  # }else{
+  #   Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+  #     dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
+  #     dplyr::ungroup() %>%
+  #     dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
+  #     dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
+  # 
+  #   ## Estimate read count vs. replicate variability trend
+  # 
+  #   lm_list <- vector("list", length = nMT)
+  #   lm_var <- lm_list
+  # 
+  #   # One linear model for each experimental condition
+  #   for(i in 1:nMT){
+  #     heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
+  #     h_int <- summary(heterosked_lm)$coefficients[1,1]
+  #     h_slope <- summary(heterosked_lm)$coefficients[2,1]
+  #     lm_list[[i]] <- c(h_int, h_slope)
+  # 
+  #     lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
+  #   }
+  # 
+  #   # Put linear model fit extrapolation into convenient data frame
+  #   true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+  #     dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
+  #     dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
+  #     dplyr::group_by(mut) %>%
+  #     dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
+  # 
+  #   log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
+  #   logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
+  # 
+  # }
+  # 
+  # 
+  # 
+  # # PREP DATA FOR REGULARIZATION -----------------------------------------------
+  # 
+  # # Vectors of use
+  # kd_estimate <- as.vector(Mut_data_est$kd_rep_est)
+  # log_kd_se <- as.vector(Mut_data_est$log_kd_se)
+  # logit_fn_se <- as.vector(Mut_data_est$logit_fn_se)
+  # Replicate <- as.vector(Mut_data_est$reps)
+  # Condition <- as.vector(Mut_data_est$mut)
+  # Gene_ID <- as.vector(Mut_data_est$fnum)
+  # nreads <- as.vector(Mut_data_est$nreads)
+  # 
+  # rm(Mut_data_est)
+  # 
+  # # Create new data frame with kinetic parameter estimates and uncertainties
+  # df_fn <- data.frame(logit_fn, logit_fn_se, Replicate, Condition, Gene_ID, nreads, log_kd, kd_estimate, log_kd_se)
+  # 
+  # 
+  # # Remove vectors no longer of use
+  # rm(logit_fn)
+  # rm(logit_fn_se)
+  # rm(Replicate)
+  # rm(Condition)
+  # rm(Gene_ID)
+  # rm(nreads)
+  # 
+  # df_fn <- df_fn[order(df_fn$Gene_ID, df_fn$Condition, df_fn$Replicate),]
+  # 
+  # 
+  # # Relabel logit(fn) as log(kdeg) for steady-state independent analysis
+  # if(NSS){
+  #   colnames(df_fn) <- c("log_kd", "log_kd_se", "Replicate", "Condition", "Gene_ID", "nreads", "logit_fn", "kd_estimate", "logit_fn_se")
+  # 
+  #   df_fn$kd_estimate <- inv_logit(df_fn$log_kd)
+  # }
+  # 
+  # 
+  # 
+  # # AVERAGE REPLICATE DATA AND REGULARIZE WITH INFORMATIVE PRIORS --------------
+  # 
+  # message("Averaging replicate data and regularizing estimates")
+  # 
+  # #Average over replicates and estimate hyperparameters
+  # avg_df_fn_bayes <- df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
+  #   dplyr::summarize(avg_log_kd = stats::weighted.mean(log_kd, 1/log_kd_se),
+  #                    sd_log_kd = sqrt(1/sum(1/((stats::sd(log_kd)^2) + log_kd_se^2 ) ) ),
+  #                    nreads = sum(nreads)) %>% dplyr::ungroup() %>%
+  #   dplyr::group_by(Condition) %>%
+  #   dplyr::mutate(sdp = stats::sd(avg_log_kd)) %>%
+  #   dplyr::mutate(theta_o = mean(avg_log_kd)) %>%
+  #   dplyr::ungroup()
+  # 
+  # 
+  # 
+  # #Calcualte population averages
+  # # sdp <- sd(avg_df_fn$avg_logit_fn) # Will be prior sd in regularization of mean
+  # # theta_o <- mean(avg_df_fn$avg_logit_fn) # Will be prior mean in regularization of mean
+  # 
+  # var_pop <- mean(avg_df_fn_bayes$sd_log_kd^2) # Will be prior mean in regularization of sd
+  # var_of_var <- stats::var(avg_df_fn_bayes$sd_log_kd^2) # Will be prior variance in regularization of sd
+  # 
+  # 
+  # ## Regularize standard deviation estimate
+  # 
+  # # Estimate hyperpriors with method of moments
+  # 
+  # a_hyper <- 2*(var_pop^2)/var_of_var + 4
+  # # that serves as prior degrees of freedom
+  # 
+  # b_hyper <- (var_pop*(a_hyper - 2))/a_hyper
+  # 
+  # 
+  # if(BDA_model){ # Not yet working well; inverse chi-squared model from BDA3
+  #   avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
+  #     dplyr::mutate(sd_post = (sd_log_kd*nreps[Condition] + a_hyper*exp(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(a_hyper + nreps[Condition] - 2) ) %>%
+  #     dplyr::mutate(log_kd_post = (avg_log_kd*(nreps[Condition]*(1/(sd_post^2))))/(nreps[Condition]/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps[Condition]/(sd_post^2) + (1/sdp^2))) %>%
+  #     dplyr::mutate(kdeg = exp(log_kd_post) ) %>%
+  #     dplyr::mutate(kdeg_sd = sd_post*exp(log_kd_post) ) %>%
+  #     dplyr::ungroup() %>%
+  #     dplyr::group_by(Gene_ID) %>%
+  #     dplyr::mutate(effect_size = log_kd_post - log_kd_post[Condition == 1]) %>%
+  #     dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post/sqrt(nreps[1]), sqrt((sd_post[Condition == 1]^2)/nreps[1] + (sd_post^2)/nreps[Condition] ) )) %>%
+  #     dplyr::mutate(L2FC_kdeg = effect_size*log2(exp(1))) %>%
+  #     dplyr::mutate(pval = pmin(1, 2*stats::pnorm((abs(effect_size) - null_cutoff)/effect_std_error, lower.tail = FALSE))) %>%
+  #     dplyr::ungroup()
+  # 
+  # }else{
+  #   # Regularize estimates with Bayesian models and empirically informed priors
+  #   avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
+  #     dplyr::mutate(sd_post = exp( (log(sd_log_kd)*nreps[Condition]*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])*(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(nreps[Condition]*(1/true_vars$true_var[Condition]) + (1/lm_var[[Condition]])) )) %>%
+  #     dplyr::mutate(log_kd_post = (avg_log_kd*(nreps[Condition]*(1/(sd_post^2))))/(nreps[Condition]/(sd_post^2) + (1/sdp^2)) + (theta_o*(1/sdp^2))/(nreps[Condition]/(sd_post^2) + (1/sdp^2))) %>%
+  #     dplyr::mutate(kdeg = exp(log_kd_post) ) %>%
+  #     dplyr::mutate(kdeg_sd = sd_post*exp(log_kd_post) ) %>%
+  #     dplyr::ungroup() %>%
+  #     dplyr::group_by(Gene_ID) %>%
+  #     dplyr::mutate(effect_size = log_kd_post - log_kd_post[Condition == 1]) %>%
+  #     dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
+  #     dplyr::mutate(L2FC_kdeg = effect_size*log2(exp(1))) %>%
+  #     dplyr::mutate(pval = pmin(1, 2*stats::pt((abs(effect_size) - null_cutoff)/effect_std_error, df = 2*(nreps[Condition]-1) + 2*a_hyper, lower.tail = FALSE))) %>%
+  #     dplyr::ungroup()
+  # 
+  # 
+  # }
+  # 
+  # 
+  # 
+  # # STATISTICAL TESTING --------------------------------------------------------
+  # 
+  # 
+  # message("Assessing statistical significance")
+  # 
+  # ## Populate various data frames with important fit information
+  # 
+  # effects <- avg_df_fn_bayes$effect_size[avg_df_fn_bayes$Condition > 1]
+  # ses <- avg_df_fn_bayes$effect_std_error[avg_df_fn_bayes$Condition > 1]
+  # 
+  # pval <- avg_df_fn_bayes$pval[avg_df_fn_bayes$Condition > 1]
+  # padj <- stats::p.adjust(pval, method = "BH")
+  # 
+  # 
+  # # ORGANIZE OUTPUT ------------------------------------------------------------
+  # 
+  # Genes_effects <- avg_df_fn_bayes$Gene_ID[avg_df_fn_bayes$Condition > 1]
+  # Condition_effects <- avg_df_fn_bayes$Condition[avg_df_fn_bayes$Condition > 1]
+  # 
+  # L2FC_kdegs <- avg_df_fn_bayes$L2FC_kdeg[avg_df_fn_bayes$Condition > 1]
+  # 
+  # Effect_sizes_df <- data.frame(Genes_effects, Condition_effects, L2FC_kdegs, effects, ses, pval, padj)
+  # 
+  # colnames(Effect_sizes_df) <- c("Feature_ID", "Exp_ID", "L2FC_kdeg", "effect", "se", "pval", "padj")
+  # 
+  # # Add sample information to output
+  # df_fn <- merge(df_fn, sample_lookup, by.x = c("Condition", "Replicate"), by.y = c("mut", "reps"))
+  # 
+  # # Add feature name information to output
+  # df_fn <- merge(df_fn, feature_lookup, by.x = "Gene_ID", by.y = "fnum")
+  # avg_df_fn_bayes <- merge(avg_df_fn_bayes, feature_lookup, by.x = "Gene_ID", by.y = "fnum")
+  # Effect_sizes_df <- merge(Effect_sizes_df, feature_lookup, by.x = "Feature_ID", by.y = "fnum")
+  # 
+  # # Order output
+  # df_fn <- df_fn[order(df_fn$Gene_ID, df_fn$Condition, df_fn$Replicate),]
+  # avg_df_fn_bayes <- avg_df_fn_bayes[order(avg_df_fn_bayes$Gene_ID, avg_df_fn_bayes$Condition),]
+  # Effect_sizes_df <- Effect_sizes_df[order(Effect_sizes_df$Feature_ID, Effect_sizes_df$Exp_ID),]
+  # 
+  # 
+  # avg_df_fn_bayes <- avg_df_fn_bayes[,c("Gene_ID", "Condition", "avg_log_kd", "sd_log_kd", "nreads", "sdp", "theta_o", "sd_post",
+  #                                       "log_kd_post", "kdeg", "kdeg_sd", "XF")]
+  # 
+  # colnames(avg_df_fn_bayes) <- c("Feature_ID", "Exp_ID", "avg_log_kdeg", "sd_log_kdeg", "nreads", "sdp", "theta_o", "sd_post",
+  #                                "log_kdeg_post", "kdeg", "kdeg_sd", "XF")
+  # 
+  # if(NSS){
+  #   colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se", "nreads", "log_kdeg", "fn", "log_kd_se", "sample", "XF")
+  # }else{
+  #   colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se", "nreads", "log_kdeg", "kdeg", "log_kd_se", "sample", "XF")
+  # }
+  # 
+  # 
+  # # Convert to tibbles because I like tibbles better
+  # fast_list <- list(dplyr::as_tibble(df_fn), dplyr::as_tibble(avg_df_fn_bayes), dplyr::as_tibble(Effect_sizes_df), pmuts_list, c(a = a_hyper, b = b_hyper), lm_list)
+  # 
+  # names(fast_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates", "Hyper_Parameters", "Mean_Variance_lms")
+  # 
+  # class(fast_list) <- "FastFit"
+  # 
+  # message("All done! Run QC_checks() on your bakRFit object to assess the quality of your data and get recommendations for next steps.")
+  # 
+  # return(fast_list)
+
+}
+
+#' Efficiently analyze nucleotide recoding data
+#'
+#' \code{fast_analysis} analyzes nucleotide recoding data maximum likelihood estimation with the L-BFGS-B algorithm
+#' implemented by \code{stats::optim} combined with analytic solutions to simple Bayesian models to perform
+#' approximate partial pooling. Output includes kinetic parameter estimates in each replicate, kinetic parameter estimates
+#' averaged across replicates, and log-2 fold changes in the degradation rate constant (L2FC(kdeg)).
+#' Averaging takes into account uncertainties estimated using the Fisher Information and estimates
+#' are regularized using analytic solutions of fully Bayesian models. The result is that kdegs are
+#' shrunk towards population means and that uncertainties are shrunk towards a mean-variance trend estimated as part of the analysis.
+#'
+#' Unless the user supplies estimates for pnew and pold, the first step of \code{fast_analysis} is to estimate the background
+#' and metabolic label (will refer to as s4U for simplicity, though bakR is compatible with other metabolic labels such as s6G)
+#' induced mutation rates. The former is best performed with a -s4U control sample, that is, a normal RNA-seq sample
+#' that lacks a -s4U feed or TimeLapse chemistry conversion of s4U to a C analog. If this sample is missing, both background and
+#' s4U induced mutation rates are estimated from the s4U fed samples. For the s4U mutation rate, features with sufficient read depth,
+#' as defined by the \code{read_cut} parameter, and the highest mutation rates are assumed to be completely labeled. Thus, the
+#' average mutation rates in these features is taken as the estimate of the s4U induced mutation rate in that sample. s4U induced mutation
+#' rates are estimated on a per-sample basis as there is often much more variability in these mutation rates than in the background
+#' mutation rates.
+#'
+#' If a -s4U control is included, the background mutation rate is estimated using all features in the control sample(s) with read depths
+#' greater than \code{read_cut}. The average mutation rate among these features is taken as the estimated background mutation rate,
+#' and that background is assumed to be constant for all samples. If a -s4U control is missing, then a strategy similar to that used
+#' to estimate s4U induced mutation rates is used. In this case, the lowest mutation rate features with sufficient read depths are used,
+#' and there average mutation rate is the background mutation rate estimate, as these features are assumed to be almost entirely unlabeled.
+#' Another slightly more computationally intensive but more accurate strategy to estimate mutation rates is to set \code{StanRate} = TRUE.
+#' This will fit a non-hierarchical mixture model to a small subset of transcripts using 'Stan'. The default in \code{bakRFit} is to use
+#' 25 transcripts. If \code{StanRate} is TRUE, then a data list must be passed to \code{Stan_data} of the form that appears in the
+#' bakRFit object's Data_list$Stan_data entry.
+#'
+#' Once mutation rates are estimated, fraction news for each feature in each sample are estimated. The approach utilized is MLE
+#' using the L-BFGS-B algorithm implemented in \code{stats::optim}. The assumed likelihood function is derived from a Poisson mixture
+#' model with rates adjusted according to each feature's empirical U-content (the average number of Us present in sequencing reads mapping
+#' to that feature in a particular sample). Fraction new estimates are then converted to degradation rate constant estimates using
+#' a solution to a simple ordinary differential equation model of RNA metabolism.
+#'
+#' Once fraction new and kdegs are estimated, the uncertainty in these parameters is estimated using the Fisher Information. In the limit of
+#' large datasets, the variance of the MLE is inversely proportional to the Fisher Information evaluated at the MLE. Mixture models are
+#' typically singular, meaning that the Fisher information matrix is not positive definite and asymptotic results for the variance
+#' do not necessarily hold. As the mutation rates are estimated a priori and fixed to be > 0, these problems are eliminated. In addition, when assessing
+#' the uncertainty of replicate fraction new estimates, the size of the dataset is the raw number of sequencing reads that map to a
+#' particular feature. This number is often large (>100) which increases the validity of invoking asymptotics.
+#'
+#' With kdegs and their uncertainties estimated, replicate estimates are pooled and regularized. There are two key steps in this
+#' downstream analysis. 1st, the uncertainty for each feature is used to fit a linear ln(uncertainty) vs. log10(read depth) trend,
+#' and uncertainties for individual features are shrunk towards the regression line. The uncertainty for each feature is a combination of the
+#' Fisher Information asymptotic uncertainty as well as the amount of variability seen between estimates. Regularization of uncertainty
+#' estimates is performed using the analytic results of a Normal distribution likelihood with known mean and unknown variance and conjugate
+#' priors. The prior parameters are estimated from the regression and amount of variability about the regression line. The strength of
+#' regularization can be tuned by adjusting the \code{prior_weight} parameter, with larger numbers yielding stronger shrinkage towards
+#' the regression line. The 2nd step is to regularize the average kdeg estimates. This is done using the analytic results of a
+#' Normal distribution likelihood model with unknown mean and known variance and conjugate priors. The prior parameters are estimated from the
+#' population wide kdeg distribution (using its mean and standard deviation as the mean and standard deviation of the normal prior).
+#' In the 1st step, the known mean is assumed to be the average kdeg, averaged across replicates and weighted by the number of reads
+#' mapping to the feature in each replicate. In the 2nd step, the known variance is assumed to be that obtained following regularization
+#' of the uncertainty estimates.
+#'
+#' Effect sizes (changes in kdeg) are obtained as the difference in log(kdeg) means between the reference and experimental
+#' sample(s), and the log(kdeg)s are assumed to be independent so that the variance of the effect size is the sum of the
+#' log(kdeg) variances. P-values assessing the significance of the effect size are obtained using a moderated t-test with number
+#' of degrees of freedom determined from the uncertainty regression hyperparameters and are adjusted for multiple testing using the Benjamini-
+#' Hochberg procedure to control false discovery rates (FDRs).
+#'
+#' In some cases, the assumed ODE model of RNA metabolism will not accurately model the dynamics of a biological system being analyzed.
+#' In these cases, it is best to compare logit(fraction new)s directly rather than converting fraction new to log(kdeg).
+#' This analysis strategy is implemented when \code{NSS} is set to TRUE. Comparing logit(fraction new) is only valid
+#' If a single metabolic label time has been used for all samples. For example, if a label time of 1 hour was used for NR-seq
+#' data from WT cells and a 2 hour label time was used in KO cells, this comparison is no longer valid as differences in
+#' logit(fraction new) could stem from differences in kinetics or label times.
+#'
+#'
+#' @param Mut_data_est Dataframe with fraction new estimation information
+#' @param nbin Number of bins for mean-variance relationship estimation. If NULL, max of 10 or (number of logit(fn) estimates)/100 is used
+#' @param null_cutoff bakR will test the null hypothesis of |effect size| < |null_cutoff|
+#' @param NSS Logical; if TRUE, logit(fn)s are compared rather than log(kdeg) so as to avoid steady-state assumption.
+#' @param Chase Logical; Set to TRUE if analyzing a pulse-chase experiment. If TRUE, kdeg = -ln(fn)/tl where fn is the fraction of
+#' reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment)
+#' @param BDA_model Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
+#' model is used.
+#' @return List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
+#' \itemize{
+#'  \item Fn_Estimates; dataframe with estimates for the fraction new and fraction new uncertainty for each feature in each replicate.
+#'  The columns of this dataframe are:
+#'  \itemize{
+#'   \item Feature_ID; Numerical ID of feature
+#'   \item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
+#'   \item Replicate; Numerical ID for replicate
+#'   \item logit_fn; logit(fraction new) estimate, unregularized
+#'   \item logit_fn_se; logit(fraction new) uncertainty, unregularized and obtained from Fisher Information
+#'   \item nreads; Number of reads mapping to the feature in the sample for which the estimates were obtained
+#'   \item log_kdeg; log of degradation rate constant (kdeg) estimate, unregularized
+#'   \item kdeg; degradation rate constant (kdeg) estimate
+#'   \item log_kd_se; log(kdeg) uncertainty, unregularized and obtained from Fisher Information
+#'   \item sample; Sample name
+#'   \item XF; Original feature name
+#'  }
+#'  \item Regularized_ests; dataframe with average fraction new and kdeg estimates, averaged across the replicates and regularized
+#'  using priors informed by the entire dataset. The columns of this dataframe are:
+#'  \itemize{
+#'   \item Feature_ID; Numerical ID of feature
+#'   \item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
+#'   \item avg_log_kdeg; Weighted average of log(kdeg) from each replicate, weighted by sample and feature-specific read depth
+#'   \item sd_log_kdeg; Standard deviation of the log(kdeg) estimates
+#'   \item nreads; Total number of reads mapping to the feature in that condition
+#'   \item sdp; Prior standard deviation for fraction new estimate regularization
+#'   \item theta_o; Prior mean for fraction new estimate regularization
+#'   \item sd_post; Posterior uncertainty
+#'   \item log_kdeg_post; Posterior mean for log(kdeg) estimate
+#'   \item kdeg; exp(log_kdeg_post)
+#'   \item kdeg_sd; kdeg uncertainty
+#'   \item XF; Original feature name
+#'  }
+#'  \item Effects_df; dataframe with estimates of the effect size (change in logit(fn)) comparing each experimental condition to the
+#'  reference sample for each feature. This dataframe also includes p-values obtained from a moderated t-test. The columns of this
+#'  dataframe are:
+#'  \itemize{
+#'   \item Feature_ID; Numerical ID of feature
+#'   \item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
+#'   \item L2FC(kdeg); Log2 fold change (L2FC) kdeg estimate or change in logit(fn) if NSS TRUE
+#'   \item effect; LFC(kdeg)
+#'   \item se; Uncertainty in L2FC_kdeg
+#'   \item pval; P-value obtained using effect_size, se, and a z-test
+#'   \item padj; pval adjusted for multiple testing using Benjamini-Hochberg procedure
+#'   \item XF; Original feature name
+#'  }
+#'  \item Mut_rates; list of two elements. The 1st element is a dataframe of s4U induced mutation rate estimates, where the mut column
+#'  represents the experimental ID and the rep column represents the replicate ID. The 2nd element is the single background mutation
+#'  rate estimate used
+#'  \item Hyper_Parameters; vector of two elements, named a and b. These are the hyperparameters estimated from the uncertainties for each
+#'  feature, and represent the two parameters of a Scaled Inverse Chi-Square distribution. Importantly, a is the number of additional
+#'  degrees of freedom provided by the sharing of uncertainty information across the dataset, to be used in the moderated t-test.
+#'  \item Mean_Variance_lms; linear model objects obtained from the uncertainty vs. read count regression model. One model is run for each Exp_ID
+#' }
+#' @importFrom magrittr %>%
+avg_and_regularize <- function(Mut_data_est, nreps, 
+                               nbin = NULL, NSS = FALSE, 
+                               BDA_model = FALSE, null_cutoff = 0,
+                               Mutrates = NULL){
+  
+  # ESTIMATE VARIANCE VS. READ COUNT TREND -------------------------------------
+  
+  ngene <- max(Mut_data_est$fnum)
+
+  ## Now affiliate each fnum, mut with a bin Id based on read counts,
+  ## bin data by bin_ID and average log10(reads) and log(sd(logit_fn))
+  
+  if(is.null(nbin)){
+    nbin <- max(c(round(ngene*sum(nreps)/100), 10))
+  }
+  
+  message("Estimating read count-variance relationship")
+  
+  
+  if(NSS){
+    Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(logit_fn_rep)^2) +logit_fn_se^2 ) ) ) )) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
+      dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
+    
+    ## Estimate read count vs. replicate variability trend
+    
+    lm_list <- vector("list", length = nMT)
+    lm_var <- lm_list
+    
+    # One linear model for each experimental condition
+    for(i in 1:nMT){
+      heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
+      h_int <- summary(heterosked_lm)$coefficients[1,1]
+      h_slope <- summary(heterosked_lm)$coefficients[2,1]
+      lm_list[[i]] <- c(h_int, h_slope)
+      
+      lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
+    }
+    
+    # Put linear model fit extrapolation into convenient data frame
+    true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(logit_fn_rep)^2) + logit_fn_se^2 ) ) ) )) %>%
+      dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
+      dplyr::group_by(mut) %>%
+      dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
+    
+    log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
+    logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
+    
+  }else{
+    Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
+      dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
+    
+    ## Estimate read count vs. replicate variability trend
+    
+    lm_list <- vector("list", length = nMT)
+    lm_var <- lm_list
+    
+    # One linear model for each experimental condition
+    for(i in 1:nMT){
+      heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
+      h_int <- summary(heterosked_lm)$coefficients[1,1]
+      h_slope <- summary(heterosked_lm)$coefficients[2,1]
+      lm_list[[i]] <- c(h_int, h_slope)
+      
+      lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
+    }
+    
+    # Put linear model fit extrapolation into convenient data frame
+    true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
+      dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
+      dplyr::group_by(mut) %>%
+      dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
+    
+    log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
+    logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
+    
+  }
+  
+  
+  
+  # PREP DATA FOR REGULARIZATION -----------------------------------------------
+  
   # Vectors of use
   kd_estimate <- as.vector(Mut_data_est$kd_rep_est)
   log_kd_se <- as.vector(Mut_data_est$log_kd_se)
@@ -999,13 +1396,13 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   Condition <- as.vector(Mut_data_est$mut)
   Gene_ID <- as.vector(Mut_data_est$fnum)
   nreads <- as.vector(Mut_data_est$nreads)
-
+  
   rm(Mut_data_est)
-
+  
   # Create new data frame with kinetic parameter estimates and uncertainties
   df_fn <- data.frame(logit_fn, logit_fn_se, Replicate, Condition, Gene_ID, nreads, log_kd, kd_estimate, log_kd_se)
-
-
+  
+  
   # Remove vectors no longer of use
   rm(logit_fn)
   rm(logit_fn_se)
@@ -1013,23 +1410,23 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   rm(Condition)
   rm(Gene_ID)
   rm(nreads)
-
+  
   df_fn <- df_fn[order(df_fn$Gene_ID, df_fn$Condition, df_fn$Replicate),]
-
-
+  
+  
   # Relabel logit(fn) as log(kdeg) for steady-state independent analysis
   if(NSS){
     colnames(df_fn) <- c("log_kd", "log_kd_se", "Replicate", "Condition", "Gene_ID", "nreads", "logit_fn", "kd_estimate", "logit_fn_se")
-
+    
     df_fn$kd_estimate <- inv_logit(df_fn$log_kd)
   }
-
-
-
+  
+  
+  
   # AVERAGE REPLICATE DATA AND REGULARIZE WITH INFORMATIVE PRIORS --------------
-
+  
   message("Averaging replicate data and regularizing estimates")
-
+  
   #Average over replicates and estimate hyperparameters
   avg_df_fn_bayes <- df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
     dplyr::summarize(avg_log_kd = stats::weighted.mean(log_kd, 1/log_kd_se),
@@ -1039,27 +1436,27 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     dplyr::mutate(sdp = stats::sd(avg_log_kd)) %>%
     dplyr::mutate(theta_o = mean(avg_log_kd)) %>%
     dplyr::ungroup()
-
-
-
+  
+  
+  
   #Calcualte population averages
   # sdp <- sd(avg_df_fn$avg_logit_fn) # Will be prior sd in regularization of mean
   # theta_o <- mean(avg_df_fn$avg_logit_fn) # Will be prior mean in regularization of mean
-
+  
   var_pop <- mean(avg_df_fn_bayes$sd_log_kd^2) # Will be prior mean in regularization of sd
   var_of_var <- stats::var(avg_df_fn_bayes$sd_log_kd^2) # Will be prior variance in regularization of sd
-
-
+  
+  
   ## Regularize standard deviation estimate
-
+  
   # Estimate hyperpriors with method of moments
-
+  
   a_hyper <- 2*(var_pop^2)/var_of_var + 4
   # that serves as prior degrees of freedom
-
+  
   b_hyper <- (var_pop*(a_hyper - 2))/a_hyper
-
-
+  
+  
   if(BDA_model){ # Not yet working well; inverse chi-squared model from BDA3
     avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
       dplyr::mutate(sd_post = (sd_log_kd*nreps[Condition] + a_hyper*exp(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(a_hyper + nreps[Condition] - 2) ) %>%
@@ -1073,7 +1470,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       dplyr::mutate(L2FC_kdeg = effect_size*log2(exp(1))) %>%
       dplyr::mutate(pval = pmin(1, 2*stats::pnorm((abs(effect_size) - null_cutoff)/effect_std_error, lower.tail = FALSE))) %>%
       dplyr::ungroup()
-
+    
   }else{
     # Regularize estimates with Bayesian models and empirically informed priors
     avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
@@ -1088,73 +1485,85 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       dplyr::mutate(L2FC_kdeg = effect_size*log2(exp(1))) %>%
       dplyr::mutate(pval = pmin(1, 2*stats::pt((abs(effect_size) - null_cutoff)/effect_std_error, df = 2*(nreps[Condition]-1) + 2*a_hyper, lower.tail = FALSE))) %>%
       dplyr::ungroup()
-
-
+    
+    
   }
-
-
-
+  
+  
+  
   # STATISTICAL TESTING --------------------------------------------------------
-
-
+  
+  
   message("Assessing statistical significance")
-
+  
   ## Populate various data frames with important fit information
-
+  
   effects <- avg_df_fn_bayes$effect_size[avg_df_fn_bayes$Condition > 1]
   ses <- avg_df_fn_bayes$effect_std_error[avg_df_fn_bayes$Condition > 1]
-
+  
   pval <- avg_df_fn_bayes$pval[avg_df_fn_bayes$Condition > 1]
   padj <- stats::p.adjust(pval, method = "BH")
-
-
+  
+  
   # ORGANIZE OUTPUT ------------------------------------------------------------
-
+  
   Genes_effects <- avg_df_fn_bayes$Gene_ID[avg_df_fn_bayes$Condition > 1]
   Condition_effects <- avg_df_fn_bayes$Condition[avg_df_fn_bayes$Condition > 1]
-
+  
   L2FC_kdegs <- avg_df_fn_bayes$L2FC_kdeg[avg_df_fn_bayes$Condition > 1]
-
+  
   Effect_sizes_df <- data.frame(Genes_effects, Condition_effects, L2FC_kdegs, effects, ses, pval, padj)
-
+  
   colnames(Effect_sizes_df) <- c("Feature_ID", "Exp_ID", "L2FC_kdeg", "effect", "se", "pval", "padj")
-
+  
   # Add sample information to output
   df_fn <- merge(df_fn, sample_lookup, by.x = c("Condition", "Replicate"), by.y = c("mut", "reps"))
-
+  
   # Add feature name information to output
   df_fn <- merge(df_fn, feature_lookup, by.x = "Gene_ID", by.y = "fnum")
   avg_df_fn_bayes <- merge(avg_df_fn_bayes, feature_lookup, by.x = "Gene_ID", by.y = "fnum")
   Effect_sizes_df <- merge(Effect_sizes_df, feature_lookup, by.x = "Feature_ID", by.y = "fnum")
-
+  
   # Order output
   df_fn <- df_fn[order(df_fn$Gene_ID, df_fn$Condition, df_fn$Replicate),]
   avg_df_fn_bayes <- avg_df_fn_bayes[order(avg_df_fn_bayes$Gene_ID, avg_df_fn_bayes$Condition),]
   Effect_sizes_df <- Effect_sizes_df[order(Effect_sizes_df$Feature_ID, Effect_sizes_df$Exp_ID),]
-
-
+  
+  
   avg_df_fn_bayes <- avg_df_fn_bayes[,c("Gene_ID", "Condition", "avg_log_kd", "sd_log_kd", "nreads", "sdp", "theta_o", "sd_post",
                                         "log_kd_post", "kdeg", "kdeg_sd", "XF")]
-
+  
   colnames(avg_df_fn_bayes) <- c("Feature_ID", "Exp_ID", "avg_log_kdeg", "sd_log_kdeg", "nreads", "sdp", "theta_o", "sd_post",
                                  "log_kdeg_post", "kdeg", "kdeg_sd", "XF")
-
+  
   if(NSS){
     colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se", "nreads", "log_kdeg", "fn", "log_kd_se", "sample", "XF")
   }else{
     colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se", "nreads", "log_kdeg", "kdeg", "log_kd_se", "sample", "XF")
   }
-
-
-  # Convert to tibbles because I like tibbles better
-  fast_list <- list(dplyr::as_tibble(df_fn), dplyr::as_tibble(avg_df_fn_bayes), dplyr::as_tibble(Effect_sizes_df), pmuts_list, c(a = a_hyper, b = b_hyper), lm_list)
-
-  names(fast_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates", "Hyper_Parameters", "Mean_Variance_lms")
-
-  class(fast_list) <- "FastFit"
-
-  message("All done! Run QC_checks() on your bakRFit object to assess the quality of your data and get recommendations for next steps.")
-
+  
+  if(!is.null(Mutrates)){
+    # Convert to tibbles because I like tibbles better
+    fast_list <- list(dplyr::as_tibble(df_fn), dplyr::as_tibble(avg_df_fn_bayes), dplyr::as_tibble(Effect_sizes_df), c(a = a_hyper, b = b_hyper), lm_list)
+    
+    names(fast_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Hyper_Parameters", "Mean_Variance_lms")
+    
+    class(fast_list) <- "FastFit"
+    
+    message("All done! Run QC_checks() on your bakRFit object to assess the quality of your data and get recommendations for next steps.")
+    
+  }else{
+    # Convert to tibbles because I like tibbles better
+    fast_list <- list(dplyr::as_tibble(df_fn), dplyr::as_tibble(avg_df_fn_bayes), dplyr::as_tibble(Effect_sizes_df), pmuts_list, c(a = a_hyper, b = b_hyper), lm_list)
+    
+    names(fast_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates", "Hyper_Parameters", "Mean_Variance_lms")
+    
+    class(fast_list) <- "FastFit"
+    
+    message("All done! Run QC_checks() on your bakRFit object to assess the quality of your data and get recommendations for next steps.")
+    
+  }
+  
   return(fast_list)
-
+  
 }
