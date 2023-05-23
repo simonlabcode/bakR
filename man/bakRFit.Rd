@@ -112,6 +112,16 @@ as the output of \code{cBprocess} will already be contained in the bakRFit objec
 or if \code{FastRerun} is set to TRUE. If you want to generate model fits using different parameters for cBprocess,
 you will have to rerun \code{bakRFit} on the bakRData object.
 
+If \code{bakRFit} is run on a bakRFnData object, \code{fn_process} and then \code{avg_and_regularize}
+will always be called. The former will generate the processed data that can be passed to the model
+fitting functions (\code{avg_and_regularize} and \code{TL_Stan}, the latter only with HybridFit = TRUE).
+
+If \code{bakRFit} is run on a bakRFnFit object. \code{fn_process} will not be called again, as
+the output of \code{fn_process} will already be contained in the bakRFnFit object. Similary,
+\code{avg_and_regularize} will not be called unless \code{bakRFit} is rerun on the bakRData object,
+or if \code{FastRerun} is set to TRUE. If you want to generate model fits using different
+parameters for \code{fn_process}, you will have to rerun \code{bakRFit} on the bakRData object.
+
 See the documentation for the individual fitting functions for details regarding how they analyze nucleotide
 recoding data. What follows is a brief overview of how each works
 
