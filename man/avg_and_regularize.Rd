@@ -11,6 +11,7 @@ avg_and_regularize(
   feature_lookup,
   nbin = NULL,
   NSS = FALSE,
+  Chase = FALSE,
   BDA_model = FALSE,
   null_cutoff = 0,
   Mutrates = NULL
@@ -29,13 +30,15 @@ avg_and_regularize(
 
 \item{NSS}{Logical; if TRUE, logit(fn)s are compared rather than log(kdeg) so as to avoid steady-state assumption.}
 
+\item{Chase}{Logical; Set to TRUE if analyzing a pulse-chase experiment. If TRUE, kdeg = -ln(fn)/tl where fn is the fraction of
+reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment)}
+
 \item{BDA_model}{Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 model is used.}
 
 \item{null_cutoff}{bakR will test the null hypothesis of |effect size| < |null_cutoff|}
 
-\item{Chase}{Logical; Set to TRUE if analyzing a pulse-chase experiment. If TRUE, kdeg = -ln(fn)/tl where fn is the fraction of
-reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment)}
+\item{Mutrates}{List containing new and old mutation rate estimates}
 }
 \value{
 List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:

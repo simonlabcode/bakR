@@ -38,7 +38,7 @@ reliableFeatures <- function(obj,
 
   # Bind variables locally to resolve devtools::check() Notes
   XF <- TC <- n <- totTC <- nT <- n2U <- nmore <- totcounts <- NULL
-  tot_mut <- f2U <- avgU <- counts <- type <- NULL
+  tot_mut <- f2U <- avgU <- counts <- type <- totTs <- NULL
   `.` <- list
 
   cBdt <- as.data.frame(obj$cB)
@@ -711,7 +711,12 @@ cBprocess <- function(obj,
 #' data_for_bakR <- cBprocess(obj = bakRData)
 #' }
 #' @export
-fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c()){
+fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE){
+  
+  # Bind to NULL
+  tl <- ctl <- Exp_ID <- r_id <- XF <- n <- npass <- concat <- NULL
+  Feature_ID <- logit <- fn <- var <- global_mean <- global_var <- alpha_p <- beta_p <- NULL
+
   metadf <- obj$metadf
   fns <- obj$fns
   
@@ -858,7 +863,7 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c()){
   fn_means <- fns %>%
     dplyr::group_by(sample) %>%
     dplyr::summarise(global_mean = mean(fn),
-                     global_var = var(fn))
+                     global_var = stats::var(fn))
   
   priors <- fn_means %>%
     dplyr::mutate(alpha_p = global_mean*(((global_mean*(1-global_mean))/global_var) - 1),
@@ -965,7 +970,7 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c()){
   )
   
   out <- list(Stan_data = data_list, Count_Matrix = Cnt_mat,
-                               Fn_est = as_tibble(fns))
+                               Fn_est = dplyr::as_tibble(fns))
   
   return(out)
 }

@@ -196,6 +196,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   tot_n <- Fisher_kdeg <- Fisher_Logit <- Logit_fn_se <- bin_ID <- kd_sd_log <- NULL
   intercept <- slope <- log_kd_rep_est <- avg_log_kd <- sd_log_kd <- NULL
   sd_post <- sdp <- theta_o <- log_kd_post <- effect_size <- effect_std_error <- NULL
+  n_new <- nreads <- logit_fn_se <- log_kd_se <- NULL
+  
 
 
 
@@ -1206,6 +1208,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 #' reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment)
 #' @param BDA_model Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 #' model is used.
+#' @param Mutrates List containing new and old mutation rate estimates
 #' @return List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
 #' \itemize{
 #'  \item Fn_Estimates; dataframe with estimates for the fraction new and fraction new uncertainty for each feature in each replicate.
@@ -1262,9 +1265,20 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 #' }
 #' @importFrom magrittr %>%
 avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_lookup,
-                               nbin = NULL, NSS = FALSE, 
+                               nbin = NULL, NSS = FALSE, Chase = FALSE,
                                BDA_model = FALSE, null_cutoff = 0,
                                Mutrates = NULL){
+  
+  # Bind variables locally to resolve devtools::check() Notes
+  fnum <- mut <- logit_fn_rep <- bin_ID <- kd_sd_log <- intercept <- NULL
+  slope <- log_kd_rep_est <- avg_log_kd <- sd_log_kd <- sd_post <- NULL
+  sdp <- theta_o <- log_kd_post <- effect_size <- effect_size_std_error <- NULL
+  
+  
+  # Helper functions that I will use on multiple occasions
+  logit <- function(x) log(x/(1-x))
+  inv_logit <- function(x) exp(x)/(1+exp(x))
+  
   
   # ESTIMATE VARIANCE VS. READ COUNT TREND -------------------------------------
   

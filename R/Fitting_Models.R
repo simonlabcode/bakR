@@ -431,7 +431,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
   }else if(inherits(obj, "bakRFnData")){
     
-    data_list <- fn_process(obj, totcut = totcut, Chase = Chase, FOI = FOI)
+    data_list <- fn_process(obj, totcut = totcut, Chase = Chase, FOI = FOI, concat = concat)
     
     ## Necessary hacky preprocessing
     Mut_data_est <- data_list$Fn_est

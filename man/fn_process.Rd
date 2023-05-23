@@ -4,7 +4,7 @@
 \alias{fn_process}
 \title{Curate data in bakRFnData object for statistical modeling}
 \usage{
-fn_process(obj, totcut = 50, Chase = FALSE, FOI = c())
+fn_process(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE)
 }
 \arguments{
 \item{obj}{An object of class bakRFnData}
