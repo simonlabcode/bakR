@@ -953,6 +953,7 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c()){
     logit_fn_rep = fns$logit_fn,
     fn_se = fns$logit_fn_se,
     Avg_Reads = Avg_Reads,
+    Avg_Reads_natural = Avg_Reads_natural,
     nMT = max(fns$Exp_ID),
     R = fns$Replicate,
     nrep = max(fns$Replicate),

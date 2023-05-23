@@ -420,47 +420,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       ## Get fn estimates from MLE implementation and curate data for Stan
 
-      Rep_Fn <- obj$Fast_Fit$Fn_Estimates
-
-      data_list <- list(
-        NE = nrow(Rep_Fn),
-        NF = max(Rep_Fn$Feature_ID),
-        MT = Rep_Fn$Exp_ID,
-        FE = Rep_Fn$Feature_ID,
-        tl = obj$Data_lists$Stan_data$tl,
-        logit_fn_rep = Rep_Fn$logit_fn,
-        fn_se = Rep_Fn$logit_fn_se,
-        Avg_Reads = obj$Data_lists$Stan_data$Avg_Reads,
-        nMT = max(Rep_Fn$Exp_ID),
-        R = Rep_Fn$Replicate,
-        nrep = max(Rep_Fn$Replicate),
-        sample_lookup = obj$Data_lists$Stan_data$sample_lookup,
-        sdf = obj$Data_lists$Stan_data$sdf,
-        mutrates = obj$Fast_Fit$Mut_rates,
-        nrep_vect = obj$Data_lists$Stan_data$nrep_vect,
-        Chase = as.integer(Chase)
-      )
-
-
-      rm(Rep_Fn)
-
-      # Run Hybrid implementation
-      Stan_list <- TL_stan(data_list, Hybrid_Fit = TRUE, NSS = NSS, chains = chains, ...)
-
-      ## Calculate and adjust p-values
-
-      Effects <- Stan_list$Effects_df
-
-      Effects <- Effects %>% dplyr::mutate(pval = 2*stats::pnorm(-abs(effect/se))) %>%
-        dplyr::mutate(padj = stats::p.adjust(pval, method = "BH"))
-
-      Stan_list$Effects_df <- Effects
-
-      rm(Effects)
-
-      class(Stan_list) <- "HybridModelFit"
-
-      obj$Hybrid_Fit <- Stan_list
+      
     }
 
     if(!(StanFit | HybridFit)){
@@ -506,34 +466,72 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
     
   }else if(inherits(obj, "bakRFnFit")){
-    data_list <- obj$Data_lists
     
-    ## Necessary hacky preprocessing
-    Mut_data_est <- data_list$Fn_est
-    
-    colnames(Mut_data_est) <- c("XF", "sample", "fn", "nreads", "fnum", "reps",
-                                "mut", "tl", "logit_fn_rep", "kd_rep_est", "log_kd_rep_est", 
-                                "logit_fn_se", "log_kd_se")
-    
-    sample_lookup <- data_list$Stan_data$sample_lookup
-    feature_lookup <- data_list$Stan_data$sdf
-    
-    colnames(sample_lookup) <- c("sample", "mut", "reps")
-    
-    ngene <- max(Mut_data_est$fnum)
-    num_conds <- max(Mut_data_est$mut)
-    nMT <- num_conds
-    nreps <- rep(0, times = num_conds)
-    for(i in 1:num_conds){
-      nreps[i] <- max(Mut_data_est$reps[Mut_data_est$mut == i])
+    if(FastRerun){
+      data_list <- obj$Data_lists
+      
+      ## Necessary hacky preprocessing
+      Mut_data_est <- data_list$Fn_est
+      
+      colnames(Mut_data_est) <- c("XF", "sample", "fn", "nreads", "fnum", "reps",
+                                  "mut", "tl", "logit_fn_rep", "kd_rep_est", "log_kd_rep_est", 
+                                  "logit_fn_se", "log_kd_se")
+      
+      sample_lookup <- data_list$Stan_data$sample_lookup
+      feature_lookup <- data_list$Stan_data$sdf
+      
+      colnames(sample_lookup) <- c("sample", "mut", "reps")
+      
+      ngene <- max(Mut_data_est$fnum)
+      num_conds <- max(Mut_data_est$mut)
+      nMT <- num_conds
+      nreps <- rep(0, times = num_conds)
+      for(i in 1:num_conds){
+        nreps[i] <- max(Mut_data_est$reps[Mut_data_est$mut == i])
+      }
+      
+      fast_list <- avg_and_regularize(Mut_data_est, nreps, sample_lookup, 
+                                      feature_lookup, NSS = NSS, BDA_model = BDA_model,
+                                      ...)
+      
+      obj$Fast_Fit <- fast_list
+      return(obj)
+    }else{
+      message("Running Hybrid implementation. Cannot run MCMC implementation with bakRFnFit input")
+      
+      Rep_Fn <- obj$Fast_Fit$Fn_Estimates
+      
+      data_list <- obj$Data_lists$Stan_data
+      
+      sample_lookup <- data_list$sample_lookup
+      colnames(sample_lookup) <- c("sample", "mut", "reps")
+      data_list$sample_lookup <- sample_lookup
+      
+      
+      rm(Rep_Fn)
+      
+      # Run Hybrid implementation
+      Stan_list <- TL_stan(data_list, Hybrid_Fit = TRUE, NSS = NSS, chains = chains, ...)
+      
+      ## Calculate and adjust p-values
+      
+      Effects <- Stan_list$Effects_df
+      
+      Effects <- Effects %>% dplyr::mutate(pval = 2*stats::pnorm(-abs(effect/se))) %>%
+        dplyr::mutate(padj = stats::p.adjust(pval, method = "BH"))
+      
+      Stan_list$Effects_df <- Effects
+      
+      rm(Effects)
+      
+      class(Stan_list) <- "HybridModelFit"
+      
+      obj$Hybrid_Fit <- Stan_list
+      
+      return(obj)
+      
     }
     
-    fast_list <- avg_and_regularize(Mut_data_est, nreps, sample_lookup, 
-                                    feature_lookup, NSS = NSS, BDA_model = BDA_model,
-                                    ...)
-    
-    obj$Fast_Fit <- fast_list
-    return(obj)
     
   }else{
     stop("obj is not of class bakRData, bakRFit, bakRFnData, or bakRFnFit")
