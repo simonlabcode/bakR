@@ -246,7 +246,6 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     warning("You are running more than 4 chains. This may be more than necessary and may sacrifice computational performance.")
   }
 
-
   if(inherits(obj, "bakRData")){
 
     # Preprocess data
@@ -460,8 +459,74 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
     return(obj)
 
+  }else if(inherits(obj, "bakRFnData")){
+    
+    data_list <- fn_process(obj, totcut = totcut, Chase = Chase, FOI = FOI)
+    
+    ## Necessary hacky preprocessing
+    Mut_data_est <- data_list$Fn_est
+    
+    colnames(Mut_data_est) <- c("XF", "sample", "fn", "nreads", "fnum", "reps",
+                                "mut", "tl", "logit_fn_rep", "kd_rep_est", "log_kd_rep_est", 
+                                "logit_fn_se", "log_kd_se")
+    
+    sample_lookup <- data_list$Stan_data$sample_lookup
+    feature_lookup <- data_list$Stan_data$sdf
+    
+    colnames(sample_lookup) <- c("sample", "mut", "reps")
+    
+    ngene <- max(Mut_data_est$fnum)
+    num_conds <- max(Mut_data_est$mut)
+    nMT <- num_conds
+    nreps <- rep(0, times = num_conds)
+    for(i in 1:num_conds){
+      nreps[i] <- max(Mut_data_est$reps[Mut_data_est$mut == i])
+    }
+    
+    fast_list <- avg_and_regularize(Mut_data_est, nreps, sample_lookup, 
+                                    feature_lookup, NSS = NSS, BDA_model = BDA_model,
+                                    ...)
+    
+    Fit_lists <- list(Fast_Fit = fast_list,
+                      Data_lists = data_list)
+    
+    class(Fit_lists) <- "bakRFnFit"
+    return(Fit_lists)
+    
+
+    
+  }else if(inherits(obj, "bakRFnFit")){
+    data_list <- obj$Data_lists
+    
+    ## Necessary hacky preprocessing
+    Mut_data_est <- data_list$Fn_est
+    
+    colnames(Mut_data_est) <- c("XF", "sample", "fn", "nreads", "fnum", "reps",
+                                "mut", "tl", "logit_fn_rep", "kd_rep_est", "log_kd_rep_est", 
+                                "logit_fn_se", "log_kd_se")
+    
+    sample_lookup <- data_list$Stan_data$sample_lookup
+    feature_lookup <- data_list$Stan_data$sdf
+    
+    colnames(sample_lookup) <- c("sample", "mut", "reps")
+    
+    ngene <- max(Mut_data_est$fnum)
+    num_conds <- max(Mut_data_est$mut)
+    nMT <- num_conds
+    nreps <- rep(0, times = num_conds)
+    for(i in 1:num_conds){
+      nreps[i] <- max(Mut_data_est$reps[Mut_data_est$mut == i])
+    }
+    
+    fast_list <- avg_and_regularize(Mut_data_est, nreps, sample_lookup, 
+                                    feature_lookup, NSS = NSS, BDA_model = BDA_model,
+                                    ...)
+    
+    obj$Fast_Fit <- fast_list
+    return(obj)
+    
   }else{
-    stop("obj is not of class bakRData or bakRFit")
+    stop("obj is not of class bakRData, bakRFit, bakRFnData, or bakRFnFit")
   }
 
 

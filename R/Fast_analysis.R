@@ -910,7 +910,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   # ESTIMATE VARIANCE VS. READ COUNT TREND -------------------------------------
 
   
-  out <- avg_and_regularize(Mut_data_est, nreps,
+  out <- avg_and_regularize(Mut_data_est, nreps, sample_lookup, feature_lookup,
                             nbin = nbin, NSS = NSS, 
                             BDA_model = BDA_model, null_cutoff = null_cutoff,
                             Mutrates = pmuts_list)
@@ -1238,6 +1238,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 #'
 #' @param Mut_data_est Dataframe with fraction new estimation information
 #' @param nbin Number of bins for mean-variance relationship estimation. If NULL, max of 10 or (number of logit(fn) estimates)/100 is used
+#' @param nreps Vector of number of replicates in each experimental condition
+#' @param sample_lookup Dictionary mapping sample names to various experimental details
+#' @param feature_lookup Dictionary mapping feature IDs to original feature names
 #' @param null_cutoff bakR will test the null hypothesis of |effect size| < |null_cutoff|
 #' @param NSS Logical; if TRUE, logit(fn)s are compared rather than log(kdeg) so as to avoid steady-state assumption.
 #' @param Chase Logical; Set to TRUE if analyzing a pulse-chase experiment. If TRUE, kdeg = -ln(fn)/tl where fn is the fraction of
@@ -1299,7 +1302,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 #'  \item Mean_Variance_lms; linear model objects obtained from the uncertainty vs. read count regression model. One model is run for each Exp_ID
 #' }
 #' @importFrom magrittr %>%
-avg_and_regularize <- function(Mut_data_est, nreps, 
+avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_lookup,
                                nbin = NULL, NSS = FALSE, 
                                BDA_model = FALSE, null_cutoff = 0,
                                Mutrates = NULL){
@@ -1307,6 +1310,7 @@ avg_and_regularize <- function(Mut_data_est, nreps,
   # ESTIMATE VARIANCE VS. READ COUNT TREND -------------------------------------
   
   ngene <- max(Mut_data_est$fnum)
+  nMT <- max(Mut_data_est$mut)
 
   ## Now affiliate each fnum, mut with a bin Id based on read counts,
   ## bin data by bin_ID and average log10(reads) and log(sd(logit_fn))
@@ -1542,7 +1546,7 @@ avg_and_regularize <- function(Mut_data_est, nreps,
     colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se", "nreads", "log_kdeg", "kdeg", "log_kd_se", "sample", "XF")
   }
   
-  if(!is.null(Mutrates)){
+  if(is.null(Mutrates)){
     # Convert to tibbles because I like tibbles better
     fast_list <- list(dplyr::as_tibble(df_fn), dplyr::as_tibble(avg_df_fn_bayes), dplyr::as_tibble(Effect_sizes_df), c(a = a_hyper, b = b_hyper), lm_list)
     
@@ -1554,7 +1558,7 @@ avg_and_regularize <- function(Mut_data_est, nreps,
     
   }else{
     # Convert to tibbles because I like tibbles better
-    fast_list <- list(dplyr::as_tibble(df_fn), dplyr::as_tibble(avg_df_fn_bayes), dplyr::as_tibble(Effect_sizes_df), pmuts_list, c(a = a_hyper, b = b_hyper), lm_list)
+    fast_list <- list(dplyr::as_tibble(df_fn), dplyr::as_tibble(avg_df_fn_bayes), dplyr::as_tibble(Effect_sizes_df), Mutrates, c(a = a_hyper, b = b_hyper), lm_list)
     
     names(fast_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates", "Hyper_Parameters", "Mean_Variance_lms")
     

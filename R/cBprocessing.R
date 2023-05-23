@@ -711,7 +711,7 @@ cBprocess <- function(obj,
 #' data_for_bakR <- cBprocess(obj = bakRData)
 #' }
 #' @export
-fn_process <- function(obj, totcut = 50, Chase = FALSE){
+fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c()){
   metadf <- obj$metadf
   fns <- obj$fns
   

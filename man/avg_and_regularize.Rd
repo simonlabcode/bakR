@@ -7,6 +7,8 @@
 avg_and_regularize(
   Mut_data_est,
   nreps,
+  sample_lookup,
+  feature_lookup,
   nbin = NULL,
   NSS = FALSE,
   BDA_model = FALSE,
@@ -16,6 +18,12 @@ avg_and_regularize(
 }
 \arguments{
 \item{Mut_data_est}{Dataframe with fraction new estimation information}
+
+\item{nreps}{Vector of number of replicates in each experimental condition}
+
+\item{sample_lookup}{Dictionary mapping sample names to various experimental details}
+
+\item{feature_lookup}{Dictionary mapping feature IDs to original feature names}
 
 \item{nbin}{Number of bins for mean-variance relationship estimation. If NULL, max of 10 or (number of logit(fn) estimates)/100 is used}
 
