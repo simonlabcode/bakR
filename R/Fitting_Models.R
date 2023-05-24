@@ -81,6 +81,7 @@
 #' reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment).
 #' @param BDA_model Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 #' model is used.
+#' @param multi_pold Logical; if TRUE, pold is estimated for each sample rather than use a global pold estimate.
 #' @param Long Logical; if TRUE, long read optimized fraction new estimation strategy is used.
 #' @param kmeans Logical; if TRUE, kmeans clustering on read-specific mutation rates is used to estimate pnews and pold.
 #' @param ... Arguments passed to either \code{fast_analysis} (if a bakRData object)
@@ -116,7 +117,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           low_reads = 100,
                           high_reads = 500000,
                           chains = 1, NSS = FALSE,
-                          Chase = FALSE, BDA_model = FALSE,
+                          Chase = FALSE, BDA_model = FALSE, multi_pold = FALSE,
                           Long = FALSE, kmeans = FALSE,
                           ...){
 
@@ -194,6 +195,11 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   ## Check Chase
   if(!is.logical(Chase)){
     stop("Chase must be logical (TRUE or FALSE)")
+  }
+  
+  ## Check multi_pold
+  if(!is.logical(multi_pold)){
+    stop("multi_pold must be logical (TRUE or FALSE)")
   }
 
   ## Check RateEst_size
@@ -293,13 +299,13 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       # Run MLE implementation
       fast_list <- bakR::fast_analysis(data_list$Fast_df, Stan_data = mutrate_list$Stan_data, StanRate = TRUE,
-                                       BDA_model = BDA_model, Chase = Chase,
+                                       BDA_model = BDA_model, Chase = Chase, multi_pold = multi_pold,
                                        NSS = NSS, Long = Long, kmeans = kmeans, ...)
 
     }else{
       # Run MLE implementation
       fast_list <- bakR::fast_analysis(data_list$Fast_df,
-                                       BDA_model = BDA_model, Chase = Chase,
+                                       BDA_model = BDA_model, Chase = Chase, multi_pold = multi_pold,
                                        NSS = NSS, Long = Long, kmeans = kmeans, ...)
     }
 
@@ -372,7 +378,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
         # Run MLE implementation
         fast_list <- bakR::fast_analysis(obj$Data_lists$Fast_df, Stan_data = mutrate_list, StanRate = TRUE,
                                          NSS = NSS,
-                                         BDA_model = BDA_model,
+                                         BDA_model = BDA_model, multi_pold = multi_pold,
                                          Chase = Chase, Long = Long, kmeans = kmeans,
                                          ...)
 
@@ -380,7 +386,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
         # Run MLE implementation
         fast_list <- bakR::fast_analysis(obj$Data_lists$Fast_df,
                                          NSS = NSS,
-                                         BDA_model = BDA_model,
+                                         BDA_model = BDA_model, multi_pold = multi_pold,
                                          Chase = Chase, Long = Long, kmeans = kmeans,
                                          ...)
 

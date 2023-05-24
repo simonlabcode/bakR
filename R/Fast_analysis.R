@@ -98,6 +98,7 @@
 #' reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment)
 #' @param BDA_model Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 #' model is used.
+#' @param multi_pold Logical; if TRUE, pold is estimated for each sample rather than use a global pold estimate.
 #' @param Long Logical; if TRUE, long read optimized fraction new estimation strategy is used.
 #' @param kmeans Logical; if TRUE, kmeans clustering on read-specific mutation rates is used to estimate pnews and pold.
 #' @return List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
@@ -183,6 +184,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           NSS = FALSE,
                           Chase = FALSE,
                           BDA_model = FALSE,
+                          multi_pold = FALSE,
                           Long = FALSE,
                           kmeans = FALSE){
 
@@ -209,8 +211,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   }
 
   ## Check pold
-  if(length(pold) > 1){
-    stop("pold must be NULL or length 1")
+  if(length(pold) > 1 & !multi_pold){
+    stop("pold must be NULL or length 1 if multi_pold is TRUE")
   }
 
   if(!is.null(pold)){
@@ -238,12 +240,24 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if(!is.null(pnew)){
     if(!all(is.numeric(pnew))){
       stop("All elements of pnew must be numeric")
-    }else if(length(pnew) != sum(nreps) ){
-      stop("pnew must be a vector of length == number of s4U fed samples in dataset")
+    }else if((length(pnew) != sum(nreps)) | (length(pnew) != 1) ){
+      stop("pnew must be a vector of length == number of s4U fed samples in dataset, or length 1.")
     }else if(!all(pnew > 0)){
       stop("All elements of pnew must be > 0")
     }else if(!all(pnew <=1)){
       stop("All elements of pnew must be <= 1")
+    }
+  }
+  
+  if(!is.null(pold)){
+    if(!all(is.numeric(pold))){
+      stop("All elements of pold must be numeric")
+    }else if(((length(pold) != sum(nreps)) | (length(pold) != 1)) & multi_pold ){
+      stop("pold must be a vector of length == number of s4U fed samples in dataset, or length 1.")
+    }else if(!all(pold >= 0)){
+      stop("All elements of pold must be >= 0")
+    }else if(!all(pold <1)){
+      stop("All elements of pold must be < 1")
     }
   }
 
@@ -251,6 +265,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if(!is.logical(no_ctl)){
     stop("no_ctl must be logical (TRUE or FALSE)")
   }
+  
 
   ## Check read_cut
   if(!is.numeric(read_cut)){
@@ -391,14 +406,20 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
     }
 
-    # average out pold
-    pold <- mean(New_data_estimate$pold)
-    New_data_estimate <- New_data_estimate[,c("pnew", "mut", "reps")]
+    if(multi_pold){
+      New_data_estimate <- New_data_estimate[,c("pnew", "pold", "mut", "reps")]
+      
+      Old_data_estimate <- New_data_estimate[,c("pold", "mut", "reps")]
+      New_data_estimate <- New_data_estimate[,c("pnew", "mut", "reps")]
 
-
-    message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
-
-    message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
+    }else{
+      # average out pold
+      pold <- mean(New_data_estimate$pold)
+      New_data_estimate <- New_data_estimate[,c("pnew", "mut", "reps")]
+      
+      
+      
+    }
 
 
   }else{
@@ -459,10 +480,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
         }
 
 
-        New_data_estimate <- data.frame(mut_actual, rep_actual, pnew)
-        colnames(New_data_estimate) <- c("mut", "reps", "pnew")
+        New_data_estimate <- data.frame(pnew, mut_actual, rep_actual)
+        colnames(New_data_estimate) <- c("pnew", "mut", "reps")
 
-        message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
+
 
       }else{ # Use binomial mixture model to estimate new read estimate mutation rate
 
@@ -511,7 +532,6 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
         New_data_estimate <- df_pnew
 
-        message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(df_pnew)), collapse = "\n"))
 
       }
 
@@ -530,8 +550,6 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
         New_data_estimate <- data.frame(mut_vect, rep_vect, pnew_vect)
         colnames(New_data_estimate) <- c("mut", "reps", "pnew")
 
-      } else if( length(pnew) != sum(nreps)  ){
-        stop("User inputted pnew is not of length 1 or of length equal to number of samples")
       } else{ # use vector of pnews provided
 
         ## Compatible with unbalanced replicates
@@ -581,16 +599,27 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
         # Filter out imputed data
         polddf <- dplyr::right_join(polddf, truedf, by = c("R", "E"))
 
-        # Final estimate of mutation rate in old reads
-        pold <- mean(polddf$pold/U_df$avg_T)
+        if(multi_pold){
+          
+          rm(mut_fit)
+          
+          rm(U_df)
+          
+          colnames(polddf) <- c("pold", "reps", "mut")
+          Old_data_estimate <- polddf
 
+        }else{
+          # Final estimate of mutation rate in old reads
+          pold <- mean(polddf$pold/U_df$avg_T)
+          
+          
+          rm(mut_fit)
+          
+          rm(U_df)
+          
 
-        rm(mut_fit)
-
-        rm(U_df)
-
-        message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
-
+        }
+       
       }else{
         if((sum(df$type == 0) == 0) | (no_ctl)){ # Estimate pold using binomial mixture model
 
@@ -633,17 +662,28 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
           high_ps <- c(0, 0, 9)
 
 
-          # Fit mixture model to each sample
-          df_pold <- df_pold %>%
-            dplyr::group_by(mut,reps) %>%
-            dplyr::summarise(pold = inv_logit(min(stats::optim(par=c(-7, -2, 0), mixture_lik, TC = TC, nT = nT, n = n, method = "L-BFGS-B", lower = low_ps, upper = high_ps)$par[1:2])) ) %>%
-            dplyr::ungroup() %>%
-            dplyr::summarise(pold = mean(pold))
+          if(multi_pold){
+            # Fit mixture model to each sample
+            df_pold <- df_pold %>%
+              dplyr::group_by(mut,reps) %>%
+              dplyr::summarise(pold = inv_logit(min(stats::optim(par=c(-7, -2, 0), mixture_lik, TC = TC, nT = nT, n = n, method = "L-BFGS-B", lower = low_ps, upper = high_ps)$par[1:2])) )
+            
+            
+            Old_data_estimate <- df_pold
+            
+          }else{
+            # Fit mixture model to each sample
+            df_pold <- df_pold %>%
+              dplyr::group_by(mut,reps) %>%
+              dplyr::summarise(pold = inv_logit(min(stats::optim(par=c(-7, -2, 0), mixture_lik, TC = TC, nT = nT, n = n, method = "L-BFGS-B", lower = low_ps, upper = high_ps)$par[1:2])) ) %>%
+              dplyr::ungroup() %>%
+              dplyr::summarise(pold = mean(pold))
+            
+            
+            
+            pold <- df_pold$pold
 
-
-
-          pold <- df_pold$pold
-          message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
+          }
 
 
 
@@ -659,8 +699,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
             dplyr::summarise(mutrate = sum(n*TC)/sum(n*nT))
 
           pold <- Old_data$mutrate
-          message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
 
+          multi_pold <- FALSE
+          warning("Since no_ctl is FALSE and -s4U samples were provided, a single pold will be estimated even if multi_pold was set to TRUE")
 
         }
       }
@@ -671,14 +712,23 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     }
   }
 
+  if(!multi_pold){
+    New_data_estimate$pold <- pold
+    message(paste0(c("Estimated pnews and polds for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
+
+  }else{
+    New_data_estimate <- dplyr::inner_join(New_data_estimate, Old_data_estimate, by = c("reps", "mut"))
+    message(paste0(c("Estimated pnews and polds for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
+    
+  }
 
 
-  if(!all(New_data_estimate$pnew - pold > 0)){
+  if(!all(New_data_estimate$pnew - New_data_estimate$pold > 0)){
     stop("All pnew must be > pold; did you input an unusually large pold?")
   }
 
   # Mutation rate estimates
-  pmuts_list <- list(New_data_estimate, pold)
+  pmuts_list <- New_data_estimate
 
 
 
@@ -846,7 +896,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     ## Estimate Fisher Info and uncertainties
     if(Chase){
       Mut_data <- Mut_data %>% dplyr::ungroup() %>%
-        dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep, kd_rep_est) %>%
+        dplyr::group_by(fnum, mut, reps, TC, pnew, pold, logit_fn_rep, kd_rep_est) %>%
         dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
         dplyr::mutate(Exp_l_fn = exp(-logit_fn_rep)) %>%
         dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
@@ -867,7 +917,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
     }else{
       Mut_data <- Mut_data %>% dplyr::ungroup() %>%
-        dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep, kd_rep_est) %>%
+        dplyr::group_by(fnum, mut, reps, TC, pnew, pold, logit_fn_rep, kd_rep_est) %>%
         dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
         dplyr::mutate(Exp_l_fn = exp(logit_fn_rep)) %>%
         dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
