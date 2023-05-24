@@ -1284,7 +1284,7 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
   
   ngene <- max(Mut_data_est$fnum)
   nMT <- max(Mut_data_est$mut)
-
+  
   ## Now affiliate each fnum, mut with a bin Id based on read counts,
   ## bin data by bin_ID and average log10(reads) and log(sd(logit_fn))
   
@@ -1312,6 +1312,12 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
       heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
       h_int <- summary(heterosked_lm)$coefficients[1,1]
       h_slope <- summary(heterosked_lm)$coefficients[2,1]
+      
+      if(h_slope > 0){
+        h_slope <- 0
+        h_int <- mean(Binned_data$avg_sd[Binned_data$mut == i])
+      }
+      
       lm_list[[i]] <- c(h_int, h_slope)
       
       lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
@@ -1344,6 +1350,12 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
       heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
       h_int <- summary(heterosked_lm)$coefficients[1,1]
       h_slope <- summary(heterosked_lm)$coefficients[2,1]
+      
+      if(h_slope > 0){
+        h_slope <- 0
+        h_int <- mean(Binned_data$avg_sd[Binned_data$mut == i])
+      }
+      
       lm_list[[i]] <- c(h_int, h_slope)
       
       lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
@@ -1354,7 +1366,8 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
       dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
       dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
       dplyr::group_by(mut) %>%
-      dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
+      dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ),
+                       true_nat_var = stats::var(exp(kd_sd_log)^2 - exp((intercept + slope*log10(nreads) ))^2 ))
     
     log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
     logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
@@ -1414,14 +1427,14 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
     dplyr::mutate(theta_o = mean(avg_log_kd)) %>%
     dplyr::ungroup()
   
-  
+
   
   #Calcualte population averages
   # sdp <- sd(avg_df_fn$avg_logit_fn) # Will be prior sd in regularization of mean
   # theta_o <- mean(avg_df_fn$avg_logit_fn) # Will be prior mean in regularization of mean
   
   var_pop <- mean(avg_df_fn_bayes$sd_log_kd^2) # Will be prior mean in regularization of sd
-  var_of_var <- stats::var(avg_df_fn_bayes$sd_log_kd^2) # Will be prior variance in regularization of sd
+  var_of_var <- mean(true_vars$true_nat_var) # Will be prior variance in regularization of sd
   
   
   ## Regularize standard deviation estimate
@@ -1432,6 +1445,7 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
   # that serves as prior degrees of freedom
   
   b_hyper <- (var_pop*(a_hyper - 2))/a_hyper
+  
   
   if(BDA_model){ # Not yet working well; inverse chi-squared model from BDA3
     avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
