@@ -1433,7 +1433,6 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
   
   b_hyper <- (var_pop*(a_hyper - 2))/a_hyper
   
-  
   if(BDA_model){ # Not yet working well; inverse chi-squared model from BDA3
     avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
       dplyr::mutate(sd_post = (sd_log_kd*nreps[Condition] + a_hyper*exp(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(a_hyper + nreps[Condition] - 2) ) %>%
