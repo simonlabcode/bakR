@@ -502,8 +502,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
         }
 
 
-        New_data_estimate <- data.frame(pnew, mut_actual, rep_actual)
-        colnames(New_data_estimate) <- c("pnew", "mut", "reps")
+        New_data_estimate <- data.frame(mut_actual, rep_actual, pnew)
+        colnames(New_data_estimate) <- c("mut", "reps", "pnew")
 
 
 
@@ -645,8 +645,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
         rm(mut_fit)
         rm(U_df)
         
-        Old_data_estimate <- data.frame(pold, mut_actual, rep_actual)
-        colnames(Old_data_estimate) <- c("pold", "mut", "reps")
+        Old_data_estimate <- data.frame(mut_actual, rep_actual, pold)
+        colnames(Old_data_estimate) <- c("mut", "reps", "pold")
         
         
 
