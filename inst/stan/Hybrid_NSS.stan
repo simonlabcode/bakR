@@ -95,6 +95,7 @@ model {
 
    vector[nMT] kd[NF]; // decay rate
    vector[nMT-1] L2FC_kd[NF]; // change in decay rate
+   vector[nMT] log_kd[NF]; // log(kdeg)
 
   for (i in 1:NF) {
     for (j in 1:nMT) {
@@ -108,6 +109,9 @@ model {
         kd[i,j] = -log(1 - inv_logit(alpha[i,j]))/tl[j];  // divide by time if not 1
 
       }
+      
+      log_kd[i,j] = log(kd[i,j]);
+
 
     } // treatment type
     for(k in 1:nMT-1){

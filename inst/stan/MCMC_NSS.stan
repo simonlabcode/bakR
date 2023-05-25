@@ -14,6 +14,7 @@ data {
   real tl[nMT];   // Label time
   real Avg_Reads[NF, nMT]; // Average read counts in transcript i and sample j (avg. across replicates)
   int<lower=0, upper=1> Chase;
+  real nU;
 }
 
 parameters {
@@ -72,7 +73,7 @@ model {
 
   for(m in 1:nMT){
       TL_lambda_eff[m] ~ lognormal(1.4, 0.15);
-      log_lambda_o[m] ~ normal(-3.5, 0.5);
+      log_lambda_o[m] ~ normal(log(0.001*nU), 0.5);
   }
 
   sig_rep ~ lognormal(-2,0.25);
@@ -107,6 +108,7 @@ generated quantities {
 
   vector[nMT] kd[NF]; // decay rate
   vector[nMT-1] L2FC_kd[NF]; // change in decay rate
+  vector[nMT] log_kd[NF]; //log(kdeg)
 
   for (i in 1:NF) {
     for (j in 1:nMT) {
@@ -114,10 +116,14 @@ generated quantities {
       if(Chase == 1){
 
         kd[i,j] = -log(inv_logit(alpha[i,j]))/tl[j];  // divide by time if not 1
-
+        
+        log_kd[i,j] = log(kd[i,j]);
+        
       }else{
 
         kd[i,j] = -log(1 - inv_logit(alpha[i,j]))/tl[j];  // divide by time if not 1
+
+        log_kd[i,j] = log(kd[i,j]);
 
       }
 
@@ -136,3 +142,4 @@ generated quantities {
   }
 
 }
+

@@ -26,6 +26,7 @@ fast_analysis(
   NSS = FALSE,
   Chase = FALSE,
   BDA_model = FALSE,
+  multi_pold = FALSE,
   Long = FALSE,
   kmeans = FALSE
 )
@@ -80,6 +81,8 @@ reads that are s4U (more properly referred to as the fraction old in the context
 
 \item{BDA_model}{Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 model is used.}
+
+\item{multi_pold}{Logical; if TRUE, pold is estimated for each sample rather than use a global pold estimate.}
 
 \item{Long}{Logical; if TRUE, long read optimized fraction new estimation strategy is used.}
 

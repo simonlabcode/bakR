@@ -297,6 +297,9 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       mutrate_list <- bakR::cBprocess(bakRData2, FOI = XF_choose, concat = FALSE)
 
+      mutrate_list$nU <- sum(obj$Data_lists$Fast_df$nT*obj$Data_lists$Fast_df$n)/sum(obj$Data_lists$Fast_df$n)
+
+      
       # Run MLE implementation
       fast_list <- bakR::fast_analysis(data_list$Fast_df, Stan_data = mutrate_list$Stan_data, StanRate = TRUE,
                                        BDA_model = BDA_model, Chase = Chase, multi_pold = multi_pold,
@@ -371,7 +374,8 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           tl = Stan_data$tl,
                           NE = length(data_df$FE),
                           NF = max(data_df$FE),
-                          sdf = Stan_data$sdf[Stan_data$sdf$fnum %in% fnum_choose,])
+                          sdf = Stan_data$sdf[Stan_data$sdf$fnum %in% fnum_choose,],
+                          nU = sum(obj$Data_lists$Fast_df$nT*obj$Data_lists$Fast_df$n)/sum(obj$Data_lists$Fast_df$n))
 
         rm(Stan_data)
 
@@ -402,6 +406,9 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     if(StanFit){
 
       obj$Data_lists$Stan_data$Chase <- as.integer(Chase)
+      
+      ## Can calculate # of Us
+      obj$Data_lists$Stan_data$nU <- sum(obj$Data_lists$Fast_df$nT*obj$Data_lists$Fast_df$n)/sum(obj$Data_lists$Fast_df$n)
 
       Stan_list <- TL_stan(obj$Data_lists$Stan_data, NSS = NSS, chains = chains, ...)
 

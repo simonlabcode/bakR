@@ -378,7 +378,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
 
   if(Long | kmeans){
-
+    
+    message("Estimating pnew with kmeans clustering")
+    
     # Make sure package for clustering is installed
     if (!requireNamespace("Ckmeans.1d.dp", quietly = TRUE))
       stop("To use kmeans estimation strategy requires 'Ckmeans.1d.dp' package which cannot be found. Please install 'Ckmeans.1d.dp' using 'install.packages('Ckmeans.1d.dp')'.")
@@ -406,6 +408,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
     }
 
+
+    
+    
     if(multi_pold){
       New_data_estimate <- New_data_estimate[,c("pnew", "pold", "mut", "reps")]
       
@@ -413,11 +418,26 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       New_data_estimate <- New_data_estimate[,c("pnew", "mut", "reps")]
 
     }else{
-      # average out pold
-      pold <- mean(New_data_estimate$pold)
-      New_data_estimate <- New_data_estimate[,c("pnew", "mut", "reps")]
       
-      
+      if((sum(df$type == 0) > 0) & !no_ctl & !multi_pold){
+        message("Estimating unlabeled mutation rate with -s4U data")
+        
+        #Old mutation rate estimation
+        Mut_data <- df
+        
+        Old_data <- Mut_data[Mut_data$type == 0, ]
+        
+        Old_data <- Old_data %>% dplyr::ungroup() %>%
+          dplyr::summarise(mutrate = sum(n*TC)/sum(n*nT))
+        
+        pold <- Old_data$mutrate
+      }else{
+        # average out pold
+        pold <- mean(New_data_estimate$pold)
+        New_data_estimate <- New_data_estimate[,c("pnew", "mut", "reps")]
+        
+      }
+
       
     }
 
@@ -427,7 +447,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     if((is.null(pnew) | is.null(pold)) & StanRate ){ # use Stan
 
 
-      mut_fit <- rstan::sampling(stanmodels$Mutrate_est2, data = Stan_data, chains = 1)
+      mut_fit <- rstan::sampling(stanmodels$Mutrate_est, data = Stan_data, chains = 1)
     }
 
     ## Make data frame of pnew estimates
@@ -435,6 +455,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
       # Get estimates from Stan fit summary
       if(StanRate){
+        
+        message("Estimating pnew with Stan output")
 
         # Even if replicates are imbalanced (more replicates of a given experimental condition
         # than another), the number of mutation rates Stan will estimate = max(nreps)*nMT
@@ -487,7 +509,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
       }else{ # Use binomial mixture model to estimate new read estimate mutation rate
 
-        message("Estimating labeled mutation rate")
+        message("Estimating pnew with likelihood maximization")
 
         # Binomial mixture likelihood
         mixture_lik <- function(param, TC, nT, n){
@@ -538,6 +560,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
     }else{ # Construct pmut data frame from User input
 
+      message("Using provided pnew estimates")
+      
       if(length(pnew) == 1){ # replicate the single pnew provided
 
         pnew_vect <- rep(pnew, times = sum(nreps) )
@@ -563,8 +587,24 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
     ### Estimate mutation rate in old reads
     if(is.null(pold)){
-      if(StanRate){ # Use Stan to estimate rates
+      
+      if((sum(df$type == 0) > 0) & !no_ctl & !multi_pold){
+        message("Estimating unlabeled mutation rate with -s4U data")
+        
+        #Old mutation rate estimation
+        Mut_data <- df
+        
+        Old_data <- Mut_data[Mut_data$type == 0, ]
+        
+        Old_data <- Old_data %>% dplyr::ungroup() %>%
+          dplyr::summarise(mutrate = sum(n*TC)/sum(n*nT))
+        
+        pold <- Old_data$mutrate
+        
+      }else if(StanRate){ # Use Stan to estimate rates
 
+        message("Estimating unlabeled mutation rate with Stan output")
+        
         ## Extract estimate of mutation rate in old reads from Stan fit
         nrep_mut <- max(df$reps)
 
@@ -598,32 +638,28 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
         # Filter out imputed data
         polddf <- dplyr::right_join(polddf, truedf, by = c("R", "E"))
+        
+        pold <- polddf$pold/U_df$avg_T
+      
+        
+        rm(mut_fit)
+        rm(U_df)
+        
+        Old_data_estimate <- data.frame(pold, mut_actual, rep_actual)
+        colnames(Old_data_estimate) <- c("pold", "mut", "reps")
+        
+        
 
-        if(multi_pold){
-          
-          rm(mut_fit)
-          
-          rm(U_df)
-          
-          colnames(polddf) <- c("pold", "reps", "mut")
-          Old_data_estimate <- polddf
-
-        }else{
+        if(!multi_pold){
           # Final estimate of mutation rate in old reads
-          pold <- mean(polddf$pold/U_df$avg_T)
-          
-          
-          rm(mut_fit)
-          
-          rm(U_df)
+          pold <- mean(Old_data_estimate$pold)
           
 
         }
        
       }else{
-        if((sum(df$type == 0) == 0) | (no_ctl)){ # Estimate pold using binomial mixture model
 
-          message("Estimating unlabeled mutation rate")
+          message("Estimating unlabeled mutation rate with likelihood maximization")
 
           # Binomial mixture likelihood
           mixture_lik <- function(param, TC, nT, n){
@@ -687,26 +723,37 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
 
 
-        }else{ # Estimate using -s4U data
-          message("Estimating unlabeled mutation rate")
-
-          #Old mutation rate estimation
-          Mut_data <- df
-
-          Old_data <- Mut_data[Mut_data$type == 0, ]
-
-          Old_data <- Old_data %>% dplyr::ungroup() %>%
-            dplyr::summarise(mutrate = sum(n*TC)/sum(n*nT))
-
-          pold <- Old_data$mutrate
-
-          multi_pold <- FALSE
-          warning("Since no_ctl is FALSE and -s4U samples were provided, a single pold will be estimated even if multi_pold was set to TRUE")
-
         }
+    }else{
+      
+      if(multi_pold){
+        message("Using provided pold estimates")
+        
+        if(length(pold) == 1){ # replicate the single pnew provided
+          
+          pold_vect <- rep(pold, times = sum(nreps) )
+          
+          ## Compatible with unbalanced replicates
+          rep_vect <- unlist(lapply(nreps, function(x) seq(1, x)))
+          
+          mut_vect <- rep(1:nMT, times = nreps)
+          
+          Old_data_estimate <- data.frame(mut_vect, rep_vect, pold_vect)
+          colnames(Old_data_estimate) <- c("mut", "reps", "pold")
+          
+        } else{ # use vector of pnews provided
+          
+          ## Compatible with unbalanced replicates
+          rep_vect <- unlist(lapply(nreps, function(x) seq(1, x)))
+          
+          mut_vect <- rep(1:nMT, times = nreps)
+          Old_data_estimate <- data.frame(mut_vect, rep_vect, pold)
+          colnames(Old_data_estimate) <- c("mut", "reps", "pold")
+        }
+      }else{
+        message("Using provided pold estimate")
+      
       }
-
-
 
 
     }
