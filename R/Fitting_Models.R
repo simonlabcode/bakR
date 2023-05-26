@@ -93,6 +93,7 @@
 #'  \item Stan_Fit; Only present if StanFit = TRUE. Output of \code{TL_stan}
 #'  \item Data_lists; Always will be present. Output of \code{cBprocess} with Fast and Stan == TRUE
 #' }
+#' @importFrom magrittr %>%
 #' @examples
 #' \donttest{
 #' # Simulate data for 1000 genes, 2 replicates, 2 conditions
@@ -171,14 +172,6 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     warning("AvgU is abnormally high; you are requiring an average number of Us greater than 50")
   }else if(AvgU < 4){
     warning("AvgU is abnormally low; you are allowing an average of less than 4 Us per read, which may model convergence issues.")
-  }
-
-  ## Check FOI
-  if(!is.null(FOI)){
-    if(typeof(obj$cB$XF) != typeof(FOI)){
-      warning("FOI should be the same data type as cB$XF in the bakRData object; if it is not none of the feature of interest will be found
-            in the cB.")
-    }
   }
 
 
@@ -432,7 +425,48 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     if(HybridFit){
 
       ## Get fn estimates from MLE implementation and curate data for Stan
-
+      
+      Rep_Fn <- obj$Fast_Fit$Fn_Estimates
+      
+      data_list <- list(
+        NE = nrow(Rep_Fn),
+        NF = max(Rep_Fn$Feature_ID),
+        MT = Rep_Fn$Exp_ID,
+        FE = Rep_Fn$Feature_ID,
+        tl = obj$Data_lists$Stan_data$tl,
+        logit_fn_rep = Rep_Fn$logit_fn,
+        fn_se = Rep_Fn$logit_fn_se,
+        Avg_Reads = obj$Data_lists$Stan_data$Avg_Reads,
+        nMT = max(Rep_Fn$Exp_ID),
+        R = Rep_Fn$Replicate,
+        nrep = max(Rep_Fn$Replicate),
+        sample_lookup = obj$Data_lists$Stan_data$sample_lookup,
+        sdf = obj$Data_lists$Stan_data$sdf,
+        mutrates = obj$Fast_Fit$Mut_rates,
+        nrep_vect = obj$Data_lists$Stan_data$nrep_vect,
+        Chase = as.integer(Chase)
+      )
+      
+      
+      rm(Rep_Fn)
+      
+      # Run Hybrid implementation
+      Stan_list <- TL_stan(data_list, Hybrid_Fit = TRUE, NSS = NSS, chains = chains, ...)
+      
+      ## Calculate and adjust p-values
+      
+      Effects <- Stan_list$Effects_df
+      
+      Effects <- Effects %>% dplyr::mutate(pval = 2*stats::pnorm(-abs(effect/se))) %>%
+        dplyr::mutate(padj = stats::p.adjust(pval, method = "BH"))
+      
+      Stan_list$Effects_df <- Effects
+      
+      rm(Effects)
+      
+      class(Stan_list) <- "HybridModelFit"
+      
+      obj$Hybrid_Fit <- Stan_list
       
     }
 
@@ -448,6 +482,11 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     
     ## Necessary hacky preprocessing
     Mut_data_est <- data_list$Fn_est
+    
+    # There is a better way to do this...
+    Mut_data_est <- Mut_data_est[,c("XF", "sample", "fn", "n",
+                                    "Feature_ID", "Replicate", "Exp_ID", "tl",
+                                    "logit_fn", "kdeg", "log_kdeg", "logit_fn_se", "log_kd_se")]
     
     colnames(Mut_data_est) <- c("XF", "sample", "fn", "nreads", "fnum", "reps",
                                 "mut", "tl", "logit_fn_rep", "kd_rep_est", "log_kd_rep_est", 

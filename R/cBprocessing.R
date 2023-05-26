@@ -379,11 +379,17 @@ cBprocess <- function(obj,
   message("Finding reliable Features")
   reliables <- bakR::reliableFeatures(obj, high_p = high_p, totcut = totcut, Ucut = Ucut, AvgU = AvgU)
 
-  if(concat == TRUE){
-    keep <- unique(c(intersect(FOI, reliables), reliables))
+  if(is.null(FOI)){
+    keep <- reliables
   }else{
-    keep <- intersect(FOI, reliables)
+    if(concat == TRUE){
+      # FOI still need to pass filtering to make sure bakRFit doesn't break
+      keep <- unique(c(intersect(FOI, reliables), reliables))
+    }else{
+      keep <- intersect(FOI, reliables)
+    }
   }
+
 
   if((length(keep) == 0) | (is.null(keep))){
     stop("No features made it past filtering.Try increasing the read count or -s4U background mutation rate cutoffs.")
@@ -621,36 +627,27 @@ cBprocess <- function(obj,
 
 #' Curate data in bakRFnData object for statistical modeling
 #'
-#' \code{cBprocess} creates the data structures necessary to analyze nucleotide recoding RNA-seq data with the
-#' MLE and Hybrid implementations in \code{bakRFit}. The input to \code{Fnprocess} must be an object of class
+#' \code{fn_process} creates the data structures necessary to analyze nucleotide recoding RNA-seq data with the
+#' MLE and Hybrid implementations in \code{bakRFit}. The input to \code{fn_process} must be an object of class
 #' `bakRFnData`. 
 #'
-#' The 1st step executed by \code{cBprocess} is to find the names of features which are deemed "reliable". A reliable feature is one with
-#' sufficient read coverage in every single sample (i.e., > totcut reads in all samples) and limited mutation content in all -s4U
-#' control samples (i.e., < high_p mutation rate in all samples lacking s4U feeds). This is done with a call to \code{reliableFeatures}.
-#' The 2nd step is to extract only reliableFeatures from the cB dataframe in the `bakRData` object. During this process, a numerical
-#' ID is given to each reliableFeature, with the numerical ID corresponding to the order in which each feature is found in the original cB
-#' (this might typically be alphabetical order).
-#'
-#' The 3rd step is to prepare a dataframe where each row corresponds to a set of n identical reads (that is they come from the same sample
-#' and have the same number of mutations and Us). Part of this process involves assigning an arbitrary numerical ID to each replicate in each
-#' experimental condition. The numerical ID will correspond to the order the sample appears in metadf. The outcome of this step is multiple
-#' dataframes with variable information content. These include a dataframe with information about read counts in each sample, one which logs
-#' the U-contents of each feature, one which is compatible with \code{fast_analysis} and thus groups reads by their number of mutations as
-#' well as their number of Us, and one which is compatible with \code{TL_stan} with StanFit == TRUE and thus groups ready by only their number
-#' of mutations. At the end of this step, two other smaller data structures are created, one which is an average count matrix (a count matrix
-#' where the ith row and jth column corresponds to the average number of reads mappin to feature i in experimental condition j, averaged over
-#' all replicates) and the other which is a sample lookup table that relates the numerical experimental and replicate IDs to the original
-#' sample name.
+#' \code{fn_process} first filters out features with less than totcut reads in any sample. It then
+#' creates the necessary data structures for analysis with \code{bakRFit} and some of the visualization
+#' functions (namely \code{plotMA}).
 #'
 #' If FOI is non-null and concat == TRUE, the features listed in FOI will be included in the list of reliable features that make it past
 #' filtering. If FOI is non-null and concat == FALSE, the features listed in FOI will be the only reliable features that make it past filtering.
-#' If FOI is null and concat == FALSE, an error will be thrown.
+#' If FOI is null and concat == FALSE or TRUE, then only the features making it past read count filtering
+#' will be kept.
 #'
 #'
 #' @param obj An object of class bakRFnData
 #' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
-#' @param FOI Features of interest; character vector containing names of features to analyze
+#' @param FOI Features of interest; character vector containing names of features to analyze. 
+#' If FOI is non-null and concat == TRUE, the features listed in FOI will be included in the list of reliable features that make it past
+#' filtering. If FOI is non-null and concat == FALSE, the features listed in FOI will be the only reliable features that make it past filtering.
+#' If FOI is null and concat == FALSE or TRUE, then only the features making it past read count filtering
+#' will be kept.
 #' @param concat Boolean; If TRUE, FOI is concatenated with output of reliableFeatures
 #' @param Chase Boolean; if TRUE, pulse-chase analysis strategy is implemented
 #' @return returns list of objects that can be passed to \code{TL_stan} and/or \code{fast_analysis}. Those objects are:
@@ -713,9 +710,37 @@ cBprocess <- function(obj,
 #' @export
 fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE){
   
+  ## Check obj
+  if(!inherits(obj, "bakRFnData")){
+    stop("obj must be of class bakRFnData")
+  }
+  
+  
+  ## Check totcut
+  if(!is.numeric(totcut)){
+    stop("totcut must be numeric")
+  }else if( totcut < 0 ){
+    stop("totcut must be greater than 0")
+  }else if(totcut > 5000){
+    warning("totcut is abnormally high (> 5000); many features will not have this much coverage in every sample and thus get filtered out.")
+  }
+  
+  ## Check FOI
+  if(!is.null(FOI)){
+    if(typeof(obj$fns$XF) != typeof(FOI)){
+      warning("FOI should be the same data type as fns$XF in the bakRFnData object; if it is not none of the feature of interest will be found
+            in the fn data frame.")
+    }
+  }
+  
+  # Define helper functions:
+  logit <- function(x) log(x/(1-x))
+  inv_logit <- function(x) exp(x)/(1+exp(x))
+  
+  
   # Bind to NULL
-  tl <- ctl <- Exp_ID <- r_id <- XF <- n <- npass <- concat <- NULL
-  Feature_ID <- logit <- fn <- var <- global_mean <- global_var <- alpha_p <- beta_p <- NULL
+  tl <- ctl <- Exp_ID <- r_id <- XF <- n <- npass <- NULL
+  Feature_ID <- fn <- var <- global_mean <- global_var <- alpha_p <- beta_p <- NULL
 
   metadf <- obj$metadf
   fns <- obj$fns
@@ -781,26 +806,29 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
   nsamps <- nrow(metadf)
   
   message("Filtering out low coverage features")
+
+  # Read count filter
+  keep <- fns %>%
+    dplyr::group_by(XF) %>%
+    dplyr::summarise(npass = sum(n >= totcut)) %>%
+    dplyr::filter(npass == nsamps) %>%
+    dplyr::select(XF)
   
   if(is.null(FOI)){
-    
-    keep <- fns %>%
-      dplyr::group_by(XF) %>%
-      dplyr::summarise(npass = sum(n >= totcut)) %>%
-      dplyr::filter(npass == nsamps) %>%
-      dplyr::select(XF)
-    
+  
     keep <- keep$XF
+    
   }else{
     
     if(concat){
-      keep <- fns %>%
-        dplyr::group_by(XF) %>%
-        dplyr::summarise(npass = sum(n >= totcut)) %>%
-        dplyr::filter(npass == nsamps) %>%
-        dplyr::select(XF)
+
+      # Realizing this is trivially just keep$XF
+      keep <- unique(c(intersect(FOI, keep$XF), keep$XF))
+
+    }else{
+      
+      keep <- intersect(FOI, keep$XF)
     }
-    keep <- union(keep$XF, FOI) 
   }
 
   

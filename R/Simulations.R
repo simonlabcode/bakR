@@ -1230,7 +1230,7 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
     stop("p_do must be of length 1 or length == num_conds")
   }
   
-  
+
   #### Simulation function from bakR
   
   # Average number of Us in reads from each simulated feature
@@ -1324,7 +1324,7 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
   
   # Simulate dropout
   fn_mean_matrix <- inv_logit(logit(fn_mean) + effect_mean)
-  RNA_conc_s4U <- RNA_conc*fn_mean_matrix*(1-p_do) + RNA_conc*(1-fn_mean)
+  RNA_conc_s4U <- RNA_conc*fn_mean_matrix*(1-p_do) + RNA_conc*(1-fn_mean_matrix)
   RNA_conc_ctl <- RNA_conc
   
   # Relative amount of each RNA species
