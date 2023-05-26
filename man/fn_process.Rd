@@ -13,7 +13,11 @@ fn_process(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE)
 
 \item{Chase}{Boolean; if TRUE, pulse-chase analysis strategy is implemented}
 
-\item{FOI}{Features of interest; character vector containing names of features to analyze}
+\item{FOI}{Features of interest; character vector containing names of features to analyze.
+If FOI is non-null and concat == TRUE, the features listed in FOI will be included in the list of reliable features that make it past
+filtering. If FOI is non-null and concat == FALSE, the features listed in FOI will be the only reliable features that make it past filtering.
+If FOI is null and concat == FALSE or TRUE, then only the features making it past read count filtering
+will be kept.}
 
 \item{concat}{Boolean; If TRUE, FOI is concatenated with output of reliableFeatures}
 }
@@ -61,32 +65,22 @@ sample names and row names are the corresponding feature names.
 }
 }
 \description{
-\code{cBprocess} creates the data structures necessary to analyze nucleotide recoding RNA-seq data with the
-MLE and Hybrid implementations in \code{bakRFit}. The input to \code{Fnprocess} must be an object of class
+\code{fn_process} creates the data structures necessary to analyze nucleotide recoding RNA-seq data with the
+MLE and Hybrid implementations in \code{bakRFit}. The input to \code{fn_process} must be an object of class
 \code{bakRFnData}.
 }
 \details{
-The 1st step executed by \code{cBprocess} is to find the names of features which are deemed "reliable". A reliable feature is one with
-sufficient read coverage in every single sample (i.e., > totcut reads in all samples) and limited mutation content in all -s4U
-control samples (i.e., < high_p mutation rate in all samples lacking s4U feeds). This is done with a call to \code{reliableFeatures}.
-The 2nd step is to extract only reliableFeatures from the cB dataframe in the \code{bakRData} object. During this process, a numerical
-ID is given to each reliableFeature, with the numerical ID corresponding to the order in which each feature is found in the original cB
-(this might typically be alphabetical order).
+\code{fn_process} first filters out features with less than totcut reads in any sample. It then
+creates the necessary data structures for analysis with \code{bakRFit} and some of the visualization
+functions (namely \code{plotMA}).
 
-The 3rd step is to prepare a dataframe where each row corresponds to a set of n identical reads (that is they come from the same sample
-and have the same number of mutations and Us). Part of this process involves assigning an arbitrary numerical ID to each replicate in each
-experimental condition. The numerical ID will correspond to the order the sample appears in metadf. The outcome of this step is multiple
-dataframes with variable information content. These include a dataframe with information about read counts in each sample, one which logs
-the U-contents of each feature, one which is compatible with \code{fast_analysis} and thus groups reads by their number of mutations as
-well as their number of Us, and one which is compatible with \code{TL_stan} with StanFit == TRUE and thus groups ready by only their number
-of mutations. At the end of this step, two other smaller data structures are created, one which is an average count matrix (a count matrix
-where the ith row and jth column corresponds to the average number of reads mappin to feature i in experimental condition j, averaged over
-all replicates) and the other which is a sample lookup table that relates the numerical experimental and replicate IDs to the original
-sample name.
-
-If FOI is non-null and concat == TRUE, the features listed in FOI will be included in the list of reliable features that make it past
-filtering. If FOI is non-null and concat == FALSE, the features listed in FOI will be the only reliable features that make it past filtering.
-If FOI is null and concat == FALSE, an error will be thrown.
+If FOI is non-null and concat == TRUE, then all the features making it past read count filtering will be included
+in the output. This is the same behavior as if FOI is null. If FOI is non-null and concat == FALSE, the features
+listed in FOI will be the only reliable features that make it past filtering. NOTE: FOIs must be deemed
+"reliable" (in this case that means making it past read count filtering) to make it past filtering. This is
+because bakRFit will break otherwise.
+If FOI is null and concat == FALSE or TRUE, then only the features making it past read count filtering
+will be kept.
 }
 \examples{
 \donttest{

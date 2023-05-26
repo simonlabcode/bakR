@@ -63,146 +63,15 @@ CorrectDropout <- function(obj, ...){
   logit <- function(x) log(x/(1-x))
   inv_logit <- function(x) exp(x)/(1+exp(x))
   
-  # Compile necessary data -------------------------------------------------------
-  
-  if(inherits(obj, "bakRFit")){
-    # Calculate number of reads in each sample
-    total_reads <- obj$Data_lists$Fast_df
-    total_reads <- total_reads %>%
-      dplyr::group_by(mut, reps, type) %>%
-      dplyr::summarise(total_reads = sum(n))
-    
-    # Calculate number of reads for each feature in each sample
-    RPMs <- obj$Data_lists$Fast_df
-    RPMs <- RPMs %>%
-      dplyr::group_by(fnum, mut, reps, type) %>%
-      dplyr::summarise(reads = sum(n))
-    
-    # RPM normalize
-    RPMs <- dplyr::inner_join(RPMs, total_reads, by = c("mut", "reps", "type"))
-    RPMs$RPM <- RPMs$reads/(RPMs$total_reads/1000000)
-    
-    # Separate control from +s4U
-    ctl_RPMs <- RPMs[RPMs$type == 0,]
-    colnames(ctl_RPMs) <- c("fnum", "mut", "reps", "type", "reads", "total_reads", "ctl_RPM")
-    ctl_RPMs <- ctl_RPMs[,c("fnum", "mut", "reps", "ctl_RPM")] %>%
-      dplyr::group_by(fnum, mut) %>%
-      dplyr::summarise(ctl_RPM = mean(ctl_RPM))
-    
-    s4U_RPMs <- RPMs[RPMs$type == 1,c("fnum", "mut", "reps", "RPM")]
-    
-    # Combine +s4U and -s4U RPMs
-    s4U_RPMs <- dplyr::inner_join(s4U_RPMs, ctl_RPMs, by = c("fnum", "mut"))
-    
-    # Get fraction new estimates
-    Fns <- obj$Fast_Fit$Fn_Estimates
-    
-    Fns <- Fns[,c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "XF", "sample")]
-    
-    colnames(Fns) <- c("fnum", "mut", "reps", "logit_fn", "XF", "sample")
-    
-    Fns$fn <- inv_logit(Fns$logit_fn)
-    
-    # Add fn info and dropout calc
-    model_df <- dplyr::inner_join(s4U_RPMs, Fns, by = c("fnum", "mut", "reps"))
-    model_df$dropout <- model_df$RPM/model_df$ctl_RPM
+  if(is.null(obj$Data_lists$Dropout_df)){
+
+    do_df <- QuantifyDropout(obj, ...)
     
   }else{
-    # Calculate number of reads in each -s4U sample
-    total_reads_ctl <- Fit$Data_lists$Ctl_data %>%
-      dplyr::group_by(Exp_ID, Replicate) %>%
-      dplyr::summarise(total_reads = sum(n))
-    total_reads_ctl$type <- 0
-    
-    # Calculate number of reads in each +s4U samle
-    total_reads <- Fit$Data_lists$Fn_est %>%
-      dplyr::group_by(Exp_ID, Replicate) %>%
-      dplyr::summarise(total_reads = sum(n))
-    total_reads$type <- 1
-    
-    total_reads <- dplyr::bind_rows(list(total_reads, total_reads_ctl))
-    
-    # Calculate number of reads for each feature in each sample
-    RPMs <- Fit$Data_lists$Fn_est
-    RPMs <- RPMs %>%
-      dplyr::group_by(Feature_ID, Exp_ID, Replicate) %>%
-      dplyr::summarise(reads = sum(n))
-    RPMs$type <- 1
-    
-    # RPM normalize
-    RPMs <- dplyr::inner_join(RPMs, total_reads, by = c("Exp_ID", "Replicate", "type"))
-    RPMs$RPM <- RPMs$reads/(RPMs$total_reads/1000000)
-    
-    # Calculate number of reads for each feature in each -s4U sample
-    ctl_RPMs <- Fit$Data_list$Ctl_data
-    ctl_RPMs <- ctl_RPMs %>%
-      dplyr::group_by(Feature_ID, Exp_ID, Replicate) %>%
-      dplyr::summarise(reads = sum(n))
-    ctl_RPMs$type <- 0
-    
-    
-    # RPM normalize
-    ctl_RPMs <- dplyr::inner_join(ctl_RPMs, total_reads, by = c("Exp_ID", "Replicate", "type"))
-    ctl_RPMs$ctl_RPM <- ctl_RPMs$reads/(ctl_RPMs$total_reads/1000000)
-    
-    # Average over -s4U replicates
-    ctl_RPMs <- ctl_RPMs %>%
-      dplyr::group_by(Feature_ID, Exp_ID) %>%
-      dplyr::summarise(ctl_RPM = mean(ctl_RPM))
-    
-    # Combine +s4U and -s4U RPMs
-    s4U_RPMs <- dplyr::inner_join(RPMs[,c("Feature_ID", "Exp_ID", "Replicate", "RPM")], 
-                                  ctl_RPMs, by = c("Feature_ID", "Exp_ID"))
-    colnames(s4U_RPMs) <- c("fnum", "mut", "reps", "RPM", "ctl_RPM")
-    
-    # Get fraction new estimates
-    Fns <- Fit$Fast_Fit$Fn_Estimates
-    
-    Fns <- Fns[,c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "XF", "sample")]
-    
-    colnames(Fns) <- c("fnum", "mut", "reps", "logit_fn", "XF", "sample")
-    
-    Fns$fn <- inv_logit(Fns$logit_fn)
-    
-    # Add fn info and dropout calc
-    model_df <- dplyr::inner_join(s4U_RPMs, Fns, by = c("fnum", "mut", "reps"))
-    model_df$dropout <- model_df$RPM/model_df$ctl_RPM
-    
+    do_df <- obj$Data_lists$Dropout_df
   }
   
   
-  # Fit dropout model ------------------------------------------------------------
-  
-  # Loop over data
-  nMT <- Fit$Data_lists$Stan_data$nMT
-  nreps <- Fit$Data_lists$Stan_data$nrep_vect
-  
-  pdos <- rep(0, times = sum(nreps))
-  
-  count <- 1
-  
-  # Fit model
-  for(i in 1:nMT){
-    for(j in 1:nreps[i]){
-      fit <- stats::nls(dropout ~ (-(scale*pdo)*fn)/((1-pdo) + fn*pdo) + scale,
-                 data = model_df[model_df$reps == j & model_df$mut == i,],
-                 start = list(scale = 1, pdo = 0.5),
-                 ...)
-      
-      fit_summ <- summary(fit)
-      
-      ests <- fit_summ$coefficients
-      
-      pdos[count] <- ests[rownames(ests) == "pdo","Estimate"]
-      if( pdos[count] < 0 ){
-        pdos[count] <- 0
-      }else if( pdos[count] >= 1){
-        stop("Dropout was estimated to be almost 100%, in one of your samples, which is likely an estimation error.
-              Is your data of unusually low coverage or metabolic label incorporation rate? This can lead to estimation problems.")
-      }
-      count <- count + 1
-    }
-  }
   
   # ggplot2::ggplot(model_df[model_df$reps == 2 & model_df$mut == 1,], ggplot2::aes(x = fn, y = dropout)) + 
   #   ggplot2::geom_point(alpha = 0.1) + 
@@ -224,14 +93,6 @@ CorrectDropout <- function(obj, ...){
   Fn_bias <- Fn_bias[,c("XF", "nreads", "sample", "Exp_ID", "Replicate", "logit_fn")]
   
   Fn_bias$fndo <- inv_logit(Fn_bias$logit_fn)
-  
-  # Add dropout info
-  do_df <- data.frame(pdo = pdos,
-                      Exp_ID = rep(1:nMT, times = nreps) )
-  
-  do_df <- do_df %>%
-    dplyr::group_by(Exp_ID) %>%
-    dplyr::mutate(Replicate = as.integer(1:length(pdo)))
   
   Fn_bias <- dplyr::inner_join(Fn_bias, do_df, by = c("Exp_ID", "Replicate"))
   
@@ -360,3 +221,222 @@ CorrectDropout <- function(obj, ...){
   
   
 }
+
+#' Fit dropout model to quantify dropout frequency
+#'
+#' \code{QuantifyDropout} estimates the percentage of 4-thiouridine containing RNA
+#' that was lost during library preparation (pdo).
+#' @importFrom magrittr %>%
+#' @param obj bakRFit object
+#' @param keep_data Logical; if TRUE, will return list with two elements. First element
+#' is the regular return (data frame with dropout quantitied), and the second element
+#' will be the data frame that was used for fitting the dropout model. This is useful
+#' if wanting to visualize the fit.
+#' @param ... Additoinal (optional) parameters to be passed to \code{stats::nls()}
+#' @export
+QuantifyDropout <- function(obj, keep_data = FALSE,
+                            ...){
+  ### Checks
+  # 1) Input must be a bakRFit object
+  # 2) There must be -s4U controls for all experimental conditions
+  
+  # Check obj
+  if(!(inherits(obj, "bakRFit") | inherits(obj, "bakRFnFit")) ){
+    if(inherits(obj, "bakRData")){
+      stop("You provided a bakRData object. You need to run bakRFit before running CorrectDropout")
+    }else{
+      stop("You did not provide a bakRFit object!")
+    }
+  }
+  
+  if(inherits(obj, "bakRFit")){
+    # Check that -s4U samples exist for all mut
+    check <- obj$Data_lists$Fast_df %>%
+      dplyr::filter(type == 0) %>%
+      dplyr::select(mut) %>%
+      dplyr::distinct()
+    
+    check <- check$mut
+  }else{
+    # Check that -s4U samples exist for all mut
+    check <- obj$Data_lists$Ctl_data %>%
+      dplyr::select(Exp_ID) %>%
+      dplyr::distinct()
+    
+    check <- check$Exp_ID
+  }
+  
+  
+  if(!identical(check, 1:obj$Data_lists$Stan_data$nMT)){
+    stop("You do not have at least one replicate of -s4U data for all experimental conditions!")
+  }
+  
+  
+  # Define helper functions:
+  logit <- function(x) log(x/(1-x))
+  inv_logit <- function(x) exp(x)/(1+exp(x))
+  
+  # Compile necessary data -------------------------------------------------------
+  
+  if(inherits(obj, "bakRFit")){
+    # Calculate number of reads in each sample
+    total_reads <- obj$Data_lists$Fast_df
+    total_reads <- total_reads %>%
+      dplyr::group_by(mut, reps, type) %>%
+      dplyr::summarise(total_reads = sum(n))
+    
+    # Calculate number of reads for each feature in each sample
+    RPMs <- obj$Data_lists$Fast_df
+    RPMs <- RPMs %>%
+      dplyr::group_by(fnum, mut, reps, type) %>%
+      dplyr::summarise(reads = sum(n))
+    
+    # RPM normalize
+    RPMs <- dplyr::inner_join(RPMs, total_reads, by = c("mut", "reps", "type"))
+    RPMs$RPM <- RPMs$reads/(RPMs$total_reads/1000000)
+    
+    # Separate control from +s4U
+    ctl_RPMs <- RPMs[RPMs$type == 0,]
+    colnames(ctl_RPMs) <- c("fnum", "mut", "reps", "type", "reads", "total_reads", "ctl_RPM")
+    ctl_RPMs <- ctl_RPMs[,c("fnum", "mut", "reps", "ctl_RPM")] %>%
+      dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(ctl_RPM = mean(ctl_RPM))
+    
+    s4U_RPMs <- RPMs[RPMs$type == 1,c("fnum", "mut", "reps", "RPM")]
+    
+    # Combine +s4U and -s4U RPMs
+    s4U_RPMs <- dplyr::inner_join(s4U_RPMs, ctl_RPMs, by = c("fnum", "mut"))
+    
+    # Get fraction new estimates
+    Fns <- obj$Fast_Fit$Fn_Estimates
+    
+    Fns <- Fns[,c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "XF", "sample")]
+    
+    colnames(Fns) <- c("fnum", "mut", "reps", "logit_fn", "XF", "sample")
+    
+    Fns$fn <- inv_logit(Fns$logit_fn)
+    
+    # Add fn info and dropout calc
+    model_df <- dplyr::inner_join(s4U_RPMs, Fns, by = c("fnum", "mut", "reps"))
+    model_df$dropout <- model_df$RPM/model_df$ctl_RPM
+    
+  }else{
+    # Calculate number of reads in each -s4U sample
+    total_reads_ctl <- Fit$Data_lists$Ctl_data %>%
+      dplyr::group_by(Exp_ID, Replicate) %>%
+      dplyr::summarise(total_reads = sum(n))
+    total_reads_ctl$type <- 0
+    
+    # Calculate number of reads in each +s4U samle
+    total_reads <- Fit$Data_lists$Fn_est %>%
+      dplyr::group_by(Exp_ID, Replicate) %>%
+      dplyr::summarise(total_reads = sum(n))
+    total_reads$type <- 1
+    
+    total_reads <- dplyr::bind_rows(list(total_reads, total_reads_ctl))
+    
+    # Calculate number of reads for each feature in each sample
+    RPMs <- Fit$Data_lists$Fn_est
+    RPMs <- RPMs %>%
+      dplyr::group_by(Feature_ID, Exp_ID, Replicate) %>%
+      dplyr::summarise(reads = sum(n))
+    RPMs$type <- 1
+    
+    # RPM normalize
+    RPMs <- dplyr::inner_join(RPMs, total_reads, by = c("Exp_ID", "Replicate", "type"))
+    RPMs$RPM <- RPMs$reads/(RPMs$total_reads/1000000)
+    
+    # Calculate number of reads for each feature in each -s4U sample
+    ctl_RPMs <- Fit$Data_list$Ctl_data
+    ctl_RPMs <- ctl_RPMs %>%
+      dplyr::group_by(Feature_ID, Exp_ID, Replicate) %>%
+      dplyr::summarise(reads = sum(n))
+    ctl_RPMs$type <- 0
+    
+    
+    # RPM normalize
+    ctl_RPMs <- dplyr::inner_join(ctl_RPMs, total_reads, by = c("Exp_ID", "Replicate", "type"))
+    ctl_RPMs$ctl_RPM <- ctl_RPMs$reads/(ctl_RPMs$total_reads/1000000)
+    
+    # Average over -s4U replicates
+    ctl_RPMs <- ctl_RPMs %>%
+      dplyr::group_by(Feature_ID, Exp_ID) %>%
+      dplyr::summarise(ctl_RPM = mean(ctl_RPM))
+    
+    # Combine +s4U and -s4U RPMs
+    s4U_RPMs <- dplyr::inner_join(RPMs[,c("Feature_ID", "Exp_ID", "Replicate", "RPM")], 
+                                  ctl_RPMs, by = c("Feature_ID", "Exp_ID"))
+    colnames(s4U_RPMs) <- c("fnum", "mut", "reps", "RPM", "ctl_RPM")
+    
+    # Get fraction new estimates
+    Fns <- Fit$Fast_Fit$Fn_Estimates
+    
+    Fns <- Fns[,c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "XF", "sample")]
+    
+    colnames(Fns) <- c("fnum", "mut", "reps", "logit_fn", "XF", "sample")
+    
+    Fns$fn <- inv_logit(Fns$logit_fn)
+    
+    # Add fn info and dropout calc
+    model_df <- dplyr::inner_join(s4U_RPMs, Fns, by = c("fnum", "mut", "reps"))
+    model_df$dropout <- model_df$RPM/model_df$ctl_RPM
+    
+  }
+  
+  
+  # Fit dropout model ------------------------------------------------------------
+  
+  # Loop over data
+  nMT <- Fit$Data_lists$Stan_data$nMT
+  nreps <- Fit$Data_lists$Stan_data$nrep_vect
+  
+  pdos <- rep(0, times = sum(nreps))
+  scales <- pdos
+  
+  count <- 1
+  
+  # Fit model
+  for(i in 1:nMT){
+    for(j in 1:nreps[i]){
+      fit <- stats::nls(dropout ~ (-(scale*pdo)*fn)/((1-pdo) + fn*pdo) + scale,
+                        data = model_df[model_df$reps == j & model_df$mut == i,],
+                        start = list(scale = 1, pdo = 0.5),
+                        ...)
+      
+      fit_summ <- summary(fit)
+      
+      ests <- fit_summ$coefficients
+      
+      pdos[count] <- ests[rownames(ests) == "pdo","Estimate"]
+      scales[count] <- ests[rownames(ests) == "scale","Estimate"]
+      
+      if( pdos[count] < 0 ){
+        pdos[count] <- 0
+      }else if( pdos[count] >= 1){
+        stop("Dropout was estimated to be almost 100%, in one of your samples, which is likely an estimation error.
+              Is your data of unusually low coverage or metabolic label incorporation rate? This can lead to estimation problems.")
+      }
+      count <- count + 1
+    }
+  }
+  
+  # Add dropout info
+  do_df <- data.frame(pdo = pdos,
+                      scale = scales,
+                      Exp_ID = rep(1:nMT, times = nreps) )
+  
+  do_df <- do_df %>%
+    dplyr::group_by(Exp_ID) %>%
+    dplyr::mutate(Replicate = as.integer(1:length(pdo)))
+  
+  if(keep_data){
+    output <- list(Dropout_df = do_df,
+                   Input_data = model_df)
+  }else{
+    return(do_df)
+  }
+  
+  
+  
+}
+

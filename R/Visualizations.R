@@ -446,3 +446,54 @@ Heatmap_kdeg <- function(obj, zscore = FALSE, filter_sig = FALSE, FDR = 0.05){
 
 
 }
+
+#' Visualize dropout
+#' 
+#' \code{VisualizeDropout} fits dropout model with \code{QuantifyDropout},
+#' reports the fit results, and then generates a ggplot object showing the
+#' data used to infer the fit as well as the fitted nonlinear trend.
+#' 
+#' @param obj bakRFit or bakRFnFit object
+#' @param Exp_ID Experimental condition ID to visualize dropout for
+#' @param Replicate Replicate ID to visualize dropout for
+#' @export
+VisualizeDropout <- function(obj, Exp_ID = 1, Replicate = 1){
+  
+  Dropout <- QuantifyDropout(obj, keep_data = TRUE)
+  
+  Data_d <- Dropout$Input_data
+  Fit_d <- Dropout$Dropout_df
+  
+  message(paste0(c("Estimated rates of dropout are:", utils::capture.output(as.data.frame(Fit_d))),
+                 collapse = "\n"))
+  
+  combined_df <- dplyr::inner_join(Fit_d, Data_d, by = dplyr::join_by(Exp_ID == mut, 
+                                                                      Replicate == reps))
+  
+  ### Make plot
+  
+  data_sub <- combined_df[combined_df$Exp_ID == Exp_ID & combined_df$Replicate == Replicate,]
+  
+  ymax <- max(data_sub$dropout)
+  npoints <- nrow(data_sub)
+  k <- 0.75
+  alpha <- exp(-(log10(npoints) - 1)*k)
+  if(alpha > 1){
+    alpha <- 1
+  }
+  
+  gg_dropout <- ggplot2::ggplot() + 
+    ggplot2::geom_point(data = data_sub, ggplot2::aes(x = fn, y = dropout),alpha = alpha ) + 
+    ggplot2::geom_line(data = data_sub, ggplot2::aes(x = fn, 
+                                                     y = (-(scale*pdo)*fn)/((1-pdo) + fn*pdo) + scale),
+                       color = "blue",
+                       linewidth = 1) + 
+    ggplot2::theme_classic() + 
+    ggplot2::ylim(c(0, ymax + 0.5)) + 
+    ggplot2::ggtitle('Blue line = nls fit')
+  
+  return(gg_dropout)
+  
+  
+  
+}

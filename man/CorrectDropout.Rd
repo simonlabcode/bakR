@@ -4,10 +4,12 @@
 \alias{CorrectDropout}
 \title{Correcting for metabolic labeling induced RNA dropout}
 \usage{
-CorrectDropout(obj)
+CorrectDropout(obj, ...)
 }
 \arguments{
 \item{obj}{bakRFit object}
+
+\item{...}{Additoinal (optional) parameters to be passed to \code{stats::nls()}}
 }
 \description{
 Dropout is the name given to a phenomenon originally identified by our lab and
