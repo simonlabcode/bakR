@@ -635,8 +635,11 @@ cBprocess <- function(obj,
 #' creates the necessary data structures for analysis with \code{bakRFit} and some of the visualization
 #' functions (namely \code{plotMA}).
 #'
-#' If FOI is non-null and concat == TRUE, the features listed in FOI will be included in the list of reliable features that make it past
-#' filtering. If FOI is non-null and concat == FALSE, the features listed in FOI will be the only reliable features that make it past filtering.
+#' If FOI is non-null and concat == TRUE, then all the features making it past read count filtering will be included
+#' in the output. This is the same behavior as if FOI is null. If FOI is non-null and concat == FALSE, the features 
+#' listed in FOI will be the only reliable features that make it past filtering. NOTE: FOIs must be deemed 
+#' "reliable" (in this case that means making it past read count filtering) to make it past filtering. This is
+#' because bakRFit will break otherwise.
 #' If FOI is null and concat == FALSE or TRUE, then only the features making it past read count filtering
 #' will be kept.
 #'

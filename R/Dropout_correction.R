@@ -18,9 +18,10 @@
 #' correction preserves the total library size to avoid artifically inflating read counts.
 #' 
 #' @importFrom magrittr %>%
-#' @param obj bakRFit object 
+#' @param obj bakRFit object
+#' @param ... Additoinal (optional) parameters to be passed to \code{stats::nls()}
 #' @export
-CorrectDropout <- function(obj){
+CorrectDropout <- function(obj, ...){
   
   ### Checks
   # 1) Input must be a bakRFit object
@@ -108,13 +109,20 @@ CorrectDropout <- function(obj){
     for(j in 1:nreps[i]){
       fit <- stats::nls(dropout ~ (-(scale*pdo)*fn)/((1-pdo) + fn*pdo) + scale,
                  data = model_df[model_df$reps == j & model_df$mut == i,],
-                 start = list(scale = 1, pdo = 0.5))
+                 start = list(scale = 1, pdo = 0.5),
+                 ...)
       
       fit_summ <- summary(fit)
       
       ests <- fit_summ$coefficients
       
       pdos[count] <- ests[rownames(ests) == "pdo","Estimate"]
+      if(pdos[count] < 0 ){
+        pdos[count] <- 0
+      }else if(pdos[count] >= 1{
+        stop("Dropout was estimated to be almost 100%, in one of your samples, which is likely an estimation error.
+              Is your data of unusually low coverage or metabolic label incorporation rate? This can lead to estimation problems.")
+      })
       count <- count + 1
     }
   }

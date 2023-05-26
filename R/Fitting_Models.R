@@ -290,7 +290,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       mutrate_list <- bakR::cBprocess(bakRData2, FOI = XF_choose, concat = FALSE)
 
-      mutrate_list$nU <- sum(obj$Data_lists$Fast_df$nT*obj$Data_lists$Fast_df$n)/sum(obj$Data_lists$Fast_df$n)
+      mutrate_list$Stan_data$nU <- sum(mutrate_list$Fast_df$nT*mutrate_list$Fast_df$n)/sum(mutrate_list$Fast_df$n)
 
       
       # Run MLE implementation

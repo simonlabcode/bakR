@@ -273,11 +273,11 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   if(!all(is.numeric(p_do))){
     stop("p_do must be numeric")
   }else if(!all(p_do <= 1)){
-    stop("p_do must be <= 1; it represents the percentage of s4U containing RNA lost during library prep")
+    stop("p_do must be <= 1; it represents the fraction of s4U containing RNA lost during library prep")
   }else if(!all(p_do >= 0)){
-    stop("p_do must be >= 0; it represents the percentage of s4U containing RNA lost during library prep")
+    stop("p_do must be >= 0; it represents the fraction of s4U containing RNA lost during library prep")
   }else if(!all(p_do == 0)){
-    warning("You are simulating dropout; statistical models implemented by bakR do not correct for dropout and thus will provide biased estimates")
+    warning("You are simulating dropout. Simulate_bakRData only properly simulates the effect of dropout on fraction news. Simulate_relative_bakRData implements a more realistic dropout simulation that also affects read counts.")
   }
 
   # Heteroskedastic Slope
@@ -1094,11 +1094,9 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
   if(!all(is.numeric(p_do))){
     stop("p_do must be numeric")
   }else if(!all(p_do <= 1)){
-    stop("p_do must be <= 1; it represents the percentage of s4U containing RNA lost during library prep")
+    stop("p_do must be <= 1; it represents the fraction of s4U containing RNA lost during library prep")
   }else if(!all(p_do >= 0)){
-    stop("p_do must be >= 0; it represents the percentage of s4U containing RNA lost during library prep")
-  }else if(!all(p_do == 0)){
-    warning("You are simulating dropout; statistical models implemented by bakR do not correct for dropout and thus will provide biased estimates")
+    stop("p_do must be >= 0; it represents the fraction of s4U containing RNA lost during library prep")
   }
   
   # Heteroskedastic Slope
