@@ -873,6 +873,9 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
   fns <- dplyr::inner_join(fns, tl_df, by = c("Exp_ID", "Replicate"))
   
   # Remove -s4U data from fns
+  fn_ctl_data <- fns[fns$Type == 0, colnames(fns) != "Type"]
+  fn_ctl_data$tl <- 0
+  
   fns <- fns[fns$Type == 1,]
   
   fns <- fns[,colnames(fns) != "Type"]
@@ -1001,7 +1004,8 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
   )
   
   out <- list(Stan_data = data_list, Count_Matrix = Cnt_mat,
-                               Fn_est = dplyr::as_tibble(fns))
+                               Fn_est = dplyr::as_tibble(fns),
+                               Ctl_data = dplyr::as_tibble(fn_ctl_data))
   
   return(out)
 }
