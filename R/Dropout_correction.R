@@ -19,9 +19,15 @@
 #' 
 #' @importFrom magrittr %>%
 #' @param obj bakRFit object
-#' @param ... Additoinal (optional) parameters to be passed to \code{stats::nls()}
+#' @param scale_init Numeric; initial estimate for -s4U/+s4U scale factor. This is the factor
+#' difference in RPM normalized read counts for completely unlabeled transcripts (i.e., highly stable
+#' transcript) between the +s4U and -s4U samples.
+#' @param pdo_init Numeric; initial estimtae for the dropout rate. This is the probability
+#' that an s4U labeled RNA molecule is lost during library prepartion. 
+#' @param ... Additional (optional) parameters to be passed to \code{stats::nls()}
 #' @export
-CorrectDropout <- function(obj, ...){
+CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
+                           ...){
   
   ### Checks
   # 1) Input must be a bakRFit object
@@ -58,6 +64,24 @@ CorrectDropout <- function(obj, ...){
     stop("You do not have at least one replicate of -s4U data for all experimental conditions!")
   }
   
+  # Check scale_init
+  if(!is.numeric(scale_init)){
+    stop("scale_init must be numeric!")
+  }else if(scale_init < 1){
+    stop("scale_init must be >= 1.")
+  }else if(scale_init > 5){
+    warning("scale_init is set to an unusually high number. The +s4U/-s4U scale
+            factor is likely just over 1")
+  }
+  
+  # Check pdo_init
+  if(!is.numeric(pdo_init)){
+    stop("pdo_init must be numeric!")
+  }else if(pdo_init <= 0){
+    stop("pdo_init must be > 0")
+  }else if(pdo_init >= 1){
+    stop("pdo_init must be < 1")
+  }
   
   # Define helper functions:
   logit <- function(x) log(x/(1-x))

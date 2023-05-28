@@ -471,29 +471,40 @@ VisualizeDropout <- function(obj, Exp_ID = 1, Replicate = 1){
   combined_df <- dplyr::inner_join(Fit_d, Data_d, by = dplyr::join_by(Exp_ID == mut, 
                                                                       Replicate == reps))
   
-  ### Make plot
+  ### Make plots
+  exp_vect <- Fit_d$Exp_ID
+  rep_vect <- Fit_d$Replicate
   
-  data_sub <- combined_df[combined_df$Exp_ID == Exp_ID & combined_df$Replicate == Replicate,]
+  dropout_plots <- vector(mode = "list", length = length(exp_vect))
   
-  ymax <- max(data_sub$dropout)
-  npoints <- nrow(data_sub)
-  k <- 0.75
-  alpha <- exp(-(log10(npoints) - 1)*k)
-  if(alpha > 1){
-    alpha <- 1
+  
+  for(i in 1:nrow(Fit_d)){
+    data_sub <- combined_df[combined_df$Exp_ID == exp_vect[i] & combined_df$Replicate == rep_vect[i],]
+    
+    ymax <- max(data_sub$dropout)
+    npoints <- nrow(data_sub)
+    k <- 0.75
+    alpha <- exp(-(log10(npoints) - 1)*k)
+    if(alpha > 1){
+      alpha <- 1
+    }
+    
+    dropout_plots[[i]] <- ggplot2::ggplot() + 
+      ggplot2::geom_point(data = data_sub, ggplot2::aes(x = fn, y = dropout),alpha = alpha ) + 
+      ggplot2::geom_line(data = data_sub, ggplot2::aes(x = fn, 
+                                                       y = (-(scale*pdo)*fn)/((1-pdo) + fn*pdo) + scale),
+                         color = "blue",
+                         linewidth = 1) + 
+      ggplot2::theme_classic() + 
+      ggplot2::ylim(c(0, ymax + 0.5)) + 
+      ggplot2::ggtitle('Blue line = nls fit')
+    
   }
   
-  gg_dropout <- ggplot2::ggplot() + 
-    ggplot2::geom_point(data = data_sub, ggplot2::aes(x = fn, y = dropout),alpha = alpha ) + 
-    ggplot2::geom_line(data = data_sub, ggplot2::aes(x = fn, 
-                                                     y = (-(scale*pdo)*fn)/((1-pdo) + fn*pdo) + scale),
-                       color = "blue",
-                       linewidth = 1) + 
-    ggplot2::theme_classic() + 
-    ggplot2::ylim(c(0, ymax + 0.5)) + 
-    ggplot2::ggtitle('Blue line = nls fit')
+  names(dropout_plots) <- paste0("ExpID_", exp_vect, "_Rep_", rep_vect)
   
-  return(gg_dropout)
+
+  return(dropout_plots)
   
   
   
