@@ -138,9 +138,9 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
 
                                  axis.ticks = ggplot2::element_line(colour = "black"),
 
-                                 axis.text = ggplot2::element_text(color="black", size = 12),
+                                 axis.text = ggplot2::element_text(color="black", size = 10),
 
-                                 axis.title = ggplot2::element_text(color="black", size = 18),
+                                 axis.title = ggplot2::element_text(color="black", size = 14),
 
                                  strip.background = ggplot2::element_blank())
 
@@ -250,9 +250,9 @@ plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = N
 
                                  axis.ticks = ggplot2::element_line(colour = "black"),
 
-                                 axis.text = ggplot2::element_text(color="black", size = 12),
+                                 axis.text = ggplot2::element_text(color="black", size = 10),
 
-                                 axis.title = ggplot2::element_text(color="black", size = 18),
+                                 axis.title = ggplot2::element_text(color="black", size = 14),
 
                                  strip.background = ggplot2::element_blank())
 
