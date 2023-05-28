@@ -456,17 +456,26 @@ Heatmap_kdeg <- function(obj, zscore = FALSE, filter_sig = FALSE, FDR = 0.05){
 #' @param obj bakRFit or bakRFnFit object
 #' @param Exp_ID Experimental condition ID to visualize dropout for
 #' @param Replicate Replicate ID to visualize dropout for
+#' @param keep_data Logical; if TRUE, will return data used to make plots along with
+#' the plots themselves
+#' @param no_message Logical; if TRUE, will not output message regarding estimated
+#' rates of dropout in each sample
 #' @export
-VisualizeDropout <- function(obj, Exp_ID = 1, Replicate = 1){
+VisualizeDropout <- function(obj, Exp_ID = 1, Replicate = 1,
+                             keep_data = FALSE,
+                             no_message = FALSE){
   
-  Dropout <- QuantifyDropout(obj, keep_data = TRUE)
+  Dropout <- QuantifyDropout(obj, keep_data = TRUE, no_message = TRUE)
   
   Data_d <- Dropout$Input_data
   Fit_d <- Dropout$Dropout_df
   
-  message(paste0(c("Estimated rates of dropout are:", 
-                   utils::capture.output(as.data.frame(Fit_d[,c("Exp_ID", "Replicate", "pdo")]))),
-                 collapse = "\n"))
+  if(!no_message){
+    message(paste0(c("Estimated rates of dropout are:", 
+                     utils::capture.output(as.data.frame(Fit_d[,c("Exp_ID", "Replicate", "pdo")]))),
+                   collapse = "\n"))
+  }
+
   
   combined_df <- dplyr::inner_join(Fit_d, Data_d, by = dplyr::join_by(Exp_ID == mut, 
                                                                       Replicate == reps))
@@ -504,7 +513,15 @@ VisualizeDropout <- function(obj, Exp_ID = 1, Replicate = 1){
   names(dropout_plots) <- paste0("ExpID_", exp_vect, "_Rep_", rep_vect)
   
 
-  return(dropout_plots)
+  if(keep_data){
+    return(list(dropout_plots = dropout_plots,
+                Input_data = Data_d,
+                Model_fit = Fit_d))
+    
+  }else{
+    return(dropout_plots)
+    
+  }
   
   
   

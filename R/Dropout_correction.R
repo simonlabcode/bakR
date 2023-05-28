@@ -261,10 +261,12 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
 #' transcript) between the +s4U and -s4U samples.
 #' @param pdo_init Numeric; initial estimtae for the dropout rate. This is the probability
 #' that an s4U labeled RNA molecule is lost during library prepartion. 
+#' @param no_message Logical; if TRUE, will not output message regarding estimated
+#' rates of dropout in each sample
 #' @param ... Additional (optional) parameters to be passed to \code{stats::nls()}
 #' @export
 QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
-                            keep_data = FALSE,
+                            keep_data = FALSE, no_message = FALSE,
                             ...){
   ### Checks
   # 1) Input must be a bakRFit object
@@ -479,6 +481,12 @@ QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   do_df <- do_df %>%
     dplyr::group_by(Exp_ID) %>%
     dplyr::mutate(Replicate = as.integer(1:length(pdo)))
+  
+  if(!no_message){
+    message(paste0(c("Estimated rates of dropout are:", 
+                     utils::capture.output(as.data.frame(do_df[,c("Exp_ID", "Replicate", "pdo")]))),
+                   collapse = "\n"))
+  }
   
   if(keep_data){
     output <- list(Dropout_df = do_df,
