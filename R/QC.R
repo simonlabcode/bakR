@@ -37,6 +37,7 @@
 #' @importFrom magrittr %>%
 #' @export
 QC_checks <- function(obj){
+  
 
   Exp_ID <- Replicate <- logit_fn <- fn_1 <- fn_2 <- NULL
   type <- mut <- reps <- pnew <- mutrate <- TC <- n <- nT <- ctl <- NULL
@@ -52,41 +53,39 @@ QC_checks <- function(obj){
   ### Assess mutation rates
   Mutation_Rates <- Fit$Mut_rates
 
-  # pnews
-  pnews <- Mutation_Rates[[1]]
+  # Mutation rates
+  mutrates <- Mutation_Rates
 
-  if(all(pnews$pnew > 0.02)){
+  if(all(mutrates$pnew > 0.02)){
     message("Mutation rates in new reads looks good!")
   }
 
-  if(any(dplyr::between(pnews$pnew, 0.0099, 0.0201))){
+  if(any(dplyr::between(mutrates$pnew, 0.0099, 0.0201))){
     warning("Mutation rates in new reads is somewhat low in one or more samples.")
 
     MCMC_next <- TRUE
   }
 
-  if(any(dplyr::between(pnews$pnew, 0.0069, 0.01))){
+  if(any(dplyr::between(mutrates$pnew, 0.0069, 0.01))){
     warning("Mutation rates in new reads are below 1% one or more samples. This significanlty reduces bakR's ability to identify differential kinetics.")
 
     MCMC_next <- TRUE
 
   }
 
-  if(any(pnews$pnew < 0.007)){
-    warning("Mutation rates in new reads are below 0.7% in one or more samples. It is nearly impossible to identify kinetic differences with such low mutation rates.")
+  if(any(mutrates$pnew < 0.007)){
+    warning("Mutation rates in new reads are below 0.7% in one or more samples. It is very difficult to identify kinetic differences with such low mutation rates.")
 
     Bad_data <- TRUE
   }
 
   # polds
-  polds <- Mutation_Rates[[2]]
-
-  if(polds < 0.004){
+  if(all(mutrates$pold < 0.004)){
     message("Background mutation rate looks good!")
-  }else if(polds < 0.01){
+  }else if(all(mutrates$pold < 0.01)){
     warning("Background mutation rate is a bit high. Did you account for SNPs when counting mutations?")
   }else{
-    warning("Background mutation rate is extremely high (>= 1%). Did you properly identify -s4U control samples in the metadf of your bakRData object?")
+    warning("Background mutation rate is high (>= 1%). Did you properly identify -s4U control samples in the metadf of your bakRData object?")
 
     Bad_data <- TRUE
   }
@@ -168,9 +167,16 @@ QC_checks <- function(obj){
 
         coeff <- stats::cor(cor_df$fn_1,
                      cor_df$fn_2)
+        
+        npoints <- nrow(cor_df)
+        k <- 0.75
+        alpha <- exp(-(log10(npoints) - 1)*k)
+        if(alpha > 1){
+          alpha <- 1
+        }
 
         cor_plots[[count]] <- ggplot2::ggplot(cor_df, ggplot2::aes(x = fn_1, y = fn_2)) +
-          ggplot2::geom_point(alpha = 0.1) +
+          ggplot2::geom_point(alpha = alpha) +
           ggplot2::xlab(paste0("logit(fn) replicate " , j, ", condition ", i)) +
           ggplot2::ylab(paste0("logit(fn) replicate " , k, ", condition ", i)) +
           ggplot2::ggtitle(paste0("logit(fn) correlation (p = ", round(coeff, digits = 3), ")"),
@@ -187,6 +193,25 @@ QC_checks <- function(obj){
 
 
   }
+  
+  
+  ## Make correlation matrix
+  nr <- max(Fns$Feature_ID)
+  nc <- length(unique(Fns$sample))
+  
+  fn_mat <- matrix(0, nrow = nr, ncol = nc)
+  
+  samps <- unique(Fns$sample)
+  
+  count <- 1
+  for(i in samps){
+    fn_mat[,count] <- Fns$logit_fn[Fns$sample == i]
+    count <- count + 1
+  }
+  
+  fn_cor_mat <- stats::cor(fn_mat)
+  
+  
 
   fn_cors <- data.frame(Exp_ID = Exps,
                         Rep_ID1 = Rep_ID1,
@@ -195,7 +220,7 @@ QC_checks <- function(obj){
 
   message(paste0(c("logit(fn) correlations for each pair of replicates are:", utils::capture.output(fn_cors)), collapse = "\n"))
 
-  if(any(fn_cors$correlation < 0.8)){
+  if(any(fn_cors$correlation < 0.7)){
     warning("logit(fraction new) correlation is low in one or more samples. Did you properly identify replicates in the metadf of your bakRData object?")
   }else{
     message("logit(fn) correlations are high, suggesting good reproducibility!")
@@ -204,7 +229,7 @@ QC_checks <- function(obj){
 
   ### Make suggestions
   if(Bad_data){
-    message("There are some causes for concerns regarding the quality of your data. These concerns will severely limit bakR's ability to detect differential kinetics. Check warning messages for details.")
+    message("Some aspects of your data may limit bakR's ability to detect differential kinetics. Check warning messages for details.")
   }else if(MCMC_next){
     message("Given your low mutation rates, I suggest running the MCMC implementation next. This can be done with bakRFit(Fit, StanFit = TRUE), where Fit is your bakRFit object.")
   }else{
@@ -219,7 +244,7 @@ QC_checks <- function(obj){
   muts <- Fit$Mut_rates
 
 
-  pnews <- muts[[1]]
+  pnews <- muts[,c("mut", "reps", "pnew")]
 
   fast_df <- obj$Data_lists$Fast_df
 
@@ -232,17 +257,15 @@ QC_checks <- function(obj){
   pnews <- pnews %>%
     dplyr::mutate(mutrate = as.factor("new"))
 
-  polds <- data.frame(mut = 1,
-                      reps = 1,
-                      pnew = muts[[2]],
-                      sample = "pold",
+  polds <- data.frame(mut = pnews$mut,
+                      reps = pnews$reps,
+                      pnew = muts$pold,
+                      sample = pnews$sample,
                       mutrate = as.factor("old"))
 
   pnews <- dplyr::bind_rows(pnews, polds)
 
   pnews$sample <- as.factor(pnews$sample)
-
-  pnews$sample <- stats::relevel(pnews$sample, "pold")
 
   # Pretty plotting theme
   theme_mds <-    ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
@@ -255,19 +278,20 @@ QC_checks <- function(obj){
                                  axis.line.y = ggplot2::element_line(colour = "black"),
 
                                  axis.ticks = ggplot2::element_line(colour = "black"),
+                                 
+                                 title = ggplot2::element_text(color = "black", size = 10),
 
                                  axis.text = ggplot2::element_text(color="black", size = 10),
-
-                                 axis.title = ggplot2::element_text(color="black", size = 14),
+                                 
+                                 axis.title = ggplot2::element_text(color = "black", size = 12),
 
                                  strip.background = ggplot2::element_blank())
 
 
-  ggplot2::theme_set(theme_mds)
-
 
   g_conversion <- ggplot2::ggplot(pnews, ggplot2::aes(x = sample, y = pnew, fill = mutrate)) +
-    ggplot2::geom_bar(stat = "identity") +
+    theme_mds + 
+    ggplot2::geom_bar(stat = "identity", position = "dodge") +
     ggplot2::xlab("Sample") +
     ggplot2::ylab("Mutation rate") +
     ggplot2::ggtitle("New (red) and old (gray) read mutation rates",
@@ -277,7 +301,6 @@ QC_checks <- function(obj){
     ggplot2::theme(legend.position = "none") +
     ggplot2::geom_hline(yintercept = 0.02, linetype = "dotted", size = 1.5, color = "blue") +
     ggplot2::geom_hline(yintercept = 0.004, linetype = "dotted", size = 1.5, color = "black")
-
 
   # Raw mutation rates
   fast_df <- obj$Data_lists$Fast_df
@@ -294,43 +317,45 @@ QC_checks <- function(obj){
   # Pretty plotting theme
   theme_mds <-    ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
                                  panel.grid.minor = ggplot2::element_blank(),
-
+                                 
                                  panel.background = ggplot2::element_blank(),
-
+                                 
                                  axis.line.x = ggplot2::element_line(colour = "black"),
-
+                                 
                                  axis.line.y = ggplot2::element_line(colour = "black"),
-
+                                 
                                  axis.ticks = ggplot2::element_line(colour = "black"),
-
-                                 axis.text = ggplot2::element_text(color="black", size = 12),
-
-                                 axis.title = ggplot2::element_text(color="black", size = 18),
-
+                                 
+                                 title = ggplot2::element_text(color = "black", size = 10),
+                                 
+                                 axis.text = ggplot2::element_text(color="black", size = 10),
+                                 
+                                 axis.title = ggplot2::element_text(color = "black", size = 12),
+                                 
                                  strip.background = ggplot2::element_blank())
 
 
-  ggplot2::theme_set(theme_mds)
 
 
   g_raw <- ggplot2::ggplot(pnews, ggplot2::aes(x = sample, y = mutrate, fill = ctl)) +
+    theme_mds + 
     ggplot2::geom_bar(stat = "identity") +
     ggplot2::xlab("Sample") +
     ggplot2::ylab("Raw mutation rate") +
-    ggplot2::ggtitle("Raw mutation rates",
-                     subtitle = "Gray bars (-s4U control samples) ideally below black line. Red bars ideally well above black line and gray bars.") +
+    ggplot2::ggtitle("Raw mutation rates (gray = -s4U; red = +s4U)",
+                     subtitle = "Gray bars ideally below black line. Red bars ideally well above black line.") +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90)) +
     ggplot2::scale_fill_manual(values = c("#A1121B", "darkgray")) +
     ggplot2::theme(legend.position = "none") +
     ggplot2::geom_hline(yintercept = 0.004, linetype = "dotted", size = 1.5, color = "black")
 
 
-
   # Fraction new correlations
 
   glist <- list(raw_mutrates = g_raw,
                 conversion_rates = g_conversion,
-                correlation_plots = cor_plots)
+                correlation_plots = cor_plots,
+                correlation_matrix = fn_cor_mat)
 
   return(glist)
 
