@@ -4,7 +4,13 @@
 \alias{VisualizeDropout}
 \title{Visualize dropout}
 \usage{
-VisualizeDropout(obj, Exp_ID = 1, Replicate = 1)
+VisualizeDropout(
+  obj,
+  Exp_ID = 1,
+  Replicate = 1,
+  keep_data = FALSE,
+  no_message = FALSE
+)
 }
 \arguments{
 \item{obj}{bakRFit or bakRFnFit object}
@@ -12,6 +18,12 @@ VisualizeDropout(obj, Exp_ID = 1, Replicate = 1)
 \item{Exp_ID}{Experimental condition ID to visualize dropout for}
 
 \item{Replicate}{Replicate ID to visualize dropout for}
+
+\item{keep_data}{Logical; if TRUE, will return data used to make plots along with
+the plots themselves}
+
+\item{no_message}{Logical; if TRUE, will not output message regarding estimated
+rates of dropout in each sample}
 }
 \description{
 \code{VisualizeDropout} fits dropout model with \code{QuantifyDropout},

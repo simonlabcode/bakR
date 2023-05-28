@@ -4,17 +4,34 @@
 \alias{QuantifyDropout}
 \title{Fit dropout model to quantify dropout frequency}
 \usage{
-QuantifyDropout(obj, keep_data = FALSE, ...)
+QuantifyDropout(
+  obj,
+  scale_init = 1.05,
+  pdo_init = 0.3,
+  keep_data = FALSE,
+  no_message = FALSE,
+  ...
+)
 }
 \arguments{
 \item{obj}{bakRFit object}
+
+\item{scale_init}{Numeric; initial estimate for -s4U/+s4U scale factor. This is the factor
+difference in RPM normalized read counts for completely unlabeled transcripts (i.e., highly stable
+transcript) between the +s4U and -s4U samples.}
+
+\item{pdo_init}{Numeric; initial estimtae for the dropout rate. This is the probability
+that an s4U labeled RNA molecule is lost during library prepartion.}
 
 \item{keep_data}{Logical; if TRUE, will return list with two elements. First element
 is the regular return (data frame with dropout quantitied), and the second element
 will be the data frame that was used for fitting the dropout model. This is useful
 if wanting to visualize the fit.}
 
-\item{...}{Additoinal (optional) parameters to be passed to \code{stats::nls()}}
+\item{no_message}{Logical; if TRUE, will not output message regarding estimated
+rates of dropout in each sample}
+
+\item{...}{Additional (optional) parameters to be passed to \code{stats::nls()}}
 }
 \description{
 \code{QuantifyDropout} estimates the percentage of 4-thiouridine containing RNA

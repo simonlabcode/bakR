@@ -41,23 +41,6 @@ QC_checks <- function(obj){
 
   Exp_ID <- Replicate <- logit_fn <- fn_1 <- fn_2 <- NULL
   type <- mut <- reps <- pnew <- mutrate <- TC <- n <- nT <- ctl <- NULL
-
-  ## Function for assessing dropout
-  assess_dropout <- function(obj2){
-    
-    vis <- VisualizeDropout(obj2, keep_data = TRUE)
-    
-    do_fit <- vis$Model_fit
-    
-    if(any(do_fit$pdo > 0.2)){
-      warning("There is a non-neglible amount of dropout in at least one of your samples.
-              I suggest running CorrectDropout() on your bakRFit object.")
-    }
-    
-    return(vis)
-    
-    
-  }
   
   ## Function for assessing fraction new correlation
   assess_fn_cor <- function(obj2, Bad_data, bakRFn){
@@ -229,11 +212,8 @@ QC_checks <- function(obj){
       message("I suggest running the Hybrid implementation next. This can be done with bakRFit(Fit, HybridFit = TRUE), where Fit is your bakRFit object.")
     }
     
-    do_assessment <- assess_dropout(obj)
-    
     glist <- list(correlation_plots = fn_assessment$correlation_plots,
-                  correlation_matrix = fn_assessment$correlation_matrix,
-                  dropout_plots = do_assessment$dropout_plots)
+                  correlation_matrix = fn_assessment$correlation_matrix)
     
     return(glist)
     
@@ -283,8 +263,6 @@ QC_checks <- function(obj){
                   bakRFn = FALSE)
     
     Bad_data <- fn_assessment$Bad_data
-    
-    do_assessment <- assess_dropout(obj)
     
     
     ### Make suggestions
@@ -415,8 +393,7 @@ QC_checks <- function(obj){
     glist <- list(raw_mutrates = g_raw,
                   conversion_rates = g_conversion,
                   correlation_plots = fn_assessment$correlation_plots,
-                  correlation_matrix = fn_assessment$correlation_matrix,
-                  dropout_plots = do_assessment$dropout_plots)
+                  correlation_matrix = fn_assessment$correlation_matrix)
     
     return(glist)
   }

@@ -4,12 +4,19 @@
 \alias{CorrectDropout}
 \title{Correcting for metabolic labeling induced RNA dropout}
 \usage{
-CorrectDropout(obj, ...)
+CorrectDropout(obj, scale_init = 1.05, pdo_init = 0.3, ...)
 }
 \arguments{
 \item{obj}{bakRFit object}
 
-\item{...}{Additoinal (optional) parameters to be passed to \code{stats::nls()}}
+\item{scale_init}{Numeric; initial estimate for -s4U/+s4U scale factor. This is the factor
+difference in RPM normalized read counts for completely unlabeled transcripts (i.e., highly stable
+transcript) between the +s4U and -s4U samples.}
+
+\item{pdo_init}{Numeric; initial estimtae for the dropout rate. This is the probability
+that an s4U labeled RNA molecule is lost during library prepartion.}
+
+\item{...}{Additional (optional) parameters to be passed to \code{stats::nls()}}
 }
 \description{
 Dropout is the name given to a phenomenon originally identified by our lab and
