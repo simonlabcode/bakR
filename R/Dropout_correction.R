@@ -232,13 +232,21 @@ CorrectDropout <- function(obj, ...){
 #' is the regular return (data frame with dropout quantitied), and the second element
 #' will be the data frame that was used for fitting the dropout model. This is useful
 #' if wanting to visualize the fit.
-#' @param ... Additoinal (optional) parameters to be passed to \code{stats::nls()}
+#' @param scale_init Numeric; initial estimate for -s4U/+s4U scale factor. This is the factor
+#' difference in RPM normalized read counts for completely unlabeled transcripts (i.e., highly stable
+#' transcript) between the +s4U and -s4U samples.
+#' @param pdo_init Numeric; initial estimtae for the dropout rate. This is the probability
+#' that an s4U labeled RNA molecule is lost during library prepartion. 
+#' @param ... Additional (optional) parameters to be passed to \code{stats::nls()}
 #' @export
-QuantifyDropout <- function(obj, keep_data = FALSE,
+QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
+                            keep_data = FALSE,
                             ...){
   ### Checks
   # 1) Input must be a bakRFit object
   # 2) There must be -s4U controls for all experimental conditions
+  # 3) Make sure scale_init is > 0 and close to 1
+  # 4) Make sure pdo_init is between 0 and 1
   
   # Check obj
   if(!(inherits(obj, "bakRFit") | inherits(obj, "bakRFnFit")) ){
@@ -269,6 +277,25 @@ QuantifyDropout <- function(obj, keep_data = FALSE,
   
   if(!identical(check, 1:obj$Data_lists$Stan_data$nMT)){
     stop("You do not have at least one replicate of -s4U data for all experimental conditions!")
+  }
+  
+  # Check scale_init
+  if(!is.numeric(scale_init)){
+    stop("scale_init must be numeric!")
+  }else if(scale_init < 1){
+    stop("scale_init must be >= 1.")
+  }else if(scale_init > 5){
+    warning("scale_init is set to an unusually high number. The +s4U/-s4U scale
+            factor is likely just over 1")
+  }
+  
+  # Check pdo_init
+  if(!is.numeric(pdo_init)){
+    stop("pdo_init must be numeric!")
+  }else if(pdo_init <= 0){
+    stop("pdo_init must be > 0")
+  }else if(pdo_init >= 1){
+    stop("pdo_init must be < 1")
   }
   
   
@@ -400,7 +427,7 @@ QuantifyDropout <- function(obj, keep_data = FALSE,
     for(j in 1:nreps[i]){
       fit <- stats::nls(dropout ~ (-(scale*pdo)*fn)/((1-pdo) + fn*pdo) + scale,
                         data = model_df[model_df$reps == j & model_df$mut == i,],
-                        start = list(scale = 1, pdo = 0.5),
+                        start = list(scale = scale_init, pdo = pdo_init),
                         ...)
       
       fit_summ <- summary(fit)

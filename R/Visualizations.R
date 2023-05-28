@@ -464,7 +464,8 @@ VisualizeDropout <- function(obj, Exp_ID = 1, Replicate = 1){
   Data_d <- Dropout$Input_data
   Fit_d <- Dropout$Dropout_df
   
-  message(paste0(c("Estimated rates of dropout are:", utils::capture.output(as.data.frame(Fit_d))),
+  message(paste0(c("Estimated rates of dropout are:", 
+                   utils::capture.output(as.data.frame(Fit_d[,c("Exp_ID", "Replicate", "pdo")]))),
                  collapse = "\n"))
   
   combined_df <- dplyr::inner_join(Fit_d, Data_d, by = dplyr::join_by(Exp_ID == mut, 
