@@ -14,6 +14,7 @@ fast_analysis(
   nbin = NULL,
   prior_weight = 2,
   MLE = TRUE,
+  ztest = FALSE,
   lower = -7,
   upper = 7,
   se_max = 2.5,
@@ -52,6 +53,8 @@ etc.}
 \item{prior_weight}{Determines extent to which logit(fn) variance is regularized to the mean-variance regression line}
 
 \item{MLE}{Logical; if TRUE then replicate logit(fn) is estimated using maximum likelihood; if FALSE more conservative Bayesian hypothesis testing is used}
+
+\item{ztest}{TRUE; if TRUE, then a z-test is used for p-value calculation rather than the more conservative moderated t-test.}
 
 \item{lower}{Lower bound for MLE with L-BFGS-B algorithm}
 

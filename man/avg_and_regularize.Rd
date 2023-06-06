@@ -14,11 +14,22 @@ avg_and_regularize(
   Chase = FALSE,
   BDA_model = FALSE,
   null_cutoff = 0,
-  Mutrates = NULL
+  Mutrates = NULL,
+  ztest = FALSE
 )
 }
 \arguments{
-\item{Mut_data_est}{Dataframe with fraction new estimation information}
+\item{Mut_data_est}{Dataframe with fraction new estimation information. Required columns are:
+\itemize{
+\item fnum; numerical ID of feature
+\item reps; numerical ID of replicate
+\item mut; numerical ID of experimental condition (Exp_ID)
+\item logit_fn_rep; logit(fn) estimate
+\item kd_rep_est; kdeg estimate
+\item log_kd_rep_est; log(kdeg) estimate
+\item logit_fn_se; logit(fn) estimate uncertainty
+\item log_kd_se; log(kdeg) estimate uncertainty
+}}
 
 \item{nreps}{Vector of number of replicates in each experimental condition}
 
@@ -39,6 +50,8 @@ model is used.}
 \item{null_cutoff}{bakR will test the null hypothesis of |effect size| < |null_cutoff|}
 
 \item{Mutrates}{List containing new and old mutation rate estimates}
+
+\item{ztest}{TRUE; if TRUE, then a z-test is used for p-value calculation rather than the more conservative moderated t-test.}
 }
 \value{
 List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:

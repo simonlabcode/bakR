@@ -26,6 +26,7 @@ bakRFit(
   multi_pold = FALSE,
   Long = FALSE,
   kmeans = FALSE,
+  ztest = FALSE,
   ...
 )
 }
@@ -82,6 +83,9 @@ model is used.}
 \item{Long}{Logical; if TRUE, long read optimized fraction new estimation strategy is used.}
 
 \item{kmeans}{Logical; if TRUE, kmeans clustering on read-specific mutation rates is used to estimate pnews and pold.}
+
+\item{ztest}{Logical; if TRUE and the MLE implementation is being used, then a z-test will be used for p-value calculation
+rather than the more conservative moderated t-test.}
 
 \item{...}{Arguments passed to either \code{fast_analysis} (if a bakRData object)
 or \code{TL_Stan} and \code{Hybrid_fit} (if a bakRFit object)}

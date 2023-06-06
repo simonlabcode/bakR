@@ -129,8 +129,8 @@ QC_checks <- function(obj){
                               cor_df$fn_2)
           
           npoints <- nrow(cor_df)
-          k <- 0.75
-          alpha <- exp(-(log10(npoints) - 1)*k)
+          a_scale <- 0.75
+          alpha <- exp(-(log10(npoints) - 1)*a_scale)
           if(alpha > 1){
             alpha <- 1
           }

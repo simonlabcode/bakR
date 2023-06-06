@@ -199,7 +199,15 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
   MT_summary <- MT_summary[, c("50%","mean", "sd")]
 
   MT_summary <- as.data.frame(MT_summary)
+  
+  # Extract log(kdeg) estimates
+  lkd_summary <- rstan::summary(fit, pars = "log_kd", probs = c(0.5))$summary
+  
+  lkd_summary <- lkd_summary[, c("50%","mean", "sd")]
+  
+  lkd_summary <- as.data.frame(lkd_summary)
 
+  # Number of non-reference experimental conditions
   nconds <- data_list$nMT - 1
 
 
@@ -237,15 +245,18 @@ TL_stan <- function(data_list, Hybrid_Fit = FALSE, keep_fit = FALSE, NSS = FALSE
   Exp_ID_kd <- rep(seq(from=1, to=(nconds+1)), times=ngs)
   kdeg <- MT_summary$mean # kdeg vector
   kdeg_sd <- MT_summary$sd # kdeg sd vector
+  log_kdeg <- lkd_summary$mean # log(kdeg) vector
+  log_kdeg_sd <- lkd_summary$sd # log(kdeg) sd vector
 
   rm(MT_summary)
+  rm(lkd_summary)
 
   Effects_df <- data.frame(F_ID, Exp_ID, L2FC_kdeg, L2FC_kdeg_sd, L2FC_kdeg, L2FC_kdeg_sd)
-  Kdeg_df <- data.frame(F_ID_kd, Exp_ID_kd, kdeg, kdeg_sd)
+  Kdeg_df <- data.frame(F_ID_kd, Exp_ID_kd, kdeg, kdeg_sd, log_kdeg, log_kdeg_sd)
   Fn_df <- data.frame(F_ID_fn, Exp_ID_fn, R_ID_fn, logit_fn, fn_se)
 
   colnames(Effects_df) <- c("Feature_ID", "Exp_ID", "L2FC_kdeg", "L2FC_kd_sd", "effect", "se")
-  colnames(Kdeg_df) <- c("Feature_ID", "Exp_ID", "kdeg", "kdeg_sd")
+  colnames(Kdeg_df) <- c("Feature_ID", "Exp_ID", "kdeg", "kdeg_sd", "log_kdeg", "log_kdeg_sd")
   colnames(Fn_df) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se")
 
   Fn_df <- merge(Fn_df, data_list$sample_lookup, by.x = c("Exp_ID", "Replicate"), by.y = c("mut", "reps"))
