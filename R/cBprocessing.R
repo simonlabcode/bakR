@@ -384,9 +384,11 @@ cBprocess <- function(obj,
   }else{
     if(concat == TRUE){
       # FOI still need to pass filtering to make sure bakRFit doesn't break
-      keep <- unique(c(intersect(FOI, reliables), reliables))
+      min_reliables <- bakR::reliableFeatures(obj, high_p = 1, totcut = 1, Ucut = Ucut, AvgU = AvgU)
+      keep <- unique(c(intersect(FOI, min_reliables), reliables))
     }else{
-      keep <- intersect(FOI, reliables)
+      min_reliables <- bakR::reliableFeatures(obj, high_p = 1, totcut = 1, Ucut = Ucut, AvgU = AvgU)
+      keep <- intersect(FOI, min_reliables)
     }
   }
 
@@ -718,7 +720,7 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
     stop("obj must be of class bakRFnData")
   }
   
-  
+
   ## Check totcut
   if(!is.numeric(totcut)){
     stop("totcut must be numeric")
@@ -824,13 +826,26 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
   }else{
     
     if(concat){
+      
+      # FOI can only be kept if it has at least 1 read in all samples
+      min_keep <- fns %>%
+        dplyr::group_by(XF) %>%
+        dplyr::summarise(npass = sum(n >= 1)) %>%
+        dplyr::filter(npass == nsamps) %>%
+        dplyr::select(XF)
 
-      # Realizing this is trivially just keep$XF
-      keep <- unique(c(intersect(FOI, keep$XF), keep$XF))
+      keep <- unique(c(intersect(FOI, min_keep$XF), keep$XF))
 
     }else{
       
-      keep <- intersect(FOI, keep$XF)
+      # FOI can only be kept if it has at least 1 read in all samples
+      min_keep <- fns %>%
+        dplyr::group_by(XF) %>%
+        dplyr::summarise(npass = sum(n >= 1)) %>%
+        dplyr::filter(npass == nsamps) %>%
+        dplyr::select(XF)
+      
+      keep <- intersect(FOI, min_keep$XF)
     }
   }
 

@@ -401,6 +401,7 @@ validate_bakRFnData <- function(obj){
 #' @export
 bakRFnData <- function(fns, metadf){
   
+
   fns <- as.data.frame(fns)
   metadf <- as.data.frame(metadf)
   
@@ -429,7 +430,7 @@ bakRFnData <- function(fns, metadf){
   
   ## Add column names to fns and metadf as necessary
   if(!all(fns_cols %in% colnames(fns))){
-    colnames(fns)[1:4] <- fns
+    colnames(fns)[1:4] <- fns_cols
     warning("Renamed first 4 columns of fns to XF, sample, fn, and n.
     If this does not reflect the content of those columns, properly rearrange fns columns and rerun bakRFnData().")
   }

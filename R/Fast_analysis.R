@@ -203,7 +203,6 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   
 
 
-
   # Check input validity -------------------------------------------------------
 
   ## Check df
@@ -241,7 +240,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if(!is.null(pnew)){
     if(!all(is.numeric(pnew))){
       stop("All elements of pnew must be numeric")
-    }else if((length(pnew) != sum(nreps)) | (length(pnew) != 1) ){
+    }else if((length(pnew) != sum(nreps)) & (length(pnew) != 1) ){
       stop("pnew must be a vector of length == number of s4U fed samples in dataset, or length 1.")
     }else if(!all(pnew > 0)){
       stop("All elements of pnew must be > 0")
@@ -253,7 +252,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if(!is.null(pold)){
     if(!all(is.numeric(pold))){
       stop("All elements of pold must be numeric")
-    }else if(((length(pold) != sum(nreps)) | (length(pold) != 1)) & multi_pold ){
+    }else if(((length(pold) != sum(nreps)) & (length(pold) != 1)) & multi_pold ){
       stop("pold must be a vector of length == number of s4U fed samples in dataset, or length 1.")
     }else if(!all(pold >= 0)){
       stop("All elements of pold must be >= 0")
@@ -1137,6 +1136,7 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
                                BDA_model = FALSE, null_cutoff = 0,
                                Mutrates = NULL, ztest = FALSE){
   
+
   ### Check Mut_data_est
   expected_cols <- c("nreads", "fnum", "reps",
                               "mut", "logit_fn_rep", "kd_rep_est", "log_kd_rep_est", 

@@ -29,6 +29,7 @@
 CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
                            ...){
   
+
   ### Checks
   # 1) Input must be a bakRFit object
   # 2) There must be -s4U controls for all experimental conditions
@@ -50,6 +51,7 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
       dplyr::distinct()
     
     check <- check$mut
+    check <- as.integer(check[order(check)])
   }else{
     # Check that -s4U samples exist for all mut
     check <- obj$Data_lists$Ctl_data %>%
@@ -57,6 +59,7 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
       dplyr::distinct()
     
     check <- check$Exp_ID
+    check <- as.integer(check[order(check)])
   }
 
   
@@ -149,7 +152,6 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   
   # Rerun MLE, going thru bakRFnData ---------------------------------------------
   
-  
   if(inherits(obj, "bakRFit")){
     # Prep fns
     Fns <- Fn_bias[,c("XF", "sample", "reads_corrected", "fn_corrected")]
@@ -190,10 +192,10 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
     colnames(Fns) <- c("XF", "sample", "n", "fn")
     
     # Make metadf
-    meta_s4U <- Fit$Data_lists$Fn_est %>%
+    meta_s4U <- obj$Data_lists$Fn_est %>%
       dplyr::select(Exp_ID, tl, sample) %>%
       dplyr::distinct()
-    meta_ctl <- Fit$Data_lists$Ctl_data %>%
+    meta_ctl <- obj$Data_lists$Ctl_data %>%
       dplyr::select(Exp_ID, tl, sample) %>%
       dplyr::distinct()
     
@@ -211,7 +213,7 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
                          XF = rep(XF, times = length(ctl_samps)),
                          sample = rep(ctl_samps, each = length(XF)))
     
-    ctl_reads <- Fit$Data_lists$Ctl_data %>%
+    ctl_reads <- obj$Data_lists$Ctl_data %>%
       dplyr::group_by(XF, sample) %>%
       dplyr::summarise(n = sum(n))
     
@@ -223,7 +225,7 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
 
   
   # Make bakRFnData
-  bakRFnData <- bakRFnData(Fns, metadf)
+  bakRFnData <- bakRFnData(Fns, metadf[unique(Fns$sample), , drop = FALSE])
   
   # Rerun fit with corrected reads and fns
   Fit_correct <- bakRFit(bakRFnData, FOI = unique(Fns$XF), concat = FALSE)
@@ -291,6 +293,7 @@ QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
       dplyr::distinct()
     
     check <- check$mut
+    check <- as.integer(check[order(check)])
   }else{
     # Check that -s4U samples exist for all mut
     check <- obj$Data_lists$Ctl_data %>%
@@ -298,6 +301,7 @@ QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
       dplyr::distinct()
     
     check <- check$Exp_ID
+    check <- as.integer(check[order(check)])
   }
   
   
@@ -375,13 +379,13 @@ QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
     
   }else{
     # Calculate number of reads in each -s4U sample
-    total_reads_ctl <- Fit$Data_lists$Ctl_data %>%
+    total_reads_ctl <- obj$Data_lists$Ctl_data %>%
       dplyr::group_by(Exp_ID, Replicate) %>%
       dplyr::summarise(total_reads = sum(n))
     total_reads_ctl$type <- 0
     
     # Calculate number of reads in each +s4U samle
-    total_reads <- Fit$Data_lists$Fn_est %>%
+    total_reads <- obj$Data_lists$Fn_est %>%
       dplyr::group_by(Exp_ID, Replicate) %>%
       dplyr::summarise(total_reads = sum(n))
     total_reads$type <- 1
@@ -389,7 +393,7 @@ QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
     total_reads <- dplyr::bind_rows(list(total_reads, total_reads_ctl))
     
     # Calculate number of reads for each feature in each sample
-    RPMs <- Fit$Data_lists$Fn_est
+    RPMs <- obj$Data_lists$Fn_est
     RPMs <- RPMs %>%
       dplyr::group_by(Feature_ID, Exp_ID, Replicate) %>%
       dplyr::summarise(reads = sum(n))
@@ -400,7 +404,7 @@ QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
     RPMs$RPM <- RPMs$reads/(RPMs$total_reads/1000000)
     
     # Calculate number of reads for each feature in each -s4U sample
-    ctl_RPMs <- Fit$Data_list$Ctl_data
+    ctl_RPMs <- obj$Data_list$Ctl_data
     ctl_RPMs <- ctl_RPMs %>%
       dplyr::group_by(Feature_ID, Exp_ID, Replicate) %>%
       dplyr::summarise(reads = sum(n))
@@ -422,7 +426,7 @@ QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
     colnames(s4U_RPMs) <- c("fnum", "mut", "reps", "RPM", "ctl_RPM")
     
     # Get fraction new estimates
-    Fns <- Fit$Fast_Fit$Fn_Estimates
+    Fns <- obj$Fast_Fit$Fn_Estimates
     
     Fns <- Fns[,c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "XF", "sample")]
     
@@ -440,8 +444,8 @@ QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   # Fit dropout model ------------------------------------------------------------
   
   # Loop over data
-  nMT <- Fit$Data_lists$Stan_data$nMT
-  nreps <- Fit$Data_lists$Stan_data$nrep_vect
+  nMT <- obj$Data_lists$Stan_data$nMT
+  nreps <- obj$Data_lists$Stan_data$nrep_vect
   
   pdos <- rep(0, times = sum(nreps))
   scales <- pdos
