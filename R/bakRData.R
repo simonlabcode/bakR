@@ -25,7 +25,7 @@ validate_bakRData <- function(obj){
 
   ## Check if rownames of metadf are same as unique(cB$sample)
   if("sample" %in% colnames(cB)){
-    if(!(all(rownames(metadf) %in% unique(cB$sample)) & all(unique(cB$sample) %in% rownames(metadf) ))){
+    if(!identical(rownames(metadf), unique(cB$sample))){
       stop(
         "Row names of metadf are not same as unique(cB$sample).
         Make sure the order in which samples appear in cB
@@ -34,7 +34,7 @@ validate_bakRData <- function(obj){
       )
     }
   }else{
-    if(!(all(rownames(metadf) %in% unique(cB[,2])) & all(unique(cB[,2]) %in% rownames(metadf)))){
+    if(!identical(rownames(metadf), unique(cB[,2]))){
       stop(
         "Row names of metadf are not same as unique(cB[,2]).
         Make sure 2nd column of cB contains sample names and
@@ -256,9 +256,9 @@ validate_bakRFnData <- function(obj){
   fns <- vals$fns
   metadf <- vals$metadf
   
-  ## Check if rownames of metadf are same as unique(fns$sample)
+  ## Check if rownames of metadf are same as unique(cB$sample)
   if("sample" %in% colnames(fns)){
-    if(!(all(rownames(metadf) %in% unique(fns$sample)) & all(unique(fns$sample) %in% rownames(metadf) ))){
+    if(!identical(rownames(metadf), unique(fns$sample))){
       stop(
         "Row names of metadf are not same as unique(fns$sample).
         Make sure the order in which samples appear in fns
@@ -267,7 +267,7 @@ validate_bakRFnData <- function(obj){
       )
     }
   }else{
-    if(!(all(rownames(metadf) %in% unique(fns[,2])) & all(unique(fns[,2]) %in% rownames(metadf)))){
+    if(!identical(rownames(metadf), unique(fns[,2]))){
       stop(
         "Row names of metadf are not same as unique(fns[,2]).
         Make sure 2nd column of fns contains sample names and
