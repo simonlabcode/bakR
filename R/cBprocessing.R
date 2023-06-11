@@ -406,8 +406,8 @@ cBprocess <- function(obj,
     dplyr::filter(XF %in% keep) %>%
     dplyr::group_by(XF) %>%
     dplyr::summarize(n = sum(n)) %>%
-    dplyr::mutate(fnum = order(XF)) %>%
-    dplyr::arrange(fnum) %>%
+    dplyr::arrange(XF) %>%
+    dplyr::mutate(fnum = 1:length(XF)) %>%
     dplyr::select(XF, fnum)
 
 
@@ -852,13 +852,14 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
   
   fns <- fns[fns$XF %in% keep,]
   
+
   # Map each reliable feature to a numerical feature ID (fnum)
   ranked_features_df  <- fns %>%
     dplyr::ungroup() %>%
     dplyr::select(XF) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(Feature_ID = order(XF)) %>%
-    dplyr::arrange(Feature_ID) %>%
+    dplyr::arrange(XF) %>%
+    dplyr::mutate(Feature_ID = 1:length(XF)) %>%
     dplyr::select(XF, Feature_ID)
   
   message("Processing data...")

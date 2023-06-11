@@ -28,7 +28,6 @@
 #' @export
 CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
                            ...){
-  
 
   ### Checks
   # 1) Input must be a bakRFit object
