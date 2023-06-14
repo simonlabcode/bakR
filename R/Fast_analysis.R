@@ -1278,7 +1278,8 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
       dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(logit_fn_rep)^2) + logit_fn_se^2 ) ) ) )) %>%
       dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
       dplyr::group_by(mut) %>%
-      dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
+      dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ),
+                       true_nat_var = stats::var(exp(kd_sd_log)^2 - exp((intercept + slope*log10(nreads) ))^2 ))
     
     log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
     logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
