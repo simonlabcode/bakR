@@ -215,6 +215,12 @@ NSSHeat <- function(bakRFit,
 #' Unlike NSSHeat, NSSHeat2 uses a mechanism scoring function that is not discontinuous
 #' as the "degradation driven" vs. "synthesis driven" boundary. Instead, the score
 #' approaches 0 as the function approaches the boundary from either side.
+#' 
+#' In addition, NSSHeat2 now defines a null model for the purpose of p value calculation using
+#' the mechanism score. Under the null hypothesis, the mechanism score is the product of two
+#' normal distributions with unit variance, one which has a non-zero mean. Simulation is used
+#' to estimate the integral of this distribution, and the number of draws (which determines the
+#' precision of the p value estimate) is determined by the \code{sims} parameter.
 #'
 #' @param bakRFit bakRFit object
 #' @param DE_df dataframe of required format with differential expression analysis results. See
@@ -225,11 +231,12 @@ NSSHeat <- function(bakRFit,
 #' @param bakR_cutoff padj cutoff for calling a fraction new significantly changed
 #' @param Exp_ID Exp_ID of experimental sample whose comparison to the reference sample you want to use.
 #' Only one reference vs. experimental sample comparison can be used at a time
-#' @param a Scale factor for mechanism scoring function. Larger numbers will make it so increase
-#' in mechanism score as a function of differential expression or differential fraction new z-score
-#' is more dramatic.
+#' @param sims Number of simulation draws from null distribution for mechanism p value calculation
 #' @importFrom magrittr %>%
-#' @return returns data frame that can be passed to pheatmap::pheatmap()
+#' @return returns list of data frames: heatmap_df and NSS_stats. 
+#' The heatmap_dfdata frame can be passed to pheatmap::pheatmap().
+#' The NSS_stats data frame contains all of the information passed to NSS_stats as well
+#' as the raw mechanism scores. It also has p values calculated from the mechanism z scores.
 #' @examples
 #' \donttest{
 #' # Simulate small dataset
@@ -262,7 +269,7 @@ NSSHeat2 <- function(bakRFit,
                      DE_cutoff = 0.05,
                      bakR_cutoff = 0.05,
                      Exp_ID = 2,
-                     a = 0.01){
+                     sims = 100000){
 
   bakRModel <- match.arg(bakRModel)
 
@@ -286,10 +293,10 @@ NSSHeat2 <- function(bakRFit,
     stop("Input for bakRFit is not an object of class bakRFit.")
   }
 
-  if(!is.numeric(a)){
-    stop("a must be numeric!")
-  }else if(a <= 0){
-    stop("a must be strictly greater than 0.")
+  if(!is.numeric(sims)){
+    stop("sims must be numeric!")
+  }else if(sims <= 100){
+    stop("sims must be strictly greater than 100.")
   }
 
 
@@ -367,27 +374,25 @@ NSSHeat2 <- function(bakRFit,
     zfn <- max(abs(NSS_eff_DE$score_bakR))
   }
 
-  #zde <- min(abs(DE_reso$stat))
 
-  ## Calculate mechanism score
-  # test_stat <- test %>%
-  #   dplyr::mutate(mech_stat = ifelse(stat > 0,
-  #                                    a*(score_bakR + zfn)*(1 + (stat - zde)),
-  #                                    -a*(score_bakR - zfn)*(1 - (stat + zde))))
   test_stat <- test %>%
     dplyr::mutate(mech_stat = ifelse(stat > 0,
                                      (score_bakR + zfn)*(stat),
                                      (score_bakR - zfn)*(stat)))
   
-  # Null is product of two independent normal distributions, both with unit variance and one with
-  # non-zero mean. The null distribution is thus a difference in non-central chi-squared RVs
-  # which is non-central F-distributed.
-  test_stat <- test_stat %>%
-    dplyr::mutate(mech_pval = stats::df(x = abs(mech_stat), df1 = 2, df2 = 2,
-                                                ncp = zfn)) %>%
-    dplyr::mutate(mech_padj = stats::p.adjust(mech_pval, method = "BH"))
+  ## Null is product of two independent normal distributions, both with unit variance and one with
+  ## non-zero mean.
   
+  # Simulate from null for empirical p-value calc
+  null_x <- rnorm(sims, mean = zfn)
+  null_y <- rnorm(sims)
+  null_xy <- null_x*null_y
   
+  # Calculate p value and multiple-test adjust
+  test_stat <- test_stat %>% dplyr::rowwise() %>%
+    dplyr::mutate(mech_pval = 2*sum(null_xy > abs(mech_stat))/sims )
+  
+  test_stat$mech_padj <- stats::p.adjust(test_stat$mech_pval, method= "BH")
   
   heatmap_df <- dplyr::tibble(DE_score = test_stat$stat,
                               Mech_score = test_stat$mech_stat,
