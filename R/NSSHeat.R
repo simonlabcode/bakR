@@ -366,15 +366,29 @@ NSSHeat2 <- function(bakRFit,
   }else{
     zfn <- max(abs(NSS_eff_DE$score_bakR))
   }
-  zde <- min(abs(DE_reso$stat))
 
+  #zde <- min(abs(DE_reso$stat))
 
   ## Calculate mechanism score
+  # test_stat <- test %>%
+  #   dplyr::mutate(mech_stat = ifelse(stat > 0,
+  #                                    a*(score_bakR + zfn)*(1 + (stat - zde)),
+  #                                    -a*(score_bakR - zfn)*(1 - (stat + zde))))
   test_stat <- test %>%
     dplyr::mutate(mech_stat = ifelse(stat > 0,
-                                     a*(score_bakR + zfn)*(1 + (stat - zde)),
-                                     -a*(score_bakR - zfn)*(1 - (stat + zde))))
-
+                                     (score_bakR + zfn)*(stat),
+                                     (score_bakR - zfn)*(stat)))
+  
+  # Null is product of two independent normal distributions, both with unit variance and one with
+  # non-zero mean. The null distribution is thus a difference in non-central chi-squared RVs
+  # which is non-central F-distributed.
+  test_stat <- test_stat %>%
+    dplyr::mutate(mech_pval = stats::df(x = abs(mech_stat), df1 = 2, df2 = 2,
+                                                ncp = zfn)) %>%
+    dplyr::mutate(mech_padj = stats::p.adjust(mech_pval, method = "BH"))
+  
+  
+  
   heatmap_df <- dplyr::tibble(DE_score = test_stat$stat,
                               Mech_score = test_stat$mech_stat,
                               XF = test_stat$XF,
@@ -421,6 +435,10 @@ NSSHeat2 <- function(bakRFit,
 
   heatmap_df <- heatmap_df[order(heatmap_df$Mech_score),]
 
-  return(heatmap_df)
+  # Compile output
+  nss_list <- list(heatmap_df = heatmap_df,
+                   NSS_stats = test_stat)
+  
+  return(nss_list)
 
 }
