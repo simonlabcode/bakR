@@ -269,7 +269,7 @@ NSSHeat2 <- function(bakRFit,
                      DE_cutoff = 0.05,
                      bakR_cutoff = 0.05,
                      Exp_ID = 2,
-                     sims = 100000){
+                     sims = 10000000){
 
   bakRModel <- match.arg(bakRModel)
 
