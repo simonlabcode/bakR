@@ -904,53 +904,82 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
   
   ### Estimate uncertainty
   
-  ## Procedure:
-  # 1) Estimate beta distribution prior empirically
-  # 2) Determine beta posterior
-  # 3) Use beta sd as uncertainty
-  
-  ## Estimate beta prior
-  fn_means <- fns %>%
-    dplyr::group_by(sample) %>%
-    dplyr::summarise(global_mean = mean(fn),
-                     global_var = stats::var(fn))
-  
-  priors <- fn_means %>%
-    dplyr::mutate(alpha_p = global_mean*(((global_mean*(1-global_mean))/global_var) - 1),
-                  beta_p = alpha_p*(1 - global_mean)/global_mean)
-  
-  ## Add priors
-  fns <- dplyr::inner_join(fns, priors, by = "sample")
-  
-  ## Estimate logit uncertainty
-  lfn_calc <- function(alpha, beta){
+  if("se" %in% colnames(fns)){
     
-    EX <- alpha/(alpha + beta)
-    VX <- (alpha*beta)/(((alpha + beta)^2)*(alpha + beta + 1))
+    ## Estimate logit uncertainty
+    lfn_calc <- function(EX, VX){
+      
+      
+      totvar <- (((1/EX) + 1/(1 - EX))^2)*VX
+      
+      return(totvar)
+    }
+    
+    ## Estimate log(kdeg) uncertainty
+    lkdeg_calc <- function(EX, VX){
+      
+      totvar <- (( 1/(log(1-EX)*(1-EX)) )^2)*VX
+      
+      return(totvar)
+    }
+    
+    ## Estimate uncertainties
+    fns <- fns %>%
+      dplyr::mutate(logit_fn_se = sqrt(lfn_calc(fn, se^2)),
+                    log_kd_se = sqrt(lkdeg_calc(fn, se^2)))
     
     
-    totvar <- (((1/EX) + 1/(1 - EX))^2)*VX
+  }else{
+    ## Procedure:
+    # 1) Estimate beta distribution prior empirically
+    # 2) Determine beta posterior
+    # 3) Use beta sd as uncertainty
     
-    return(totvar)
+    ## Estimate beta prior
+    fn_means <- fns %>%
+      dplyr::group_by(sample) %>%
+      dplyr::summarise(global_mean = mean(fn),
+                       global_var = stats::var(fn))
+    
+    priors <- fn_means %>%
+      dplyr::mutate(alpha_p = global_mean*(((global_mean*(1-global_mean))/global_var) - 1),
+                    beta_p = alpha_p*(1 - global_mean)/global_mean)
+    
+    ## Add priors
+    fns <- dplyr::inner_join(fns, priors, by = "sample")
+    
+    ## Estimate logit uncertainty
+    lfn_calc <- function(alpha, beta){
+      
+      EX <- alpha/(alpha + beta)
+      VX <- (alpha*beta)/(((alpha + beta)^2)*(alpha + beta + 1))
+      
+      
+      totvar <- (((1/EX) + 1/(1 - EX))^2)*VX
+      
+      return(totvar)
+    }
+    
+    ## Estimate log(kdeg) uncertainty
+    lkdeg_calc <- function(alpha, beta){
+      
+      EX <- alpha/(alpha + beta)
+      VX <- (alpha*beta)/(((alpha + beta)^2)*(alpha + beta + 1))
+      
+      
+      totvar <- (( 1/(log(1-EX)*(1-EX)) )^2)*VX
+      
+      return(totvar)
+    }
+    
+    fns <- fns %>%
+      dplyr::mutate(logit_fn_se = sqrt(lfn_calc(alpha_p + n*fn, n + beta_p)),
+                    log_kd_se = sqrt(lkdeg_calc(alpha_p + n*fn, n + beta_p)))
+    
+    fns <- fns[,!(colnames(fns) %in% c("alpha_p", "beta_p", "global_mean", "global_var"))]
+    
   }
   
-  ## Estimate log(kdeg) uncertainty
-  lkdeg_calc <- function(alpha, beta){
-    
-    EX <- alpha/(alpha + beta)
-    VX <- (alpha*beta)/(((alpha + beta)^2)*(alpha + beta + 1))
-    
-    
-    totvar <- (( 1/(log(1-EX)*(1-EX)) )^2)*VX
-    
-    return(totvar)
-  }
-  
-  fns <- fns %>%
-    dplyr::mutate(logit_fn_se = sqrt(lfn_calc(alpha_p + n*fn, n + beta_p)),
-                  log_kd_se = sqrt(lkdeg_calc(alpha_p + n*fn, n + beta_p)))
-  
-  fns <- fns[,!(colnames(fns) %in% c("alpha_p", "beta_p", "global_mean", "global_var"))]
   
   
   ### Average standardized reads
