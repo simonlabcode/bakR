@@ -465,6 +465,41 @@ VisualizeDropout <- function(obj, Exp_ID = 1, Replicate = 1,
                              keep_data = FALSE,
                              no_message = FALSE){
   
+  if(inherits(obj, "bakRFit")){
+    
+    if(sum(obj$Data_lists$Fast_df$type == 0) == 0){
+      stop("You do not have any -s4U control data!")
+    }
+    
+    
+    # Check that -s4U samples exist for all mut
+    check <- obj$Data_lists$Fast_df %>%
+      dplyr::filter(type == 0) %>%
+      dplyr::select(mut) %>%
+      dplyr::distinct()
+    
+    check <- check$mut
+    check <- as.integer(check[order(check)])
+  }else{
+    
+    if(is.null(obj$Data_lists$Ctl_data)){
+      stop("You do not have any -s4U control data!")
+    }
+    
+    # Check that -s4U samples exist for all mut
+    check <- obj$Data_lists$Ctl_data %>%
+      dplyr::select(Exp_ID) %>%
+      dplyr::distinct()
+    
+    check <- check$Exp_ID
+    check <- as.integer(check[order(check)])
+  }
+  
+  
+  if(!identical(check, 1:obj$Data_lists$Stan_data$nMT)){
+    stop("You do not have at least one replicate of -s4U data for all experimental conditions!")
+  }
+  
   Dropout <- QuantifyDropout(obj, keep_data = TRUE, no_message = TRUE)
   
   Data_d <- Dropout$Input_data

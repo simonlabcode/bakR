@@ -48,6 +48,12 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   }
   
   if(inherits(obj, "bakRFit")){
+    
+    if(sum(obj$Data_lists$Fast_df$type == 0) == 0){
+      stop("You do not have any -s4U control data!")
+    }
+    
+    
     # Check that -s4U samples exist for all mut
     check <- obj$Data_lists$Fast_df %>%
       dplyr::filter(type == 0) %>%
@@ -57,6 +63,11 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
     check <- check$mut
     check <- as.integer(check[order(check)])
   }else{
+    
+    if(is.null(obj$Data_lists$Ctl_data)){
+      stop("You do not have any -s4U control data!")
+    }
+    
     # Check that -s4U samples exist for all mut
     check <- obj$Data_lists$Ctl_data %>%
       dplyr::select(Exp_ID) %>%
@@ -65,7 +76,7 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
     check <- check$Exp_ID
     check <- as.integer(check[order(check)])
   }
-
+  
   
   if(!identical(check, 1:obj$Data_lists$Stan_data$nMT)){
     stop("You do not have at least one replicate of -s4U data for all experimental conditions!")
@@ -340,6 +351,12 @@ QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   }
   
   if(inherits(obj, "bakRFit")){
+    
+    if(sum(obj$Data_lists$Fast_df$type == 0) == 0){
+      stop("You do not have any -s4U control data!")
+    }
+    
+    
     # Check that -s4U samples exist for all mut
     check <- obj$Data_lists$Fast_df %>%
       dplyr::filter(type == 0) %>%
@@ -349,6 +366,11 @@ QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
     check <- check$mut
     check <- as.integer(check[order(check)])
   }else{
+    
+    if(is.null(obj$Data_lists$Ctl_data)){
+      stop("You do not have any -s4U control data!")
+    }
+    
     # Check that -s4U samples exist for all mut
     check <- obj$Data_lists$Ctl_data %>%
       dplyr::select(Exp_ID) %>%
@@ -357,6 +379,8 @@ QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
     check <- check$Exp_ID
     check <- as.integer(check[order(check)])
   }
+  
+  
   
   
   if(!identical(check, 1:obj$Data_lists$Stan_data$nMT)){
