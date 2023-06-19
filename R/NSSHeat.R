@@ -275,17 +275,17 @@ NSSHeat2 <- function(bakRFit,
 
 
   # Bind variables locally to resolve devtools::check() Notes
-  padj <- pval <- log2FoldChange <- effect <- se <- Sig <- Sig_bakR <- score_bakR <- NULL
+  DE_padj <- DE_pval <- L2FC_RNA <- effect <- se <- Sig <- Sig_bakR <- score_bakR <- NULL
   mech <- stat <- DE_score <- Mech_score <- bakR_score <- NULL
   mech_stat <- NULL
 
   ### Checks
-  if(sum(c("XF", "log2FoldChange", "stat", "pval", "padj") %in% colnames(DE_df)) < 5){
-    stop("You are missing necessary columns in DE_df. Columns named XF, log2FoldChange,
-         stat, pval, and padj must be included. See the Further-Analyses vignette for details")
+  if(sum(c("XF", "L2FC_RNA", "DE_score", "DE_pval", "DE_padj") %in% colnames(DE_df)) < 5){
+    stop("You are missing necessary columns in DE_df. Columns named XF, L2FC_RNA,
+         DE_score, DE_pval, and DE_padj must be included. See the Further-Analyses vignette for details")
   }
 
-  if(sum(colnames(DE_df) %in% c("XF", "log2FoldChange", "stat", "pval", "padj")) > 5){
+  if(sum(colnames(DE_df) %in% c("XF", "L2FC_RNA", "DE_score", "DE_pval", "DE_padj")) > 5){
     stop("Looks like you have repeat columns of the same name in DE_df. Make sure column
          names are unique and that each column is correctly labeled and try again.")
   }
@@ -343,8 +343,8 @@ NSSHeat2 <- function(bakRFit,
   }
 
 
-  DE_reso <-  DE_df[DE_df$padj < DE_cutoff & !is.na(DE_df$padj),]
-
+  DE_reso <-  DE_df
+  
   DE_XF <- DE_reso$XF
 
 
@@ -352,9 +352,9 @@ NSSHeat2 <- function(bakRFit,
     dplyr::mutate(score_bakR = effect/se)
 
 
-  NSS_eff_DE <- NSS_eff_DE[, c("XF", "pval", "padj", "score_bakR")]
+  NSS_eff_DE <- NSS_eff_DE[, c("XF", "score_bakR", "L2FC_kdeg", "pval", "padj")]
 
-  colnames(NSS_eff_DE) <- c( "XF", "bakR_pval", "bakR_padj", "score_bakR")
+  colnames(NSS_eff_DE) <- c( "XF", "bakR_score", "L2FC_kdeg", "bakR_pval", "bakR_padj")
 
   XF_both <- intersect(NSS_eff_DE$XF, DE_XF)
 
@@ -369,17 +369,17 @@ NSSHeat2 <- function(bakRFit,
 
   ## Calculate zf and zde
   if(sum(NSS_eff_DE$bakR_padj < bakR_cutoff) > 0){
-    zfn <- min(abs(NSS_eff_DE$score_bakR[NSS_eff_DE$bakR_padj < bakR_cutoff]))
+    zfn <- min(abs(NSS_eff_DE$bakR_score[NSS_eff_DE$bakR_padj < bakR_cutoff]))
 
   }else{
-    zfn <- max(abs(NSS_eff_DE$score_bakR))
+    zfn <- max(abs(NSS_eff_DE$bakR_score))
   }
 
 
   test_stat <- test %>%
-    dplyr::mutate(mech_stat = ifelse(stat > 0,
-                                     (score_bakR + zfn)*(stat),
-                                     (score_bakR - zfn)*(stat)))
+    dplyr::mutate(mech_stat = ifelse(DE_score > 0,
+                                     (bakR_score + zfn)*(DE_score),
+                                     (bakR_score - zfn)*(DE_score)))
   
   ## Null is product of two independent normal distributions, both with unit variance and one with
   ## non-zero mean.
@@ -401,17 +401,17 @@ NSSHeat2 <- function(bakRFit,
   test_stat$mech_padj <- stats::p.adjust(test_stat$mech_pval, method= "BH")
   
   ## Calculate meta analysis p value (p value that either expression or fraction new has changed)
-  test_stat$meta_pval <- stats::pchisq(-2*(log(test_stat$bakR_pval) + log(test_stat$pval)), 
+  test_stat$meta_pval <- stats::pchisq(-2*(log(test_stat$bakR_pval) + log(test_stat$DE_pval)), 
                                        df = 4,
                                        lower.tail = FALSE)
   
   test_stat$meta_padj <- stats::p.adjust(test_stat$meta_pval, method = "BH")
   
   
-  heatmap_df <- dplyr::tibble(DE_score = test_stat$stat,
-                              Mech_score = test_stat$mech_stat,
-                              XF = test_stat$XF,
-                              bakR_score = test_stat$score_bakR)
+  heatmap_df <- dplyr::tibble(DE_score = test_stat$DE_score[test_stat$DE_padj < DE_cutoff],
+                              Mech_score = test_stat$mech_stat[test_stat$DE_padj < DE_cutoff],
+                              XF = test_stat$XF[test_stat$DE_padj < DE_cutoff],
+                              bakR_score = test_stat$bakR_score[test_stat$DE_padj < DE_cutoff])
 
 
   sd_DE <- stats::sd(heatmap_df$DE_score)
