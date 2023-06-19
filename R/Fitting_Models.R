@@ -85,7 +85,10 @@
 #' @param Long Logical; if TRUE, long read optimized fraction new estimation strategy is used.
 #' @param kmeans Logical; if TRUE, kmeans clustering on read-specific mutation rates is used to estimate pnews and pold.
 #' @param ztest Logical; if TRUE and the MLE implementation is being used, then a z-test will be used for p-value calculation
-#' rather than the more conservative moderated t-test. 
+#' rather than the more conservative moderated t-test.
+#' @param Fisher Logical; if TRUE, Fisher information is used to estimate logit(fn) uncertainty. Else, a less conservative binomial model is used, which
+#' can be preferable in instances where the Fisher information strategy often drastically overestimates uncertainty
+#' (i.e., low coverage or low pnew).
 #' @param ... Arguments passed to either \code{fast_analysis} (if a bakRData object)
 #' or \code{TL_Stan} and \code{Hybrid_fit} (if a bakRFit object)
 #' @return bakRFit object with results from statistical modeling and data processing. Objects possibly included are:
@@ -121,7 +124,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           high_reads = 500000,
                           chains = 1, NSS = FALSE,
                           Chase = FALSE, BDA_model = FALSE, multi_pold = FALSE,
-                          Long = FALSE, kmeans = FALSE, ztest = FALSE,
+                          Long = FALSE, kmeans = FALSE, ztest = FALSE, Fisher = TRUE,
                           ...){
 
   # Bind variables locally to resolve devtools::check() Notes
@@ -261,6 +264,11 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   if(!is.logical(ztest)){
     stop("ztest must be logical (TRUE or FALSE)")
   }
+  
+  ## Check Fisher
+  if(!is.logical(Fisher)){
+    stop("Fisher must be logical (TRUE or FALSE")
+  }
 
   if(inherits(obj, "bakRData")){
 
@@ -303,13 +311,15 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
       # Run MLE implementation
       fast_list <- bakR::fast_analysis(data_list$Fast_df, Stan_data = mutrate_list$Stan_data, StanRate = TRUE,
                                        BDA_model = BDA_model, Chase = Chase, multi_pold = multi_pold,
-                                       NSS = NSS, Long = Long, kmeans = kmeans, ztest = ztest, ...)
+                                       NSS = NSS, Long = Long, kmeans = kmeans, ztest = ztest,
+                                       Fisher = Fisher, ...)
 
     }else{
       # Run MLE implementation
       fast_list <- bakR::fast_analysis(data_list$Fast_df,
                                        BDA_model = BDA_model, Chase = Chase, multi_pold = multi_pold,
-                                       NSS = NSS, Long = Long, kmeans = kmeans, ztest = ztest, ...)
+                                       NSS = NSS, Long = Long, kmeans = kmeans, ztest = ztest, 
+                                       Fisher = Fisher, ...)
     }
 
 
@@ -384,6 +394,7 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                                          NSS = NSS,
                                          BDA_model = BDA_model, multi_pold = multi_pold,
                                          Chase = Chase, Long = Long, kmeans = kmeans, ztest = ztest,
+                                         Fisher = Fisher,
                                          ...)
 
       }else{

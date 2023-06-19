@@ -102,6 +102,9 @@
 #' @param multi_pold Logical; if TRUE, pold is estimated for each sample rather than use a global pold estimate.
 #' @param Long Logical; if TRUE, long read optimized fraction new estimation strategy is used.
 #' @param kmeans Logical; if TRUE, kmeans clustering on read-specific mutation rates is used to estimate pnews and pold.
+#' @param Fisher Logical; if TRUE, Fisher information is used to estimate logit(fn) uncertainty. Else, a less conservative binomial model is used, which
+#' can be preferable in instances where the Fisher information strategy often drastically overestimates uncertainty
+#' (i.e., low coverage or low pnew).
 #' @return List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
 #' \itemize{
 #'  \item Fn_Estimates; dataframe with estimates for the fraction new and fraction new uncertainty for each feature in each replicate.
@@ -187,7 +190,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           BDA_model = FALSE,
                           multi_pold = FALSE,
                           Long = FALSE,
-                          kmeans = FALSE){
+                          kmeans = FALSE, Fisher = TRUE){
 
 
   # Bind variables locally to resolve devtools::check() Notes
@@ -374,6 +377,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     stop("Chase must be logical (TRUE or FALSE)")
   }
 
+  ## Check Fisher
+  if(!is.logical(Fisher)){
+    stop("Fisher must be logical (TRUE or FALSE")
+  }
 
   # ESTIMATE MUTATION RATES ----------------------------------------------------
 
@@ -946,54 +953,104 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     Mut_data <- dplyr::left_join(Mut_data, Mut_data_est[, c("kd_rep_est" ,"logit_fn_rep", "fnum", "mut", "reps")], by = c("fnum", "mut", "reps"))
 
     ## Estimate Fisher Info and uncertainties
-    if(Chase){
-      Mut_data <- Mut_data %>% dplyr::ungroup() %>%
-        dplyr::group_by(fnum, mut, reps, TC, pnew, pold, logit_fn_rep, kd_rep_est) %>%
-        dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
-        dplyr::mutate(Exp_l_fn = exp(-logit_fn_rep)) %>%
-        dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
-        dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
-        dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
-        dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
-        dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
-        dplyr::ungroup() %>%
-        dplyr::group_by(fnum, mut, reps) %>%
-        dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
-                         Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
-                         tot_n = sum(n)) %>% #,
-        #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
-        dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
-                      Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
-        dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
-                      Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
-
+    if(Fisher){
+      if(Chase){
+        Mut_data <- Mut_data %>% dplyr::ungroup() %>%
+          dplyr::group_by(fnum, mut, reps, TC, pnew, pold, logit_fn_rep, kd_rep_est) %>%
+          dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
+          dplyr::mutate(Exp_l_fn = exp(-logit_fn_rep)) %>%
+          dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
+          dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
+          dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
+          dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
+          dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
+          dplyr::ungroup() %>%
+          dplyr::group_by(fnum, mut, reps) %>%
+          dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
+                           Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
+                           tot_n = sum(n)) %>% #,
+          #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
+          dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
+                        Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
+          dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
+                        Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
+        
+      }else{
+        Mut_data <- Mut_data %>% dplyr::ungroup() %>%
+          dplyr::group_by(fnum, mut, reps, TC, pnew, pold, logit_fn_rep, kd_rep_est) %>%
+          dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
+          dplyr::mutate(Exp_l_fn = exp(logit_fn_rep)) %>%
+          dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
+          dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
+          dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
+          dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
+          dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
+          dplyr::ungroup() %>%
+          dplyr::group_by(fnum, mut, reps) %>%
+          dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
+                           Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
+                           tot_n = sum(n)) %>% #,
+          #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
+          dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
+                        Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
+          dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
+                        Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
+        
+      }
+      
+      Mut_data_est$logit_fn_se <- Mut_data$Logit_fn_se
+      Mut_data_est$log_kd_se <- Mut_data$log_kd_se
+      
     }else{
-      Mut_data <- Mut_data %>% dplyr::ungroup() %>%
-        dplyr::group_by(fnum, mut, reps, TC, pnew, pold, logit_fn_rep, kd_rep_est) %>%
-        dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
-        dplyr::mutate(Exp_l_fn = exp(logit_fn_rep)) %>%
-        dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
-        dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
-        dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
-        dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
-        dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
-        dplyr::ungroup() %>%
-        dplyr::group_by(fnum, mut, reps) %>%
-        dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
-                         Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
-                         tot_n = sum(n)) %>% #,
-        #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
-        dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
-                      Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
-        dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
-                      Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
-
+      ## Procedure:
+      # 1) Estimate beta distribution prior empirically
+      # 2) Determine beta posterior analytically
+      # 3) Use beta sd as uncertainty
+      
+      ## Estimate beta prior
+      fn_means <- Mut_data_est %>%
+        dplyr::group_by(mut, reps) %>%
+        dplyr::summarise(global_mean = mean(Fn_rep_est),
+                         global_var = stats::var(Fn_rep_est))
+      
+      priors <- fn_means %>%
+        dplyr::mutate(alpha_p = global_mean*(((global_mean*(1-global_mean))/global_var) - 1),
+                      beta_p = alpha_p*(1 - global_mean)/global_mean)
+      
+      ## Add priors
+      Mut_data_est <- dplyr::inner_join(Mut_data_est, priors, by = c("mut", "reps"))
+      
+      ## Estimate logit uncertainty
+      lfn_calc <- function(alpha, beta){
+        
+        EX <- alpha/(alpha + beta)
+        VX <- (alpha*beta)/(((alpha + beta)^2)*(alpha + beta + 1))
+        
+        
+        totvar <- (((1/EX) + 1/(1 - EX))^2)*VX
+        
+        return(totvar)
+      }
+      
+      ## Estimate log(kdeg) uncertainty
+      lkdeg_calc <- function(alpha, beta){
+        
+        EX <- alpha/(alpha + beta)
+        VX <- (alpha*beta)/(((alpha + beta)^2)*(alpha + beta + 1))
+        
+        
+        totvar <- (( 1/(log(1-EX)*(1-EX)) )^2)*VX
+        
+        return(totvar)
+      }
+      
+      Mut_data_est <- Mut_data_est %>%
+        dplyr::mutate(logit_fn_se = sqrt(lfn_calc(alpha_p + nreads*Fn_rep_est, nreads + beta_p)),
+                      log_kd_se = sqrt(lkdeg_calc(alpha_p + nreads*Fn_rep_est, nreads + beta_p)))
     }
+    
 
 
-
-    Mut_data_est$logit_fn_se <- Mut_data$Logit_fn_se
-    Mut_data_est$log_kd_se <- Mut_data$log_kd_se
 
     Mut_data_est <- Mut_data_est %>% dplyr::mutate(log_kd_rep_est = log(kd_rep_est))
 
@@ -1398,7 +1455,6 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
   b_hyper <- (var_pop*(a_hyper - 2))/a_hyper
   
   
-  #browser()
   if(BDA_model){ # Not yet working well; inverse chi-squared model from BDA3
     avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
       dplyr::mutate(sd_post = (sd_log_kd*nreps[Condition] + a_hyper*exp(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(a_hyper + nreps[Condition] - 2) ) %>%
