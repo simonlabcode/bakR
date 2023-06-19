@@ -375,12 +375,6 @@ validate_bakRFnData <- function(obj){
         sample, and thus should be betweeen 0 and 1."
       )
     }
-  }else if(sum(fns[,4] < 0 | fns[,4] > 1) > 0){
-    stop(
-      "4th column of fns contains values < 0 or > 1. This column should represent
-        the fraction new estimate uncertainty for the corresponding feature in the corresponding
-        sample, and thus should be betweeen 0 and 1."
-    )
   }
   
   ## Check to make sure that there is no negative tl

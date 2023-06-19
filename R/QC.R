@@ -38,7 +38,6 @@
 #' @export
 QC_checks <- function(obj){
   
-
   Exp_ID <- Replicate <- logit_fn <- fn_1 <- fn_2 <- NULL
   type <- mut <- reps <- pnew <- mutrate <- TC <- n <- nT <- ctl <- NULL
   

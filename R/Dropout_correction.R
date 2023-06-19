@@ -155,19 +155,18 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   
   
   # Rerun MLE, going thru bakRFnData ---------------------------------------------
-  
   if(inherits(obj, "bakRFit")){
     # Prep fns
     if(!recalc_uncertainty){
       
       # uncertainty delta approximation
       calc_fn_se <- function(lfn, lfn_se){
-        var <- (exp(-lfn)/((1 + exp(-lfn))^2))*(lfn_se^2)
+        var1 <- ((exp(-lfn)/((1 + exp(-lfn))^2))^2)*(lfn_se^2)
+        return(var1)
       }
       
       Fns <- Fn_bias[,c("XF", "sample", "reads_corrected", "fn_corrected")]
-      scales <- Fn_bias$logit_fn_corrected/Fn_bias$logit_fn
-      Fns$se <- calc_fn_se(Fn_bias$logit_fn_corrected, Fn_bias$logit_fn_se*scales)
+      Fns$se <- sqrt(calc_fn_se(Fn_bias$logit_fn_corrected, Fn_bias$logit_fn_se))
       colnames(Fns) <- c("XF", "sample", "n", "fn", "se")
       
     }else{
@@ -202,8 +201,15 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
       dplyr::summarise(n = sum(n))
     
     Fn_ctl <- dplyr::inner_join(Fn_ctl, ctl_reads, by = c("XF", "sample"))
-    Fns <- dplyr::bind_rows(list(Fns, Fn_ctl[,c("XF", "sample", "fn", "n")]))
     
+    if(!recalc_uncertainty){
+      Fn_ctl$se <- 0
+      Fns <- dplyr::bind_rows(list(Fns, Fn_ctl[,c("XF", "sample", "fn", "se", "n")]))
+      
+    }else{
+      Fns <- dplyr::bind_rows(list(Fns, Fn_ctl[,c("XF", "sample", "fn", "n")]))
+    }
+
   }else{
     # Prep fns
     if(!recalc_uncertainty){
@@ -272,6 +278,11 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   
   # Rerun fit with corrected reads and fns
   Fit_correct <- bakRFit(bakRFnData, FOI = unique(Fns$XF), concat = FALSE)
+  
+  # If mutation rates were estimated, propogate those to Fast_Fit
+  if(inherits(obj, "bakRFit")){
+    Fit_correct$Fast_Fit$Mut_rates <- obj$Fast_Fit$Mut_rates
+  }
   
   
   # Make Final Fit object --------------------------------------------------------

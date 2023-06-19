@@ -863,7 +863,7 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
     dplyr::select(XF, Feature_ID)
   
   message("Processing data...")
-  
+
   # Make count matrix that is DESeq2 compatible
   Cnt_mat <- matrix(0, ncol = length(samp_list), nrow = length(unique(keep)))
   
@@ -889,8 +889,15 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
   fns <- dplyr::inner_join(fns, tl_df, by = c("Exp_ID", "Replicate"))
   
   # Remove -s4U data from fns
-  fn_ctl_data <- fns[fns$Type == 0, colnames(fns) != "Type"]
-  fn_ctl_data$tl <- 0
+  
+  if(sum(fns$Type == 0) > 1){
+    fn_ctl_data <- fns[fns$Type == 0, colnames(fns) != "Type"]
+    fn_ctl_data$tl <- 0
+    
+    ctl_absent <- FALSE
+  }else{
+    ctl_absent <- TRUE
+  }
   
   fns <- fns[fns$Type == 1,]
   
@@ -903,7 +910,6 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
   
   
   ### Estimate uncertainty
-  
   if("se" %in% colnames(fns)){
     
     ## Estimate logit uncertainty
@@ -1048,9 +1054,16 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
     Chase = as.integer(Chase) 
   )
   
-  out <- list(Stan_data = data_list, Count_Matrix = Cnt_mat,
-                               Fn_est = dplyr::as_tibble(fns),
-                               Ctl_data = dplyr::as_tibble(fn_ctl_data))
+  if(ctl_absent){
+    out <- list(Stan_data = data_list, Count_Matrix = Cnt_mat,
+                Fn_est = dplyr::as_tibble(fns),
+                Ctl_data = NULL)
+  }else{
+    out <- list(Stan_data = data_list, Count_Matrix = Cnt_mat,
+                Fn_est = dplyr::as_tibble(fns),
+                Ctl_data = dplyr::as_tibble(fn_ctl_data))
+  }
+  
   
   return(out)
 }
