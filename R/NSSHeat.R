@@ -391,13 +391,22 @@ NSSHeat2 <- function(bakRFit,
   
   # Calculate p value and multiple-test adjust
   test_stat <- test_stat %>% dplyr::rowwise() %>%
-    dplyr::mutate(mech_pval = 2*sum(null_xy > abs(mech_stat))/sims )
+    dplyr::mutate(mech_pval = 2*sum(null_xy > abs(mech_stat))/sims ) %>%
+    dplyr::ungroup()
   
   rm(null_x)
   rm(null_y)
   rm(null_xy)
   
   test_stat$mech_padj <- stats::p.adjust(test_stat$mech_pval, method= "BH")
+  
+  ## Calculate meta analysis p value (p value that either expression or fraction new has changed)
+  test_stat$meta_pval <- stats::pchisq(-2*(log(test_stat$bakR_pval) + log(test_stat$pval)), 
+                                       df = 4,
+                                       lower.tail = FALSE)
+  
+  test_stat$meta_padj <- stats::p.adjust(test_stat$meta_pval, method = "BH")
+  
   
   heatmap_df <- dplyr::tibble(DE_score = test_stat$stat,
                               Mech_score = test_stat$mech_stat,
