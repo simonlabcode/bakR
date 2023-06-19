@@ -11,7 +11,7 @@ NSSHeat2(
   DE_cutoff = 0.05,
   bakR_cutoff = 0.05,
   Exp_ID = 2,
-  a = 0.01
+  sims = 1e+07
 )
 }
 \arguments{
@@ -30,12 +30,13 @@ or MCMC}
 \item{Exp_ID}{Exp_ID of experimental sample whose comparison to the reference sample you want to use.
 Only one reference vs. experimental sample comparison can be used at a time}
 
-\item{a}{Scale factor for mechanism scoring function. Larger numbers will make it so increase
-in mechanism score as a function of differential expression or differential fraction new z-score
-is more dramatic.}
+\item{sims}{Number of simulation draws from null distribution for mechanism p value calculation}
 }
 \value{
-returns data frame that can be passed to pheatmap::pheatmap()
+returns list of data frames: heatmap_df and NSS_stats.
+The heatmap_dfdata frame can be passed to pheatmap::pheatmap().
+The NSS_stats data frame contains all of the information passed to NSS_stats as well
+as the raw mechanism scores. It also has p values calculated from the mechanism z scores.
 }
 \description{
 This uses the output of bakR and a differential expression analysis software to construct
@@ -46,6 +47,12 @@ result of a steady-state quasi-independent analysis of NR-seq data.
 Unlike NSSHeat, NSSHeat2 uses a mechanism scoring function that is not discontinuous
 as the "degradation driven" vs. "synthesis driven" boundary. Instead, the score
 approaches 0 as the function approaches the boundary from either side.
+
+In addition, NSSHeat2 now defines a null model for the purpose of p value calculation using
+the mechanism score. Under the null hypothesis, the mechanism score is the product of two
+normal distributions with unit variance, one which has a non-zero mean. Simulation is used
+to estimate the integral of this distribution, and the number of draws (which determines the
+precision of the p value estimate) is determined by the \code{sims} parameter.
 }
 \examples{
 \donttest{

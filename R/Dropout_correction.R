@@ -24,9 +24,14 @@
 #' transcript) between the +s4U and -s4U samples.
 #' @param pdo_init Numeric; initial estimtae for the dropout rate. This is the probability
 #' that an s4U labeled RNA molecule is lost during library prepartion. 
+#' @param recalc_uncertainty Logical; if TRUE, then fraction new uncertainty is recalculated
+#' using adjusted fn and a simple binomial model of estimate uncertainty. This will provided a 
+#' slight underestimate of the fn uncertainty, but will be far less biased for low coverage features,
+#' or for samples with low pnews.
 #' @param ... Additional (optional) parameters to be passed to \code{stats::nls()}
 #' @export
 CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
+                           recalc_uncertainty = TRUE,
                            ...){
 
   ### Checks
@@ -116,7 +121,7 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   # Collect biased fn estimates
   Fn_bias <- obj$Fast_Fit$Fn_Estimates
   
-  Fn_bias <- Fn_bias[,c("XF", "nreads", "sample", "Exp_ID", "Replicate", "logit_fn")]
+  Fn_bias <- Fn_bias[,c("XF", "nreads", "sample", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se")]
   
   Fn_bias$fndo <- inv_logit(Fn_bias$logit_fn)
   
@@ -153,9 +158,23 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   
   if(inherits(obj, "bakRFit")){
     # Prep fns
-    Fns <- Fn_bias[,c("XF", "sample", "reads_corrected", "fn_corrected")]
-    colnames(Fns) <- c("XF", "sample", "n", "fn")
-    
+    if(!recalc_uncertainty){
+      
+      # uncertainty delta approximation
+      calc_fn_se <- function(lfn, lfn_se){
+        var <- (exp(-lfn)/((1 + exp(-lfn))^2))*(lfn_se^2)
+      }
+      
+      Fns <- Fn_bias[,c("XF", "sample", "reads_corrected", "fn_corrected")]
+      scales <- Fn_bias$logit_fn_corrected/Fn_bias$logit_fn
+      Fns$se <- calc_fn_se(Fn_bias$logit_fn_corrected, Fn_bias$logit_fn_se*scales)
+      colnames(Fns) <- c("XF", "sample", "n", "fn", "se")
+      
+    }else{
+      Fns <- Fn_bias[,c("XF", "sample", "reads_corrected", "fn_corrected")]
+      colnames(Fns) <- c("XF", "sample", "n", "fn")
+      
+    }
     
     # Make metadf
     metadf <- obj$Data_lists$Fast_df %>%
@@ -187,9 +206,24 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
     
   }else{
     # Prep fns
-    Fns <- Fn_bias[,c("XF", "sample", "reads_corrected", "fn_corrected")]
-    colnames(Fns) <- c("XF", "sample", "n", "fn")
-    
+    if(!recalc_uncertainty){
+      
+      # uncertainty delta approximation
+      calc_fn_se <- function(lfn, lfn_se){
+        var <- (exp(-lfn)/((1 + exp(-lfn))^2))*(lfn_se^2)
+      }
+      
+      Fns <- Fn_bias[,c("XF", "sample", "reads_corrected", "fn_corrected")]
+      scales <- Fn_bias$logit_fn_corrected/Fn_bias$logit_fn
+      Fns$se <- calc_fn_se(Fn_bias$logit_fn_corrected, Fn_bias$logit_fn_se*scales)
+      colnames(Fns) <- c("XF", "sample", "n", "fn", "se")
+      
+    }else{
+      Fns <- Fn_bias[,c("XF", "sample", "reads_corrected", "fn_corrected")]
+      colnames(Fns) <- c("XF", "sample", "n", "fn")
+      
+    }
+
     # Make metadf
     meta_s4U <- obj$Data_lists$Fn_est %>%
       dplyr::select(Exp_ID, tl, sample) %>%
@@ -217,8 +251,18 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
       dplyr::summarise(n = sum(n))
     
     Fn_ctl <- dplyr::inner_join(Fn_ctl, ctl_reads, by = c("XF", "sample"))
-    Fns <- dplyr::bind_rows(list(Fns, Fn_ctl[,c("XF", "sample", "fn", "n")]))
     
+    if(!recalc_uncertainty){
+      Fn_ctl$se <- 0
+      Fns <- dplyr::bind_rows(list(Fns, Fn_ctl[,c("XF", "sample", "fn", "se", "n")]))
+      
+    }else{
+      Fns <- dplyr::bind_rows(list(Fns, Fn_ctl[,c("XF", "sample", "fn", "n")]))
+    }
+    
+    
+    
+
     
   }
 

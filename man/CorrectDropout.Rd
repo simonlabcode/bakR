@@ -4,7 +4,13 @@
 \alias{CorrectDropout}
 \title{Correcting for metabolic labeling induced RNA dropout}
 \usage{
-CorrectDropout(obj, scale_init = 1.05, pdo_init = 0.3, ...)
+CorrectDropout(
+  obj,
+  scale_init = 1.05,
+  pdo_init = 0.3,
+  recalc_uncertainty = TRUE,
+  ...
+)
 }
 \arguments{
 \item{obj}{bakRFit object}
@@ -15,6 +21,11 @@ transcript) between the +s4U and -s4U samples.}
 
 \item{pdo_init}{Numeric; initial estimtae for the dropout rate. This is the probability
 that an s4U labeled RNA molecule is lost during library prepartion.}
+
+\item{recalc_uncertainty}{Logical; if TRUE, then fraction new uncertainty is recalculated
+using adjusted fn and a simple binomial model of estimate uncertainty. This will provided a
+slight underestimate of the fn uncertainty, but will be far less biased for low coverage features,
+or for samples with low pnews.}
 
 \item{...}{Additional (optional) parameters to be passed to \code{stats::nls()}}
 }
