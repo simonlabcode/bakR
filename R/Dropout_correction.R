@@ -33,6 +33,10 @@
 CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
                            recalc_uncertainty = TRUE,
                            ...){
+  
+  # Address "no visible binding" NOTEs
+  type <- mut <- Exp_ID <- Replicate <- nreads <- fndo <- pdo <- NULL
+  fnGdo <- fn_corrected <- fnG <- tl <- n <- NULL
 
   ### Checks
   # 1) Input must be a bakRFit object
@@ -335,6 +339,11 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
 QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
                             keep_data = FALSE, no_message = FALSE,
                             ...){
+  
+  # Address "no visible binding" NOTEs
+  type <- mut <- Exp_ID <- reps <- n <- fnum <- ctl_RPM <- NULL
+  Replicate <- Feature_ID <- pdo <- NULL
+    
   ### Checks
   # 1) Input must be a bakRFit object
   # 2) There must be -s4U controls for all experimental conditions

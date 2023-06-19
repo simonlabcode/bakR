@@ -1135,7 +1135,7 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
                                nbin = NULL, NSS = FALSE, Chase = FALSE,
                                BDA_model = FALSE, null_cutoff = 0,
                                Mutrates = NULL, ztest = FALSE){
-  
+
 
   ### Check Mut_data_est
   expected_cols <- c("nreads", "fnum", "reps",
@@ -1223,7 +1223,7 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
   fnum <- mut <- logit_fn_rep <- bin_ID <- kd_sd_log <- intercept <- NULL
   slope <- log_kd_rep_est <- avg_log_kd <- sd_log_kd <- sd_post <- NULL
   sdp <- theta_o <- log_kd_post <- effect_size <- effect_size_std_error <- NULL
-  
+  effect_std_error <- NULL
   
   # Helper functions that I will use on multiple occasions
   logit <- function(x) log(x/(1-x))

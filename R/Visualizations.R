@@ -465,6 +465,9 @@ VisualizeDropout <- function(obj, Exp_ID = 1, Replicate = 1,
                              keep_data = FALSE,
                              no_message = FALSE){
   
+  # Address "no visible binding" NOTEs
+  type <- mut <- reps <- fn <- dropout <- pdo <- NULL
+  
   if(inherits(obj, "bakRFit")){
     
     if(sum(obj$Data_lists$Fast_df$type == 0) == 0){

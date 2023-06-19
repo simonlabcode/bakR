@@ -746,7 +746,8 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
   # Bind to NULL
   tl <- ctl <- Exp_ID <- r_id <- XF <- n <- npass <- NULL
   Feature_ID <- fn <- var <- global_mean <- global_var <- alpha_p <- beta_p <- NULL
-
+  se <- NULL
+  
   metadf <- obj$metadf
   fns <- obj$fns
   
@@ -913,7 +914,7 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
   if("se" %in% colnames(fns)){
     
     ## Estimate logit uncertainty
-    lfn_calc <- function(EX, VX){
+    lfn_calc2 <- function(EX, VX){
       
       
       totvar <- (((1/EX) + 1/(1 - EX))^2)*VX
@@ -922,7 +923,7 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
     }
     
     ## Estimate log(kdeg) uncertainty
-    lkdeg_calc <- function(EX, VX){
+    lkdeg_calc2 <- function(EX, VX){
       
       totvar <- (( 1/(log(1-EX)*(1-EX)) )^2)*VX
       
@@ -931,8 +932,8 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
     
     ## Estimate uncertainties
     fns <- fns %>%
-      dplyr::mutate(logit_fn_se = sqrt(lfn_calc(fn, se^2)),
-                    log_kd_se = sqrt(lkdeg_calc(fn, se^2)))
+      dplyr::mutate(logit_fn_se = sqrt(lfn_calc2(fn, se^2)),
+                    log_kd_se = sqrt(lkdeg_calc2(fn, se^2)))
     
     
   }else{

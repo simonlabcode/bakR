@@ -275,16 +275,17 @@ NSSHeat2 <- function(bakRFit,
 
 
   # Bind variables locally to resolve devtools::check() Notes
-  padj <- log2FoldChange <- effect <- se <- Sig <- Sig_bakR <- score_bakR <- NULL
+  padj <- pval <- log2FoldChange <- effect <- se <- Sig <- Sig_bakR <- score_bakR <- NULL
   mech <- stat <- DE_score <- Mech_score <- bakR_score <- NULL
+  mech_stat <- NULL
 
   ### Checks
-  if(sum(c("XF", "log2FoldChange", "stat", "padj") %in% colnames(DE_df)) < 4){
+  if(sum(c("XF", "log2FoldChange", "stat", "pval", "padj") %in% colnames(DE_df)) < 5){
     stop("You are missing necessary columns in DE_df. Columns named XF, log2FoldChange,
-         stat, and padj must be included. See the Further-Analyses vignette for details")
+         stat, pval, and padj must be included. See the Further-Analyses vignette for details")
   }
 
-  if(sum(colnames(DE_df) %in% c("XF", "log2FoldChange", "stat", "padj")) > 4){
+  if(sum(colnames(DE_df) %in% c("XF", "log2FoldChange", "stat", "pval", "padj")) > 5){
     stop("Looks like you have repeat columns of the same name in DE_df. Make sure column
          names are unique and that each column is correctly labeled and try again.")
   }
@@ -351,9 +352,9 @@ NSSHeat2 <- function(bakRFit,
     dplyr::mutate(score_bakR = effect/se)
 
 
-  NSS_eff_DE <- NSS_eff_DE[, c("pval", "padj", "score_bakR", "XF")]
+  NSS_eff_DE <- NSS_eff_DE[, c("XF", "pval", "padj", "score_bakR")]
 
-  colnames(NSS_eff_DE) <- c("bakR_pval", "bakR_padj", "score_bakR", "XF")
+  colnames(NSS_eff_DE) <- c( "XF", "bakR_pval", "bakR_padj", "score_bakR")
 
   XF_both <- intersect(NSS_eff_DE$XF, DE_XF)
 
@@ -384,8 +385,8 @@ NSSHeat2 <- function(bakRFit,
   ## non-zero mean.
   
   # Simulate from null for empirical p-value calc
-  null_x <- rnorm(sims, mean = zfn)
-  null_y <- rnorm(sims)
+  null_x <- stats::rnorm(sims, mean = zfn)
+  null_y <- stats::rnorm(sims)
   null_xy <- null_x*null_y
   
   # Calculate p value and multiple-test adjust
