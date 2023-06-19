@@ -256,6 +256,12 @@ validate_bakRFnData <- function(obj){
   fns <- vals$fns
   metadf <- vals$metadf
   
+  if("se" %in% colnames(fns)){
+    se_provided <- TRUE
+  }else{
+    se_provided <- FALSE
+  }
+  
   ## Check if rownames of metadf are same as unique(cB$sample)
   if("sample" %in% colnames(fns)){
     if(!identical(rownames(metadf), unique(fns$sample))){
@@ -279,13 +285,24 @@ validate_bakRFnData <- function(obj){
   
   
   ## Check if Numerical data in fns is all integer
-  if(sum(purrr::map_dbl(unclass(fns), is.numeric)) < 2){
-    stop(
-      "There are less than 2 columns of fns containing numeric data.
+  if(sum(purrr::map_dbl(unclass(fns), is.numeric)) < ifelse(se_provided, 3, 2) ){
+    
+    if(se_provided){
+      stop(
+        "There are less than 3 columns of fns containing numeric data.
+      fns should have a column corresponding to the fraction new estimates (fn),
+      fn estimate uncertainties (se), and number of sequencing reads (n).",
+        call. = FALSE
+      )
+    }else{
+      stop(
+        "There are less than 2 columns of fns containing numeric data.
       fns should have a column corresponding to the fraction new estimates (fn),
       and number of sequencing reads (n).",
-      call. = FALSE
-    )
+        call. = FALSE
+      )
+    }
+
   }
   
   
@@ -315,11 +332,20 @@ validate_bakRFnData <- function(obj){
         mapping to the corresponding feature in the corresponding sample."
       )
     }
-  }else if(sum(fns[,4] < 0) > 0){
-    stop(
-      "4th column of fns contains values < 0. This column should tally the number of reads 
+  }else if(sum(fns[,ifelse(se_provided, 5, 4)] < 0) > 0){
+    
+    if(se_provided){
+      stop(
+        "5th column of fns contains values < 0. This column should tally the number of reads 
         mapping to the corresponding feature in the corresponding sample."
-    )
+      )
+    }else{
+      stop(
+        "4th column of fns contains values < 0. This column should tally the number of reads 
+        mapping to the corresponding feature in the corresponding sample."
+      )
+    }
+
   }
   
   
@@ -340,7 +366,24 @@ validate_bakRFnData <- function(obj){
     )
   }
   
-  ## Check to make sure that there is no -s4U data
+  ## Check to make sure that fn se is between 0 and 1
+  if("se" %in% colnames(fns)){
+    if(sum(fns$se < 0 | fns$se > 1) > 0){
+      stop(
+        "se column of fns contains values < 0 or > 1. This column should represent
+        the fraction new estimate uncertainty for the corresponding feature in the corresponding
+        sample, and thus should be betweeen 0 and 1."
+      )
+    }
+  }else if(sum(fns[,4] < 0 | fns[,4] > 1) > 0){
+    stop(
+      "4th column of fns contains values < 0 or > 1. This column should represent
+        the fraction new estimate uncertainty for the corresponding feature in the corresponding
+        sample, and thus should be betweeen 0 and 1."
+    )
+  }
+  
+  ## Check to make sure that there is no negative tl
   if(sum(metadf$tl < 0) > 1){
     stop(
       "tl is < 0 for some entries of metadf. tl represents the duration of s4U labeling
@@ -405,7 +448,16 @@ bakRFnData <- function(fns, metadf){
   fns <- as.data.frame(fns)
   metadf <- as.data.frame(metadf)
   
-  fns_cols <- c("XF", "sample", "fn", "n")
+  if("se" %in% colnames(fns)){
+    fns_cols <- c("XF", "sample", "fn", "se", "n")
+    se_provided <- TRUE
+    
+  }else{
+    fns_cols <- c("XF", "sample", "fn", "n")
+    se_provided <- FALSE
+    
+  }
+  
   meta_cols <- c("tl", "Exp_ID")
   
   ## Check number of columns of fns
@@ -430,9 +482,17 @@ bakRFnData <- function(fns, metadf){
   
   ## Add column names to fns and metadf as necessary
   if(!all(fns_cols %in% colnames(fns))){
-    colnames(fns)[1:4] <- fns_cols
-    warning("Renamed first 4 columns of fns to XF, sample, fn, and n.
-    If this does not reflect the content of those columns, properly rearrange fns columns and rerun bakRFnData().")
+    
+    if(se_provided){
+      colnames(fns)[1:5] <- fns_cols
+      warning("Renamed first 5 columns of fns to XF, sample, fn, se, and n.
+      If this does not reflect the content of those columns, properly rearrange fns columns and rerun bakRFnData().")
+    }else{
+      colnames(fns)[1:4] <- fns_cols
+      warning("Renamed first 4 columns of fns to XF, sample, fn, and n.
+      If this does not reflect the content of those columns, properly rearrange fns columns and rerun bakRFnData().")
+    }
+
   }
   
   if(!all(meta_cols %in% colnames(metadf))){

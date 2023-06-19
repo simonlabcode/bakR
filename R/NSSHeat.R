@@ -392,6 +392,10 @@ NSSHeat2 <- function(bakRFit,
   test_stat <- test_stat %>% dplyr::rowwise() %>%
     dplyr::mutate(mech_pval = 2*sum(null_xy > abs(mech_stat))/sims )
   
+  rm(null_x)
+  rm(null_y)
+  rm(null_xy)
+  
   test_stat$mech_padj <- stats::p.adjust(test_stat$mech_pval, method= "BH")
   
   heatmap_df <- dplyr::tibble(DE_score = test_stat$stat,
