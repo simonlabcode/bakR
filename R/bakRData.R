@@ -181,6 +181,9 @@ bakRData <- function(cB, metadf){
 
   cB_cols <- c("XF", "sample", "TC", "nT", "n")
   meta_cols <- c("tl", "Exp_ID")
+  
+  meta_samps <- rownames(metadf)
+  cB_samps <- unique(cB$sample)
 
   ## Check number of columns of CB
   if(ncol(cB) < 5){
@@ -223,8 +226,16 @@ bakRData <- function(cB, metadf){
     (i.e., with any of StanRateEst, StanFit, or HybridFit set to TRUE) will work with this kind
     of data.")
   }
+  
+  if(!all(meta_samps %in% cB_samps)){
+    stop("Not all of the samples appearing as rownames in metadf appear in the sample column of cB")
+  }
+  
+  if(!all(cB_samps %in% meta_samps)){
+    stop("Not all of the samples appearing in the sample column of cB appear as rownames in metadf.")
+  }
 
-  validate_bakRData(new_bakRData(cB, metadf))
+  validate_bakRData(new_bakRData(cB, metadf[unique(cB$sample),]))
 
 
 }
@@ -420,8 +431,10 @@ validate_bakRFnData <- function(obj){
 #'
 #' This function creates an object of class bakRFnData
 #' @param fns Dataframe with columns corresponding to sample names (sample), feature IDs (XF),
-#' fraction new estimates (fn), and number of sequencing reads (nreads) 
-#' @param metadf Dataframe detailing s4U label time and experimental ID of each sample
+#' fraction new estimates (fn), and number of sequencing reads (nreads). \code{fns} can optionally
+#' contain a column of fraction new estimate uncertainties (se).
+#' @param metadf Dataframe detailing s4U label time and experimental ID of each sample. Identical to \code{bakRData}
+#' input
 #' @return A bakRFnData object. This has two components: a data frame describing experimental
 #' details (metadf) and a data frame containing the fraction new estimates (fns).
 #' @examples
@@ -451,6 +464,10 @@ bakRFnData <- function(fns, metadf){
     se_provided <- FALSE
     
   }
+  
+  meta_samps <- rownames(metadf)
+  fns_samps <- unique(fns$sample)
+  
   
   meta_cols <- c("tl", "Exp_ID")
   
@@ -504,7 +521,16 @@ bakRFnData <- function(fns, metadf){
     of data.")
   }
   
-  validate_bakRFnData(new_bakRFnData(fns, metadf))
+  if(!all(meta_samps %in% fns_samps)){
+    stop("Not all of the samples appearing as rownames in metadf appear in the sample column of cB")
+  }
+  
+  if(!all(fns_samps %in% meta_samps)){
+    stop("Not all of the samples appearing in the sample column of cB appear as rownames in metadf.")
+  }
+  
+  
+  validate_bakRFnData(new_bakRFnData(fns, metadf[unique(fns$sample),]))
   
   
 }
