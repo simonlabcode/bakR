@@ -454,14 +454,29 @@ Heatmap_kdeg <- function(obj, zscore = FALSE, filter_sig = FALSE, FDR = 0.05){
 #' data used to infer the fit as well as the fitted nonlinear trend.
 #' 
 #' @param obj bakRFit or bakRFnFit object
-#' @param Exp_ID Experimental condition ID to visualize dropout for
-#' @param Replicate Replicate ID to visualize dropout for
 #' @param keep_data Logical; if TRUE, will return data used to make plots along with
 #' the plots themselves
 #' @param no_message Logical; if TRUE, will not output message regarding estimated
 #' rates of dropout in each sample
+#' @return If keep_data is FALSE, then a list of `ggplot` objects are returned, one
+#' for each +s4U sample. The plots show the relationship between a feature's fraction new
+#' and the difference between its +s4U and -s4U read coverage. Nonlinear-least squares fit
+#' is plotted on top of points as a blue line. If keep_data is TRUE, then the data used
+#' to make the plots is returned in addition to the list of plots.
+#' @examples
+#' \donttest{
+#' # Simulate data for 500 genes and 2 replicates with 40% dropout
+#' sim <- Simulate_relative_bakRData(500, nreps = 2, p_do = 0.4)
+#'
+#' # Fit data with fast implementation
+#' Fit <- bakRFit(sim$bakRData)
+#'
+#' # Quantify dropout
+#' DO_plots <- VisualizeDropout(Fit)
+#'
+#' }
 #' @export
-VisualizeDropout <- function(obj, Exp_ID = 1, Replicate = 1,
+VisualizeDropout <- function(obj,
                              keep_data = FALSE,
                              no_message = FALSE){
   
