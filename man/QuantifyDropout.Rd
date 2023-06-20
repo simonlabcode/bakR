@@ -24,16 +24,35 @@ transcript) between the +s4U and -s4U samples.}
 that an s4U labeled RNA molecule is lost during library prepartion.}
 
 \item{keep_data}{Logical; if TRUE, will return list with two elements. First element
-is the regular return (data frame with dropout quantitied), and the second element
+is the regular return (data frame with dropout quantified), and the second element
 will be the data frame that was used for fitting the dropout model. This is useful
-if wanting to visualize the fit.}
+if wanting to visualize the fit. See Return documetation for more details}
 
 \item{no_message}{Logical; if TRUE, will not output message regarding estimated
 rates of dropout in each sample}
 
 \item{...}{Additional (optional) parameters to be passed to \code{stats::nls()}}
 }
+\value{
+If keep_data is FALSE, then only a data frame with the dropout rate estimates (pdo)
+in each sample is returned. If keep_data is TRUE, then a list with two elements is returned. One element is
+the pdo data frame always returned, and the second is the data frame containing information passed
+to \code{stats::nls} for pdo estimation.
+}
 \description{
 \code{QuantifyDropout} estimates the percentage of 4-thiouridine containing RNA
 that was lost during library preparation (pdo).
+}
+\examples{
+\donttest{
+# Simulate data for 500 genes and 2 replicates with 40\% dropout
+sim <- Simulate_relative_bakRData(500, nreps = 2, p_do = 0.4)
+
+# Fit data with fast implementation
+Fit <- bakRFit(sim$bakRData)
+
+# Quantify dropout
+Fit <- QuantifyDropout(Fit)
+
+}
 }

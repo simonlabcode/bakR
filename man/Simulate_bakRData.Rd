@@ -161,7 +161,7 @@ the number of mutations is instead drawn from a binomial distribution with the s
 of mutation = \code{p_old}. \code{p_new} must be greater than \code{p_old} because mutations in new RNA
 arise from both background mutations that occur with probability \code{p_old} as well as metabolic label induced mutations
 
-Simulated read counts should be treated as if they are spike-in and RPKM normalized, so the same scale factor can be applied
+Simulated read counts should be treated as if they are spike-in and RPKM normalized, so the same scale factor of 1 can be applied
 to each sample when comparing the sequencing reads (e.g., if you are performing differential expression analysis).
 
 Function to simulate a \code{bakRData} object according to a realistic generative model

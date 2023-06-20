@@ -135,22 +135,27 @@ the i-th condition to the reference condition (defined as the 1st condition) so 
 }
 \description{
 \code{Simulate_relative_bakRData} simulates a \code{bakRData} object. It's output also includes the simulated
-values of all kinetic parameters of interest. The main difference between \code{Simulate_relative_bakRData}
+values of all kinetic parameters of interest.
+}
+\details{
+The main difference between \code{Simulate_relative_bakRData}
 and \code{Simulate_bakRData} is that the former requires both the number of
 genes (\code{ngene}) and the total number of reads (\code{depth}) has to be set.
 In the latter, only the number of genes is set, and the number of reads for each
 gene is simulated so that no matter how many genes are simulated, the number of
-reads given default parameters is relective of what is seen in 20,000,000 read
+reads given default parameters is reflective of what is seen in 20,000,000 read
 human RNA-seq libraries. The benefit of \code{Simulate_relative_bakRData} is that it is
 easier to test the impact of depth on model performance. This can theoretically
 be done by changing the synthesis rate constant parameters in \code{Simulate_bakRData},
 but the relationship between these parameters and sequencing depth is unintuitive. The
-benefit of \code{Simulate_bakRData} is that fewer genes can be simulated and still
+benefit of \code{Simulate_bakRData} is that fewer genes can be simulated
 while still yielding reasonable per-gene coverage without figuring out what the
 total depth in the small gene subset should be. This is nice for testing bakR and
-other analysis tools on small datasets.
-}
-\details{
+other analysis tools on small datasets. \code{Simulate_relative_bakRData} is a more
+realistic simulation that better accounts for the relative nature of RNA-seq read
+counts (i.e., expected number of reads from a given feature is related to proportion of RNA molecules
+coming from that feature).
+
 Another difference between \code{Simulate_relative_bakRData} and \code{Simulate_bakRData}
 is that \code{Simulate_relative_bakRData} uses the label time and simulated degradation
 rate constants to infer the fraction new, whereas \code{Simulate_bakRData} uses simulated
@@ -161,6 +166,10 @@ and the distribution of fraction news has a major impact on model performance).
 Similarly, \code{Simulate_bakRData} is preferable for directly assessing the impact of
 fraction news on model performance, without having to think about how both the label
 time and simulated degradation rate constant distribution.
+
+If investigating dropout, only \code{Simulate_relative_bakRData} should be used, as the
+accurate simulation of read counts as being a function of the relative abundance of
+each RNA feature is crucial to accurately simulate dropout.
 
 Function to simulate a \code{bakRData} object according to a realistic generative model
 }

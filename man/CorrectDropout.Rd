@@ -29,15 +29,21 @@ or for samples with low pnews.}
 
 \item{...}{Additional (optional) parameters to be passed to \code{stats::nls()}}
 }
+\value{
+A \code{bakRFit} or \code{bakRFnFit} object (same type as was passed in). Fraction new estimates and read counts
+in \code{Fast_Fit$Fn_Estimates} and (in the case of a \code{bakRFnFit} input) \code{Data_lists$Fn_Est}are dropout corrected.
+A count matrix with corrected read counts (\code{Data_lists$Count_Matrix_corrected}) is also output, along with a
+data frame with information about the dropout rate estimated for each sample (\code{Data_lists$Dropout_df}).
+}
 \description{
 Dropout is the name given to a phenomenon originally identified by our lab and
 further detailed in two independent publications (\if{html}{\out{<a href="https://www.biorxiv.org/content/10.1101/2023.05.24.542133v1" >}}Zimmer et al. (2023)\if{html}{\out{</a>}},
 and \if{html}{\out{<a href="https://www.biorxiv.org/content/10.1101/2023.04.21.537786v1">}} Berg et al. (2023)\if{html}{\out{</a>}}).
-Dropout is the under-representation
-of reads from RNA containing metabolic label (4-thiouridine or 6-thioguanidine most commonly).
-Loss of 4-thiouridine (s4U) containing RNA on plastic surfaces and RT dropoff caused by
+Dropout is the under-representation of reads from RNA containing metabolic label
+(4-thiouridine or 6-thioguanidine most commonly). Loss of 4-thiouridine (s4U)
+containing RNA on plastic surfaces and RT dropoff caused by
 modifications on s4U introduced by recoding chemistry have been attributed as the likely
-causes of this phenmenon. While protocols can be altered in ways to drastically reduce this
+causes of this phenomenon. While protocols can be altered in ways to drastically reduce this
 source of dropout, you may still have datasets that you want to analyze with bakR collected
 with suboptimal handling. That is where \code{CorrectDropout} comes in.
 }
@@ -46,5 +52,18 @@ with suboptimal handling. That is where \code{CorrectDropout} comes in.
 that was lost during library preparation (pdo). It then uses this estimate of pdo
 to correct fraction new estimates and read counts. Both corrections are analytically
 derived from a rigorous generative model of NR-seq data. Importantly, the read count
-correction preserves the total library size to avoid artifically inflating read counts.
+correction preserves the total library size to avoid artificially inflating read counts.
+}
+\examples{
+\donttest{
+# Simulate data for 500 genes and 2 replicates with 40\% dropout
+sim <- Simulate_relative_bakRData(500, nreps = 2, p_do = 0.4)
+
+# Fit data with fast implementation
+Fit <- bakRFit(sim$bakRData)
+
+# Correct for dropout
+Fit <- CorrectDropout(Fit)
+
+}
 }

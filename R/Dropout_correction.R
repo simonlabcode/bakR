@@ -3,11 +3,11 @@
 #' Dropout is the name given to a phenomenon originally identified by our lab and
 #' further detailed in two independent publications (<a href="https://www.biorxiv.org/content/10.1101/2023.05.24.542133v1" >Zimmer et al. (2023)</a>,
 #' and <a href="https://www.biorxiv.org/content/10.1101/2023.04.21.537786v1"> Berg et al. (2023)</a>). 
-#' Dropout is the under-representation
-#' of reads from RNA containing metabolic label (4-thiouridine or 6-thioguanidine most commonly).
-#' Loss of 4-thiouridine (s4U) containing RNA on plastic surfaces and RT dropoff caused by 
+#' Dropout is the under-representation of reads from RNA containing metabolic label 
+#' (4-thiouridine or 6-thioguanidine most commonly). Loss of 4-thiouridine (s4U) 
+#' containing RNA on plastic surfaces and RT dropoff caused by 
 #' modifications on s4U introduced by recoding chemistry have been attributed as the likely
-#' causes of this phenmenon. While protocols can be altered in ways to drastically reduce this
+#' causes of this phenomenon. While protocols can be altered in ways to drastically reduce this
 #' source of dropout, you may still have datasets that you want to analyze with bakR collected
 #' with suboptimal handling. That is where \code{CorrectDropout} comes in.
 #'
@@ -15,7 +15,7 @@
 #' that was lost during library preparation (pdo). It then uses this estimate of pdo
 #' to correct fraction new estimates and read counts. Both corrections are analytically
 #' derived from a rigorous generative model of NR-seq data. Importantly, the read count
-#' correction preserves the total library size to avoid artifically inflating read counts.
+#' correction preserves the total library size to avoid artificially inflating read counts.
 #' 
 #' @importFrom magrittr %>%
 #' @param obj bakRFit object
@@ -29,6 +29,22 @@
 #' slight underestimate of the fn uncertainty, but will be far less biased for low coverage features,
 #' or for samples with low pnews.
 #' @param ... Additional (optional) parameters to be passed to \code{stats::nls()}
+#' @return A `bakRFit` or `bakRFnFit` object (same type as was passed in). Fraction new estimates and read counts
+#' in `Fast_Fit$Fn_Estimates` and (in the case of a `bakRFnFit` input) `Data_lists$Fn_Est`are dropout corrected.
+#' A count matrix with corrected read counts (`Data_lists$Count_Matrix_corrected`) is also output, along with a
+#' data frame with information about the dropout rate estimated for each sample (`Data_lists$Dropout_df`).
+#' @examples
+#' \donttest{
+#' # Simulate data for 500 genes and 2 replicates with 40% dropout
+#' sim <- Simulate_relative_bakRData(500, nreps = 2, p_do = 0.4)
+#'
+#' # Fit data with fast implementation
+#' Fit <- bakRFit(sim$bakRData)
+#'
+#' # Correct for dropout
+#' Fit <- CorrectDropout(Fit)
+#'
+#' }
 #' @export
 CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
                            recalc_uncertainty = TRUE,
@@ -344,9 +360,9 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
 #' @importFrom magrittr %>%
 #' @param obj bakRFit object
 #' @param keep_data Logical; if TRUE, will return list with two elements. First element
-#' is the regular return (data frame with dropout quantitied), and the second element
+#' is the regular return (data frame with dropout quantified), and the second element
 #' will be the data frame that was used for fitting the dropout model. This is useful
-#' if wanting to visualize the fit.
+#' if wanting to visualize the fit. See Return documetation for more details
 #' @param scale_init Numeric; initial estimate for -s4U/+s4U scale factor. This is the factor
 #' difference in RPM normalized read counts for completely unlabeled transcripts (i.e., highly stable
 #' transcript) between the +s4U and -s4U samples.
@@ -355,6 +371,22 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
 #' @param no_message Logical; if TRUE, will not output message regarding estimated
 #' rates of dropout in each sample
 #' @param ... Additional (optional) parameters to be passed to \code{stats::nls()}
+#' @return If keep_data is FALSE, then only a data frame with the dropout rate estimates (pdo)
+#' in each sample is returned. If keep_data is TRUE, then a list with two elements is returned. One element is 
+#' the pdo data frame always returned, and the second is the data frame containing information passed
+#' to \code{stats::nls} for pdo estimation.
+#' @examples
+#' \donttest{
+#' # Simulate data for 500 genes and 2 replicates with 40% dropout
+#' sim <- Simulate_relative_bakRData(500, nreps = 2, p_do = 0.4)
+#'
+#' # Fit data with fast implementation
+#' Fit <- bakRFit(sim$bakRData)
+#'
+#' # Quantify dropout
+#' Fit <- QuantifyDropout(Fit)
+#'
+#' }
 #' @export
 QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
                             keep_data = FALSE, no_message = FALSE,
