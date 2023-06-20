@@ -1,7 +1,7 @@
 #' Identify features (e.g., transcripts) with high quality data
 #'
 #' This function identifies all features (e.g., transcripts, exons, etc.) for which the mutation rate
-#' is below a set threshold in the control (no s4U) sample and which have more reads than a set threshold
+#' is below a set threshold in the control (-s4U) sample and which have more reads than a set threshold
 #' in all samples. If there is no -s4U sample, then only the read count cutoff is considered. Additional
 #' filtering options are only relevant if working with short RNA-seq read data. This includes filtering out
 #' features with extremely low empirical U-content (i.e., the average number of Us in sequencing reads from
@@ -9,7 +9,8 @@
 #'
 #' @param obj Object of class bakRData
 #' @param high_p highest mutation rate accepted in control samples
-#' @param totcut readcount cutoff
+#' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out
+#' @param totcut_all Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
 #' @param Ucut Must have a fraction of reads with 2 or less Us less than this cutoff in all samples
 #' @param AvgU Must have an average number of Us greater than this
 #' @importFrom magrittr %>%
@@ -30,98 +31,134 @@
 #' features_to_keep <- reliableFeatures(obj = bakRData)
 #' }
 #' @export
-reliableFeatures <- function(obj,
-                             high_p = 0.2,
-                             totcut = 50,
-                             Ucut = 0.25,
-                             AvgU = 4){
-
+reliableFeatures <- reliableFeatures <- function(obj,
+                                                 high_p = 0.2,
+                                                 totcut = 50,
+                                                 totcut_all = 10,
+                                                 Ucut = 0.25,
+                                                 AvgU = 4){
+  
   # Bind variables locally to resolve devtools::check() Notes
   XF <- TC <- n <- totTC <- nT <- n2U <- nmore <- totcounts <- NULL
   tot_mut <- f2U <- avgU <- counts <- type <- totTs <- NULL
   `.` <- list
-
+  
   cBdt <- as.data.frame(obj$cB)
   metadf <- obj$metadf
-
+  
   nsamps <- length(unique(cBdt$sample))
-
-
+  
+  
   samp_list <- unique(cBdt$sample)
-
+  
   c_list <- rownames(metadf[metadf$tl == 0,])
-
+  
   s4U_list <- samp_list[!(samp_list %in% c_list)]
-
+  
   type_list <- ifelse(metadf[samp_list, "tl"] == 0, 0, 1)
-
+  
   # Create mut and reps dictionary
   ID_dict <- data.frame(sample = rownames(metadf),
-                        type = type_list)
-
-
-  cBdt <- dplyr::left_join(cBdt, ID_dict, by = "sample") %>%
+                        type = type_list,
+                        Exp_ID = metadf$Exp_ID)
+  
+  
+  cBdt <- dplyr::inner_join(cBdt, ID_dict, by = "sample") %>%
     dplyr::ungroup()
-
-
+  
+  
   cBdt <- data.table::setDT(cBdt)
-
-
+  
   if(sum(obj$metadf$tl == 0) > 0){
-
-    cBdt <- cBdt[sample %in% unique(sample) & !grepl("__", XF)]
-
-
+    
+    cBdt <- cBdt[!grepl("__", XF)]
+    
+    
     cBdt <- cBdt[, `:=`(totTC = TC * n * abs(type - 1))]
-
-
+    
+    
     cBdt <- cBdt[, .(tot_mut = sum(totTC), totcounts = sum(n), totTs = sum(n*nT),
                      avgU = sum(nT * n)/sum(n), n2U = sum(n[nT <=2]),
-                     nmore = sum(n[nT > 2])), keyby = .(sample,XF)]
-
+                     nmore = sum(n[nT > 2])), keyby = .(sample,XF,Exp_ID)]
+    
     cBdt <- cBdt[, `:=`(f2U = n2U/(nmore + n2U))]
-
-    cBdt <- cBdt[(totcounts >= totcut) & (tot_mut/totTs < high_p) &
+    
+    ### read count filtering
+    cBreps <- setDT( dplyr::as_tibble(cBdt) %>%
+                       dplyr::select(Exp_ID, sample) %>%
+                       dplyr::distinct() %>%
+                       dplyr::group_by(Exp_ID) %>%
+                       dplyr::count() )
+    
+    cBr <- cBdt[(totcounts >= totcut)]
+    cBr <- cBr[, .(counts = .N), keyby = .(XF, Exp_ID)]
+    
+    cBr <- cBr[cBreps, on = .(Exp_ID), nomatch = NULL]
+    cBr <- cBr[counts == n]
+    features_r <- unique(cBr$XF)
+    
+    ### Additional filtering
+    cBdt <- cBdt[(totcounts >= totcut_all) & (tot_mut/totTs < high_p) &
                    (f2U < Ucut) & (avgU > AvgU)]
-
+    
     cBdt <- cBdt[, .(counts = .N), keyby = .(XF)]
-
+    
     cBdt <- dplyr::as_tibble(cBdt)
-
+    
     cBdt <- cBdt[cBdt$counts == nsamps,]
-
-    y <- unique(unlist(cBdt$XF))
-
-
-
+    
+    features_all <- unique(unlist(cBdt$XF))
+    
+    y <- intersect(features_r, features_all)
+    
+    
+    
   }else{
-
+    
     cBdt <- cBdt[sample %in% unique(sample) & !grepl("__", XF)]
-
-
+    
+    ### read count filtering
+    cBreps <- setDT( dplyr::as_tibble(cBdt) %>%
+                       dplyr::select(Exp_ID, sample) %>%
+                       dplyr::distinct() %>%
+                       dplyr::group_by(Exp_ID) %>%
+                       dplyr::count() )
+    
+    cBr <- cBdt[(totcounts >= totcut)]
+    cBr <- cBr[, .(counts = .N), keyby = .(XF, Exp_ID)]
+    
+    cBr <- cBr[cBreps, on = .(Exp_ID), nomatch = NULL]
+    cBr <- cBr[counts == n]
+    features_r <- unique(cBr$XF)
+    
+    
+    ### All other filtering
     cBdt <- cBdt[, .(totcounts = sum(n),
                      avgU = sum(nT * n)/sum(n), n2U = sum(n[nT <=2]),
                      nmore = sum(n[nT > 2])), keyby = .(sample,XF)]
-
+    
     cBdt <- cBdt[, `:=`(f2U = n2U/(nmore + n2U))]
-
-    cBdt <- cBdt[(totcounts >= totcut) &
+    
+    cBdt <- cBdt[(totcounts >= totcut_all) &
                    (f2U < Ucut) & (avgU > AvgU)]
-
+    
     cBdt <- cBdt[, .(counts = .N), keyby = .(XF)]
-
+    
     cBdt <- dplyr::as_tibble(cBdt)
-
+    
     cBdt <- cBdt[cBdt$counts == nsamps,]
-
-    y <- unique(unlist(cBdt$XF))
-
-
+    
+    features_all <- unique(unlist(cBdt$XF))
+    
+    
+    y <- intersect(features_r, features_all)
+    
   }
-
-
-  return(y)
+  
+  
+  return(y[order(y)])
 }
+
 
 #' Curate data in bakRData object for statistical modeling
 #'
@@ -156,7 +193,8 @@ reliableFeatures <- function(obj,
 #' @param obj An object of class bakRData
 #' @param high_p Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any no s4U control
 #' samples are filtered out
-#' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
+#' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out
+#' @param totcut_all Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
 #' @param Ucut Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples
 #' @param AvgU Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples
 #' @param Stan Boolean; if TRUE, then data_list that can be passed to 'Stan' is curated
@@ -223,6 +261,7 @@ reliableFeatures <- function(obj,
 cBprocess <- function(obj,
                        high_p = 0.2,
                        totcut = 50,
+                       totcut_all = 10,
                        Ucut = 0.25,
                        AvgU = 4,
                        Stan = TRUE,
@@ -377,17 +416,18 @@ cBprocess <- function(obj,
 
   # Get reliable features:
   message("Finding reliable Features")
-  reliables <- bakR::reliableFeatures(obj, high_p = high_p, totcut = totcut, Ucut = Ucut, AvgU = AvgU)
+  reliables <- bakR::reliableFeatures(obj, high_p = high_p, totcut = totcut, totcut_all = totcut_all,
+                                      Ucut = Ucut, AvgU = AvgU)
 
   if(is.null(FOI)){
     keep <- reliables
   }else{
     if(concat == TRUE){
       # FOI still need to pass filtering to make sure bakRFit doesn't break
-      min_reliables <- bakR::reliableFeatures(obj, high_p = 1, totcut = 1, Ucut = Ucut, AvgU = AvgU)
+      min_reliables <- bakR::reliableFeatures(obj, high_p = 1, totcut = 1, totcut_all = 1, Ucut = Ucut, AvgU = AvgU)
       keep <- unique(c(intersect(FOI, min_reliables), reliables))
     }else{
-      min_reliables <- bakR::reliableFeatures(obj, high_p = 1, totcut = 1, Ucut = Ucut, AvgU = AvgU)
+      min_reliables <- bakR::reliableFeatures(obj, high_p = 1, totcut = 1, totcut_all = 1, Ucut = Ucut, AvgU = AvgU)
       keep <- intersect(FOI, min_reliables)
     }
   }
@@ -647,7 +687,8 @@ cBprocess <- function(obj,
 #'
 #'
 #' @param obj An object of class bakRFnData
-#' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
+#' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out
+#' @param totcut_all Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
 #' @param FOI Features of interest; character vector containing names of features to analyze. 
 #' If FOI is non-null and concat == TRUE, the features listed in FOI will be included in the list of reliable features that make it past
 #' filtering. If FOI is non-null and concat == FALSE, the features listed in FOI will be the only reliable features that make it past filtering.
@@ -713,7 +754,7 @@ cBprocess <- function(obj,
 #' data_for_bakR <- cBprocess(obj = bakRData)
 #' }
 #' @export
-fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE){
+fn_process <- function(obj, totcut = 50, totcut_all = 10, Chase = FALSE, FOI = c(), concat = TRUE){
   
   ## Check obj
   if(!inherits(obj, "bakRFnData")){
@@ -813,13 +854,35 @@ fn_process <- function(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE
   
   message("Filtering out low coverage features")
 
-  # Read count filter
-  keep <- fns %>%
+  # Read count filter (all samples)
+  keep_all <- fns %>%
     dplyr::group_by(XF) %>%
-    dplyr::summarise(npass = sum(n >= totcut)) %>%
+    dplyr::summarise(npass = sum(n >= totcut_all)) %>%
     dplyr::filter(npass == nsamps) %>%
     dplyr::select(XF)
   
+  # Read count (per experimental condition)
+  fns_ids <- dplyr::inner_join(fns, ID_dict, by = "sample")
+  rep_counts <- fns_ids %>%
+    dplyr::select(sample, Exp_ID) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(count = 1) %>%
+    dplyr::group_by(Exp_ID) %>%
+    dplyr::summarise(counts = sum(count))
+  
+  fns_ids <- dplyr::inner_join(fns_ids, rep_counts, by = "Exp_ID") 
+  keep_exp <- fns_ids %>%
+    dplyr::group_by(XF, Exp_ID) %>%
+    dplyr::summarise(npass = sum(n >= totcut),
+                     counts = unique(counts)) %>%
+    dplyr::filter(npass == counts) %>%
+    dplyr::select(XF)
+  
+  rm(fns_ids)
+  
+  # Final keep
+  keep <- data.frame(XF = intersect(keep_exp$XF, keep_all$XF))
+
   if(is.null(FOI)){
   
     keep <- keep$XF

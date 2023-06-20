@@ -8,6 +8,7 @@ cBprocess(
   obj,
   high_p = 0.2,
   totcut = 50,
+  totcut_all = 10,
   Ucut = 0.25,
   AvgU = 4,
   Stan = TRUE,
@@ -22,7 +23,9 @@ cBprocess(
 \item{high_p}{Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any no s4U control
 samples are filtered out}
 
-\item{totcut}{Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out}
+\item{totcut}{Numeric; Any transcripts with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out}
+
+\item{totcut_all}{Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out}
 
 \item{Ucut}{Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples}
 

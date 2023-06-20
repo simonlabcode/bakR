@@ -59,7 +59,8 @@
 #' is a \code{bakRFit} object
 #' @param high_p Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any -s4U control
 #' samples (i.e., samples that were not treated with s4U) are filtered out
-#' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
+#' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out
+#' @param totcut_all Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
 #' @param Ucut Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples
 #' @param AvgU Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples
 #' @param FastRerun Logical; only matters if a bakRFit object is passed to \code{bakRFit}. If TRUE, then the Stan-free
@@ -113,6 +114,7 @@
 bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           high_p = 0.2,
                           totcut = 50,
+                          totcut_all = 10,
                           Ucut = 0.25,
                           AvgU = 4,
                           FastRerun = FALSE,
@@ -152,10 +154,21 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   ## Check totcut
   if(!is.numeric(totcut)){
     stop("totcut must be numeric")
-  }else if( totcut < 0 ){
+  }else if( totcut <= 0 ){
     stop("totcut must be greater than 0")
   }else if(totcut > 5000){
     warning("totcut is abnormally high (> 5000); many features will not have this much coverage in every sample and thus get filtered out.")
+  }
+  
+  ## Check totcut
+  if(!is.numeric(totcut_all)){
+    stop("totcut_all must be numeric")
+  }else if( totcut_all <= 0 ){
+    stop("totcut_all must be greater than 0")
+  }else if(totcut_all > totcut){
+    stop("totcut_all must be less than or equal to totcut.")
+  }else if(totcut_all > 5000){
+    warning("totcut_all is abnormally high (> 5000); many features will not have this much coverage in every sample and thus get filtered out.")
   }
 
   ## Check Ucut
@@ -273,7 +286,8 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   if(inherits(obj, "bakRData")){
 
     # Preprocess data
-    data_list <- bakR::cBprocess(obj, high_p = high_p, totcut = totcut, Ucut = Ucut,
+    data_list <- bakR::cBprocess(obj, high_p = high_p, totcut = totcut, totcut_all = totcut_all,
+                                       Ucut = Ucut,
                                        AvgU = AvgU,
                                        Stan = TRUE,
                                        Fast = TRUE,
@@ -496,7 +510,8 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
   }else if(inherits(obj, "bakRFnData")){
     
-    data_list <- fn_process(obj, totcut = totcut, Chase = Chase, FOI = FOI, concat = concat)
+    data_list <- fn_process(obj, totcut = totcut, totcut_all = totcut_all,
+                            Chase = Chase, FOI = FOI, concat = concat)
     
     ## Necessary hacky preprocessing
     Mut_data_est <- data_list$Fn_est

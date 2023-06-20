@@ -4,12 +4,21 @@
 \alias{fn_process}
 \title{Curate data in bakRFnData object for statistical modeling}
 \usage{
-fn_process(obj, totcut = 50, Chase = FALSE, FOI = c(), concat = TRUE)
+fn_process(
+  obj,
+  totcut = 50,
+  totcut_all = 10,
+  Chase = FALSE,
+  FOI = c(),
+  concat = TRUE
+)
 }
 \arguments{
 \item{obj}{An object of class bakRFnData}
 
-\item{totcut}{Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out}
+\item{totcut}{Numeric; Any transcripts with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out}
+
+\item{totcut_all}{Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out}
 
 \item{Chase}{Boolean; if TRUE, pulse-chase analysis strategy is implemented}
 

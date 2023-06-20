@@ -10,6 +10,7 @@ bakRFit(
   HybridFit = FALSE,
   high_p = 0.2,
   totcut = 50,
+  totcut_all = 10,
   Ucut = 0.25,
   AvgU = 4,
   FastRerun = FALSE,
@@ -27,6 +28,7 @@ bakRFit(
   Long = FALSE,
   kmeans = FALSE,
   ztest = FALSE,
+  Fisher = TRUE,
   ...
 )
 }
@@ -42,7 +44,9 @@ is a \code{bakRFit} object}
 \item{high_p}{Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any -s4U control
 samples (i.e., samples that were not treated with s4U) are filtered out}
 
-\item{totcut}{Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out}
+\item{totcut}{Numeric; Any transcripts with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out}
+
+\item{totcut_all}{Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out}
 
 \item{Ucut}{Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples}
 
@@ -86,6 +90,10 @@ model is used.}
 
 \item{ztest}{Logical; if TRUE and the MLE implementation is being used, then a z-test will be used for p-value calculation
 rather than the more conservative moderated t-test.}
+
+\item{Fisher}{Logical; if TRUE, Fisher information is used to estimate logit(fn) uncertainty. Else, a less conservative binomial model is used, which
+can be preferable in instances where the Fisher information strategy often drastically overestimates uncertainty
+(i.e., low coverage or low pnew).}
 
 \item{...}{Arguments passed to either \code{fast_analysis} (if a bakRData object)
 or \code{TL_Stan} and \code{Hybrid_fit} (if a bakRFit object)}

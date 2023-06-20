@@ -8,9 +8,11 @@ bakRFnData(fns, metadf)
 }
 \arguments{
 \item{fns}{Dataframe with columns corresponding to sample names (sample), feature IDs (XF),
-fraction new estimates (fn), and number of sequencing reads (nreads)}
+fraction new estimates (fn), and number of sequencing reads (nreads). \code{fns} can optionally
+contain a column of fraction new estimate uncertainties (se).}
 
-\item{metadf}{Dataframe detailing s4U label time and experimental ID of each sample}
+\item{metadf}{Dataframe detailing s4U label time and experimental ID of each sample. Identical to \code{bakRData}
+input}
 }
 \value{
 A bakRFnData object. This has two components: a data frame describing experimental

@@ -29,7 +29,8 @@ fast_analysis(
   BDA_model = FALSE,
   multi_pold = FALSE,
   Long = FALSE,
-  kmeans = FALSE
+  kmeans = FALSE,
+  Fisher = TRUE
 )
 }
 \arguments{
@@ -90,6 +91,10 @@ model is used.}
 \item{Long}{Logical; if TRUE, long read optimized fraction new estimation strategy is used.}
 
 \item{kmeans}{Logical; if TRUE, kmeans clustering on read-specific mutation rates is used to estimate pnews and pold.}
+
+\item{Fisher}{Logical; if TRUE, Fisher information is used to estimate logit(fn) uncertainty. Else, a less conservative binomial model is used, which
+can be preferable in instances where the Fisher information strategy often drastically overestimates uncertainty
+(i.e., low coverage or low pnew).}
 }
 \value{
 List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
