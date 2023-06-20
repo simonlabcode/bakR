@@ -23,7 +23,7 @@
 #' of mutation = \code{p_old}. \code{p_new} must be greater than \code{p_old} because mutations in new RNA
 #' arise from both background mutations that occur with probability \code{p_old} as well as metabolic label induced mutations
 #'
-#' Simulated read counts should be treated as if they are spike-in and RPKM normalized, so the same scale factor can be applied
+#' Simulated read counts should be treated as if they are spike-in and RPKM normalized, so the same scale factor of 1 can be applied
 #' to each sample when comparing the sequencing reads (e.g., if you are performing differential expression analysis).
 #'
 #' Function to simulate a `bakRData` object according to a realistic generative model
@@ -277,7 +277,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   }else if(!all(p_do >= 0)){
     stop("p_do must be >= 0; it represents the fraction of s4U containing RNA lost during library prep")
   }else if(!all(p_do == 0)){
-    warning("You are simulating dropout. Simulate_bakRData only properly simulates the effect of dropout on fraction news. Simulate_relative_bakRData implements a more realistic dropout simulation that also affects read counts.")
+    warning("You are simulating dropout. Simulate_bakRData only properly simulates the effect of dropout on fraction news. Simulate_relative_bakRData implements a more realistic dropout simulation that also accurately affects read counts.")
   }
 
   # Heteroskedastic Slope
@@ -631,7 +631,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
   }
 
   # 1 = new read; 0 = old read
-  newness <- unlist(purrr::pmap(list(n = Reads_vect, p = fn_vect), purrr::rbernoulli))
+  newness <- unlist(purrr::pmap(list(n = Reads_vect, size = 1, p = fn_vect), stats::rbinom))
 
 
   Gene_ID <- rep(Gene_ID, times = Reads_vect)
@@ -648,7 +648,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
 
     logit_bernoulli_sum <- function(n, lp_mean, lp_sd){
 
-      sum(purrr::rbernoulli(n = n,
+      sum(purrr::rbinom(n = n, size = 1,
                             p = inv_logit(stats::rnorm(n = n,
                                                      mean = lp_mean,
                                                      sd = lp_sd))))
@@ -833,20 +833,25 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
 #' Simulating nucleotide recoding data with relative count data
 #'
 #' \code{Simulate_relative_bakRData} simulates a `bakRData` object. It's output also includes the simulated
-#' values of all kinetic parameters of interest. The main difference between \code{Simulate_relative_bakRData} 
+#' values of all kinetic parameters of interest. 
+#' 
+#' The main difference between \code{Simulate_relative_bakRData} 
 #' and \code{Simulate_bakRData} is that the former requires both the number of 
 #' genes (\code{ngene}) and the total number of reads (\code{depth}) has to be set.
 #' In the latter, only the number of genes is set, and the number of reads for each
 #' gene is simulated so that no matter how many genes are simulated, the number of
-#' reads given default parameters is relective of what is seen in 20,000,000 read 
+#' reads given default parameters is reflective of what is seen in 20,000,000 read 
 #' human RNA-seq libraries. The benefit of \code{Simulate_relative_bakRData} is that it is 
 #' easier to test the impact of depth on model performance. This can theoretically
 #' be done by changing the synthesis rate constant parameters in \code{Simulate_bakRData},
 #' but the relationship between these parameters and sequencing depth is unintuitive. The
-#' benefit of \code{Simulate_bakRData} is that fewer genes can be simulated and still
+#' benefit of \code{Simulate_bakRData} is that fewer genes can be simulated
 #' while still yielding reasonable per-gene coverage without figuring out what the
 #' total depth in the small gene subset should be. This is nice for testing bakR and 
-#' other analysis tools on small datasets.
+#' other analysis tools on small datasets. \code{Simulate_relative_bakRData} is a more
+#' realistic simulation that better accounts for the relative nature of RNA-seq read
+#' counts (i.e., expected number of reads from a given feature is related to proportion of RNA molecules
+#' coming from that feature). 
 #' 
 #' Another difference between \code{Simulate_relative_bakRData} and \code{Simulate_bakRData}
 #' is that \code{Simulate_relative_bakRData} uses the label time and simulated degradation
@@ -858,6 +863,10 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
 #' Similarly, \code{Simulate_bakRData} is preferable for directly assessing the impact of
 #' fraction news on model performance, without having to think about how both the label
 #' time and simulated degradation rate constant distribution.
+#' 
+#' If investigating dropout, only \code{Simulate_relative_bakRData} should be used, as the 
+#' accurate simulation of read counts as being a function of the relative abundance of
+#' each RNA feature is crucial to accurately simulate dropout.
 #'
 #'
 #' Function to simulate a `bakRData` object according to a realistic generative model
@@ -953,7 +962,7 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
                               lprob_U_sd = 0, lp_sd = 0){
   
   
-  
+
   # Bind variables locally to resolve devtools::check() Notes
   S <- R <- MT <- FN <- TC <- nT <- TP <- NULL
   `.` <- list
@@ -1358,7 +1367,7 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
     }
   }
   
-  
+
   standard_RNA <- matrix(0, nrow = ngene, ncol = num_conds)
   mean_RNA <- rep(0, times = num_conds)
   sd_RNA <- rep(0, times = num_conds)
@@ -1377,6 +1386,7 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
     }
   }
   
+
   # kdeg
   kd <- -log(1 - fn)/tl
   
@@ -1458,7 +1468,7 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
   }
   
   # 1 = new read; 0 = old read
-  newness <- unlist(purrr::pmap(list(n = Reads_vect, p = fn_vect), purrr::rbernoulli))
+  newness <- unlist(purrr::pmap(list(n = Reads_vect, size = 1, p = fn_vect), stats::rbinom))
   
   
   Gene_ID <- rep(Gene_ID, times = Reads_vect)
@@ -1475,7 +1485,7 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
     
     logit_bernoulli_sum <- function(n, lp_mean, lp_sd){
       
-      sum(purrr::rbernoulli(n = n,
+      sum(stats::rbinom(n = n, size = 1,
                             p = inv_logit(stats::rnorm(n = n,
                                                        mean = lp_mean,
                                                        sd = lp_sd))))
