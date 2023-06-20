@@ -261,6 +261,7 @@ new_bakRFnData <- function(fns, metadf){
 #' @param obj An object of class bakRFnData
 validate_bakRFnData <- function(obj){
   
+
   tl <- Exp_ID <- check <- NULL
   
   vals <- unclass(obj)

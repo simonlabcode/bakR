@@ -22,11 +22,10 @@ fn_process(
 
 \item{Chase}{Boolean; if TRUE, pulse-chase analysis strategy is implemented}
 
-\item{FOI}{Features of interest; character vector containing names of features to analyze.
-If FOI is non-null and concat == TRUE, the features listed in FOI will be included in the list of reliable features that make it past
-filtering. If FOI is non-null and concat == FALSE, the features listed in FOI will be the only reliable features that make it past filtering.
-If FOI is null and concat == FALSE or TRUE, then only the features making it past read count filtering
-will be kept.}
+\item{FOI}{Features of interest; character vector containing names of features to analyze. If \code{FOI} is non-null and \code{concat} is TRUE, then
+all minimally reliable FOIs will be combined with reliable features passing all set filters (\code{totcut} and \code{totcut_all}).
+If \code{concat} is FALSE, only the minimally reliable FOIs will be kept. A minimally reliable FOI is one that passes
+filtering with minimally stringent parameters.}
 
 \item{concat}{Boolean; If TRUE, FOI is concatenated with output of reliableFeatures}
 }
@@ -52,7 +51,7 @@ replicates
 \item sdf; Dataframe that maps numerical feature ID to original feature name. Also has read depth information
 \item sample_lookup; Lookup table relating MT and R to the original sample name
 }
-\item Fn_est; A data frame containing fraction new estimates:
+\item Fn_est; A data frame containing fraction new estimates for +s4U samples:
 \itemize{
 \item sample; Original sample name
 \item XF; Original feature name
@@ -71,6 +70,8 @@ replicates
 \item Count_Matrix; A matrix with read count information. Each column represents a sample and each row represents a feature.
 Each entry is the raw number of read counts mapping to a particular feature in a particular sample. Column names are the corresponding
 sample names and row names are the corresponding feature names.
+\item Ctl_data; Identical content to Fn_est but for any -s4U data (and thus with fn estimates set to 0). Will be \code{NULL} if no -s4U
+data is present
 }
 }
 \description{
@@ -83,13 +84,15 @@ MLE and Hybrid implementations in \code{bakRFit}. The input to \code{fn_process}
 creates the necessary data structures for analysis with \code{bakRFit} and some of the visualization
 functions (namely \code{plotMA}).
 
-If FOI is non-null and concat == TRUE, then all the features making it past read count filtering will be included
-in the output. This is the same behavior as if FOI is null. If FOI is non-null and concat == FALSE, the features
-listed in FOI will be the only reliable features that make it past filtering. NOTE: FOIs must be deemed
-"reliable" (in this case that means making it past read count filtering) to make it past filtering. This is
-because bakRFit will break otherwise.
-If FOI is null and concat == FALSE or TRUE, then only the features making it past read count filtering
-will be kept.
+The 1st step executed by \code{fn_process} is to find the names of features which are deemed "reliable". A reliable feature is one with
+sufficient read coverage in every single sample (i.e., > totcut_all reads in all samples) and sufficient read coverage in at all replicates
+of at least one experimental condition (i.e., > totcut reads in all replicates for one or more experimental conditions). This is done with a call to \code{reliableFeatures}.
+
+The 2nd step is to extract only reliableFeatures from the fns dataframe in the \code{bakRFnData} object. During this process, a numerical
+ID is given to each reliableFeature, with the numerical ID corresponding to their order when arranged using \code{dplyr::arrange}.
+
+The 3rd step is to prepare data structures that can be passed to \code{fast_analysis} and \code{TL_stan} (usually accessed via the
+\code{bakRFit} helper function).
 }
 \examples{
 \donttest{

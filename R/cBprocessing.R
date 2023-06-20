@@ -164,15 +164,17 @@ reliableFeatures <- reliableFeatures <- function(obj,
 #'
 #' \code{cBprocess} creates the data structures necessary to analyze nucleotide recoding RNA-seq data with any of the
 #' statistical model implementations in \code{bakRFit}. The input to \code{cBprocess} must be an object of class
-#' `bakRData`. The output can contain data passable to \code{fast_analysis} (if Fast == TRUE), \code{TL_stan} with StanFit = TRUE if
-#' Stan == TRUE, or both.
+#' `bakRData`.
 #'
 #' The 1st step executed by \code{cBprocess} is to find the names of features which are deemed "reliable". A reliable feature is one with
-#' sufficient read coverage in every single sample (i.e., > totcut reads in all samples) and limited mutation content in all -s4U
-#' control samples (i.e., < high_p mutation rate in all samples lacking s4U feeds). This is done with a call to \code{reliableFeatures}.
+#' sufficient read coverage in every single sample (i.e., > totcut_all reads in all samples), sufficient read coverage in at all replicates
+#' of at least one experimental condition (i.e., > totcut reads in all replicates for one or more experimental conditions) and limited mutation content in all -s4U
+#' control samples (i.e., < high_p mutation rate in all samples lacking s4U feeds). In addition, if analyzing short read sequencing data, two additional
+#' definitons of reliable features become pertinent: the fraction of reads that can have 2 or less Us in each sample (Ucut) and the
+#' minimum average number of Us for a feature's reads in each sample (AvgU). This is done with a call to \code{reliableFeatures}.
+#'
 #' The 2nd step is to extract only reliableFeatures from the cB dataframe in the `bakRData` object. During this process, a numerical
-#' ID is given to each reliableFeature, with the numerical ID corresponding to the order in which each feature is found in the original cB
-#' (this might typically be alphabetical order).
+#' ID is given to each reliableFeature, with the numerical ID corresponding to their order when arranged using \code{dplyr::arrange}.
 #'
 #' The 3rd step is to prepare a dataframe where each row corresponds to a set of n identical reads (that is they come from the same sample
 #' and have the same number of mutations and Us). Part of this process involves assigning an arbitrary numerical ID to each replicate in each
@@ -185,9 +187,6 @@ reliableFeatures <- reliableFeatures <- function(obj,
 #' all replicates) and the other which is a sample lookup table that relates the numerical experimental and replicate IDs to the original
 #' sample name.
 #'
-#' If FOI is non-null and concat == TRUE, the features listed in FOI will be included in the list of reliable features that make it past
-#' filtering. If FOI is non-null and concat == FALSE, the features listed in FOI will be the only reliable features that make it past filtering.
-#' If FOI is null and concat == FALSE, an error will be thrown.
 #'
 #'
 #' @param obj An object of class bakRData
@@ -199,7 +198,10 @@ reliableFeatures <- reliableFeatures <- function(obj,
 #' @param AvgU Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples
 #' @param Stan Boolean; if TRUE, then data_list that can be passed to 'Stan' is curated
 #' @param Fast Boolean; if TRUE, then dataframe that can be passed to fast_analysis() is curated
-#' @param FOI Features of interest; character vector containing names of features to analyze
+#' @param FOI Features of interest; character vector containing names of features to analyze. If \code{FOI} is non-null and \code{concat} is TRUE, then
+#' all minimally reliable FOIs will be combined with reliable features passing all set filters (\code{high_p}, \code{totcut}, \code{totcut_all},
+#' \code{Ucut}, and \code{AvgU}). If \code{concat} is FALSE, only the minimally reliable FOIs will be kept. A minimally reliable FOI is one that passes
+#' filtering with minimally stringent parameters.
 #' @param concat Boolean; If TRUE, FOI is concatenated with output of reliableFeatures
 #' @return returns list of objects that can be passed to \code{TL_stan} and/or \code{fast_analysis}. Those objects are:
 #' \itemize{
@@ -677,23 +679,23 @@ cBprocess <- function(obj,
 #' creates the necessary data structures for analysis with \code{bakRFit} and some of the visualization
 #' functions (namely \code{plotMA}).
 #'
-#' If FOI is non-null and concat == TRUE, then all the features making it past read count filtering will be included
-#' in the output. This is the same behavior as if FOI is null. If FOI is non-null and concat == FALSE, the features 
-#' listed in FOI will be the only reliable features that make it past filtering. NOTE: FOIs must be deemed 
-#' "reliable" (in this case that means making it past read count filtering) to make it past filtering. This is
-#' because bakRFit will break otherwise.
-#' If FOI is null and concat == FALSE or TRUE, then only the features making it past read count filtering
-#' will be kept.
+#' The 1st step executed by \code{fn_process} is to find the names of features which are deemed "reliable". A reliable feature is one with
+#' sufficient read coverage in every single sample (i.e., > totcut_all reads in all samples) and sufficient read coverage in at all replicates
+#' of at least one experimental condition (i.e., > totcut reads in all replicates for one or more experimental conditions). This is done with a call to \code{reliableFeatures}.
 #'
+#' The 2nd step is to extract only reliableFeatures from the fns dataframe in the `bakRFnData` object. During this process, a numerical
+#' ID is given to each reliableFeature, with the numerical ID corresponding to their order when arranged using \code{dplyr::arrange}.
+#'
+#' The 3rd step is to prepare data structures that can be passed to \code{fast_analysis} and \code{TL_stan} (usually accessed via the 
+#' \code{bakRFit} helper function).
 #'
 #' @param obj An object of class bakRFnData
 #' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out
 #' @param totcut_all Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
-#' @param FOI Features of interest; character vector containing names of features to analyze. 
-#' If FOI is non-null and concat == TRUE, the features listed in FOI will be included in the list of reliable features that make it past
-#' filtering. If FOI is non-null and concat == FALSE, the features listed in FOI will be the only reliable features that make it past filtering.
-#' If FOI is null and concat == FALSE or TRUE, then only the features making it past read count filtering
-#' will be kept.
+#' @param FOI Features of interest; character vector containing names of features to analyze. If \code{FOI} is non-null and \code{concat} is TRUE, then
+#' all minimally reliable FOIs will be combined with reliable features passing all set filters (\code{totcut} and \code{totcut_all}).
+#' If \code{concat} is FALSE, only the minimally reliable FOIs will be kept. A minimally reliable FOI is one that passes
+#' filtering with minimally stringent parameters.
 #' @param concat Boolean; If TRUE, FOI is concatenated with output of reliableFeatures
 #' @param Chase Boolean; if TRUE, pulse-chase analysis strategy is implemented
 #' @return returns list of objects that can be passed to \code{TL_stan} and/or \code{fast_analysis}. Those objects are:
@@ -717,7 +719,7 @@ cBprocess <- function(obj,
 #'   \item sdf; Dataframe that maps numerical feature ID to original feature name. Also has read depth information
 #'   \item sample_lookup; Lookup table relating MT and R to the original sample name
 #'  }
-#'  \item Fn_est; A data frame containing fraction new estimates:
+#'  \item Fn_est; A data frame containing fraction new estimates for +s4U samples:
 #'  \itemize{
 #'   \item sample; Original sample name
 #'   \item XF; Original feature name
@@ -736,6 +738,8 @@ cBprocess <- function(obj,
 #'  \item Count_Matrix; A matrix with read count information. Each column represents a sample and each row represents a feature.
 #'  Each entry is the raw number of read counts mapping to a particular feature in a particular sample. Column names are the corresponding
 #'  sample names and row names are the corresponding feature names.
+#'  \item Ctl_data; Identical content to Fn_est but for any -s4U data (and thus with fn estimates set to 0). Will be \code{NULL} if no -s4U 
+#'  data is present
 #' }
 #' @importFrom magrittr %>%
 #' @examples
