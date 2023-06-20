@@ -1,6 +1,6 @@
 #' Check data quality and make suggestions to user about what analyses to run.
 #'
-#' \code{QC_checks} takes as input a bakRFit object and uses the Fast_Fit object to assess
+#' \code{QC_checks} takes as input a `bakRFit` or `bakRFnFit` object and uses the Fast_Fit object to assess
 #' data quality and make suggestions about which implementation to run next. QC_checks
 #' takes into account the mutation rates in all samples, the fraction new distributions, the reproducibility
 #' of fraction new estimates, and the read lengths. It then outputs a number of
