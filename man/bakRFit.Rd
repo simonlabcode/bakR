@@ -33,7 +33,8 @@ bakRFit(
 )
 }
 \arguments{
-\item{obj}{bakRData object produced by \code{bakRData} or a bakRFit object produced by \code{bakRFit}}
+\item{obj}{\code{bakRData} object produced by \code{bakRData}, \code{bakRFit} object produced by \code{bakRFit}
+\code{bakRFnData} object produced by \code{bakRFnData}, or \code{bakRFnFit} object produced by \code{bakRFit}.}
 
 \item{StanFit}{Logical; if TRUE, then the MCMC implementation is run. Will only be used if \code{obj}
 is a \code{bakRFit} object}
@@ -41,16 +42,16 @@ is a \code{bakRFit} object}
 \item{HybridFit}{Logical; if TRUE, then the Hybrid implementation is run. Will only be used if \code{obj}
 is a \code{bakRFit} object}
 
-\item{high_p}{Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any -s4U control
+\item{high_p}{Numeric; Any features with a mutation rate (number of mutations / number of Ts in reads) higher than this in any -s4U control
 samples (i.e., samples that were not treated with s4U) are filtered out}
 
-\item{totcut}{Numeric; Any transcripts with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out}
+\item{totcut}{Numeric; Any features with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out}
 
-\item{totcut_all}{Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out}
+\item{totcut_all}{Numeric; Any features with less than this number of sequencing reads in any sample are filtered out}
 
-\item{Ucut}{Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples}
+\item{Ucut}{Numeric; All features must have a fraction of reads with 2 or less Us less than this cutoff in all samples}
 
-\item{AvgU}{Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples}
+\item{AvgU}{Numeric; All features must have an average number of Us greater than this cutoff in all samples}
 
 \item{FastRerun}{Logical; only matters if a bakRFit object is passed to \code{bakRFit}. If TRUE, then the Stan-free
 model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the 'Stan' models.}

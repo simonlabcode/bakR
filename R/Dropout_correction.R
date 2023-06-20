@@ -301,7 +301,6 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   
   
   # Make Final Fit object --------------------------------------------------------
-  
   Fit_Final <- obj
   Fit_Final$Fast_Fit <- Fit_correct$Fast_Fit
   Fit_Final$Data_lists$Count_Matrix_corrected <- Fit_correct$Data_lists$Count_Matrix
@@ -311,6 +310,27 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   Stan_data$Avg_Reads <- Fit_correct$Data_lists$Stan_data$Avg_Reads
   Stan_data$Avg_Reads_natural <- Fit_correct$Data_lists$Stan_data$Avg_Reads_natural
   Fit_Final$Data_lists$Stan_data <- Stan_data
+  
+  # Correct fraction news in Fn_est
+  if(inherits(obj, "bakRFnFit")){
+    Fns <- Fit_Final$Data_lists$Fn_est %>%
+      dplyr::select(XF, sample, Feature_ID, Replicate, Exp_ID, tl) %>%
+      dplyr::distinct()
+    
+    new_Fns <- Fit_correct$Fast_Fit$Fn_Estimates %>%
+      dplyr::select(Feature_ID, Exp_ID, Replicate, logit_fn, kdeg,
+                    log_kdeg, logit_fn_se, log_kd_se, nreads) %>%
+      dplyr::mutate(fn = inv_logit(logit_fn))
+    
+    Fns <- dplyr::inner_join(Fns, new_Fns, by = c("Feature_ID", "Exp_ID", "Replicate"))
+    
+    colnames(Fns)[colnames(Fns) == "nreads"] <- "n"
+    
+    Fit_Final$Data_lists$Fn_est <- Fns[,c("XF", "sample", "fn", "n",
+                                          "Feature_ID", "Replicate", "Exp_ID", 
+                                          "tl", "logit_fn", "kdeg", "log_kdeg",
+                                          "logit_fn_se", "log_kd_se")]
+  }
   
   return(Fit_Final)
   

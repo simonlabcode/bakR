@@ -52,17 +52,18 @@
 #' is performed as with the Hybrid implementation.
 #'
 #'
-#' @param obj bakRData object produced by \code{bakRData} or a bakRFit object produced by \code{bakRFit}
+#' @param obj `bakRData` object produced by \code{bakRData}, `bakRFit` object produced by \code{bakRFit}
+#' `bakRFnData` object produced by \code{bakRFnData}, or `bakRFnFit` object produced by \code{bakRFit}.
 #' @param StanFit Logical; if TRUE, then the MCMC implementation is run. Will only be used if \code{obj}
 #' is a \code{bakRFit} object
 #' @param HybridFit Logical; if TRUE, then the Hybrid implementation is run. Will only be used if \code{obj}
 #' is a \code{bakRFit} object
-#' @param high_p Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any -s4U control
+#' @param high_p Numeric; Any features with a mutation rate (number of mutations / number of Ts in reads) higher than this in any -s4U control
 #' samples (i.e., samples that were not treated with s4U) are filtered out
-#' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out
-#' @param totcut_all Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
-#' @param Ucut Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples
-#' @param AvgU Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples
+#' @param totcut Numeric; Any features with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out
+#' @param totcut_all Numeric; Any features with less than this number of sequencing reads in any sample are filtered out
+#' @param Ucut Numeric; All features must have a fraction of reads with 2 or less Us less than this cutoff in all samples
+#' @param AvgU Numeric; All features must have an average number of Us greater than this cutoff in all samples
 #' @param FastRerun Logical; only matters if a bakRFit object is passed to \code{bakRFit}. If TRUE, then the Stan-free
 #' model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the 'Stan' models.
 #' @param FOI Features of interest; character vector containing names of features to analyze
