@@ -66,94 +66,49 @@ reliableFeatures <- reliableFeatures <- function(obj,
   cBdt <- dplyr::inner_join(cBdt, ID_dict, by = "sample") %>%
     dplyr::ungroup()
   
-  
+
   cBdt <- data.table::setDT(cBdt)
   
-  if(sum(obj$metadf$tl == 0) > 0){
-    
-    cBdt <- cBdt[!grepl("__", XF)]
-    
-    
-    cBdt <- cBdt[, `:=`(totTC = TC * n * abs(type - 1))]
-    
-    
-    cBdt <- cBdt[, .(tot_mut = sum(totTC), totcounts = sum(n), totTs = sum(n*nT),
-                     avgU = sum(nT * n)/sum(n), n2U = sum(n[nT <=2]),
-                     nmore = sum(n[nT > 2])), keyby = .(sample,XF,Exp_ID)]
-    
-    cBdt <- cBdt[, `:=`(f2U = n2U/(nmore + n2U))]
-    
-    ### read count filtering
-    cBreps <- setDT( dplyr::as_tibble(cBdt) %>%
-                       dplyr::select(Exp_ID, sample) %>%
-                       dplyr::distinct() %>%
-                       dplyr::group_by(Exp_ID) %>%
-                       dplyr::count() )
-    
-    cBr <- cBdt[(totcounts >= totcut)]
-    cBr <- cBr[, .(counts = .N), keyby = .(XF, Exp_ID)]
-    
-    cBr <- cBr[cBreps, on = .(Exp_ID), nomatch = NULL]
-    cBr <- cBr[counts == n]
-    features_r <- unique(cBr$XF)
-    
-    ### Additional filtering
-    cBdt <- cBdt[(totcounts >= totcut_all) & (tot_mut/totTs < high_p) &
-                   (f2U < Ucut) & (avgU > AvgU)]
-    
-    cBdt <- cBdt[, .(counts = .N), keyby = .(XF)]
-    
-    cBdt <- dplyr::as_tibble(cBdt)
-    
-    cBdt <- cBdt[cBdt$counts == nsamps,]
-    
-    features_all <- unique(unlist(cBdt$XF))
-    
-    y <- intersect(features_r, features_all)
-    
-    
-    
-  }else{
-    
-    cBdt <- cBdt[sample %in% unique(sample) & !grepl("__", XF)]
-    
-    ### read count filtering
-    cBreps <- setDT( dplyr::as_tibble(cBdt) %>%
-                       dplyr::select(Exp_ID, sample) %>%
-                       dplyr::distinct() %>%
-                       dplyr::group_by(Exp_ID) %>%
-                       dplyr::count() )
-    
-    cBr <- cBdt[(totcounts >= totcut)]
-    cBr <- cBr[, .(counts = .N), keyby = .(XF, Exp_ID)]
-    
-    cBr <- cBr[cBreps, on = .(Exp_ID), nomatch = NULL]
-    cBr <- cBr[counts == n]
-    features_r <- unique(cBr$XF)
-    
-    
-    ### All other filtering
-    cBdt <- cBdt[, .(totcounts = sum(n),
-                     avgU = sum(nT * n)/sum(n), n2U = sum(n[nT <=2]),
-                     nmore = sum(n[nT > 2])), keyby = .(sample,XF)]
-    
-    cBdt <- cBdt[, `:=`(f2U = n2U/(nmore + n2U))]
-    
-    cBdt <- cBdt[(totcounts >= totcut_all) &
-                   (f2U < Ucut) & (avgU > AvgU)]
-    
-    cBdt <- cBdt[, .(counts = .N), keyby = .(XF)]
-    
-    cBdt <- dplyr::as_tibble(cBdt)
-    
-    cBdt <- cBdt[cBdt$counts == nsamps,]
-    
-    features_all <- unique(unlist(cBdt$XF))
-    
-    
-    y <- intersect(features_r, features_all)
-    
-  }
+  
+  cBdt <- cBdt[!grepl("__", XF)]
+  
+  
+  cBdt <- cBdt[, `:=`(totTC = TC * n * abs(type - 1))]
+  
+  
+  cBdt <- cBdt[, .(tot_mut = sum(totTC), totcounts = sum(n), totTs = sum(n*nT),
+                   avgU = sum(nT * n)/sum(n), n2U = sum(n[nT <=2]),
+                   nmore = sum(n[nT > 2])), keyby = .(sample,XF,Exp_ID)]
+  
+  cBdt <- cBdt[, `:=`(f2U = n2U/(nmore + n2U))]
+  
+  ### read count filtering
+  cBreps <- setDT( dplyr::as_tibble(cBdt) %>%
+                     dplyr::select(Exp_ID, sample) %>%
+                     dplyr::distinct() %>%
+                     dplyr::group_by(Exp_ID) %>%
+                     dplyr::count() )
+  
+  cBr <- cBdt[(totcounts >= totcut)]
+  cBr <- cBr[, .(counts = .N), keyby = .(XF, Exp_ID)]
+  
+  cBr <- cBr[cBreps, on = .(Exp_ID), nomatch = NULL]
+  cBr <- cBr[counts == n]
+  features_r <- unique(cBr$XF)
+  
+  ### Additional filtering
+  cBdt <- cBdt[(totcounts >= totcut_all) & (tot_mut/totTs < high_p) &
+                 (f2U < Ucut) & (avgU > AvgU)]
+  
+  cBdt <- cBdt[, .(counts = .N), keyby = .(XF)]
+  
+  cBdt <- dplyr::as_tibble(cBdt)
+  
+  cBdt <- cBdt[cBdt$counts == nsamps,]
+  
+  features_all <- unique(unlist(cBdt$XF))
+  
+  y <- intersect(features_r, features_all)
   
   
   return(y[order(y)])
