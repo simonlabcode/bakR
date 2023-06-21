@@ -1239,7 +1239,7 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
   
 
   #### Simulation function from bakR
-  
+
   # Average number of Us in reads from each simulated feature
   U_cont <- stats::rbeta(ngene, alpha, beta)
   
@@ -1321,6 +1321,11 @@ Simulate_relative_bakRData <- function(ngene, depth, num_conds = 2L, nreps = 3L,
   # Average WT fraction new
   fn_mean <- 1 - exp(-kd_mean*tl)
   
+  # No 1s or 0s 
+  fn_mean <- ifelse(fn_mean > 0.999, 0.999, fn_mean)
+  fn_mean <- ifelse(fn_mean < 0.001, 0.001, fn_mean)
+  
+    
   # Difference in L2FC(kdeg)
   L2FC_kd_mean <- log2(log(1 - inv_logit(logit(fn_mean) + effect_mean))/log(1- fn_mean))
   
