@@ -1,6 +1,6 @@
 #' Efficiently analyze nucleotide recoding data
 #'
-#' \code{fast_analysis} analyzes nucleotide recoding data maximum likelihood estimation with the L-BFGS-B algorithm
+#' \code{fast_analysis} analyzes nucleotide recoding data with maximum likelihood estimation
 #' implemented by \code{stats::optim} combined with analytic solutions to simple Bayesian models to perform
 #' approximate partial pooling. Output includes kinetic parameter estimates in each replicate, kinetic parameter estimates
 #' averaged across replicates, and log-2 fold changes in the degradation rate constant (L2FC(kdeg)).
@@ -8,25 +8,34 @@
 #' are regularized using analytic solutions of fully Bayesian models. The result is that kdegs are
 #' shrunk towards population means and that uncertainties are shrunk towards a mean-variance trend estimated as part of the analysis.
 #'
-#' Unless the user supplies estimates for pnew and pold, the first step of \code{fast_analysis} is to estimate the background
+#' Unless the user supplies estimates for pnew and pold, the first step of \code{fast_analysis} is to estimate the background (pold)
 #' and metabolic label (will refer to as s4U for simplicity, though bakR is compatible with other metabolic labels such as s6G)
-#' induced mutation rates. The former is best performed with a -s4U control sample, that is, a normal RNA-seq sample
-#' that lacks a -s4U feed or TimeLapse chemistry conversion of s4U to a C analog. If this sample is missing, both background and
-#' s4U induced mutation rates are estimated from the s4U fed samples. For the s4U mutation rate, features with sufficient read depth,
-#' as defined by the \code{read_cut} parameter, and the highest mutation rates are assumed to be completely labeled. Thus, the
-#' average mutation rates in these features is taken as the estimate of the s4U induced mutation rate in that sample. s4U induced mutation
-#' rates are estimated on a per-sample basis as there is often much more variability in these mutation rates than in the background
-#' mutation rates.
-#'
-#' If a -s4U control is included, the background mutation rate is estimated using all features in the control sample(s) with read depths
-#' greater than \code{read_cut}. The average mutation rate among these features is taken as the estimated background mutation rate,
-#' and that background is assumed to be constant for all samples. If a -s4U control is missing, then a strategy similar to that used
-#' to estimate s4U induced mutation rates is used. In this case, the lowest mutation rate features with sufficient read depths are used,
-#' and there average mutation rate is the background mutation rate estimate, as these features are assumed to be almost entirely unlabeled.
-#' Another slightly more computationally intensive but more accurate strategy to estimate mutation rates is to set \code{StanRate} = TRUE.
-#' This will fit a non-hierarchical mixture model to a small subset of transcripts using 'Stan'. The default in \code{bakRFit} is to use
-#' 25 transcripts. If \code{StanRate} is TRUE, then a data list must be passed to \code{Stan_data} of the form that appears in the
-#' bakRFit object's Data_list$Stan_data entry.
+#' induced (pnew) mutation rates. Several pnew and pold estimation strategies are implemented in bakR. For pnew estimation,
+#' the two strategies are likelihood maximization of a binomial mixture model (default) and sampling from the full posterior of
+#' a U-content adjusted Poisson mixture model with HMC (when \code{StanRateEst} is set to TRUE in \code{bakRFit}).
+#' 
+#' The default pnew estimation strategy involves combining the mutational data for all features into sample-wide mutational
+#' data vectors (# of T-to-C conversions, # of Ts, and # of such reads vectors). These data vectors are then
+#' downsampled (to prevent float overflow) and used to maximize the likelihood of a two-component binomial mixture model. The
+#' two components correspond to reads from old and new RNA, and the three estimated paramters are the fraction of 
+#' all reads that are new (nuisance parameter in this case), and the old and new read mutation rates.
+#' 
+#' The alternative strategy involves running a fully Bayesian implementation of a similar mixture model using Stan, a 
+#' probalistic programming language that bakR makes use of in several functions. This strategy can yield more accurate
+#' mutation rate estimates when the label times are much shorter or longer than the average half-lives of the sequenced RNA 
+#' (i.e., the fraction news are mostly close to 0 or 1, respectively). To improve the efficiency of this approach, only a small
+#' subset of RNA features are analyzed, the number of which is set by the \code{RateEst_size} parameter in \code{bakRFit}. By default,
+#' this number is set to 30, which on the average NR-seq dataset yields a several minute runtime for mutation rate estimation.
+#' 
+#' Estimation of pold can be performed with three strategies: the same two strategies discussed for pnew estimation, and a third
+#' strategy that relies on the presence of -s4U control data. If -s4U control data is present, the default pold estimation
+#' strategy is to use the average mutation rate in reads from all -s4U control datasets as the global pold estimate. Thus,
+#' a single pold estimate is used for all samples. The likelihood maximization strategy can be used by
+#' setting \code{no_ctl} to TRUE, and this strategy becomes the default strategy if no -s4U data is present.
+#' In addition, as of version 1.0.0 of bakR (released late June of 2023), users can decide to estimate
+#' pold for each +s4U sample independently by setting \code{multi_pold} to TRUE. In this case, independent -s4U datasets can no longer be used for 
+#' mutation rate estimation purposes, and thus the strategies for pold estimation are identical to the
+#' set of pnew estimation strategies.
 #'
 #' Once mutation rates are estimated, fraction news for each feature in each sample are estimated. The approach utilized is MLE
 #' using the L-BFGS-B algorithm implemented in \code{stats::optim}. The assumed likelihood function is derived from a Poisson mixture
@@ -39,7 +48,17 @@
 #' typically singular, meaning that the Fisher information matrix is not positive definite and asymptotic results for the variance
 #' do not necessarily hold. As the mutation rates are estimated a priori and fixed to be > 0, these problems are eliminated. In addition, when assessing
 #' the uncertainty of replicate fraction new estimates, the size of the dataset is the raw number of sequencing reads that map to a
-#' particular feature. This number is often large (>100) which increases the validity of invoking asymptotics.
+#' particular feature. This number is often large (>100) which increases the validity of invoking asymptotics. 
+#' As of version 1.0.0, users can opt for an alternative uncertainty estimation strategy by setting 
+#' \code{Fisher} to FALSE. This strategy makes use of the standard error for the estimator of a binomial random
+#' variables rate of success parameter. If we can uniquely identify new and old reads, then the 
+#' variance in our estimate for the fraction of reads that is new is fn*(1-fn)/n. This uncertainty 
+#' estimate will typically underestimate fraction new replicate uncertainties. We showed in the bakR
+#' paper though that the Fisher information strategy often significantly overestimates uncertainties
+#' of low coverage or extreme fraction new features. Therefore, this more bullish, underconservative 
+#' uncertainty quantification can be useful on datasets with low mutation rates, extreme label times,
+#' or low sequecning depth. We have found that false discovery rates are still well controlled when using
+#' this alternative uncertainty quantification strategy.
 #'
 #' With kdegs and their uncertainties estimated, replicate estimates are pooled and regularized. There are two key steps in this
 #' downstream analysis. 1st, the uncertainty for each feature is used to fit a linear ln(uncertainty) vs. log10(read depth) trend,
@@ -600,7 +619,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     ### Estimate mutation rate in old reads
     if(is.null(pold)){
       
-      if((sum(df$type == 0) > 0) & !no_ctl & !multi_pold){
+      if((sum(df$type == 0) > 0) & !no_ctl & !multi_pold & !StanRate){
         message("Estimating unlabeled mutation rate with -s4U data")
         
         #Old mutation rate estimation
