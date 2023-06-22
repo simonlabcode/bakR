@@ -261,8 +261,8 @@ NSSHeat <- function(bakRFit,
 #' DE_df$DE_pval <- 2*stats::dnorm(-abs(DE_df$stat))
 #' DE_df$DE_padj <- 2*stats::p.adjust(DE_df$DE_pval, method = "BH")
 #'
-#' # make heatmap matrix
-#' Heatmap <- NSSHeat2(bakRFit = Fit,
+#' # perform NSS analysis
+#' NSS_analysis <- NSSHeat2(bakRFit = Fit,
 #'                DE_df = DE_df,
 #'                bakRModel = "MLE")
 #'
@@ -394,8 +394,13 @@ NSSHeat2 <- function(bakRFit,
   null_xy <- null_x*null_y
   
   # Calculate p value and multiple-test adjust
+    # One trick to increase p-value precision is to compare test stat to the absolute
+    # value of draws from the null model.
+    # Any instances of 0 pvalue are set to half of what the p value would be if
+    # there were a single null model draw more extreme than the test stat.
   test_stat <- test_stat %>% dplyr::rowwise() %>%
-    dplyr::mutate(mech_pval = 2*sum(null_xy > abs(mech_stat))/sims ) %>%
+    dplyr::mutate(mech_pval = sum(abs(null_xy) > abs(mech_stat))/sims ) %>%
+    dplyr::mutate(mech_pval = ifelse(mech_pval = 0, 0.5/sims, mech_pval)) %>%
     dplyr::ungroup()
   
   rm(null_x)
@@ -403,6 +408,14 @@ NSSHeat2 <- function(bakRFit,
   rm(null_xy)
   
   test_stat$mech_padj <- stats::p.adjust(test_stat$mech_pval, method= "BH")
+  
+  if(sum(test_stat$mech_padj < 0.05) == 0 & sum(test_stat$DE_padj < 0.05) > 0){
+    warning("All multiple test adjusted mechanism p values are >= 0.05, despite there being
+            instances of differential expression that pass this statistical threshold. This
+            could be a result of the precision of the mechanism score p value being
+            too low. You might consider increasing the sims parameter, though this comes
+            at the cost of slower computation.")
+  }
   
   ## Calculate meta analysis p value (p value that either expression or fraction new has changed)
   test_stat$meta_pval <- stats::pchisq(-2*(log(test_stat$bakR_pval) + log(test_stat$DE_pval)), 
