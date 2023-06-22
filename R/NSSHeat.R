@@ -412,9 +412,11 @@ NSSHeat2 <- function(bakRFit,
   if(sum(test_stat$mech_padj < 0.05) == 0 & sum(test_stat$DE_padj < 0.05) > 0){
     warning("All multiple test adjusted mechanism p values are >= 0.05, despite there being
             instances of differential expression that pass this statistical threshold. This
-            could be a result of the precision of the mechanism score p value being
-            too low. You might consider increasing the sims parameter, though this comes
-            at the cost of slower computation.")
+            could be a result of low confidence assignment of kinetic mechanism (i.e.,
+            to ambiguity in whether the differential expression is transcriptionally or 
+            post-transcriptionally driven); however, this could also be due to the precision 
+            of the mechanism score p value being too low. You might consider increasing the 
+            sims parameter, though this comes at the cost of slower computation.")
   }
   
   ## Calculate meta analysis p value (p value that either expression or fraction new has changed)
