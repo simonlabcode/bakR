@@ -400,7 +400,7 @@ NSSHeat2 <- function(bakRFit,
     # there were a single null model draw more extreme than the test stat.
   test_stat <- test_stat %>% dplyr::rowwise() %>%
     dplyr::mutate(mech_pval = sum(abs(null_xy) > abs(mech_stat))/sims ) %>%
-    dplyr::mutate(mech_pval = ifelse(mech_pval = 0, 0.5/sims, mech_pval)) %>%
+    dplyr::mutate(mech_pval = ifelse(mech_pval == 0, 0.5/sims, mech_pval)) %>%
     dplyr::ungroup()
   
   rm(null_x)
