@@ -53,6 +53,10 @@ the mechanism score. Under the null hypothesis, the mechanism score is the produ
 normal distributions with unit variance, one which has a non-zero mean. Simulation is used
 to estimate the integral of this distribution, and the number of draws (which determines the
 precision of the p value estimate) is determined by the \code{sims} parameter.
+
+NSSHeat2 also provides "meta-analysis p values", which can be interpreted as the p-value that
+a particular RNA feature is observing differential expression or differential kinetics (or both).
+This meta_pval is estimated using Fisher's method for meta analysis.
 }
 \examples{
 \donttest{
@@ -67,11 +71,12 @@ NF <- nrow(Fit$Fast_Fit$Effects_df)
 
 # Simulate mock differential expression data frame
 DE_df <- data.frame(XF = as.character(1:NF),
-                       log2FoldChange = stats::rnorm(NF, 0, 2))
+                       L2FC_RNA = stats::rnorm(NF, 0, 2))
 
-DE_df$stat <- DE_df$log2FoldChange/0.5
+DE_df$DE_score <- DE_df$L2FC_RNA/0.5
 
-DE_df$padj <- 2*stats::dnorm(-abs(DE_df$stat))
+DE_df$DE_pval <- 2*stats::dnorm(-abs(DE_df$stat))
+DE_df$DE_padj <- 2*stats::p.adjust(DE_df$DE_pval, method = "BH")
 
 # make heatmap matrix
 Heatmap <- NSSHeat2(bakRFit = Fit,

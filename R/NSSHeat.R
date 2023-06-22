@@ -221,6 +221,10 @@ NSSHeat <- function(bakRFit,
 #' normal distributions with unit variance, one which has a non-zero mean. Simulation is used
 #' to estimate the integral of this distribution, and the number of draws (which determines the
 #' precision of the p value estimate) is determined by the \code{sims} parameter.
+#' 
+#' NSSHeat2 also provides "meta-analysis p values", which can be interpreted as the p-value that
+#' a particular RNA feature is observing differential expression or differential kinetics (or both).
+#' This meta_pval is estimated using Fisher's method for meta analysis.
 #'
 #' @param bakRFit bakRFit object
 #' @param DE_df dataframe of required format with differential expression analysis results. See
@@ -250,11 +254,12 @@ NSSHeat <- function(bakRFit,
 #'
 #' # Simulate mock differential expression data frame
 #' DE_df <- data.frame(XF = as.character(1:NF),
-#'                        log2FoldChange = stats::rnorm(NF, 0, 2))
+#'                        L2FC_RNA = stats::rnorm(NF, 0, 2))
 #'
-#' DE_df$stat <- DE_df$log2FoldChange/0.5
+#' DE_df$DE_score <- DE_df$L2FC_RNA/0.5
 #'
-#' DE_df$padj <- 2*stats::dnorm(-abs(DE_df$stat))
+#' DE_df$DE_pval <- 2*stats::dnorm(-abs(DE_df$stat))
+#' DE_df$DE_padj <- 2*stats::p.adjust(DE_df$DE_pval, method = "BH")
 #'
 #' # make heatmap matrix
 #' Heatmap <- NSSHeat2(bakRFit = Fit,
@@ -343,9 +348,8 @@ NSSHeat2 <- function(bakRFit,
   }
 
 
-  DE_reso <-  DE_df
-  
-  DE_XF <- DE_reso$XF
+  DE_XF <- DE_df$XF
+  XF_keep <- DE_df$XF[DE_df$DE_padj < DE_cutoff]
 
 
   NSS_eff_DE <- NSS_eff %>%
@@ -359,12 +363,12 @@ NSSHeat2 <- function(bakRFit,
   XF_both <- intersect(NSS_eff_DE$XF, DE_XF)
 
   NSS_eff_DE <- NSS_eff_DE[NSS_eff_DE$XF %in% XF_both,]
-  DE_reso <- DE_reso[DE_reso$XF %in% XF_both,]
+  DE_df <- DE_df[DE_df$XF %in% XF_both,]
 
 
   #browser()
 
-  test <- dplyr::right_join(NSS_eff_DE, DE_reso, by = "XF")
+  test <- dplyr::right_join(NSS_eff_DE, DE_df, by = "XF")
 
 
   ## Calculate zf and zde
@@ -451,6 +455,9 @@ NSSHeat2 <- function(bakRFit,
   heatmap_df <- as.data.frame(heatmap_df)
   row.names(heatmap_df) <- heatmap_df$XF
   heatmap_df <- heatmap_df[,c("bakR_score", "DE_score", "Mech_score")]
+  
+  # Filter out non-sig DE
+  heatmap_df <- heatmap_df[XF_keep,]
 
   heatmap_df <- heatmap_df[order(heatmap_df$Mech_score),]
 
