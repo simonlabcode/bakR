@@ -8,7 +8,7 @@ GSprocessing(GS, use_symbol = FALSE)
 }
 \arguments{
 \item{GS}{Table of read counts and NTR (fraction new) estimate parameters output by GRAND-SLAM. Corresponds
-to the \emph{run name}.tsv file included in GRAND-SLAM output}
+to the \emph{run_name}.tsv file included in GRAND-SLAM output}
 
 \item{use_symbol}{Logical; if TRUE, then Symbol column rather than Gene column is used
 as feature column (XF) in output data frame.}
