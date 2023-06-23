@@ -1,0 +1,40 @@
+---
+title: "Correcting for dropout"
+author: "Isaac Vock"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{bakR-Quickstart}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+abstract: >
+  In a standard RNA-seq experiment, differential expression 
+
+---
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.dim = c(6, 4)
+)
+```
+
+## Necessary Setup
+
+Install and load bakR to run the code in this vignette; instructions on how to do so can be found at this [link](https://simonlabcode.github.io/bakR/index.html). Also, you'll want to set the seed so as to ensure the results you get reproduce those presented in the vignette. 
+
+```{r setup}
+library(bakR)
+set.seed(123)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
