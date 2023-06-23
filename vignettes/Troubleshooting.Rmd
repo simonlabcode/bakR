@@ -3,7 +3,7 @@ title: "Troubleshooting analyses of NR-seq data with bakR"
 author: "Isaac Vock"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{bakR-Quickstart}
+  %\VignetteIndexEntry{Troubleshooting}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 abstract: >
