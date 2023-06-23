@@ -2,6 +2,7 @@
 
 export(CorrectDropout)
 export(FnPCA)
+export(GSprocessing)
 export(Heatmap_kdeg)
 export(NSSHeat)
 export(NSSHeat2)
