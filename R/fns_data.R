@@ -8,7 +8,7 @@
 #'
 #' @usage data(fns)
 #'
-#' @format A dataframe with 1,790 rows and 5 variables. Input to \code{bakRFndata}
+#' @format A dataframe with 1,800 rows and 5 variables. Input to \code{bakRFndata}
 #' \describe{
 #' \item{sample}{Sample name}
 #' \item{XF}{Name of feature (e.g., ENSEMBL gene ID)}
