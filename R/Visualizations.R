@@ -7,6 +7,7 @@
 #' @param log_kdeg Boolean; if TRUE, then log(kdeg) estimates used for PCA rather than logit(fn). Currently
 #' only compatible with Fast_Fit
 #' @return A ggplot object.
+#' @importFrom magrittr %>%
 #' @examples
 #' \donttest{
 #' # Simulate data for 500 genes and 2 replicates
@@ -108,6 +109,7 @@ FnPCA <- function(obj, log_kdeg = FALSE){
 #' @return A ggplot object. Each point represents a transcript. The x-axis is the
 #' log-2 fold change in the degradation rate constant and the y-axis is the log-10
 #' transformed multiple test adjusted p value.
+#' @importFrom magrittr %>%
 #' @examples
 #' \donttest{
 #' # Simulate data for 500 genes and 2 replicates
@@ -216,6 +218,7 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
 #' @return A ggplot object. Each point represents a transcript. The
 #' x-axis is log-10 transformed replicate average read counts,
 #' y-axis is the log-2 fold-change in the degradation rate constant.
+#' @importFrom magrittr %>%
 #' @examples
 #' \donttest{
 #' # Simulate data for 500 genes and 2 replicates
@@ -351,6 +354,7 @@ plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = N
 #' and columns represent (from left to right) differential kinetics z-score,
 #' differential expression z-score, and a mechanism score where positive represents
 #' synthesis driven and negative degradation driven changes in expression.
+#' @importFrom magrittr %>%
 #' @examples
 #' \donttest{
 #' # Simulate data
@@ -463,6 +467,7 @@ Heatmap_kdeg <- function(obj, zscore = FALSE, filter_sig = FALSE, FDR = 0.05){
 #' and the difference between its +s4U and -s4U read coverage. Nonlinear-least squares fit
 #' is plotted on top of points as a blue line. If keep_data is TRUE, then the data used
 #' to make the plots is returned in addition to the list of plots.
+#' @importFrom magrittr %>%
 #' @examples
 #' \donttest{
 #' # Simulate data for 500 genes and 2 replicates with 40% dropout
