@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 abstract: >
-  In a standard RNA-seq experiment, differential expression 
+  Analyzing NR-seq data can be difficult. This vignette is here to help. In it, I will discuss some of the most common challenges that one can run into when analyzing your data with bakR, and how to overcome them. In particular, I will showcase bakR's quality control check functionality and discuss the problems that it looks out for. In addition, I will discuss aspects of NR-seq data that can hinder accurate estimation of the mutation rates in new and old sequencing reads. Finally, I will show how bakR's alternative mutation rate estimation strategy can ameliorate some of these challenges.
 
 ---
 
@@ -22,9 +22,102 @@ knitr::opts_chunk$set(
 
 ## Necessary Setup
 
-Install and load bakR to run the code in this vignette; instructions on how to do so can be found at this [link](https://simonlabcode.github.io/bakR/index.html). Also, you'll want to set the seed so as to ensure the results you get reproduce those presented in the vignette. 
+Load bakR! Version 1.0.0 or later is required to run all of the code in this vignette and reproduce the results presented. ggplot2 and corrplot (the latter of which is not automatically installed with bakR) will also be used for some figures shown here.
 
 ```{r setup}
 library(bakR)
+library(ggplot2)
+library(corrplot)
 set.seed(123)
 ```
+
+
+## The QC_checks() function
+
+Version 0.4.0 of bakR introduced a function that takes as input a bakRFit object and assesses a number of aspects of the model fit and raw data:
+
+```{r}
+# Simulate a nucleotide recoding dataset
+sim_data <- Simulate_relative_bakRData(1000, depth = 1000000,
+                                       nreps = 2)
+  # This will simulate 1000 features, 1000000 reads, 2 experimental conditions,
+  # and 2 replicates for each experimental condition
+  # See ?Simulate_relative_bakRData for details regarding tunable parameters
+
+# Run the efficient model
+Fit <- bakRFit(sim_data$bakRData)
+
+# Quality control checks
+QC <- QC_checks(Fit)
+
+```
+
+
+QC_checks assesses four aspects of your data and bakR's model fit:
+
+1. Raw mutation rates
+1. Inferred new and old read mutation rates
+1. Average fraction new
+1. Fraction new estimate replicate correlation
+
+### Raw mutation rates
+
+The first thing that `QC_checks()` assesses is the average mutation rate in all sequencing reads from all analyzed samples. High quality data is characterized by mutation rates that are higher in all +s4U samples than in any -s4U samples. In addition, to a first order approximation the higher the mutation rates in +s4U samples and the lower the mutation rates in -s4U samples, the better. One output of QC_checks is a convenient plot of raw mutation rates to see what these look like for your data:
+
+```{r, fig.align='center'}
+# Barplots of raw mutation rates
+QC$raw_mutrates
+```
+
+In this simulated data, you can see that the +s4U raw mutation rates are all consistenly much higher than the -s4U mutation rates. The barplot also provides a quasi-arbitrary guide for what good +s4U and -s4U mutation rates are.
+
+### Inferred mutation rates
+
+The second thing that `QC_checks()` assesses is the mutation rate of new and old reads, inferred by bakR. The difference between the inferred and raw mutation rates can be a cause of confusion for those new to NR-seq data. The raw mutation rates are the average proportion of Ts that are mutated in all sequencing reads for a given sample. This means that the raw mutation rates average over mutation rates from both new reads (i.e., reads derived from RNA synthesized during metabolic labeling) and old reads (i.e., those that were synthesized prior to metabolic labeling). The inferred mutation rates are the estimated mutation rates of old and new reads separately. Higher inferred mutation rates yield higher raw mutation rates, but they are distinct quantities. In particular, the raw mutation rate depends not only on the new and old read mutation rates, but on what fraction of sequencing reads are new and what fraction are old.
+
+Like with the raw mutation rates, higher new read mutation rates and lower old read mutation rates are better. `QC_checks()` outputs a helpful visualization of these mutation rates:
+
+```{r, fig.align='center'}
+# Barplots of inferred mutation rates
+QC$conversion_rates
+```
+
+Once again, this simulated data looks good!
+
+### Average fraction news
+
+The third thing that `QC_checks()` assesses is the average estimated fraction new. The ability to accurately infer the degradation kinetics of a particular RNA feature is highly dependent on the relationship between the length of metabolic labeling and the half-life of the feature. More specifically, some really nice work from the Dieterich lab has shown that degradation rate constant estimates are more accurate for features with half-lives closer to the metabolic labeling time. If the label time is much longer (shorter) than a feature's half-live, than the feature will be almost completely labeled (unlabeled). The relationship between fraction new and degradation rate constant makes it so that at extreme fraction news (close to 0 or 1), the rate constant estimate is very sensitive to the exact fraction new estimate. This means that fraction news close to 0 or 1 yield more uncertain kinetic parameter estimates. 
+
+QC_checks() will output a message about the average estimated fraction new in each +s4U sample. You can also visualize the distribution of fraction new estimates as follows:
+
+```{r, fig.align='center'}
+# Barplots of inferred mutation rates
+ggplot(Fit$Fast_Fit$Fn_Estimates, aes(x = logit_fn, color = as.factor(sample))) + 
+  geom_density() + 
+  theme_classic() +
+  scale_color_viridis_d() + 
+  xlab("logit(fn) estimates") + 
+  ylab("density")
+```
+
+Note, the density plot above is showing fraction news on a logit scale. Logit is a function that takes as input numbers bounded between 0 and 1 and outputs an unbounded number. A logit(fraction new) of 0 means a fraction new of 0.5. A logit(fraction new) of -2 (2) is a fraction new of ~0.1 (~0.9) Similar to log-transforming RNA-seq read count data, logit transforming fraction news can be useful when visualizing data that ranges multiple orders of magnitude.
+
+### Fraction new estimate replicate correlation
+
+Finally, `QC_checks()` assesses the extent to which fraction new estimates correlate between replicates of the same experimental condition. Better correlation means less variable data, which means it will be easier to identify differences in kinetic parameters between experimental conditions. `QC_checks` will output a message regarding each replicate-to-replicate correlation, and also provides a number of correlation plots that you can inspect:
+
+```{r, fig.align='center'}
+# Barplots of inferred mutation rates
+  # Numerical indices are ordered as they appear in QC_checks() output message
+  # So this is for replicate 1 and 2 of experimental ID 1
+QC$correlation_plots[[1]]
+```
+
+In addition, `QC_checks` outputs a correlation matrix to allow for convenient visualization of all sample-to-sample correlations:
+
+```{r, fig.align='center'}
+corrplot.mixed(QC$correlation_matrix, 
+               upper = "square", lower = "number", 
+               addgrid.col = "black", tl.col = "black")
+```
+

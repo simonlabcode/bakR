@@ -38,6 +38,11 @@
 #' @export
 QC_checks <- function(obj){
   
+# Helper functions that I will use on multiple occasions
+  logit <- function(x) log(x/(1-x))
+  inv_logit <- function(x) exp(x)/(1+exp(x))
+
+  
   Exp_ID <- Replicate <- logit_fn <- fn_1 <- fn_2 <- NULL
   type <- mut <- reps <- pnew <- mutrate <- TC <- n <- nT <- ctl <- NULL
   
@@ -50,20 +55,18 @@ QC_checks <- function(obj){
     # Calculate average fraction new in each sample
     avg_fns <- Fns %>%
       dplyr::group_by(Exp_ID, Replicate) %>%
-      dplyr::summarise(avg_logit_fn = mean(logit_fn))
+      dplyr::summarise(avg_fn = mean(inv_logit(logit_fn)))
     
-    message(paste0(c("Average logit(fraction news) for each sample are:", utils::capture.output(avg_fns)), collapse = "\n"))
+    message(paste0(c("Average fraction news for each sample are:", utils::capture.output(avg_fns)), collapse = "\n"))
     
-    message("Reminder: a logit fraction new of 0 means a fraction new of 0.5, which would be ideal.")
+    avg_fns <- avg_fns$avg_fn
     
-    avg_fns <- avg_fns$avg_logit_fn
-    
-    if(all(dplyr::between(avg_fns, -2, 2))){
-      message("The average logit(fraction news) in all samples are between -2 and 2, suggesting an appropriate label time!")
+    if(all(dplyr::between(avg_fns, 0.2, 0.8))){
+      message("The average fraction news in all samples are between 0.2 and 0.8, suggesting an appropriate label time!")
     }
     
-    if(any(dplyr::between(avg_fns, -4, -2) )){
-      warning("The average logit(fraction news) are relatively low (between -4 and -2) in one or more samples, suggesting your label time was a bit short. This will limit bakR's ability to identify kinetic differences")
+    if(any(dplyr::between(avg_fns, 0.05, 0.2) )){
+      warning("The average fraction news are relatively low (between 0.05 and 0.2) in one or more samples, suggesting your label time was a bit short. This will limit bakR's ability to identify kinetic differences")
       
       if(!bakRFn){
         message("Low fraction news impair bakR's default mutation rate estimation strategy. I suggest rerunning bakRFit with FastRerun and StanRateEst = TRUE, particularly if some of the estimated mutation rates are oddly low (< 0.01) in a subset of samples.")
@@ -71,20 +74,20 @@ QC_checks <- function(obj){
       
     }
     
-    if(any(dplyr::between(avg_fns, 2, 4))){
-      warning("The average logit(fraction news) are relatively high (between 2 and 4) in one or more samples, suggesting your label time was a big long. This will limit bakR's ability to identify kinetic differences")
+    if(any(dplyr::between(avg_fns, 0.8, 0.95))){
+      warning("The average fraction news are relatively high (between 0.8 and 0.95) in one or more samples, suggesting your label time was a big long. This will limit bakR's ability to identify kinetic differences")
     }
     
-    if(any(avg_fns < -4)){
-      warning("The average logit(fraction news) are extremely low (less than -4) in one or more samples, suggesting your label time was too short. It will be difficult for bakR to identify any kinetic differences.")
+    if(any(avg_fns < 0.05)){
+      warning("The average fraction news are extremely low (less than 0.05) in one or more samples, suggesting your label time was too short. It will be difficult for bakR to identify any kinetic differences.")
       if(!bakRFn){
         message("Low fraction news impair bakR's default mutation rate estimation strategy. I suggest rerunning bakRFit with FastRerun and StanRateEst = TRUE, particularly if some of the estimated mutation rates are oddly low (< 0.01) in a subset of samples.")
       }
       Bad_data <- TRUE
     }
     
-    if(any(avg_fns > 4)){
-      warning("The average logit(fraction news) are extremely high (greater than 4) in one or more samples, suggesting your label time was too long. It will be difficult for bakR to identify any kinetic differences.")
+    if(any(avg_fns > 0.95)){
+      warning("The average fraction news are extremely high (greater than 0.95) in one or more samples, suggesting your label time was too long. It will be difficult for bakR to identify any kinetic differences.")
       Bad_data <- TRUE
     }
     
