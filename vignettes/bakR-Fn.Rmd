@@ -1,5 +1,5 @@
 ---
-title: "GRAND-SLAM output/fn estimates as bakR input for people in a hurry"
+title: "GRAND-SLAM output/fn estimates as bakR input"
 author: "Isaac Vock"
 output: rmarkdown::html_vignette
 vignette: >
@@ -11,8 +11,7 @@ abstract: >
   As of bakR version 1.0.0, you can now provide a table of fraction new estimates as input. Tools like   GRAND-SLAM provide such tables, though you can also use your own pipeline for estimating the          fraction of reads that are new in your NR-seq experiments.
   
   In this vigngette, I will provide a brief introduction to how to use this type of alternative input
-  in bakR. A longer form version of this vignette also exists, if you would like a more thorough
-  discussion of this analysis route.
+  in bakR. An Appendix at the end of this vignette will go deeper into some specifics regarding input data structure and analysis strategies.
 
 ---
 
@@ -90,7 +89,7 @@ Fit <- bakRFit(bfndo)
 
 bakRFit() is used here as a wrapper for two functions in bakR: fn_process() and fast_analysis(). For 
 more details on what these functions do, run `?fn_process` or `fast_analysis`. Alternatively,
-see the more highly detailed version of this vignette for additional details.
+see the "Differential kinetic analysis with bakR" vignette that provides more details.
 
 When using fraction new estimates as input, only one of the two more highly powered implementations may be used (the Hybrid implementation from the bakR manuscript). You can run this as follows:
 
@@ -139,11 +138,19 @@ FnPCA(Fit$Fast_Fit)
 
 ## Step 4: Where to go from here
 
-This vignette provides the minimal amount of information to get up and running with bakR using fraction new estimates as input. If you would like a more thorough discussion of each step of this process, check out the long form version of this vignette ("Using GRAND-SLAM output/fn estimates in bakR"). In addition, there are a number of other vignettes the cover various topics not discussed in these intro vignettes:
+This vignette provides the minimal amount of information to get up and running with bakR using fraction new estimates as input. If you would like a more thorough discussion of each step of this process, check out the long form version of the intro to bakR vignette ("Differential kinetic analysis with bakR"). In addition, there are a number of other vignettes that cover various topics not discussed in these intro vignettes:
 
 1. Differential synthesis rate analysis
-1. Correcting for loss of s^4^U RNA during library prepartion (a.k.a. dropout correction)
+1. Correcting for loss of s^4^U RNA during library preparation (a.k.a. dropout correction)
 1. Troubleshooting analyses of NR-seq datasets
 1. Analyzing away from steady-state data
 
+## Appendix
 
+### A1: Input data
+
+
+### A2: Analysis options
+
+
+### A3: Analyzing non-NR-seq data

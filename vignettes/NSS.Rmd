@@ -1,0 +1,182 @@
+---
+title: "Untitled"
+output: html_document
+date: "2023-06-24"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Going beyond the steady-state assumption
+
+You may have noticed an assumption that continually crops up in the analyses presented 
+in bakR vignettes: steady-state. In the Getting-Started vignette, it was a necessary part
+of relating the fraction new to the more interesting $kdeg$. In this vignette, it was
+additionally a key part of assessing synthesis kinetics. It therefore underlies all of the
+differential kinetic analysis discussed so far. What happens if it is a bad assumption? "Dogs
+and cats living together! Mass hysteria!"? No Dr. Venkman, there's a way out, and that's
+what we're going to talk about next.
+
+### Violating the steady-state assumption
+Before we talk about what to do when the steady-state assumption is questionable, it's worth
+briefly mentioning *when* the steady-state assumption is worth throwing out. Assuming steady-state
+RNA dynamics means that you are assuming the rate at which RNA synthesized is the same
+as the rate at which it is degraded. "Wait, does that mean we are assuming $ksyn = kdeg$?" No. The
+degradation rate constant $kdeg$ is not the rate of degradation. The rate of degradation (i.e., the
+number of RNA molecules degraded per unit time) depends on $kdeg$ AND the amount of RNA present.
+So steady-state actually means that $ksyn = kdeg*[RNA]$. In the context of NR-seq experiments, assuming
+steady-state means that we are assuming this relationship holds throughout the entire metabolic label feed
+time. Therefore, another way to phrase this assumption is to say that we are assuming that our population
+of cells aren't actively responding to some stimulus and regulating $ksyn$ and/or $kdeg$. RNA levels remain constant during the experiment. 
+
+Here's a fun question: are cells ever at steady-state? Yes and no. An individual cell is NEVER at steady-state.
+Gene expression is constantly regulated as the cell progresses through the cell cycle and performs all 
+of the biochemical functions necessary to stay alive. BUT, bakR is designed to analyze *bulk* nucleotide recoding RNA-seq data. This means the data comes from a population of cells, not a single cell. Thus, when I say that I am assuming steady-state, what I really mean is that I am assuming the population average is at steady-state. If the population of cells are asynchronous (so they aren't all going through the exact same cell cycle stages at the
+same time) and haven't been perturbed recently (e.g., treated with a drug), then this is probably a pretty solid assumption. 
+
+Lots of cool experiments are done with cells far from steady-state though. When using nucleotide recoding RNA-seq, it is increasingly popular to perform rapid degradation of a protein of interest, treatment with a specific drug, or some other acute perturbation leading up to and during metabolic labeling. Therefore, we need a way to analyze data without the helpful steady-state assumption. This is challenging though, because if we can't assume steady-state, how do we relate what we measure (the fraction new) to the RNA metabolic kinetics we care about? The answer: keep it non-parametric. 
+
+### Analyzing NR-seq data far from steady-state
+I am using the term non-parametric here to suggest getting away from using explicit mathematical functions to model RNA metabolism. Rather, we can think very generally about what effects changes in RNA synthesis and degradation kinetics can have on the fraction new in an NR-seq experiment. Let's say we compare an unperturbed, steady-state population of cells to a cells that have been treated with a drug of interest. If the fraction new for a particular transcript is higher in the drug treated cells than the untreated cells, how could that have come about? Well, generally speaking, there are two possibilities:
+
+1. The RNA may have been destabilized by the drug treatment. This is the same explanation you would give for the change if everything were steady-state.
+1. The synthesis rate of the RNA may have been ramped up following drug treatment. This is an intuitive explanation that is surprisingly only possible away from steady-state. At steady-state, changes in synthesis kinetics affect the amount of new and old RNA equally, leading to no change in the fraction new. 
+
+Here is the key realization: these two possibilities have different impacts on the LEVELS of RNA. If synthesis is
+increasing upon drug treatment, then the amount of that transcript will also increase. If the transcript is 
+destabilized though, then there will be less of it around at the end of the experiment. Therefore, **combining differential expression with differential fraction new analyses reveals the kinetic differences**. More generally,
+here is a diagram that covers the range of possible kinetic mechanisms and conclusions:
+
+![Diagram of NR-seq NSS analysis strategy.](NSS_Analysis.png)
+
+### Performing steady-state independent comparisons with bakR + DESeq2
+The goal of the steady-state independent analysis that I am putting forth is to identify the **major** kinetic mechanism of any differential expression observed. The analysis strategy is as follows:
+
+1. Compare NR-seq with bakR (but with one small parameter tweak)
+1. Perform differential expression analysis
+1. Use the NSSHeat() function in bakR to combine the results and come to a mechanistic conclusion.
+
+Simple enough! As usual, let's start out by simulating some data. Unfortunately, since non-steady state (NSS) is such a broad term, there is no NSS simulation option. That's okay though, as the analysis strategy will still work even if the steady-state assumption isn't invalid. To make it interesting though, we'll simulate a mix of synthesis and degradation changes:
+
+```{r}
+# Simulate a nucleotide recoding dataset
+sim_data <- Simulate_bakRData(1000,
+                         num_kd_DE = c(0, 200),
+                         num_ks_DE = c(0, 200))
+  # This will simulate 1000 features, 2 experimental conditions
+  # and 3 replicates for each experimental condition.
+  # See ?Simulate_bakRData for details regarding tunable parameters
+
+# Extract simulated bakRData object
+bakRData <- sim_data$bakRData
+
+# Extract simualted ground truths
+sim_truth <- sim_data$sim_list
+
+## Run the efficient model
+Fit <- bakRFit(bakRData, NSS = TRUE)
+
+
+```
+
+What's interesting about this simulation is that all transcripts which are differentially stable are also differentially synthesized, so our goal is to identify the major source of kinetic regulation. Also, note the change to the bakRFit() call; a parameter called NSS is set to TRUE. This will make it so that bakR compares logit(fraction new)s rather than log(kdeg)s, since the relationship between fraction new and $kdeg$ may no longer hold.
+
+Next, we can perform differential expression analysis just as we did before:
+
+```{r, results = 'hide'}
+
+# Get the count matrix from bakR
+Counts <- Fit$Data_lists$Count_Matrix
+
+# Experimental conditions for each sample
+# There are 6 s4U treated samples (3 replicates of each condition)
+# In addition, there are 2 -s4U control samples (1 for each condition)
+
+## s4U conditions
+# 1st three samples are reference (ref) samples
+# Next three samples are experimental (exp) samples
+conditions_s4U <- as.factor(rep(c("ref", "exp"), each = 3))
+
+## -s4U control conditions
+# 1st sample is reference, next is experimental
+conditions_ctl <- as.factor(c("ref", "exp"))
+
+# Combined s4U and -s4U control conditions
+conditions <- c(conditions_s4U, conditions_ctl)
+
+# Make the colData input for DESeq2
+colData <- data.frame(conditions = conditions)
+rownames(colData) <- colnames(Counts)
+
+# Make DESeq2 data object
+dds <- DESeqDataSetFromMatrix(countData = Counts,
+                              colData = colData,
+                              design = ~conditions)
+
+# Fit DESeq2 model
+ddso <- DESeq(dds)
+
+# Extract results of experimental vs. reference comparison
+reso <- results(ddso, contrast = c("conditions", "exp", "ref"))
+
+```
+
+We're almost ready to use bakR's special NSSHeat() function. NSSHeat() has two required inputs:
+
+1. A bakR fit object (preferably fit with NSS set to TRUE)
+1. A data frame containing differential expression analysis results
+
+In particular, the differential expression data frame must contain four columns named as follows:
+
+1. **XF**: Name of the feature (gene, exon, etc.) that the read comes from.
+1. **log2FoldChange**: L2FC(RNA) estimated by the differential expression analysis.
+1. **stat**: L2FC(RNA)/se[L2FC(RNA)]; so like a differential expression z-score.
+1. **padj**: Multiple test adjusted p-value from differential expression analysis.
+
+Conveniently, our DESeq2 results object has all the information we need! We can make the differential expression data frame like so:
+
+```{r, results = 'hide'}
+# Convert to data frame
+reso <- as.data.frame(reso)
+
+# Make data frame
+DE_df <- data.frame(XF = row.names(reso),
+                    log2FoldChange = reso$log2FoldChange,
+                    stat = reso$stat,
+                    padj = reso$padj)
+
+```
+
+We are ready to perform the steady-state independent analysis now!
+
+```{r, results = 'hide'}
+
+NSSheatmap <- NSSHeat(Fit, DE_df)
+
+```
+
+See ?NSSHeat for information about the additional parameters that can be specified. Most importantly, there is the bakRModel parameter, which tells NSSHeat which fit to use in the bakRFit model, if multiple exist. The default setting is to just use the MLE fit, which should always be there. 
+
+So what can you do with the output of NSSHeat? Well, as the name implies, this function is specifically designed to help you make heatmaps. NSSheatmap will have three columns:
+
+1. **bakR_score**: The logit(fraction new) change z-score from bakR
+1. **DE_score**: The L2FC(RNA) z-score from DESeq2
+1. **Mech_score**: A mechanism z-score that quantifies the extent to which significant changes in gene expression are synthesis or degradation driven. Synthesis driven = positive numbers; degradation driven = negative numbers.
+
+You can quickly make the heatmap using the lovely pheatmap package:
+
+```{r, fig.align='center'}
+
+# Nice red to blue color gradient
+  # Feel free to use any coloring your heart desires
+col <- c("#053061", "#2166AC", "#4393C3", "#92C5DE", 
+         "#D1E5F0", "#F7F7F7", "#FDDBC7", "#F4A582", 
+         "#D6604D", "#B2182B", "#67001F")
+
+# NSS heatmap
+pheatmap(NSSheatmap, cluster_cols = FALSE, show_rownames = FALSE, color = col)
+
+```
+
+Each row in the data frame output by NSSHeat corresponds to a feature that was differentially expressed in the experimental condition. Features that were not identified as differentially expressed can either be the result of an underpowered analysis (i.e., they really are differentially expressed in the two conditions but more replicates/sequencing depth would have been required to identify this confidently) or of complicated concomitant modulation of synthesis and degradation kinetics. This makes non-differentially expressed features more difficult to analyze with this strategy, which is why bakR focuses on the differentially expressed features.

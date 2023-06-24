@@ -6,5 +6,10 @@ articles:
   navbar: ~
   contents:
   - Getting-Started
-  - Further-Analyses
+  - bakR-Quickstart
+  - Differential-Synth
+  - bakR-Fn
+  - Dropout
+  - Troubleshooting
+  - NSS
 
