@@ -61,7 +61,8 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   # Check obj
   if(!(inherits(obj, "bakRFit") | inherits(obj, "bakRFnFit")) ){
     if(inherits(obj, "bakRData")){
-      stop("You provided a bakRData object. You need to run bakRFit before running CorrectDropout")
+      stop("You provided a bakRData object. You need to run bakRFit before 
+           running CorrectDropout")
     }else{
       stop("You did not provide a bakRFit object!")
     }
@@ -99,7 +100,8 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   
   
   if(!identical(check, 1:obj$Data_lists$Stan_data$nMT)){
-    stop("You do not have at least one replicate of -s4U data for all experimental conditions!")
+    stop("You do not have at least one replicate of -s4U data for all 
+         experimental conditions!")
   }
   
   # Check scale_init
@@ -405,7 +407,8 @@ QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   # Check obj
   if(!(inherits(obj, "bakRFit") | inherits(obj, "bakRFnFit")) ){
     if(inherits(obj, "bakRData")){
-      stop("You provided a bakRData object. You need to run bakRFit before running CorrectDropout")
+      stop("You provided a bakRData object. You need to run bakRFit before 
+           running CorrectDropout")
     }else{
       stop("You did not provide a bakRFit object!")
     }
@@ -445,7 +448,8 @@ QuantifyDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   
   
   if(!identical(check, 1:obj$Data_lists$Stan_data$nMT)){
-    stop("You do not have at least one replicate of -s4U data for all experimental conditions!")
+    stop("You do not have at least one replicate of -s4U data for all 
+         experimental conditions!")
   }
   
   # Check scale_init

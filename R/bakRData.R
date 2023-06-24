@@ -209,13 +209,15 @@ bakRData <- function(cB, metadf){
   if(!all(cB_cols %in% colnames(cB))){
     colnames(cB)[1:5] <- cB_cols
     warning("Renamed first 5 columns of cB to XF, sample, TC, nT, and n.
-    If this does not reflect the content of those columns, properly rearrange cB columns and rerun bakRData().")
+    If this does not reflect the content of those columns, properly rearrange 
+            cB columns and rerun bakRData().")
   }
 
   if(!all(meta_cols %in% colnames(metadf))){
     colnames(metadf)[1:2] <- meta_cols
     warning("Renamed first 2 columns of metadf to tl and Exp_ID.
-    If this does not reflect the content of those columns, properly rearrange metadf columns and rerun bakRData().")
+    If this does not reflect the content of those columns, properly rearrange 
+            metadf columns and rerun bakRData().")
   }
 
   if(max(metadf$Exp_ID) == 1){
@@ -498,11 +500,13 @@ bakRFnData <- function(fns, metadf){
     if(se_provided){
       colnames(fns)[1:5] <- fns_cols
       warning("Renamed first 5 columns of fns to XF, sample, fn, se, and n.
-      If this does not reflect the content of those columns, properly rearrange fns columns and rerun bakRFnData().")
+      If this does not reflect the content of those columns, properly rearrange 
+              fns columns and rerun bakRFnData().")
     }else{
       colnames(fns)[1:4] <- fns_cols
       warning("Renamed first 4 columns of fns to XF, sample, fn, and n.
-      If this does not reflect the content of those columns, properly rearrange fns columns and rerun bakRFnData().")
+      If this does not reflect the content of those columns, properly rearrange 
+              fns columns and rerun bakRFnData().")
     }
 
   }
@@ -510,7 +514,8 @@ bakRFnData <- function(fns, metadf){
   if(!all(meta_cols %in% colnames(metadf))){
     colnames(metadf)[1:2] <- meta_cols
     warning("Renamed first 2 columns of metadf to tl and Exp_ID.
-    If this does not reflect the content of those columns, properly rearrange metadf columns and rerun bakRFnData().")
+    If this does not reflect the content of those columns, properly rearrange 
+            metadf columns and rerun bakRFnData().")
   }
   
   if(max(metadf$Exp_ID) == 1){
@@ -523,11 +528,13 @@ bakRFnData <- function(fns, metadf){
   }
   
   if(!all(meta_samps %in% fns_samps)){
-    stop("Not all of the samples appearing as rownames in metadf appear in the sample column of cB")
+    stop("Not all of the samples appearing as rownames in metadf appear in the 
+         sample column of cB")
   }
   
   if(!all(fns_samps %in% meta_samps)){
-    stop("Not all of the samples appearing in the sample column of cB appear as rownames in metadf.")
+    stop("Not all of the samples appearing in the sample column of cB appear as 
+         rownames in metadf.")
   }
   
   
