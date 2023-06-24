@@ -24,10 +24,10 @@ abstract: >
   If the kinetics is of interest to you, then a recently developed solution to 
   this problem is nucleotide recoding RNA-seq, which exists in several fundamentally 
   similar flavors, the primary ones being TimeLapse-seq, SLAM-seq, and TUC-seq. The strategy involves feeding
-  cells with a metabolic label (typically 4-thiouridine, a.k.a. 4sU), extracting the RNA as you
+  cells with a metabolic label (typically 4-thiouridine, a.k.a. s^4^U), extracting the RNA as you
   normally would for RNA-seq, and then using a unique chemistry to convert the metabolic
   label into something that a sequencer will read as a different base (e.g., a cytosine analog
-  for 4sU). Thus, labeled and unlabeled reads can be separated bioinformatically
+  for s^4^U). Thus, labeled and unlabeled reads can be separated bioinformatically
   upon sequencing by the presence of mutations (e.g., U-to-C mutations). 
   
   
@@ -99,11 +99,11 @@ of each column:
 1. **sample**: This is the name of the sample from which the reads described in this
 row originated. Usually this will be some sort of character vector that you have
 defined.
-1. **TC**: Number of U-to-C mutations (assuming using 4sU as the metabolic label). Called TC because technically the data is T-to-C mutations in reverse-transcribed RNA
+1. **TC**: Number of U-to-C mutations (assuming using s^4^U as the metabolic label). Called TC because technically the data is T-to-C mutations in reverse-transcribed RNA
 1. **nT**: Number of Ts (Us in the RNA) in the sequencing read(s)
 1. **XF**: Name of the feature (gene, exon, etc.) that the read comes from. Kinetic parameters will be estimated for each feature, so this should represent the functional unit who's metabolic kinetics you are interested in. 
     * **XF** stands for "exonic feature", since in most cases you        should only be considering reads that map to definitively       exonic locations. Introns are typically rapidly turned          over and thus will be highly labeled species that will          bias estimates of mature transcript stability.
-1. **n**: Number of reads with identical data for the other 4 columns. For example, n = 3 in the 2nd row means that there are 3 reads from sample WT_cntl (WT cells not treated with s4U) that mapped to **XF** ENSG00000100242 (SUN2), had 0 T to C mutations, and had 11 Ts.
+1. **n**: Number of reads with identical data for the other 4 columns. For example, n = 3 in the 2nd row means that there are 3 reads from sample WT_cntl (WT cells not treated with s^4^U) that mapped to **XF** ENSG00000100242 (SUN2), had 0 T to C mutations, and had 11 Ts.
 
 The structure of the cB file most closely reflects the output of a pipeline for analyzing nucleotide recoding RNA-seq data developed by the Simon lab (available [here](https://bitbucket.org/mattsimon9/timelapse_pipeline/src/master/)), but consists of data provided by another published pipeline, SLAMDUNK (see the
 alleyoop dump function in SLAMDUNK).
@@ -142,7 +142,7 @@ They're the same, and they HAVE TO BE!! Each row of metadf corresponds to a samp
 
 Keeping in mind that each row represents a sample, the content of the columns are:
 
-1. **tl**: The length of the metabolic labeling feed. This can be in any units (the simulated data puts it in terms of minutes), but **if no 4sU was fed to a sample, tl must be 0 for that sample**. -4sU controls play an important role in all of the statistical models, so this is crucial to remember. While not technically necessary to run bakR, we always highly suggest including these controls.
+1. **tl**: The length of the metabolic labeling feed. This can be in any units (the simulated data puts it in terms of minutes), but **if no s^4^U was fed to a sample, tl must be 0 for that sample**. -s^4^U controls play an important role in all of the statistical models, so this is crucial to remember. While not technically necessary to run bakR, we always highly suggest including these controls.
 1. **Exp_ID**: Stands for "Experimental ID" and is a numerical ID that denotes which samples are from the reference condition and which experimental samples belong to the same "treatment". In this simulated dataset, there are two conditions, a reference condition (samples 1, 2, 3, and 7) and a single experimental condition (samples 4, 5, 6, and 8). **The reference condition must be given numerical ID 1** and **the experimental conditions must be given sequential numerical IDs starting from 2** (i.e., 2, 3, 4, ...). You can have more than one experimental sample, but all comparisons will only be done with respect to one reference sample.
     * If you want to compare two experimental samples, this can be done with the output of the models, though it will require a bit of post-hoc work on your end. More on this later...
 
@@ -156,7 +156,7 @@ bakRData <- bakRData(cB_small, metadf)
 
 ## Step 2: Fitting the Efficient Model
 
-bakR implements several blends of fundamentally similar statistical models to perform differential kinetic analysis. No matter your intentions though, you must first fit data with the most efficient model available. This model (implemented in the fast_analysis() function, so see ?fast_analysis for more details) estimates mutation rates and then finds the maximum likelihood estimate (MLE) for the fraction of sequencing reads from new RNA (new meaning RNA synthesized after the start of metabolic labeling) for each feature in each 4sU fed sample. The reason you have to run this model is that some part of its output will be used by every other model you can run with bakR. More on that later though; first, let's create a simulated dataset and fit it with the efficient model. Using a simulated dataset will allow us to compare the results to the ground truth and validate its accuracy. 
+bakR implements several blends of fundamentally similar statistical models to perform differential kinetic analysis. No matter your intentions though, you must first fit data with the most efficient model available. This model (implemented in the fast_analysis() function, so see ?fast_analysis for more details) estimates mutation rates and then finds the maximum likelihood estimate (MLE) for the fraction of sequencing reads from new RNA (new meaning RNA synthesized after the start of metabolic labeling) for each feature in each s^4^U fed sample. The reason you have to run this model is that some part of its output will be used by every other model you can run with bakR. More on that later though; first, let's create a simulated dataset and fit it with the efficient model. Using a simulated dataset will allow us to compare the results to the ground truth and validate its accuracy. 
 
 ```{r}
 # Simulate a nucleotide recoding dataset
@@ -178,7 +178,7 @@ Fit <- bakRFit(bakRData)
 
 bakRFit() is used here as a wrapper for two functions in bakR: cBprocess() and fast_analysis(). cBprocess() will extract and properly format the information needed for all statistical models from the bakRData object and fast_analysis() will perform the efficient analysis. This should take no more than a minute to run. Messages are printed along the way to keep you updated as to the progress of the analysis. 
 
-One of the most important messages is that regarding the estimated pnews and pold. The pnews are the estimated mutation rates of reads from new RNAs (new meaning RNAs synthesized after the start of 4sU labeling) in each sample (muts = Exp_ID, and reps = a numerical replicate ID that corresponds to the order replicates appear in the cB), and pold is a global estimate of the background mutation rate used in all analyses. The simulated mutation rates are 0.05 for new reads and 0.001 for old reads in all samples this simulation, so the estimates are pretty darn close. You can also input mutation rate estimates from elsewhere (say a run of the full Stan model implemented in bakR) to bakRFit():
+One of the most important messages is that regarding the estimated pnews and pold. The pnews are the estimated mutation rates of reads from new RNAs (new meaning RNAs synthesized after the start of s^4^U labeling) in each sample (muts = Exp_ID, and reps = a numerical replicate ID that corresponds to the order replicates appear in the cB), and pold is a global estimate of the background mutation rate used in all analyses. The simulated mutation rates are 0.05 for new reads and 0.001 for old reads in all samples this simulation, so the estimates are pretty darn close. You can also input mutation rate estimates from elsewhere (say a run of the full Stan model implemented in bakR) to bakRFit():
 
 ```{r}
 # Run efficient model with known mutation rates
@@ -301,7 +301,7 @@ If the second question is of interest, then I would suggest heading over to some
 
 1. Did you analyze a mix of technical and biological replicates? Technical replicates will have much less replicate
 to replicate variability than biological replicates, which will confuse and crash the models.
-1. Is your 4sU label time abnormally long or short? If you are getting warnings from running the MLE implementation 
+1. Is your s^4^U label time abnormally long or short? If you are getting warnings from running the MLE implementation 
 about logit(fn)s being at the lower or upper bounds, this could be the case. It means that there will be some extreme
 mutational data (e.g., 0 mutations in any sequencing read) that will make analysis with the MCMC implementation 
 more difficult. Try filtering out these extreme transcripts and rerunning bakR if this is the case.

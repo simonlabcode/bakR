@@ -61,7 +61,7 @@ Fit_c <- CorrectDropout(Fit)
 
 ```
 
-Dropout will lead to a correlation between the fraction new and the difference between +s4U and -s4U read counts. This trend and the model fit can be visualized as follows:
+Dropout will lead to a correlation between the fraction new and the difference between +s^4^U and -s^4^U read counts. This trend and the model fit can be visualized as follows:
 
 ```{r, fig.align='center'}
 # Correct dropout-induced biases
@@ -121,12 +121,12 @@ abline(0, 1, col = "red")
 
 As discussed in the Abstract for this vignette, dropout refers to the loss of metabolically labeled RNA, or reads from said RNA. Dropout correction in the context of bakR is specifically designed to address biases due to the loss of metabolically labeled RNA during library preparation. 
 
-bakR's strategy for correcting dropout involves formalizing a model for dropout, using that model to infer a parametric relationship between the biased fraction new estimate and the ratio of +s4U to -s4U read counts for a feature, and then fitting that model to data with nonlinear least squares. bakR's model of dropout makes several simplifying assumptions to ensure tractability of parameter estimation while still capturing important features of the process:
+bakR's strategy for correcting dropout involves formalizing a model for dropout, using that model to infer a parametric relationship between the biased fraction new estimate and the ratio of +s^4^U to -s^4^U read counts for a feature, and then fitting that model to data with nonlinear least squares. bakR's model of dropout makes several simplifying assumptions to ensure tractability of parameter estimation while still capturing important features of the process:
 
 1. The average number of reads that will come from an RNA feature is related to the fraction of sequenced RNA molecules derived from that feature.
 1. All labeled RNA is equally likely to get lost during library preparation, with the probability of losing a molecule of labeled RNA referred to as pdo.
 
-These assumptions lead to the following expressions for the expected number of sequencing reads coming from a feature (index i) in +s4U and -s4U NR-seq data:
+These assumptions lead to the following expressions for the expected number of sequencing reads coming from a feature (index i) in +s^4^U and -s^4^U NR-seq data:
 
 $$
 \begin{align}
@@ -191,7 +191,7 @@ $$
 
 \end{align}
 $$
-bakR's `CorrectDropout` function fits this predicted relationship between the ratio of +s4U to -s4U reads ($\text{Dropout}$) and the uncorrected fraction new estimates ($\theta_{\text{i}}^{\text{do}}$) to infer $pdo$. Corrected fraction new estimates can then be inferred from the relationship between $\theta_{\text{i}}^{\text{do}}$, $\text{pdo}$, and $\theta_{\text{i}}$. Finally, bakR redistributes read counts according to what the estimated relative proportions of each feature would have been if no dropout had existed. The key insight is that:
+bakR's `CorrectDropout` function fits this predicted relationship between the ratio of +s^4^U to -s^4^U reads ($\text{Dropout}$) and the uncorrected fraction new estimates ($\theta_{\text{i}}^{\text{do}}$) to infer $pdo$. Corrected fraction new estimates can then be inferred from the relationship between $\theta_{\text{i}}^{\text{do}}$, $\text{pdo}$, and $\theta_{\text{i}}$. Finally, bakR redistributes read counts according to what the estimated relative proportions of each feature would have been if no dropout had existed. The key insight is that:
 
 $$
 \begin{align}
@@ -222,7 +222,7 @@ $$
 $$
 
 ## Differences between bakR and grandR's strategies
-Florian Erhard's group was the first to implement a strategy for dropout correction in an NR-seq analysis tool (their R package [grandR](https://github.com/erhard-lab/grandR)). The strategy used by grandR is discussed [here](https://www.biorxiv.org/content/10.1101/2023.04.21.537786v1). In short, the dropout rate ($\text{pdo}$) is assumed to be related to the Spearman correlation ($\rho$) between the rank of a feature's fraction new(referred to by them as the new-to-total ratio, or NTR) and the log of the dropout metric discussed above (ratio of +s4U to -s4U read counts) as follows:
+Florian Erhard's group was the first to implement a strategy for dropout correction in an NR-seq analysis tool (their R package [grandR](https://github.com/erhard-lab/grandR)). The strategy used by grandR is discussed [here](https://www.biorxiv.org/content/10.1101/2023.04.21.537786v1). In short, the dropout rate ($\text{pdo}$) is assumed to be related to the Spearman correlation ($\rho$) between the rank of a feature's fraction new(referred to by them as the new-to-total ratio, or NTR) and the log of the dropout metric discussed above (ratio of +s^4^U to -s^4^U read counts) as follows:
 
 $$
 \begin{align}

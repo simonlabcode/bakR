@@ -62,14 +62,14 @@ QC_checks assesses four aspects of your data and bakR's model fit:
 
 ### Raw mutation rates
 
-The first thing that `QC_checks()` assesses is the average mutation rate in all sequencing reads from all analyzed samples. High quality data is characterized by mutation rates that are higher in all +s4U samples than in any -s4U samples. In addition, to a first order approximation the higher the mutation rates in +s4U samples and the lower the mutation rates in -s4U samples, the better. One output of QC_checks is a convenient plot of raw mutation rates to see what these look like for your data:
+The first thing that `QC_checks()` assesses is the average mutation rate in all sequencing reads from all analyzed samples. High quality data is characterized by mutation rates that are higher in all +s^4^U samples than in any -s^4^U samples. In addition, to a first order approximation the higher the mutation rates in +s^4^U samples and the lower the mutation rates in -s^4^U samples, the better. One output of QC_checks is a convenient plot of raw mutation rates to see what these look like for your data:
 
 ```{r, fig.align='center'}
 # Barplots of raw mutation rates
 QC$raw_mutrates
 ```
 
-In this simulated data, you can see that the +s4U raw mutation rates are all consistenly much higher than the -s4U mutation rates. The barplot also provides a quasi-arbitrary guide for what good +s4U and -s4U mutation rates are.
+In this simulated data, you can see that the +s^4^U raw mutation rates are all consistenly much higher than the -s^4^U mutation rates. The barplot also provides a quasi-arbitrary guide for what good +s^4^U and -s^4^U mutation rates are.
 
 ### Inferred mutation rates
 
@@ -88,7 +88,7 @@ Once again, this simulated data looks good!
 
 The third thing that `QC_checks()` assesses is the average estimated fraction new. The ability to accurately infer the degradation kinetics of a particular RNA feature is highly dependent on the relationship between the length of metabolic labeling and the half-life of the feature. More specifically, some really nice work from the Dieterich lab has shown that degradation rate constant estimates are more accurate for features with half-lives closer to the metabolic labeling time. If the label time is much longer (shorter) than a feature's half-live, than the feature will be almost completely labeled (unlabeled). The relationship between fraction new and degradation rate constant makes it so that at extreme fraction news (close to 0 or 1), the rate constant estimate is very sensitive to the exact fraction new estimate. This means that fraction news close to 0 or 1 yield more uncertain kinetic parameter estimates. 
 
-QC_checks() will output a message about the average estimated fraction new in each +s4U sample. You can also visualize the distribution of fraction new estimates as follows:
+QC_checks() will output a message about the average estimated fraction new in each +s^4^U sample. You can also visualize the distribution of fraction new estimates as follows:
 
 ```{r, fig.align='center'}
 # Barplots of inferred mutation rates
@@ -122,13 +122,11 @@ corrplot.mixed(QC$correlation_matrix,
 ```
 
 
-## Common challenges
+## Challenge to be aware of: inaccurate pnew and pold estimates
 
-`QC_checks` is designed to identify and flag challenges that bakR could run into when analyzing your data. In my experience, the single most important thing to check is the robustness of the new and old read mutation rate estimates (pnew and pold). In this section, I will show you what to look out for and how to address common problems.
+`QC_checks` is designed to identify and flag challenges that bakR could run into when analyzing your data. In my experience, the single most important thing to check is the robustness of the new and old read mutation rate estimates (pnew and pold). 
 
-### Causes of inaccurate pnew and pold estimates
-
-By default, bakR fits a simple binomial mixture with the method of maximum likelihood to estimate pnew. If you have -s4U data, then bakR uses the average mutation rate from that data as a global pold estimate. Otherwise, the default pold estimation strategy is the same as for pold. This strategy can go astray if most of the reads in your data are either new or old. Intuitively, if there are very few new (old) reads, it is very difficult for a model to infer what the mutation rate in new (old) reads is. For example, here is an analysis of simulated data where over 98% of reads are old:
+By default, bakR fits a simple binomial mixture with the method of maximum likelihood to estimate pnew. If you have -s^4^U data, then bakR uses the average mutation rate from that data as a global pold estimate. Otherwise, the default pold estimation strategy is the same as for pold. This strategy can go astray if most of the reads in your data are either new or old. Intuitively, if there are very few new (old) reads, it is very difficult for a model to infer what the mutation rate in new (old) reads is. For example, here is an analysis of simulated data where over 98% of reads are old:
 
 ```{r}
 # Seed for reproducibility
@@ -154,3 +152,92 @@ condition are both massive underestimates. Running `QC_checks` provides a sugges
 QC <- QC_checks(Fit)
 
 ```
+
+Note the message that says "I suggest rerunning bakRFit with FastRerun and StanRateEst = TRUE, particularly if some of the estimated mutation rates are oddly low (< 0.01) in a subset of samples". bakR has a second pnew and pold estimation strategy up it's sleeve, accessible via the `StanRateEst` parameter. Setting this to TRUE causes bakR to resort to using a fully Bayesian approach with the probabilistic programming language `Stan` working on the back end to fit a mixture model. This approach will take a bit longer to run, but can provide more accurate pnew and pold estimates:
+
+```{r}
+# Rerun with Stan-based pnew estimation
+  # This will take a couple minutes to run
+Fit_s <- bakRFit(Fit, FastRerun = TRUE, StanRateEst = TRUE)
+
+```
+
+It's incredibly diffulct to get perfect pnew estimates on this dataset, but this strategy certainly does a lot better! You can compare the resulting fraction new estimates in the troublesome samples:
+
+```{r, fig.align='center'}
+
+# Simulated ground truth
+sim_truth <- sim_data$sim_list
+
+# Features that made it past filtering
+XFs <- unique(Fit$Fast_Fit$Effects_df$XF)
+
+# Simulated logit(fraction news) from features making it past filtering
+true_fn <- sim_truth$Fn_rep_sim$Logit_fn[sim_truth$Fn_rep_sim$Feature_ID %in% XFs &
+                                           sim_truth$Fn_rep_sim$Exp_ID == 2]
+
+# Estimated logit(fraction news)
+est_fn <- Fit$Fast_Fit$Fn_Estimates$logit_fn[Fit$Fast_Fit$Fn_Estimates$Exp_ID == 2]
+
+# Compare estimate to truth
+plot(true_fn, est_fn, xlab = "True logit(fn)", ylab = "Estimated logit(fn)",
+     main = "Default pnew estimation",
+     xlim = c(-8, 6),
+     ylim = c(-8, 6))
+abline(0, 1, col = "red")
+
+# Estimated logit(fraction news)
+est_fn <- Fit_s$Fast_Fit$Fn_Estimates$logit_fn[Fit_s$Fast_Fit$Fn_Estimates$Exp_ID == 2]
+
+# Compare estimate to truth
+plot(true_fn, est_fn, xlab = "True logit(fn)", ylab = "Estimated logit(fn)",
+     main = "Alternative pnew estimation",
+     xlim = c(-8, 6),
+     ylim = c(-8, 6))
+abline(0, 1, col = "red")
+
+
+```
+
+Perhaps you have an alternative strategy for estimating pnew, or you are fairly confident as to what the mutation rate in new reads in your data is. In that case, your estimates can be passed directly to bakR no questions asked. You can either pass a vector of pnews for each sample (ordered as they appear in the bakRFit pnew/pold estimate message, so ordered by Experimental ID then Replicate ID), or just a single pnew if you think it is the same in all samples:
+
+```{r}
+# Rerun with Stan-based pnew estimation
+  # This will take a couple minutes to run
+Fit_u <- bakRFit(Fit, FastRerun = TRUE, pnew = 0.05)
+
+```
+
+As expected, this improves estimate accuracy, though not much more than setting `StanRateEst = TRUE` did:
+
+```{r, fig.align='center'}
+
+# Estimated logit(fraction news)
+est_fn <- Fit_u$Fast_Fit$Fn_Estimates$logit_fn[Fit_u$Fast_Fit$Fn_Estimates$Exp_ID == 2]
+
+# Compare estimate to truth
+plot(true_fn, est_fn, xlab = "True logit(fn)", ylab = "Estimated logit(fn)",
+     main = "User provided pnew",
+     xlim = c(-8, 6),
+     ylim = c(-8, 6))
+abline(0, 1, col = "red")
+
+
+```
+
+## Experimental suggestions
+
+Sometimes the solution to challenges you might face when analyzing NR-seq data with bakR can be overcome with alternative bakR settings. Sometimes though, experimental optimization can make a much bigger difference. Here are some general suggestions to consider when designing your next NR-seq experiment:
+
+1. Assess and optimize s^4^U incorporation in your cell line.
+    * You would be surprised how much cell line to cell line variability there is in readiness of metabolic label uptake. On one end of the spectrum there are HeLa cells that uptake label so ferociously that you often can use lower than normal s^4^U concentrations to avoid cytotoxic effects while still maintaining high incorporation rates. On the other end of the spectrum though, neuronal cell lines often uptake label at a much lower rate. 
+    * TAMRA dot blot assays are one way our lab inspects the incorporation rate in a new cell line. If incorporation rates are low, we test out using a higher concentration of metabolic label, while looking out for any signs of cytotoxicity
+1. **Don't user super short label times!!**
+    * There is an unfortunate tendency to treat NR-seq experiments like transcriptional assays. The thinking goes "label for a short enough time and the amount of new RNA is only influenced by synthesis kinetics". 
+    * This is fraught for many reasons. For one, a "short" label time in an NR-seq experiment still often means about an hour in mammalian cell lines. There is plenty of degradation of new RNA in that time frame though, meaning that the amount of new RNA is a function of both degradation and synthesis kinetics.
+    * In addition, by restricting yourself to analysis of only new RNA, you are throwing out the vast majority of your reads and significantly underpowering your analyses.
+    * Note, while there is some evidence in the literature that differential new RNA expression analysis can provide insights missed by differential total RNA expression analysis, the extent to which this is generally true is questionable. Evidence in favor of this conclusion could stem from inadequate normalization of the total RNA-seq data, causing global effects of a perturbation to be missed.
+    * Finally, one benefit of analyzing the fraction of reads that are new rather than the raw number of reads that are new is that the former is "internally normalized" The fraction new is the ratio of an RNA feature's new read counts in a sample to it's total read counts in that same sample. Thus, any scale factor that you need to apply to the sample-wide or feature-specific read counts cancel out when calculating this ratio. Analyzing fraction news (e.g., by relating these to degradation rate constants) thus avoids the challenge of normalizing RNA-seq read count data. This upside is eliminated when performing differential expression analysis with new RNA read counts, where normalization must once again be considered.  
+1. Rather, try and use a label time near the average half-life of RNAs that you are interested in studying. If you are hoping to probe all mRNAs, then note that in humans the average mRNA half-life is around 4 hours. If you are studying miRNAs, which have much longer half-lives, you will likely want to use a longer label time.
+    * Beware of toxicity effects of the metabolic label though! 
+    * Always include a -s^4^U control so that you can determine if there is anything significantly different about expression patterns in s^4^U treated cells (e.g., activation of stress response pathways). Be careful not to overinterpret effects like metabolic label containing RNA dropout (discussed in another vignette on the bakR website) as cytotoxicity effects! Correct read counts for dropout (with bakR's `CorrectDropout` function) and see if there are still major expression differences

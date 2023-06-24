@@ -142,7 +142,7 @@ FnPCA(Fit$Fast_Fit)
 This vignette provides the minimal amount of information to get up and running with bakR using fraction new estimates as input. If you would like a more thorough discussion of each step of this process, check out the long form version of this vignette ("Using GRAND-SLAM output/fn estimates in bakR"). In addition, there are a number of other vignettes the cover various topics not discussed in these intro vignettes:
 
 1. Differential synthesis rate analysis
-1. Correcting for loss of s4U RNA during library prepartion (a.k.a. dropout correction)
+1. Correcting for loss of s^4^U RNA during library prepartion (a.k.a. dropout correction)
 1. Troubleshooting analyses of NR-seq datasets
 1. Analyzing away from steady-state data
 
