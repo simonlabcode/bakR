@@ -62,32 +62,49 @@ QC_checks <- function(obj){
     avg_fns <- avg_fns$avg_fn
     
     if(all(dplyr::between(avg_fns, 0.2, 0.8))){
-      message("The average fraction news in all samples are between 0.2 and 0.8, suggesting an appropriate label time!")
+      message("The average fraction news in all samples are between 0.2 and 0.8, 
+              suggesting an appropriate label time!")
     }
     
     if(any(dplyr::between(avg_fns, 0.05, 0.2) )){
-      warning("The average fraction news are relatively low (between 0.05 and 0.2) in one or more samples, suggesting your label time was a bit short. This will limit bakR's ability to identify kinetic differences")
+      warning("The average fraction news are relatively low (between 0.05 and 
+              0.2) in one or more samples, suggesting your label time was a bit
+              short. This will limit bakR's ability to identify kinetic 
+              differences")
       
       if(!bakRFn){
-        message("Low fraction news impair bakR's default mutation rate estimation strategy. I suggest rerunning bakRFit with FastRerun and StanRateEst = TRUE, particularly if some of the estimated mutation rates are oddly low (< 0.01) in a subset of samples.")
+        message("Low fraction news impair bakR's default mutation rate estimation 
+                strategy. I suggest rerunning bakRFit with FastRerun and 
+                StanRateEst = TRUE, particularly if some of the estimated mutation 
+                rates are oddly low (< 0.01) in a subset of samples.")
       }
       
     }
     
     if(any(dplyr::between(avg_fns, 0.8, 0.95))){
-      warning("The average fraction news are relatively high (between 0.8 and 0.95) in one or more samples, suggesting your label time was a big long. This will limit bakR's ability to identify kinetic differences")
+      warning("The average fraction news are relatively high (between 0.8 and 
+              0.95) in one or more samples, suggesting your label time was a bit
+              long. This will limit bakR's ability to identify kinetic differences")
     }
     
     if(any(avg_fns < 0.05)){
-      warning("The average fraction news are extremely low (less than 0.05) in one or more samples, suggesting your label time was too short. It will be difficult for bakR to identify any kinetic differences.")
+      warning("The average fraction news are extremely low (less than 0.05) in 
+              one or more samples, suggesting your label time was too short. 
+              It will be difficult for bakR to identify any kinetic differences.")
       if(!bakRFn){
-        message("Low fraction news impair bakR's default mutation rate estimation strategy. I suggest rerunning bakRFit with FastRerun and StanRateEst = TRUE, particularly if some of the estimated mutation rates are oddly low (< 0.01) in a subset of samples.")
+        message("Low fraction news impair bakR's default mutation rate estimation 
+                strategy. I suggest rerunning bakRFit with FastRerun and 
+                StanRateEst = TRUE, particularly if some of the estimated 
+                mutation rates are oddly low (< 0.01) in a subset of samples.")
       }
       Bad_data <- TRUE
     }
     
     if(any(avg_fns > 0.95)){
-      warning("The average fraction news are extremely high (greater than 0.95) in one or more samples, suggesting your label time was too long. It will be difficult for bakR to identify any kinetic differences.")
+      warning("The average fraction news are extremely high (greater than 
+              0.95) in one or more samples, suggesting your label time was 
+              too long. It will be difficult for bakR to identify any kinetic 
+              differences.")
       Bad_data <- TRUE
     }
     
@@ -183,7 +200,9 @@ QC_checks <- function(obj){
     message(paste0(c("logit(fn) correlations for each pair of replicates are:", utils::capture.output(fn_cors)), collapse = "\n"))
     
     if(any(fn_cors$correlation < 0.7)){
-      warning("logit(fraction new) correlation is low in one or more samples. Did you properly identify replicates in the metadf of your bakRData object?")
+      warning("logit(fraction new) correlation is low in one or more samples. 
+              Did you properly identify replicates in the metadf of your bakRData 
+              object?")
     }else{
       message("logit(fn) correlations are high, suggesting good reproducibility!")
     }
@@ -209,9 +228,12 @@ QC_checks <- function(obj){
     
     ### Make suggestions
     if(Bad_data){
-      message("Some aspects of your data may limit bakR's ability to detect differential kinetics. Check warning messages for details.")
+      message("Some aspects of your data may limit bakR's ability to detect 
+              differential kinetics. Check warning messages for details.")
     }else{
-      message("I suggest running the Hybrid implementation next. This can be done with bakRFit(Fit, HybridFit = TRUE), where Fit is your bakRFit object.")
+      message("I suggest running the Hybrid implementation next. This can be 
+              done with bakRFit(Fit, HybridFit = TRUE), where Fit is your 
+              bakRFit object.")
     }
     
     glist <- list(correlation_plots = fn_assessment$correlation_plots,
@@ -238,14 +260,18 @@ QC_checks <- function(obj){
     }
     
     if(any(dplyr::between(mutrates$pnew, 0.0069, 0.01))){
-      warning("Mutation rates in new reads are below 1% one or more samples. This significanlty reduces bakR's ability to identify differential kinetics.")
+      warning("Mutation rates in new reads are below 1% one or more samples. 
+              This significanlty reduces bakR's ability to identify differential 
+              kinetics.")
       
       MCMC_next <- TRUE
       
     }
     
     if(any(mutrates$pnew < 0.007)){
-      warning("Mutation rates in new reads are below 0.7% in one or more samples. It is very difficult to identify kinetic differences with such low mutation rates.")
+      warning("Mutation rates in new reads are below 0.7% in one or more samples. 
+              It is very difficult to identify kinetic differences with such low
+              mutation rates.")
       
       Bad_data <- TRUE
     }
@@ -254,9 +280,11 @@ QC_checks <- function(obj){
     if(all(mutrates$pold < 0.004)){
       message("Background mutation rate looks good!")
     }else if(all(mutrates$pold < 0.01)){
-      warning("Background mutation rate is a bit high. Did you account for SNPs when counting mutations?")
+      warning("Background mutation rate is a bit high. Did you account for SNPs 
+              when counting mutations?")
     }else{
-      warning("Background mutation rate is high (>= 1%). Did you properly identify -s4U control samples in the metadf of your bakRData object?")
+      warning("Background mutation rate is high (>= 1%). Did you properly 
+              identify -s4U control samples in the metadf of your bakRData object?")
       
       Bad_data <- TRUE
     }
@@ -269,11 +297,15 @@ QC_checks <- function(obj){
     
     ### Make suggestions
     if(Bad_data){
-      message("Some aspects of your data may limit bakR's ability to detect differential kinetics. Check warning messages for details.")
+      message("Some aspects of your data may limit bakR's ability to detect 
+              differential kinetics. Check warning messages for details.")
     }else if(MCMC_next){
-      message("Given your low mutation rates, I suggest running the MCMC implementation next. This can be done with bakRFit(Fit, StanFit = TRUE), where Fit is your bakRFit object.")
+      message("Given your low mutation rates, I suggest running the MCMC 
+              implementation next. This can be done with bakRFit(Fit, StanFit = TRUE), 
+              where Fit is your bakRFit object.")
     }else{
-      message("I suggest running the Hybrid implementation next. This can be done with bakRFit(Fit, HybridFit = TRUE), where Fit is your bakRFit object.")
+      message("I suggest running the Hybrid implementation next. This can be done 
+              with bakRFit(Fit, HybridFit = TRUE), where Fit is your bakRFit object.")
     }
     
     

@@ -121,3 +121,36 @@ corrplot.mixed(QC$correlation_matrix,
                addgrid.col = "black", tl.col = "black")
 ```
 
+
+## Common challenges
+
+`QC_checks` is designed to identify and flag challenges that bakR could run into when analyzing your data. In my experience, the single most important thing to check is the robustness of the new and old read mutation rate estimates (pnew and pold). In this section, I will show you what to look out for and how to address common problems.
+
+### Causes of inaccurate pnew and pold estimates
+
+By default, bakR fits a simple binomial mixture with the method of maximum likelihood to estimate pnew. If you have -s4U data, then bakR uses the average mutation rate from that data as a global pold estimate. Otherwise, the default pold estimation strategy is the same as for pold. This strategy can go astray if most of the reads in your data are either new or old. Intuitively, if there are very few new (old) reads, it is very difficult for a model to infer what the mutation rate in new (old) reads is. For example, here is an analysis of simulated data where over 98% of reads are old:
+
+```{r}
+# Seed for reproducibility
+set.seed(321)
+
+# Simulate a nucleotide recoding dataset
+sim_data <- Simulate_bakRData(1000, nreps = 2, fn_mean = -4)
+  # This will simulate 1000 features, 2 experimental conditions,
+  # and 2 replicates for each experimental condition
+  # The average logit(fn) will be -4, which corresponds to an average fn of just under 0.02.
+
+# Run the efficient model
+  # Check the pnew estimates, which should all be around 0.05
+Fit <- bakRFit(sim_data$bakRData)
+
+```
+
+While the pnew estimates in one of the experimental conditions is alright, the estimates for the other
+condition are both massive underestimates. Running `QC_checks` provides a suggestion though
+
+```{r}
+# Run QC_checks and read messages
+QC <- QC_checks(Fit)
+
+```
