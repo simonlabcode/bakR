@@ -330,8 +330,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if(!is.numeric(prior_weight)){
     stop("prior_weight must be numeric")
   }else if(prior_weight < 1){
-    stop("prior_weight must be >= 1. The larger the value, the more each feature's fraction new uncertainty estimate is shrunk towards the
-         log10(read counts) vs. log(uncertainty) regression line.")
+    stop("prior_weight must be >= 1. The larger the value, the more each 
+    feature's fraction new uncertainty estimate is shrunk towards the
+    log10(read counts) vs. log(uncertainty) regression line.")
   }
 
 
@@ -348,7 +349,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if(!all(is.numeric(c(lower, upper)))){
     stop("lower and upper must be numeric")
   }else if(upper < lower){
-    stop("upper must be > lower. Upper and lower represent the upper and lower bounds used by stats::optim for MLE")
+    stop("upper must be > lower. Upper and lower represent the upper and lower 
+         bounds used by stats::optim for MLE")
   }
 
   ## Check mut_reg
@@ -364,7 +366,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if(!is.numeric(p_mean)){
     stop("p_mean must be numeric")
   }else if(abs(p_mean) > 2){
-    warning("p_mean is far from 0. This might bias estimates considerably; tread lightly.")
+    warning("p_mean is far from 0. This might bias estimates considerably; 
+            tread lightly.")
   }
 
   ## Check p_sd
@@ -373,7 +376,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   }else if(p_sd <= 0){
     stop("p_sd must be greater than 0")
   }else if(p_sd < 0.5){
-    warning("p_sd is pretty small. This might bias estimates considerably; tread lightly.")
+    warning("p_sd is pretty small. This might bias estimates considerably; 
+            tread lightly.")
   }
 
   ## Check StanRate
@@ -387,7 +391,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   }else if(null_cutoff < 0){
     stop("null_cutoff must be 0 or positive")
   }else if(null_cutoff > 2){
-    warning("You are testing against a null hypothesis |L2FC(kdeg)| greater than 2; this might be too conservative")
+    warning("You are testing against a null hypothesis |L2FC(kdeg)| greater 
+            than 2; this might be too conservative")
   }
 
 
@@ -414,7 +419,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     
     # Make sure package for clustering is installed
     if (!requireNamespace("Ckmeans.1d.dp", quietly = TRUE))
-      stop("To use kmeans estimation strategy requires 'Ckmeans.1d.dp' package which cannot be found. Please install 'Ckmeans.1d.dp' using 'install.packages('Ckmeans.1d.dp')'.")
+      stop("To use kmeans estimation strategy requires 'Ckmeans.1d.dp' package 
+           which cannot be found. Please install 'Ckmeans.1d.dp' using 
+           'install.packages('Ckmeans.1d.dp')'.")
 
     # Filter out -s4U data, wont' use that here
     df <- df[df$type == 1,]
@@ -568,7 +575,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                                          n = n))
 
         if(sum(!is.finite(df_check$fn)) > 0){
-          stop("The binomial log-likelihood is not computable for some of your data, meaning the default mutation rate estimation strategy won't work. Rerun bakRFit with StanRateEst set to TRUE to remedy this problem.")
+          stop("The binomial log-likelihood is not computable for some of your 
+               data, meaning the default mutation rate estimation strategy won't 
+               work. Rerun bakRFit with StanRateEst set to TRUE to remedy this problem.")
         }
 
         rm(df_check)
@@ -719,7 +728,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                                            n = n))
 
           if(sum(!is.finite(df_check$fn)) > 0){
-            stop("The binomial log-likelihood is not computable for some of your data, meaning the default mutation rate estimation strategy won't work. Rerun bakRFit with StanRateEst set to TRUE to remedy this problem.")
+            stop("The binomial log-likelihood is not computable for some of your 
+                 data, meaning the default mutation rate estimation strategy 
+                 won't work. Rerun bakRFit with StanRateEst set to TRUE to remedy 
+                 this problem.")
           }
 
           rm(df_check)
@@ -1579,7 +1591,8 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
     
     class(fast_list) <- "FastFit"
     
-    message("All done! Run QC_checks() on your bakRFit object to assess the quality of your data and get recommendations for next steps.")
+    message("All done! Run QC_checks() on your bakRFit object to assess the 
+            quality of your data and get recommendations for next steps.")
     
   }else{
     # Convert to tibbles because I like tibbles better
@@ -1589,7 +1602,8 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
     
     class(fast_list) <- "FastFit"
     
-    message("All done! Run QC_checks() on your bakRFit object to assess the quality of your data and get recommendations for next steps.")
+    message("All done! Run QC_checks() on your bakRFit object to assess the 
+            quality of your data and get recommendations for next steps.")
     
   }
   
