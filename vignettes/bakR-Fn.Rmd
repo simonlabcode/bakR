@@ -3,7 +3,7 @@ title: "GRAND-SLAM output/fn estimates as bakR input"
 author: "Isaac Vock"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{bakRFn-Quickstart}
+  %\VignetteIndexEntry{bakR-Fn}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 abstract: >

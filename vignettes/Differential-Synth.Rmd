@@ -3,7 +3,7 @@ title: "Differential synthesis analysis with bakR and DESeq2"
 author: "Isaac Vock"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Further-Analyses}
+  %\VignetteIndexEntry{Differential-Synth}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
