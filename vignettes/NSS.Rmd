@@ -109,7 +109,7 @@ bakRData <- sim_data$bakRData
 sim_truth <- sim_data$sim_list
 
 ## Run the efficient model
-Fit <- bakRFit(bakRData, NSS = TRUE)
+Fit <- bakRFit(bakRData)
 
 
 ```
@@ -176,9 +176,10 @@ reso <- as.data.frame(reso)
 
 # Make data frame
 DE_df <- data.frame(XF = row.names(reso),
-                    log2FoldChange = reso$log2FoldChange,
-                    stat = reso$stat,
-                    padj = reso$padj)
+                    L2FC_RNA = reso$log2FoldChange,
+                    DE_score = reso$stat,
+                    DE_pval = reso$pval,
+                    DE_padj = reso$padj)
 
 ```
 
@@ -186,7 +187,7 @@ We are ready to perform the steady-state independent analysis now!
 
 ```{r, results = 'hide'}
 
-NSSheatmap <- NSSHeat(Fit, DE_df)
+NSS <- NSSHeat2(Fit, DE_df)
 
 ```
 
@@ -209,7 +210,7 @@ col <- c("#053061", "#2166AC", "#4393C3", "#92C5DE",
          "#D6604D", "#B2182B", "#67001F")
 
 # NSS heatmap
-pheatmap(NSSheatmap, cluster_cols = FALSE, show_rownames = FALSE, color = col)
+pheatmap(NSS$heatmap_df, cluster_cols = FALSE, show_rownames = FALSE, color = col)
 
 ```
 
