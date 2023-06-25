@@ -480,8 +480,8 @@ DissectMechanism <- function(bakRFit,
   heatmap_df <- heatmap_df[order(heatmap_df$Mech_score),]
 
   # Compile output
-  nss_list <- list(heatmap_df = heatmap_df,
-                   NSS_stats = test_stat)
+  nss_list <- list(Heatmap_df = heatmap_df,
+                   Mechanism_df = test_stat)
   
   return(nss_list)
 

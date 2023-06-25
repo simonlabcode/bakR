@@ -9,7 +9,7 @@ vignette: >
 abstract: >
   An alternative title considered for the [bakR manuscript](https://rnajournal.cshlp.org/content/29/7/958.abstract) was "Dissecting the mechanisms of gene expression regulation with bakR". While the actual title is a very accurate/literal description of the task bakR accomplishes (performing differential stability/synthesis analyses), the rejected title better captures the motivation of developing bakR. Differential expression analysis with regular RNA-seq + tools like DESeq2, edgeR, limma, etc. allows for the identification of regulation. NR-seq (TimeLapse-seq, SLAM-seq, TUC-seq, etc.) + bakR opens the door the determining whether observed regulation was transcriptionally or post-transcriptionally driven.
   
-   In this vignette, I will discuss functionality introduced in version 1.0.0 of bakR that explicitly facilitates the kind of mechanistic dissection that inspired bakR's development. Implemented in the `DissectMechanism` function,
+   In this vignette, I will discuss functionality introduced in version 1.0.0 of bakR that explicitly facilitates the kind of mechanistic dissection that inspired bakR's development. Implemented in the `DissectMechanism` function, bakR takes a statistical approach to assessing how likely any RNA feature is to be undergoing transcriptional or post-transcriptional regulation. I will start with a practical discussion of how to use `DissectMechanism` and interpret its output. I will commense with a deeper dive into the details of what `DissectMechanism` does.
 
 ---
 
@@ -25,8 +25,6 @@ knitr::opts_chunk$set(
 
 
 ## Introduction
-
-Welcome! This vignette discusses how to perform differential synthesis analysis. It involves combining the outpu of bakR with that of a differential expression anlaysis software. The assumption is that at this point you have worked through the Getting-Started vignette. If that is not the case, I would highly suggest starting there and then coming back here once you're familiar with the standard use cases of bakR. 
 
 These are the packages you are going to have to install and load in order to do everything presented in this vignette:
 
@@ -46,6 +44,156 @@ library(stats)
 # Set the seed for reproducibility
 set.seed(123)
 ```
+
+## Mechanistic dissections of gene expression regulation with bakR + DESeq2
+
+The goal of the `DissectMechanism` function discussed in this vignette is to identify the **major** kinetic mechanism of any differential expression observed. The analysis strategy is as follows:
+
+1. Compare NR-seq with bakR (but with one small parameter tweak)
+1. Perform differential expression analysis
+1. Use the DissectMechanism() function in bakR to combine the results and come to a mechanistic conclusion.
+
+Simple enough! As usual, let's start out by simulating some data. To make it interesting though, we'll simulate a mix of synthesis and degradation changes:
+
+```{r}
+# Simulate a nucleotide recoding dataset
+sim_data <- Simulate_bakRData(1000,
+                         num_kd_DE = c(0, 200),
+                         num_ks_DE = c(0, 400))
+  # This will simulate 1000 features, 2 experimental conditions
+  # and 3 replicates for each experimental condition.
+  # See ?Simulate_bakRData for details regarding tunable parameters
+
+# Extract simulated bakRData object
+bakRData <- sim_data$bakRData
+
+# Extract simualted ground truths
+sim_truth <- sim_data$sim_list
+
+## Run the efficient model
+Fit <- bakRFit(bakRData)
+
+
+```
+
+What's interesting about this simulation is that all transcripts which are differentially stable are also differentially synthesized, so our goal is to identify the major source of kinetic regulation.
+
+Next, we can perform differential expression analysis just as described in the differential synthesis analysis vignette:
+
+```{r}
+
+# Get the count matrix from bakR
+Counts <- Fit$Data_lists$Count_Matrix
+
+# Experimental conditions for each sample
+# There are 6 s4U treated samples (3 replicates of each condition)
+# In addition, there are 2 -s4U control samples (1 for each condition)
+
+## s4U conditions
+# 1st three samples are reference (ref) samples
+# Next three samples are experimental (exp) samples
+conditions_s4U <- as.factor(rep(c("ref", "exp"), each = 3))
+
+## -s4U control conditions
+# 1st sample is reference, next is experimental
+conditions_ctl <- as.factor(c("ref", "exp"))
+
+# Combined s4U and -s4U control conditions
+conditions <- c(conditions_s4U, conditions_ctl)
+
+# Make the colData input for DESeq2
+colData <- data.frame(conditions = conditions)
+rownames(colData) <- colnames(Counts)
+
+# Make DESeq2 data object
+dds <- DESeqDataSetFromMatrix(countData = Counts,
+                              colData = colData,
+                              design = ~conditions)
+
+# Fit DESeq2 model
+ddso <- DESeq(dds)
+
+# Extract results of experimental vs. reference comparison
+reso <- results(ddso, contrast = c("conditions", "exp", "ref"))
+
+```
+
+We're almost ready to use bakR's special DissectMechanism() function. DissectMechanism() has two required inputs:
+
+1. A bakR fit object
+1. A data frame containing differential expression analysis results
+
+In particular, the differential expression data frame must contain five columns named as follows:
+
+1. **XF**: Name of the feature (gene, exon, etc.) that the read comes from.
+1. **L2FC_RNA**: L2FC(RNA) estimated by the differential expression analysis.
+1. **DE_score**: L2FC(RNA)/se[L2FC(RNA)]; so like a differential expression z-score.
+1. **DE_pval**: P-value from differential expression analysis.
+1. **DE_padj**: Multiple test adjusted p-value from differential expression analysis.
+
+Conveniently, our DESeq2 results object has all the information we need! We can make the differential expression data frame like so:
+
+```{r, results = 'hide'}
+# Convert to data frame
+reso <- as.data.frame(reso)
+
+# Make data frame
+DE_df <- data.frame(XF = row.names(reso),
+                    L2FC_RNA = reso$log2FoldChange,
+                    DE_score = reso$stat,
+                    DE_pval = reso$pval,
+                    DE_padj = reso$padj)
+
+```
+
+We are ready to perform a mechanistic dissection now!
+
+```{r, results = 'hide'}
+
+Mechs <- DissectMechanism2(Fit, DE_df)
+
+```
+
+See ?DissectMechanism for information about the additional parameters that can be specified. Most importantly, there is the bakRModel parameter, which tells DissectMechanism which fit to use in the bakRFit model, if multiple exist. The default setting is to just use the MLE fit, which should always be there. 
+
+So what is in the output of DissectMechanism? Two data frames:
+
+1. Heatmap_df: A data frame meant to facilitate visualization of results as a heatmap.
+1. Mechanism_df: A data frame with statistical assessments of likely mechanisms of observed differential expression.
+
+Heatmap_df has the three following columns:
+
+1. **bakR_score**: The logit(fraction new) change z-score from bakR
+1. **DE_score**: The L2FC(RNA) z-score from DESeq2
+1. **Mech_score**: A mechanism z-score that quantifies the extent to which significant changes in gene expression are synthesis or degradation driven. Synthesis driven = positive numbers; degradation driven = negative numbers.
+
+You can quickly make the heatmap using the lovely pheatmap package:
+
+```{r, fig.align='center'}
+
+# Nice red to blue color gradient
+  # Feel free to use any coloring your heart desires
+col <- c("#053061", "#2166AC", "#4393C3", "#92C5DE", 
+         "#D1E5F0", "#F7F7F7", "#FDDBC7", "#F4A582", 
+         "#D6604D", "#B2182B", "#67001F")
+
+# NSS heatmap
+pheatmap(Mechs$Heatmap_df, cluster_cols = FALSE, show_rownames = FALSE, color = col)
+
+```
+
+Each row in the data frame output by DissectMechanism corresponds to a feature that was differentially expressed in the experimental condition. Differential expression is defined as a `DE_padj` less than the `DE_cutoff` parameter in `DissectMechanism`. Features that were not identified as differentially expressed can either be the result of an underpowered analysis (i.e., they really are differentially expressed in the two conditions but more replicates/sequencing depth would have been required to identify this confidently) or of complicated concomitant modulation of synthesis and degradation kinetics. This makes non-differentially expressed features more difficult to analyze with this strategy, which is why bakR focuses on the differentially expressed features.
+
+Mechanism_df provides all of the information present in Heatmap_df, and then some, for all features, even those that are not "significantly differentially expressed". The columns of Mechanism_df are as follows:
+
+1.
+1.
+1.
+1.
+1.
+1.
+1.
+
 
 ## Going beyond the steady-state assumption
 
@@ -89,134 +237,3 @@ here is a diagram that covers the range of possible kinetic mechanisms and concl
 
 ![Diagram of NR-seq NSS analysis strategy.](NSS_Analysis.png)
 
-### Performing steady-state independent comparisons with bakR + DESeq2
-The goal of the steady-state independent analysis that I am putting forth is to identify the **major** kinetic mechanism of any differential expression observed. The analysis strategy is as follows:
-
-1. Compare NR-seq with bakR (but with one small parameter tweak)
-1. Perform differential expression analysis
-1. Use the NSSHeat() function in bakR to combine the results and come to a mechanistic conclusion.
-
-Simple enough! As usual, let's start out by simulating some data. Unfortunately, since non-steady state (NSS) is such a broad term, there is no NSS simulation option. That's okay though, as the analysis strategy will still work even if the steady-state assumption isn't invalid. To make it interesting though, we'll simulate a mix of synthesis and degradation changes:
-
-```{r}
-# Simulate a nucleotide recoding dataset
-sim_data <- Simulate_bakRData(1000,
-                         num_kd_DE = c(0, 200),
-                         num_ks_DE = c(0, 200))
-  # This will simulate 1000 features, 2 experimental conditions
-  # and 3 replicates for each experimental condition.
-  # See ?Simulate_bakRData for details regarding tunable parameters
-
-# Extract simulated bakRData object
-bakRData <- sim_data$bakRData
-
-# Extract simualted ground truths
-sim_truth <- sim_data$sim_list
-
-## Run the efficient model
-Fit <- bakRFit(bakRData)
-
-
-```
-
-What's interesting about this simulation is that all transcripts which are differentially stable are also differentially synthesized, so our goal is to identify the major source of kinetic regulation. Also, note the change to the bakRFit() call; a parameter called NSS is set to TRUE. This will make it so that bakR compares logit(fraction new)s rather than log(kdeg)s, since the relationship between fraction new and $kdeg$ may no longer hold.
-
-Next, we can perform differential expression analysis just as we did before:
-
-```{r, results = 'hide'}
-
-# Get the count matrix from bakR
-Counts <- Fit$Data_lists$Count_Matrix
-
-# Experimental conditions for each sample
-# There are 6 s4U treated samples (3 replicates of each condition)
-# In addition, there are 2 -s4U control samples (1 for each condition)
-
-## s4U conditions
-# 1st three samples are reference (ref) samples
-# Next three samples are experimental (exp) samples
-conditions_s4U <- as.factor(rep(c("ref", "exp"), each = 3))
-
-## -s4U control conditions
-# 1st sample is reference, next is experimental
-conditions_ctl <- as.factor(c("ref", "exp"))
-
-# Combined s4U and -s4U control conditions
-conditions <- c(conditions_s4U, conditions_ctl)
-
-# Make the colData input for DESeq2
-colData <- data.frame(conditions = conditions)
-rownames(colData) <- colnames(Counts)
-
-# Make DESeq2 data object
-dds <- DESeqDataSetFromMatrix(countData = Counts,
-                              colData = colData,
-                              design = ~conditions)
-
-# Fit DESeq2 model
-ddso <- DESeq(dds)
-
-# Extract results of experimental vs. reference comparison
-reso <- results(ddso, contrast = c("conditions", "exp", "ref"))
-
-```
-
-We're almost ready to use bakR's special NSSHeat() function. NSSHeat() has two required inputs:
-
-1. A bakR fit object (preferably fit with NSS set to TRUE)
-1. A data frame containing differential expression analysis results
-
-In particular, the differential expression data frame must contain four columns named as follows:
-
-1. **XF**: Name of the feature (gene, exon, etc.) that the read comes from.
-1. **log2FoldChange**: L2FC(RNA) estimated by the differential expression analysis.
-1. **stat**: L2FC(RNA)/se[L2FC(RNA)]; so like a differential expression z-score.
-1. **padj**: Multiple test adjusted p-value from differential expression analysis.
-
-Conveniently, our DESeq2 results object has all the information we need! We can make the differential expression data frame like so:
-
-```{r, results = 'hide'}
-# Convert to data frame
-reso <- as.data.frame(reso)
-
-# Make data frame
-DE_df <- data.frame(XF = row.names(reso),
-                    L2FC_RNA = reso$log2FoldChange,
-                    DE_score = reso$stat,
-                    DE_pval = reso$pval,
-                    DE_padj = reso$padj)
-
-```
-
-We are ready to perform the steady-state independent analysis now!
-
-```{r, results = 'hide'}
-
-NSS <- NSSHeat2(Fit, DE_df)
-
-```
-
-See ?NSSHeat for information about the additional parameters that can be specified. Most importantly, there is the bakRModel parameter, which tells NSSHeat which fit to use in the bakRFit model, if multiple exist. The default setting is to just use the MLE fit, which should always be there. 
-
-So what can you do with the output of NSSHeat? Well, as the name implies, this function is specifically designed to help you make heatmaps. NSSheatmap will have three columns:
-
-1. **bakR_score**: The logit(fraction new) change z-score from bakR
-1. **DE_score**: The L2FC(RNA) z-score from DESeq2
-1. **Mech_score**: A mechanism z-score that quantifies the extent to which significant changes in gene expression are synthesis or degradation driven. Synthesis driven = positive numbers; degradation driven = negative numbers.
-
-You can quickly make the heatmap using the lovely pheatmap package:
-
-```{r, fig.align='center'}
-
-# Nice red to blue color gradient
-  # Feel free to use any coloring your heart desires
-col <- c("#053061", "#2166AC", "#4393C3", "#92C5DE", 
-         "#D1E5F0", "#F7F7F7", "#FDDBC7", "#F4A582", 
-         "#D6604D", "#B2182B", "#67001F")
-
-# NSS heatmap
-pheatmap(NSS$heatmap_df, cluster_cols = FALSE, show_rownames = FALSE, color = col)
-
-```
-
-Each row in the data frame output by NSSHeat corresponds to a feature that was differentially expressed in the experimental condition. Features that were not identified as differentially expressed can either be the result of an underpowered analysis (i.e., they really are differentially expressed in the two conditions but more replicates/sequencing depth would have been required to identify this confidently) or of complicated concomitant modulation of synthesis and degradation kinetics. This makes non-differentially expressed features more difficult to analyze with this strategy, which is why bakR focuses on the differentially expressed features.
