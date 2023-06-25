@@ -51,6 +51,9 @@ NSSHeat <- function(bakRFit,
                     Exp_ID = 2,
                     lid = 4){
 
+  .Deprecated("DissectMechanism")
+  
+  
   bakRModel <- match.arg(bakRModel)
 
 
@@ -212,17 +215,17 @@ NSSHeat <- function(bakRFit,
 #' a dataframe that can be passed to pheatmap::pheatmap(). This heatmap will display the
 #' result of a steady-state quasi-independent analysis of NR-seq data.
 #'
-#' Unlike NSSHeat, NSSHeat2 uses a mechanism scoring function that is not discontinuous
+#' Unlike NSSHeat, DissectMechanism uses a mechanism scoring function that is not discontinuous
 #' as the "degradation driven" vs. "synthesis driven" boundary. Instead, the score
 #' approaches 0 as the function approaches the boundary from either side.
 #' 
-#' In addition, NSSHeat2 now defines a null model for the purpose of p value calculation using
+#' In addition, DissectMechanism now defines a null model for the purpose of p value calculation using
 #' the mechanism score. Under the null hypothesis, the mechanism score is the product of two
 #' normal distributions with unit variance, one which has a non-zero mean. Simulation is used
 #' to estimate the integral of this distribution, and the number of draws (which determines the
 #' precision of the p value estimate) is determined by the \code{sims} parameter.
 #' 
-#' NSSHeat2 also provides "meta-analysis p values", which can be interpreted as the p-value that
+#' DissectMechanism also provides "meta-analysis p values", which can be interpreted as the p-value that
 #' a particular RNA feature is observing differential expression or differential kinetics (or both).
 #' This meta_pval is estimated using Fisher's method for meta analysis.
 #'
@@ -262,13 +265,13 @@ NSSHeat <- function(bakRFit,
 #' DE_df$DE_padj <- 2*stats::p.adjust(DE_df$DE_pval, method = "BH")
 #'
 #' # perform NSS analysis
-#' NSS_analysis <- NSSHeat2(bakRFit = Fit,
+#' NSS_analysis <- DissectMechanism(bakRFit = Fit,
 #'                DE_df = DE_df,
 #'                bakRModel = "MLE")
 #'
 #' }
 #' @export
-NSSHeat2 <- function(bakRFit,
+DissectMechanism <- function(bakRFit,
                      DE_df,
                      bakRModel = c("MLE", "Hybrid", "MCMC"),
                      DE_cutoff = 0.05,

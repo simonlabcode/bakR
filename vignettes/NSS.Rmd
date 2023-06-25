@@ -1,11 +1,16 @@
 ---
-title: "Differential synthesis analysis with bakR and DESeq2"
+title: "Steady-state quasi-independent mechanistic investigations"
 author: "Isaac Vock"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{NSS}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+abstract: >
+  An alternative title considered for the [bakR manuscript](https://rnajournal.cshlp.org/content/29/7/958.abstract) was "Dissecting the mechanisms of gene expression regulation with bakR". While the actual title is a very accurate/literal description of the task bakR accomplishes (performing differential stability/synthesis analyses), the rejected title better captures the motivation of developing bakR. Differential expression analysis with regular RNA-seq + tools like DESeq2, edgeR, limma, etc. allows for the identification of regulation. NR-seq (TimeLapse-seq, SLAM-seq, TUC-seq, etc.) + bakR opens the door the determining whether observed regulation was transcriptionally or post-transcriptionally driven.
+  
+   In this vignette, I will discuss functionality introduced in version 1.0.0 of bakR that explicitly facilitates the kind of mechanistic dissection that inspired bakR's development. Implemented in the `DissectMechanism` function,
+
 ---
 
 ---
