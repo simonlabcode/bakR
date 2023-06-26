@@ -140,7 +140,7 @@ FnPCA2 <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), log_kdeg = FALSE){
     }else if(Model == "Hybrid"){
       stop("log(kdeg) PCA plots are only compatible with MLE implementation")
     }else{
-      logit_fn_df <- obj$Fn_Estimates[,c("log_kdeg", "Feature_ID", "Exp_ID", "Replicate", "sample")]
+      logit_fn_df <- obj$Fast_Fit$Fn_Estimates[,c("log_kdeg", "Feature_ID", "Exp_ID", "Replicate", "sample")]
       colnames(logit_fn_df) <- c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")
     }
   }else{
@@ -151,7 +151,7 @@ FnPCA2 <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), log_kdeg = FALSE){
       logit_fn_df <- obj$Hybrid_Fit$Fn_Estimates[,c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")]
       
     }else{
-      logit_fn_df <- obj$Fn_Estimates[,c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")]
+      logit_fn_df <- obj$Fast_Fit$Fn_Estimates[,c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")]
       
     }
   }
@@ -161,10 +161,10 @@ FnPCA2 <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), log_kdeg = FALSE){
       stop("log(kdeg) PCA is curently only compatible with Fast_Fit.")
     }
     
-    logit_fn_df <- obj$Fn_Estimates[,c("log_kdeg", "Feature_ID", "Exp_ID", "Replicate", "sample")]
+    logit_fn_df <- obj$Fast_Fit$Fn_Estimates[,c("log_kdeg", "Feature_ID", "Exp_ID", "Replicate", "sample")]
     colnames(logit_fn_df) <- c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")
   }else{
-    logit_fn_df <- obj$Fn_Estimates[,c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")]
+    logit_fn_df <- obj$Fast_Fit$Fn_Estimates[,c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")]
     
   }
   
