@@ -446,6 +446,13 @@ DissectMechanism <- function(bakRFit,
     dplyr::mutate(ksyn_pval = 2*stats::pnorm(-abs(ksyn_score))) %>%
     dplyr::mutate(ksyn_padj = stats::p.adjust(ksyn_pval, method = "BH"))
 
+  ### Calculate fraction of L2FC(RNA) attributable to degradation
+  test_stat <- test_stat %>%
+    dplyr::mutate(f_deg = ifelse(sign(-L2FC_kdeg) != sign(L2FC_RNA),
+                                 0,
+                                 ifelse(abs(L2FC_kdeg) > abs(L2FC_RNA),
+                                        1,
+                                        -L2FC_kdeg/L2FC_RNA)))
   
   
   heatmap_df <- dplyr::tibble(DE_score = test_stat$DE_score[test_stat$DE_padj < DE_cutoff],

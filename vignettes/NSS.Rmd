@@ -282,6 +282,7 @@ Mechanism_df provides all of the information present in Heatmap_df, and then som
 1. **ksyn_score**: L2FC(ksyn) z-score estimated as discusssed in the differential synthesis analysis vignette.
 1. **ksyn_pval**: L2FC(ksyn) p-value estimated as discussed in the differential synthesis analysis vignette.
 1. **ksyn_padj**: Multiple test adjusted L2FC(ksyn) p-value.
+1. **f_deg**: Fraction of L2FC(RNA) attributable to L2FC(kdeg). Equals -L2FC(kdeg)/L2FC(RNA) (with a ceiling of 1 and a floor of 0), and is an old steady-state dependent metric our lab used. Values greater than 0.5 represent degradation driven regulation; values less than 0.5 represent synthesis driven regulation.
 
 The first nine columns are things you provided to `DissectMechanism`. The next five columns are the important output of `DissectMechanism`'s statistical analysis. This analysis really consists of two separate analyses:
 
@@ -290,7 +291,7 @@ The first nine columns are things you provided to `DissectMechanism`. The next f
 1. Meta-analysis: Assessing whether or not there is evidence for any of: differential expression, differential kinetics (bakR output), or both.
     * For this, Fisher's method is used to combine the DEA and bakR p-values and assess the probability of obtaining a duo of p-values like this if both the differential expression and differential fraction new signal were null.
     
-The final 4 columns are the output of differential synthesis analysis conducted as described in the vignette on this topic. For details, check out that vignette.
+The next 4 columns are the output of differential synthesis analysis conducted as described in the vignette on this topic. For details, check out that vignette. Finally, the last column is a metric that our lab has used in the past to assess the mechanisms of observed regulation. It is only valid if your population of cells are at steady-state, as it relies on the relationship that arises from this assumption: L2FC(RNA) = L2FC(ksyn) - L2FC(kdeg).
     
 One thing I like to look at is how the combination of the estimated L2FC(RNA) and L2FC(kdeg) give rise to the mechanism statistic. Let's look at the dataset with exclusively transcriptional regulation:
 
