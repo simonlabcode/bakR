@@ -9,7 +9,7 @@ DissectMechanism(
   DE_df,
   bakRModel = c("MLE", "Hybrid", "MCMC"),
   DE_cutoff = 0.05,
-  bakR_cutoff = 0.05,
+  bakR_cutoff = 0.3,
   Exp_ID = 2,
   sims = 1e+07
 )
@@ -25,7 +25,9 @@ or MCMC}
 
 \item{DE_cutoff}{padj cutoff for calling a gene differentially expressed}
 
-\item{bakR_cutoff}{padj cutoff for calling a fraction new significantly changed}
+\item{bakR_cutoff}{padj cutoff for calling a fraction new significantly changed. As discussed in the mechanistic
+dissection vignette, it is best to keep this more conservative (higher padj) than is typical. Thus, default is 0.3 rather
+than the more standard (though admittedly arbitrary) 0.05.}
 
 \item{Exp_ID}{Exp_ID of experimental sample whose comparison to the reference sample you want to use.
 Only one reference vs. experimental sample comparison can be used at a time}

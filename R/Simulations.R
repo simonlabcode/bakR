@@ -931,17 +931,19 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
 #' @examples
 #' \donttest{
 #' # 2 replicate, 2 experimental condition, 1000 gene simulation
-#' sim_2reps <- Simulate_bakRData(ngene = 1000, nreps = 2)
+#' sim_2reps <- Simulate_bakRData(ngene = 1000, depth = 100000,
+#'                                nreps = 2)
 #'
 #' # 3 replicate, 2 experimental condition, 1000 gene simulation
 #' # with 100 instances of differential degradation kinetics
-#' sim_3reps <- Simulate_bakRData(ngene = 1000, num_kd_DE = c(0, 100))
+#' sim_3reps <- Simulate_relative_bakRData(ngene = 1000, depth = 100000,
+#'                                         num_kd_DE = c(0, 100))
 #'
 #' # 2 replicates, 3 experimental condition, 1000 gene simulation
 #' # with 100 instances of differential degradation kinetics in the 1st
 #' # condition and no instances of differential degradation kinetics in the
 #' # 2nd condition
-#' sim_3es <- Simulate_bakRData(ngene = 1000,
+#' sim_3es <- Simulate_relative_bakRData(ngene = 1000, depth = 100000,
 #'                              nreps = 2,
 #'                              num_conds = 3,
 #'                              num_kd_DE = c(0, 100, 0))

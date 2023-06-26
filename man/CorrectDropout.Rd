@@ -57,7 +57,7 @@ correction preserves the total library size to avoid artificially inflating read
 \examples{
 \donttest{
 # Simulate data for 500 genes and 2 replicates with 40\% dropout
-sim <- Simulate_relative_bakRData(500, nreps = 2, p_do = 0.4)
+sim <- Simulate_relative_bakRData(500, 100000, nreps = 2, p_do = 0.4)
 
 # Fit data with fast implementation
 Fit <- bakRFit(sim$bakRData)

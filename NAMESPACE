@@ -3,6 +3,7 @@
 export(CorrectDropout)
 export(DissectMechanism)
 export(FnPCA)
+export(FnPCA2)
 export(GSprocessing)
 export(Heatmap_kdeg)
 export(NSSHeat)

@@ -37,7 +37,7 @@ Imports:
     rstan,
     rstantools (>= 2.1.1),
     dplyr,
-	tidyr,
+    tidyr,
     stats,
     magrittr,
     Hmisc,
@@ -58,8 +58,8 @@ Suggests:
     knitr,
     DESeq2,
     pheatmap,
-	Ckmeans.1d.dp,
-	corrplot
+    Ckmeans.1d.dp,
+    corrplot
 VignetteBuilder: knitr
 URL: https://simonlabcode.github.io/bakR/
 BugReports: https://github.com/simonlabcode/bakR/issues/

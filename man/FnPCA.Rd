@@ -18,6 +18,8 @@ A ggplot object.
 }
 \description{
 This function creates a 2-component PCA plot using logit(fn) estimates.
+\code{FnPCA} has been deprecated in favor of \code{FnPCA2}. The latter accepts a full
+bakRFit as input and handles imbalanced replicates.
 }
 \examples{
 \donttest{
