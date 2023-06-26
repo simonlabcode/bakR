@@ -8,7 +8,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 abstract: >
 
-  As of bakR version 1.0.0, you can now provide a table of fraction new estimates as input. Tools like   GRAND-SLAM provide such tables, though you can also use your own pipeline for estimating the          fraction of reads that are new in your NR-seq experiments.
+  As of bakR version 1.0.0, you can now provide a table of fraction new estimates as input. Tools like GRAND-SLAM provide such tables, though you can also use your own pipeline for estimating the fraction of reads that are new in your NR-seq experiments.
   
   In this vigngette, I will provide a brief introduction to how to use this type of alternative input
   in bakR. An Appendix at the end of this vignette will go deeper into some specifics regarding input data structure and analysis strategies.
@@ -35,7 +35,7 @@ set.seed(123)
 
 ## Step 1: Creating a bakRFnData Object
 
-The 1st step to using bakR with fraction new estimates as input is to create a bakRFnData object. A bakRFnData object consists of two components: a fns dataframe and a metadf dataframe.
+The 1st step to using bakR with fraction new estimates as input is to create a bakRFnData object. A bakRFnData object consists of two components: a fns data frame and a metadf data frame.
 fns stands for "fraction new estimates" and contains information regarding the estimates for the fraction of sequencing reads from a given feature that were new in a given sample. metadf stands
 for metadata data frame and contains important information about the
 experimental details of each sample (i.e., how long the metabolic label
@@ -43,9 +43,7 @@ feed was, which samples are reference samples, and which are experimental
 samples). Examples of what these data structures are available via calls to 
 `data("fns")` and `data("metadf")`, for the fns data frame and metadf respectively.
 
-A fns data frame consists of rows corresponding to groups of reads with identical
-data, where data corresponds to the values of the following three required variables,
-and one optional variable:
+A fns data frame consists of rows corresponding to fraction new estimate information for a given feature. In particular, there are 4 required (and one optional) columns in the fns data frame:
 
 1. **sample**: This is the name of the sample from which the reads described in this
 row originated. Usually this will be some sort of character vector that you have
@@ -54,11 +52,11 @@ defined.
     * **XF** stands for "exonic feature", since in most cases you        should only be considering reads that map to definitively       exonic locations. Introns are typically rapidly turned          over and thus will be highly labeled species that will          bias estimates of mature transcript stability.
 1. **fn**: Estimate of the fraction new
 1. **se** (optional): Uncertainty in fraction new estimate
+1. **n**: Number of reads from the feature/sample combination represented in this row.
     
-The last column of a fns data frame is **n**: Number of reads with identical data for the other 4 columns.
 
 The metadf data frame is described in both the "bakR for people in a hurry" and
-"Getting started with bakR" vignettes.
+"Differential kinetic analysis with bakR" vignettes.
 
 One route by which to obtain the fns data frame is via [GRAND-SLAM](https://academic.oup.com/bioinformatics/article/34/13/i218/5045735), an efficient and user friendly tool developed by the Erhard lab which implements a binomial mixture model [originally described](https://www.nature.com/articles/nmeth.4582#Sec9) by our lab.
 GRAND-SLAM outputs a table named *run_name*.tsv (where *run_name* is whatever you specified when running GRAND-SLAM), which can be quickly converted to a fns data frame. You can then create a bakRFnData object as follows:
@@ -88,17 +86,11 @@ Fit <- bakRFit(bfndo)
 ```
 
 bakRFit() is used here as a wrapper for two functions in bakR: fn_process() and fast_analysis(). For 
-more details on what these functions do, run `?fn_process` or `fast_analysis`. Alternatively,
-see the "Differential kinetic analysis with bakR" vignette that provides more details.
+more details on what these functions do, run `?fn_process` or `fast_analysis`. 
 
 When using fraction new estimates as input, only one of the two more highly powered implementations may be used (the Hybrid implementation from the bakR manuscript). You can run this as follows:
 
 ```{r, eval = FALSE}
-# Load options that will make running models more efficient
-rstan::rstan_options(auto_write = TRUE)
-options(mc.cores = parallel::detectCores())
-
-
 # Run Hybrid model (This might take several minutes to run)
 Fit <- bakRFit(Fit, HybridFit = TRUE)
 ```
@@ -132,7 +124,7 @@ and PCA plots:
 
 ```{r, fig.align='center'}
 ## 2D PCA plot with replicate fraction news
-FnPCA(Fit$Fast_Fit)
+FnPCA2(Fit, Model = "MLE")
 
 ```
 
@@ -143,7 +135,7 @@ This vignette provides the minimal amount of information to get up and running w
 1. Differential synthesis rate analysis
 1. Correcting for loss of s^4^U RNA during library preparation (a.k.a. dropout correction)
 1. Troubleshooting analyses of NR-seq datasets
-1. Analyzing away from steady-state data
+1. Dissecting the mechanisms of gene expression regulation while relaxing the steady-state assumption.
 
 ## Appendix
 

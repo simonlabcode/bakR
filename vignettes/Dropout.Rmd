@@ -8,7 +8,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 abstract: >
   
-  Several labs have independently identified and discussed the prevalence of dropout in NR-seq and other metabolic labeling RNA-seq experiments. Dropout is the phenomenon by which metabolically labeled RNA or sequencing reads derived from such RNA is lost either during library preparation or during computational processing of the raw sequencing data. Recent work suggests that there are three potential causes for this: 1) loss of labeled RNA on plastic surfaces during RNA extraction, 2) RT falloff due to modifications of the metabolic labeling made by some NR-seq chemistries, and 3) Loss of reads with many NR-induced mutations due to poor read alignment. While the final cause is best remedied by improved alignment strategies (discussed in  [Zimmer et al.](https://www.biorxiv.org/content/10.1101/2023.05.24.542133v1) and [Berg et al.](https://www.biorxiv.org/content/10.1101/2023.04.21.537786v1)), modified fastq processing will not address the other causes. Improved handling of RNA can help, but what if you already have data that you suspect may be biased by dropout?
+  Dropout is the phenomenon by which metabolically labeled RNA or sequencing reads derived from such RNA is lost either during library preparation or during computational processing of the raw sequencing data. Several labs have independently identified and discussed the prevalence of dropout in NR-seq and other metabolic labeling RNA-seq experiments. Recent work suggests that there are three potential causes for this: 1) Loss of labeled RNA on plastic surfaces during RNA extraction, 2) RT falloff due to modifications of the metabolic labeling made by some NR-seq chemistries, and 3) loss of reads with many NR-induced mutations due to poor read alignment. While 3) is best remedied by improved alignment strategies (discussed in  [Zimmer et al.](https://www.biorxiv.org/content/10.1101/2023.05.24.542133v1) and [Berg et al.](https://www.biorxiv.org/content/10.1101/2023.04.21.537786v1)), modified fastq processing will not address the other causes. Improved handling of RNA can help, but what if you already have data that you suspect may be biased by dropout?
   
   Version 1.0.0 of bakR introduced a strategy to correct for dropout induced biases. In this vignette, I will show how to correct for dropout with bakR. Following the demonstrations, I will also include a more thorough discussion of dropout, bakR's dropout correction strategy, and how it differs from a [strategy recently developed](https://www.biorxiv.org/content/10.1101/2023.04.21.537786v1) by the Erhard lab. 
 
@@ -148,7 +148,7 @@ $$
 \theta_{\text{i}} &= \text{True fraction new for feature i} \\
 \text{pdo} &= \text{Probability that a labeled RNA molecule is preferentially lost during library prep} \\
 \text{NF} &= \text{Total number of RNA features that contribute sequencable molecules} \\
-\text{R} &= \text{Total number of sequencing reads}
+\text{R} &= \text{Total number of sequencing reads.}
 
 
 
@@ -213,7 +213,7 @@ $$
 \end{align}
 $$
 
-Thus, the dropout correct read counts can be obtained as follows:
+Thus, the dropout corrected read counts can be obtained as follows:
 
 $$
 \begin{align}
@@ -281,3 +281,9 @@ $$
 \end{align}
 $$
 
+### A2: U-content dependence
+
+Given hypotheses about how dropout arises, you may expect the extent of dropout to be correlated with the U-content of the RNA feature. In fact, this does seem to be the case in real datasets. bakR currently does not attempt to account for this correlation for a few reasons:
+
+1. U-content is not typically correlated with estimated fraction new. Thus, the U-content dropout biases are often evenly represented throughout the fraction new vs. dropout trend. This means that their influence is to add scatter to the data while not perturbing the mean of the trend.
+1. A rigorous empirical relationship between U-content and dropout is difficult to derive from first principles given existing data. An ad hoc correction factor can be added, but so far we have found it to have minimal impact on dropout rate estimation.

@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 abstract: >
-  Analyzing NR-seq data can be difficult. This vignette is here to help. In it, I will discuss some of the most common challenges that one can run into when analyzing your data with bakR, and how to overcome them. In particular, I will showcase bakR's quality control check functionality and discuss the problems that it looks out for. In addition, I will discuss aspects of NR-seq data that can hinder accurate estimation of the mutation rates in new and old sequencing reads. Finally, I will show how bakR's alternative mutation rate estimation strategy can ameliorate some of these challenges.
+  Analyzing NR-seq data can be difficult. This vignette is here to help. In it, I will discuss some of the most common challenges that one can run into when analyzing your data with bakR, and how to overcome them. In particular, I will showcase bakR's quality control check functionality (introduced in version 0.4.0) and discuss the problems that it looks out for. In addition, I will discuss aspects of NR-seq data that can hinder accurate estimation of the mutation rates in new and old sequencing reads. Finally, I will show how bakR's alternative mutation rate estimation strategy can ameliorate some of these challenges.
 
 ---
 
@@ -86,7 +86,7 @@ Once again, this simulated data looks good!
 
 ### Average fraction news
 
-The third thing that `QC_checks()` assesses is the average estimated fraction new. The ability to accurately infer the degradation kinetics of a particular RNA feature is highly dependent on the relationship between the length of metabolic labeling and the half-life of the feature. More specifically, some really nice work from the Dieterich lab has shown that degradation rate constant estimates are more accurate for features with half-lives closer to the metabolic labeling time. If the label time is much longer (shorter) than a feature's half-live, than the feature will be almost completely labeled (unlabeled). The relationship between fraction new and degradation rate constant makes it so that at extreme fraction news (close to 0 or 1), the rate constant estimate is very sensitive to the exact fraction new estimate. This means that fraction news close to 0 or 1 yield more uncertain kinetic parameter estimates. 
+The third thing that `QC_checks()` assesses is the average estimated fraction new. The ability to accurately infer the degradation kinetics of a particular RNA feature is highly dependent on the relationship between the length of metabolic labeling and the half-life of the feature. More specifically, some [really nice work](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007252) from the Dieterich lab has shown that degradation rate constant estimates are more accurate for features with half-lives closer to the metabolic labeling time. If the label time is much longer (shorter) than a feature's half-live, than the feature will be almost completely labeled (unlabeled). The relationship between fraction new and degradation rate constant makes it so that at extreme fraction news (close to 0 or 1), the rate constant estimate is very sensitive to the exact fraction new estimate. This means that fraction news close to 0 or 1 yield more uncertain kinetic parameter estimates. 
 
 QC_checks() will output a message about the average estimated fraction new in each +s^4^U sample. You can also visualize the distribution of fraction new estimates as follows:
 
@@ -116,6 +116,7 @@ QC$correlation_plots[[1]]
 In addition, `QC_checks` outputs a correlation matrix to allow for convenient visualization of all sample-to-sample correlations:
 
 ```{r, fig.align='center'}
+# Using function from corrplot package
 corrplot.mixed(QC$correlation_matrix, 
                upper = "square", lower = "number", 
                addgrid.col = "black", tl.col = "black")
@@ -126,7 +127,7 @@ corrplot.mixed(QC$correlation_matrix,
 
 `QC_checks` is designed to identify and flag challenges that bakR could run into when analyzing your data. In my experience, the single most important thing to check is the robustness of the new and old read mutation rate estimates (pnew and pold). 
 
-By default, bakR fits a simple binomial mixture with the method of maximum likelihood to estimate pnew. If you have -s^4^U data, then bakR uses the average mutation rate from that data as a global pold estimate. Otherwise, the default pold estimation strategy is the same as for pold. This strategy can go astray if most of the reads in your data are either new or old. Intuitively, if there are very few new (old) reads, it is very difficult for a model to infer what the mutation rate in new (old) reads is. For example, here is an analysis of simulated data where over 98% of reads are old:
+By default, bakR fits a simple binomial mixture with the method of maximum likelihood to estimate pnew. If you have -s^4^U data, then bakR uses the average mutation rate from that data as a global pold estimate. Otherwise, the default pold estimation strategy is the same as for pnew. This strategy can go astray if most of the reads in your data are either new or old. Intuitively, if there are very few new (old) reads, it is very difficult for a model to infer what the mutation rate in new (old) reads is. For example, here is an analysis of simulated data where over 98% of reads are old:
 
 ```{r}
 # Seed for reproducibility
@@ -162,7 +163,7 @@ Fit_s <- bakRFit(Fit, FastRerun = TRUE, StanRateEst = TRUE)
 
 ```
 
-It's incredibly diffulct to get perfect pnew estimates on this dataset, but this strategy certainly does a lot better! You can compare the resulting fraction new estimates in the troublesome samples:
+It's incredibly difficult to get perfect pnew estimates on this dataset, but this strategy certainly does a lot better! You can compare the resulting fraction new estimates in the troublesome samples:
 
 ```{r, fig.align='center'}
 
@@ -231,10 +232,10 @@ Sometimes the solution to challenges you might face when analyzing NR-seq data w
 
 1. Assess and optimize s^4^U incorporation in your cell line.
     * You would be surprised how much cell line to cell line variability there is in readiness of metabolic label uptake. On one end of the spectrum there are HeLa cells that uptake label so ferociously that you often can use lower than normal s^4^U concentrations to avoid cytotoxic effects while still maintaining high incorporation rates. On the other end of the spectrum though, neuronal cell lines often uptake label at a much lower rate. 
-    * TAMRA dot blot assays are one way our lab inspects the incorporation rate in a new cell line. If incorporation rates are low, we test out using a higher concentration of metabolic label, while looking out for any signs of cytotoxicity
+    * TAMRA dot blot assays are one way our lab inspects the incorporation rate in a new cell line. If incorporation rates are low, we test using a higher concentration of metabolic label, while looking out for any signs of cytotoxicity
 1. **Don't user super short label times!!**
     * There is a tendency to treat NR-seq experiments like transcriptional assays. The thinking goes "label for a short enough time and the amount of new RNA is only influenced by synthesis kinetics". 
-    * This is fraught for many reasons. For one, a "short" label time in an NR-seq experiment still often means about an hour in mammalian cell lines. There is plenty of degradation of new RNA in that time frame though, meaning that the amount of new RNA is a function of both degradation and synthesis kinetics. 
+    * This is fraught for many reasons. For one, a "short" label time in an NR-seq experiment still often means about an hour in mammalian cell lines, as enough RNA has to be labeled to allow for robust detection of it without enrichment of the labeled species. There is plenty of degradation of new RNA in that time frame though, meaning that the amount of new RNA is a function of both degradation and synthesis kinetics. 
     * In addition, by restricting yourself to analysis of only new RNA, you are throwing out the vast majority of your reads and significantly underpowering your analyses.
     * Note, while there is some evidence in the literature that differential new RNA expression analysis can provide insights missed by differential total RNA expression analysis, the extent to which this is generally true is questionable. Evidence in favor of this conclusion could stem from inadequate normalization of the total RNA-seq data, causing global effects of a perturbation to be missed.
     * Finally, one benefit of analyzing the fraction of reads that are new rather than the raw number of reads that are new is that the former is "internally normalized" The fraction new is the ratio of an RNA feature's new read counts in a sample to it's total read counts in that same sample. Thus, any scale factor that you need to apply to the sample-wide or feature-specific read counts cancel out when calculating this ratio. Analyzing fraction news (e.g., by relating these to degradation rate constants) thus avoids the challenge of normalizing RNA-seq read count data. This upside is eliminated when performing differential expression analysis with new RNA read counts, where normalization must once again be considered.  
@@ -248,3 +249,4 @@ Sometimes the solution to challenges you might face when analyzing NR-seq data w
     * When you pulse with a metabolic label like s^4^U though, you have already created a species of RNA whose dynamics are completely degradation driven: the unlabeled RNA. Following the metabolic label pulse with a nucleotide chase is thus redundant, switching the degradation driven population from the unlabeled RNA to the labeled RNA.
     * In addition, pulse-chase experiments often necessitate extensive exposure of your cells to the metabolic label, which increases the possibility of cytotoxic effects of metabolic label. 
     * Finally, analysis of pulse-chase experiments is more complicated than a pulse-label design. To estimate the kinetics of degradation, you need to know what fraction of the RNA for each feature of interest was labeled after the pulse. This means that estimating the synthesis and degradation kinetics requires two separate samples, RNA extracted after the pulse and RNA extracted after the chase. With the pulse alone, you can get all of the information that you can get with both though!! You want multiple time points? Just do multiple pulses. Pulse-labels are easier to perform and easier to analyze than pulse-chases.
+    * If you have pulse-chase NR-seq data you would like to analyze, you can contact me by either posting an Issue to the bakR Github or emailing me directly (isaac.vock@yale.edu). I also have a [repo](https://github.com/isaacvock/Pulse_Chase) that was created for this purpose you can check out.

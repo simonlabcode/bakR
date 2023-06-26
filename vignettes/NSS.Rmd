@@ -67,7 +67,7 @@ The goal of the `DissectMechanism` function discussed in this vignette is to ide
 
 1. Compare NR-seq with bakR
 1. Perform differential expression analysis
-1. Use the DissectMechanism() function in bakR to combine the results and come to a mechanistic conclusion.
+1. Use the `DissectMechanism()` function in bakR to combine the results and come to a mechanistic conclusion.
 
 Simple enough! As usual, let's start out by simulating some data. I will simulate two separate datasets, one with exclusively transcriptional regulation and one with exclusively post-transcriptional regulation. This will allow us to see how `DissectMechanism` performs in these two different regimes:
 
@@ -229,9 +229,9 @@ Mechs_d <- DissectMechanism(Fit_d, DE_df_d,
 
 ```
 
-See ?DissectMechanism for information about the additional parameters that can be specified. Most importantly, there is the bakRModel parameter, which tells DissectMechanism which fit to use in the bakRFit model, if multiple exist. The default setting is to just use the MLE fit, which should always be there. 
+See `?DissectMechanism` for information about the additional parameters that can be specified. Most importantly, there is the bakRModel parameter, which tells DissectMechanism which fit to use in the bakRFit model, if multiple exist. The default setting is to just use the MLE fit, which should always be there. 
 
-So what is in the output of DissectMechanism? Two data frames:
+The output of `DissectMechanism` is two data frames:
 
 1. Heatmap_df: A data frame meant to facilitate visualization of results as a heatmap.
 1. Mechanism_df: A data frame with statistical assessments of likely mechanisms of observed differential expression.
@@ -335,7 +335,7 @@ If you take a closer look at the heatmap and scatter plot, a couple things might
 
 You may have noticed an assumption that continually crops up in the analyses presented 
 in bakR vignettes: steady-state. In the Getting-Started vignette, it was a necessary part
-of relating the fraction new to the more interesting $kdeg$. In the differential synthesis analysis vignette it was a key part of assessing synthesis kinetics. It therefore underlies all of the differential kinetic analysis discussed so far. What happens if it is a bad assumption? "Dogs and cats living together! Mass hysteria!"? Well Dr. Venkman, it certainly complicates things, but `DissectMechanism` does its best to curtail these issues. 
+of relating the fraction new to the biologically relevant $kdeg$. In the differential synthesis analysis vignette it was a key part of assessing synthesis kinetics. It therefore underlies all of the differential kinetic analysis discussed so far. What happens if it is a bad assumption? "Dogs and cats living together! Mass hysteria!"? Well Dr. Venkman, it certainly complicates things, but `DissectMechanism` does its best to curtail these issues. 
 
 In this section, I will discuss many of the nitty-gritty details about how `DissectMechanism` is working. It's analysis strategy is heavily inspired by the task of assessing the kinetic mechanisms of observed differential expression in a steady-state-independent manner. Accomplishing this means generalizing how differences in the fraction new in an NR-seq experiment can relate to differences in degradation **or** synthesis when away from steady-state.
 
@@ -367,7 +367,7 @@ I am using the term non-parametric here to suggest getting away from using expli
 Here is the key realization: these two possibilities have different impacts on the LEVELS of RNA. If synthesis is
 increasing upon drug treatment, then the amount of that transcript will also increase. If the transcript is 
 destabilized though, then there will be less of it around at the end of the experiment. Therefore, **combining differential expression with differential fraction new analyses reveals the kinetic differences**. More generally,
-here is a diagram that covers the range of possible kinetic mechanisms and conclusions:
+here is a diagram that covers the range of possible kinetic mechanisms and conclusions ($\theta$ is the fraction new):
 
 ![Diagram of NR-seq NSS analysis strategy.](NSS_Analysis.png)
 
@@ -443,7 +443,7 @@ This particular function is admittedly a bit arbitrary, but it has a lot of the 
 
 ### The assymetry of the mechanism score
 
-I briefly alluded in the last section to the assymetry of the mechanism score function. The x-axis (0 differential expression) represents one dividing line, but what about the two separate vertical dividing lines? The reason for this is that transcriptional regulation can yield no fraction new signal. Thus, low confidence changes in the fraction new should be interpreted as no change in the fraction new. When no change in the fraction new is accompanied by differential expression, this is most likely transcriptional regulation.
+I briefly alluded in the last section to the asymmetry of the mechanism score function. The x-axis (0 differential expression) represents one dividing line, but what about the two separate vertical dividing lines? The reason for this is that transcriptional regulation can yield no fraction new signal. Thus, low confidence changes in the fraction new should be interpreted as no change in the fraction new. When no change in the fraction new is accompanied by differential expression, this is most likely transcriptional regulation.
 
 The locations of the vertical lines are set by the `bakR_cutoff` parameter in `DissectMechanism`. `bakR_cutoff` represents the bakR_padj cutoff for calling a change in the fraction new "significant". `DissectMechanism` determines what z-score is necessary to yield that padj (since multiple-test adjustment makes the relationship between padj and z-score a bit difficult to predict a priori) and uses that as the vertical dividing lines. 
 

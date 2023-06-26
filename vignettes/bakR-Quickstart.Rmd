@@ -7,39 +7,7 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 abstract: >
-  In a standard RNA-seq experiment, differential expression 
-  analysis is incredibly common. The idea is to compare the expression
-  of thousands of transcripts between two conditions, which
-  I'll refer to as the reference and experimental samples. Once you 
-  have compiled a list of genes whose expressions differ significantly
-  between the two conditions, a reasonable follow-up question is "what
-  caused the change in each of the genes"? The three broad answers to
-  that question are 1) Something altered the RNA synthesis rates; 2) Something
-  altered the RNA degradation rates; or 3) A little bit
-  of both 1) and 2). Unfortunately, standard RNA-seq analysis cannot answer this
-  mechanistic question, as RNA-seq only tells you about changes in expression level
-  and cannot deduce the kinetic causes of those changes. 
-  
-  
-  If the kinetics is of interest to you, then a recently developed solution to 
-  this problem is nucleotide recoding RNA-seq, which exists in several fundamentally 
-  similar flavors, the primary ones being TimeLapse-seq, SLAM-seq, and TUC-seq. The strategy involves feeding
-  cells with a metabolic label (typically 4-thiouridine, a.k.a. s^4^U), extracting the RNA as you
-  normally would for RNA-seq, and then using a unique chemistry to convert the metabolic
-  label into something that a sequencer will read as a different base (e.g., a cytosine analog
-  for s^4^U). Thus, labeled and unlabeled reads can be separated bioinformatically
-  upon sequencing by the presence of mutations (e.g., U-to-C mutations). 
-  
-  
-  One problem though; the metabolic label must 1st get into cells, and then it must compete 
-  with the normal nucleotide for incorporation into RNA. The result of this is that mutation
-  rates are typically low (often around 5% in RNA produced during metabolic labeling, meaning that each U
-  in a sequencing read from these RNAs has about a 5% chance of being mutated to a C), making simple and 
-  definitive separation of labeled and unlabeled reads impossible. The solution: advanced
-  statistical modeling implemented by bakR, an R package for analyzing nucleotide recoding
-  sequencing data. The analyses implemented in this package will enable you to perform 
-  differential kinetic analysis just as easily as you can perform differential expression analysis,
-  allowing you to elucidate the mechanisms of regulated gene expression.
+  bakR is a tool for comparing nucleotide recoding RNA-seq datasets (NR-seq). NR-seq refers to a class of methods (e.g., TimeLapse-seq, SLAM-seq, TUC-seq, etc.) which combine RNA-seq, metabolic labeling, and unique metabolic label recoding chemistries to assess the kinetics of gene expression. This vignette will provide a quick introduction to using bakR. A longer version of this vignette ("Differential kinetic analysis with bakR") exists to provide a more in-depth discussion of each step of this process.
 ---
 
 
@@ -64,7 +32,7 @@ set.seed(123)
 
 The 1st step to using bakR is to create a bakRData
 object. A bakRData object
-consists of two components: a cB dataframe and a metadf dataframe.
+consists of two components: a cB data frame and a metadf data frame.
 cB stands for counts binomial and contains all of the information about
 mutations seen in sequencing reads in each sample sequenced. metadf stands
 for metadata data frame and contains important information about the
@@ -80,7 +48,7 @@ data, where data corresponds to the values of the following four variables:
 1. **sample**: This is the name of the sample from which the reads described in this
 row originated. Usually this will be some sort of character vector that you have
 defined.
-1. **TC**: Number of U-to-C mutations (assuming using s^4^U as the metabolic label). Called TC because technically the data is T-to-C mutations in reverse-transcribed RNA
+1. **TC**: Number of U-to-C mutations (assuming using s^4^U as the metabolic label). Called TC because technically the data is T-to-C mutations in reverse-transcribed RNA.
 1. **nT**: Number of Ts (Us in the RNA) in the sequencing read(s)
 1. **XF**: Name of the feature (gene, exon, etc.) that the read comes from. Kinetic parameters will be estimated for each feature, so this should represent the functional unit who's metabolic kinetics you are interested in. 
     * **XF** stands for "exonic feature", since in most cases you        should only be considering reads that map to definitively       exonic locations. Introns are typically rapidly turned          over and thus will be highly labeled species that will          bias estimates of mature transcript stability.
@@ -93,7 +61,7 @@ developed by our lab, called bam2bakR (available [here](https://github.com/simon
 The metadf has two columns:
 
 1. **tl**: The length of the metabolic labeling feed. This can be in any units (the simulated data puts it in terms of minutes), but **if no s^4^U was fed to a sample, tl must be 0 for that sample**. -s^4^U controls play an important role in all of the statistical models, so this is crucial to remember. While not technically necessary to run bakR, we always highly suggest including these controls.
-1. **Exp_ID**: Stands for "Experimental ID" and is a numerical ID that denotes which samples are from the reference condition and which experimental samples belong to the same "treatment". In this simulated dataset, there are two conditions, a reference condition (samples 1, 2, 3, and 7) and a single experimental condition (samples 4, 5, 6, and 8). **The reference condition must be given numerical ID 1** and **the experimental conditions must be given sequential numerical IDs starting from 2** (i.e., 2, 3, 4, ...). You can have more than one experimental sample, but all comparisons will only be done with respect to one reference sample.
+1. **Exp_ID**: Stands for "Experimental ID" and is a numerical ID that denotes which samples are from the reference condition (Exp_ID = 1) and which experimental samples belong to the same "treatment" (Exp_IDs > 1). You can have more than one experimental sample, but all comparisons will only be done with respect to one reference sample.
 
 The metadf data frame must also have row names corresponding to the sample name that the 
 **tl** and **Exp_ID** entries describe, as the sample name appears in the cB data frame.
@@ -139,18 +107,13 @@ bakRFit() is used here as a wrapper for two functions in bakR: cBprocess() and f
 more details on what these functions do, run `?cBprocess` or `fast_analysis`. Alternatively,
 see the more highly detailed version of this vignette for additional details.
 
-While the fast implementation was running, it outputted a message regarding the estimated pnews and pold. The pnews are the estimated mutation rates of reads from new RNAs (new meaning RNAs synthesized after the start of s^4^U labeling) in each sample (muts = Exp_ID, and reps = a numerical replicate ID that corresponds to the order replicates appear in the cB), and pold is a global estimate of the background mutation rate used in all analyses. For more details on how bakR estimates these
+While the fast implementation was running, it outputted a message regarding the estimated pnews and pold. The pnews are the estimated mutation rates of reads from new RNAs (new meaning RNAs synthesized after the start of s^4^U labeling) in each sample (muts = Exp_ID, and reps = a numerical replicate ID that corresponds to the order replicates appear in the cB), and polds are the estimates for the background mutation rate used in all analyses. For more details on how bakR estimates these
 mutation rates and alternative estimation strategies implemented in bakR, see the longer form version
 of this vignette as well as the vignette on troubleshooting analyses.
 
 To run the heavier, more highly powered models, just rerun bakRFit() on the Fit object, but with either the StanFit or HybridFit parameters set to true.
 
 ```{r, eval = FALSE}
-# Load options that will make running models more efficient
-rstan::rstan_options(auto_write = TRUE)
-options(mc.cores = parallel::detectCores())
-
-
 # Run Hybrid model (This might take several minutes to run)
 Fit <- bakRFit(Fit, HybridFit = TRUE)
 
@@ -189,16 +152,20 @@ and PCA plots:
 
 ```{r, fig.align='center'}
 ## 2D PCA plot with replicate fraction news
-FnPCA(Fit$Fast_Fit)
+  # The equivalent function prior to version 1.0.0 is FnPCA, now deprecated in 
+  # favor of FnPCA2.
+FnPCA2(Fit, Model = "MLE")
 
 ```
 
 ## Step 4: Where to go from here
 
-This vignette provides the minimal amount of information to get up and running with bakR. If you would like a more thorough discussion of each step of this process, check out the long form version of this vignette ("Differential kinetic analysis with bakR"). In addition, there are a number of other vignettes the cover various topics not discussed in these intro vignettes:
+This vignette provides the minimal amount of information to get up and running with bakR. If you would like a more thorough discussion of each step of this process, check out the long form version of this vignette ("Differential kinetic analysis with bakR"). In addition, there are a number of other vignettes that cover various topics not discussed in these intro vignettes:
 
 1. Differential synthesis rate analysis
 1. Correcting for loss of s^4^U RNA during library prepartion (a.k.a. dropout correction)
 1. Troubleshooting analyses of NR-seq datasets
-1. Analyzing away from steady-state data
+1. Mechanistic dissection of differential expression
 1. Running bakR with fraction new estimate input (e.g., from GRAND-SLAM)
+
+Note, all but the "Differential synthesis rate analysis" vignette are only fully compatible with version 1.0.0 of bakR. Update bakR as necessary

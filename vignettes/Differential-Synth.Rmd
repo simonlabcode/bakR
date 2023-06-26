@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-Welcome! This vignette discusses how to perform differential synthesis analysis. It involves combining the outpu of bakR with that of a differential expression anlaysis software. The assumption is that at this point you have worked through the Getting-Started vignette. If that is not the case, I would highly suggest starting there and then coming back here once you're familiar with the standard use cases of bakR. 
+Welcome! This vignette discusses how to perform differential synthesis analysis. It involves combining the output of bakR with that of a differential expression analysis software. The assumption is that at this point you have worked through the "Differential kinetic analysis with bakR" vignette, or its more succinct alternative. If that is not the case, I would highly suggest starting there and then coming back here once you're familiar with the standard use cases of bakR. 
 
 These are the packages you are going to have to install and load in order to do everything presented in this vignette:
 
@@ -43,7 +43,7 @@ set.seed(123)
 
 ## Intro to differential synthesis analysis
 I claim that bakR is a tool for performing differential kinetic analysis, but if you 
-are coming from the Getting-Started vignette then you might think that this is a misnomer.
+are coming from the "Differential kinetic analysis with bakR" vignette then you might think that this is a misnomer.
 All that I showed you how to do in that vignette was differential *stability* analysis. Full-fledged differential kinetic analysis means performing differential *synthesis* analysis as well, so let's talk about how you can do that with bakR.
 
 bakR won't be able to accomplish this task alone. The reason for this is that assessing changes in synthesis means assessing changes in RNA stability and RNA expression. Therefore, we need to perform differential expression analysis in conjunction with differential stability analysis. In theory, I could have implemented my own differential expression analysis in bakR, but with so many popular software tools currently in existence to perform that task, it seemed pointlessly redundant. It also gives you the freedom to use whatever differential expression analysis tool that you are used to using, and to perform whatever kind of DE analysis that you like independent of bakR. 
@@ -124,7 +124,7 @@ dds <- DESeqDataSetFromMatrix(countData = Counts,
 
 ```
 
-I invite you to read the DESeq2 documentation if you need help understanding the call to DESeqDataSetFromMatrix. In short though, the first entry is our count matrix, the second is our colData object, and the final entry is the design matrix. Limma's documentation (another differential expression analysis software) has a great introduction to design matrices, but this one is simple. It means that we want to group samples together that have the same value for the conditions factor in the colData object. So all "ref" samples will be grouped together and all "exp" samples will be grouped together. DESeq2 will then compare different groups, which means that it will compare "exp" and "ref" samples in this case.
+I invite you to read the [DESeq2 documentation](http://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html) if you need help understanding the call to DESeqDataSetFromMatrix. In short though, the first entry is our count matrix, the second is our colData object, and the final entry is the design matrix. [Limma's documentation](https://bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/designmatrices.html) (another differential expression analysis software) has a great introduction to design matrices, but this one is simple. It means that we want to group samples together that have the same value for the conditions factor in the colData object. So all "ref" samples will be grouped together and all "exp" samples will be grouped together. DESeq2 will then compare different groups, which means that it will compare "exp" and "ref" samples in this case.
 
 Now we can fit DESeq2 and extract the differential expression analysis results:
 
@@ -253,4 +253,6 @@ ksyn_results
 ```
 
 FP is a false positive, FN is a false negative, TP is a true positive, and TN is a true negative. All in all, I'd say it went pretty well! You now know how to perform differential synthesis analysis with bakR + DEseq2.
+
+**NOTE**: As of version 1.0.0 of bakR, `DissectMechanism` is a function in bakR that will implement this analysis strategy for you. See the vignette on mechanistic dissection for more details.
 
