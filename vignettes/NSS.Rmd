@@ -237,3 +237,5 @@ here is a diagram that covers the range of possible kinetic mechanisms and concl
 
 ![Diagram of NR-seq NSS analysis strategy.](NSS_Analysis.png)
 
+
+### The statistics of DissectMechanism

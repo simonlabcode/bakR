@@ -235,7 +235,9 @@ NSSHeat <- function(bakRFit,
 #' @param bakRModel Model fit from which bakR implementation should be used? Options are MLE, Hybrid,
 #' or MCMC
 #' @param DE_cutoff padj cutoff for calling a gene differentially expressed
-#' @param bakR_cutoff padj cutoff for calling a fraction new significantly changed
+#' @param bakR_cutoff padj cutoff for calling a fraction new significantly changed. As discussed in the mechanistic
+#' dissection vignette, it is best to keep this more conservative (higher padj) than is typical. Thus, default is 0.3 rather
+#' than the more standard (though admittedly arbitrary) 0.05.
 #' @param Exp_ID Exp_ID of experimental sample whose comparison to the reference sample you want to use.
 #' Only one reference vs. experimental sample comparison can be used at a time
 #' @param sims Number of simulation draws from null distribution for mechanism p value calculation
@@ -275,7 +277,7 @@ DissectMechanism <- function(bakRFit,
                      DE_df,
                      bakRModel = c("MLE", "Hybrid", "MCMC"),
                      DE_cutoff = 0.05,
-                     bakR_cutoff = 0.05,
+                     bakR_cutoff = 0.3,
                      Exp_ID = 2,
                      sims = 10000000){
 
@@ -435,6 +437,14 @@ DissectMechanism <- function(bakRFit,
                               XF = test_stat$XF[test_stat$DE_padj < DE_cutoff],
                               bakR_score = test_stat$bakR_score[test_stat$DE_padj < DE_cutoff])
 
+  # Filter out non-sig DE
+  heatmap_df <- heatmap_df[heatmap_df$XF %in% XF_keep,]
+  
+  
+  # Log scale mechanism score because it is a bit crazier than others
+  heatmap_df <- heatmap_df %>%
+    dplyr::mutate(Mech_score = log(abs(Mech_score) + 1)*sign(Mech_score))
+  
 
   sd_DE <- stats::sd(heatmap_df$DE_score)
   sd_bakR <- stats::sd(heatmap_df$bakR_score)
@@ -449,18 +459,9 @@ DissectMechanism <- function(bakRFit,
 
 
   ## Scale all columns equally
-  max_DE <- max(heatmap_df$DE_score)
-  min_DE <- min(heatmap_df$DE_score)
-
-  max_bakR <- max(heatmap_df$bakR_score)
-  min_bakR <- min(heatmap_df$bakR_score)
-
-  max_mech <- max(heatmap_df$Mech_score)
-  min_mech <- min(heatmap_df$Mech_score)
-
-  abs_max_DE <- max(c(abs(c(max_DE, min_DE))))
-  abs_max_bakR <- max(c(abs(c(max_bakR, min_bakR))))
-  abs_max_mech <- max(c(abs(c(max_mech, min_mech))))
+  abs_max_DE <- max(abs(heatmap_df$DE_score))
+  abs_max_bakR <- max(abs(heatmap_df$bakR_score))
+  abs_max_mech <- max(abs(heatmap_df$Mech_score))
 
   # Changed to leave mechanism score completely unperturbed
   heatmap_df <- heatmap_df %>%
