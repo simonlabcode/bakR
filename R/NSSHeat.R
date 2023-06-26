@@ -286,16 +286,17 @@ DissectMechanism <- function(bakRFit,
 
   # Bind variables locally to resolve devtools::check() Notes
   DE_padj <- DE_pval <- L2FC_RNA <- effect <- se <- Sig <- Sig_bakR <- score_bakR <- NULL
-  mech <- stat <- DE_score <- Mech_score <- bakR_score <- NULL
+  mech <- stat <- DE_score <- DE_se <- Mech_score <- bakR_score <- NULL
   mech_stat <- NULL
 
   ### Checks
-  if(sum(c("XF", "L2FC_RNA", "DE_score", "DE_pval", "DE_padj") %in% colnames(DE_df)) < 5){
+  if(sum(c("XF", "L2FC_RNA", "DE_score", "DE_se", "DE_pval", "DE_padj") %in% colnames(DE_df)) < 6){
     stop("You are missing necessary columns in DE_df. Columns named XF, L2FC_RNA,
-         DE_score, DE_pval, and DE_padj must be included. See the Further-Analyses vignette for details")
+         DE_score, DE_se, DE_pval, and DE_padj must be included. 
+         See the mechanistic dissection vignette for more details.")
   }
 
-  if(sum(colnames(DE_df) %in% c("XF", "L2FC_RNA", "DE_score", "DE_pval", "DE_padj")) > 5){
+  if(sum(colnames(DE_df) %in% c("XF", "L2FC_RNA", "DE_score","DE_se", "DE_pval", "DE_padj")) > 6){
     stop("Looks like you have repeat columns of the same name in DE_df. Make sure column
          names are unique and that each column is correctly labeled and try again.")
   }
@@ -308,6 +309,10 @@ DissectMechanism <- function(bakRFit,
     stop("sims must be numeric!")
   }else if(sims <= 100){
     stop("sims must be strictly greater than 100.")
+  }else if(sims < 1000){
+    warning("sims is less than 1000. The max precision of the mechanistic p-value 
+            is roughly 1/sims, meaning that a sims this low will severely limit
+            your ability to interpret any mechanistic p-value as highly significant.")
   }
 
 
@@ -361,9 +366,11 @@ DissectMechanism <- function(bakRFit,
     dplyr::mutate(score_bakR = effect/se)
 
 
-  NSS_eff_DE <- NSS_eff_DE[, c("XF", "score_bakR", "L2FC_kdeg", "pval", "padj")]
+  NSS_eff_DE <- NSS_eff_DE[, c("XF", "score_bakR", "L2FC_kdeg", "se", "pval", "padj")]
 
-  colnames(NSS_eff_DE) <- c( "XF", "bakR_score", "L2FC_kdeg", "bakR_pval", "bakR_padj")
+  NSS_eff_DE$se <- NSS_eff_DE$se*log2(exp(1))
+  
+  colnames(NSS_eff_DE) <- c( "XF", "bakR_score", "L2FC_kdeg", "bakR_se", "bakR_pval", "bakR_padj")
 
   XF_both <- intersect(NSS_eff_DE$XF, DE_XF)
 
@@ -430,6 +437,15 @@ DissectMechanism <- function(bakRFit,
                                        lower.tail = FALSE)
   
   test_stat$meta_padj <- stats::p.adjust(test_stat$meta_pval, method = "BH")
+  
+  
+  ### Calculate L2FC(ksyn) and stats
+  test_stat <- test_stat %>%
+    dplyr::mutate(L2FC_ksyn = L2FC_RNA + L2FC_kdeg,
+                  ksyn_score = L2FC_ksyn/(sqrt(DE_se^2 + bakR_se^2))) %>%
+    dplyr::mutate(ksyn_pval = 2*stats::pnorm(-abs(ksyn_score))) %>%
+    dplyr::mutate(ksyn_padj = stats::p.adjust(ksyn_pval, method = "BH"))
+
   
   
   heatmap_df <- dplyr::tibble(DE_score = test_stat$DE_score[test_stat$DE_padj < DE_cutoff],

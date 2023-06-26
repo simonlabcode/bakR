@@ -1,6 +1,8 @@
 #' Creating PCA plots with logit(fn) estimates
 #'
-#' This function creates a 2-component PCA plot using logit(fn) estimates.
+#' This function creates a 2-component PCA plot using logit(fn) estimates. 
+#' \code{FnPCA} has been deprecated in favor of `FnPCA2`. The latter accepts a full
+#' bakRFit as input and handles imbalanced replicates.
 #'
 #' @param obj Object contained within output of \code{bakRFit}. So, either Fast_Fit (MLE implementation fit),
 #' Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)
@@ -26,6 +28,7 @@
 #' @export
 FnPCA <- function(obj, log_kdeg = FALSE){
 
+  .Deprecated("FnPCA2")  
 
   # Bind variables locally to resolve devtools::check() Notes
   PC1 <- PC2 <- NULL
@@ -94,6 +97,128 @@ FnPCA <- function(obj, log_kdeg = FALSE){
 
   return(g_pca)
 
+}
+
+#' Creating PCA plots with logit(fn) estimates
+#'
+#' This function creates a 2-component PCA plot using logit(fn) or log(kdeg) estimates.
+#'
+#' @param obj bakRFit object
+#' @param Model String identifying implementation for which you want to generate a PCA plot
+#' @param log_kdeg Boolean; if TRUE, then log(kdeg) estimates used for PCA rather than logit(fn). Currently
+#' only compatible with MLE implementation
+#' @return A ggplot object.
+#' @importFrom magrittr %>%
+#' @examples
+#' \donttest{
+#' # Simulate data for 500 genes and 2 replicates
+#' sim <- Simulate_bakRData(500, nreps = 2)
+#'
+#' # Fit data with fast implementation
+#' Fit <- bakRFit(sim$bakRData)
+#'
+#' # Fn PCA
+#' FnPCA2(Fit$Fast_Fit)
+#'
+#' # log(kdeg) PCA
+#' FnPCA2(Fit$Fast_Fit, log_kdeg = TRUE)
+#'
+#' }
+#' @export
+FnPCA2 <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), log_kdeg = FALSE){
+  
+  # Bind variables locally to resolve devtools::check() Notes
+  PC1 <- PC2 <- NULL
+  
+  Model <- match.arg(Model)
+  
+  ### Extract logit(fn)
+  
+  if(log_kdeg){
+    if(Model == "MCMC"){
+      stop("log(kdeg) PCA plots are only compatible with MLE implementation")
+    }else if(Model == "Hybrid"){
+      stop("log(kdeg) PCA plots are only compatible with MLE implementation")
+    }else{
+      logit_fn_df <- obj$Fn_Estimates[,c("log_kdeg", "Feature_ID", "Exp_ID", "Replicate", "sample")]
+      colnames(logit_fn_df) <- c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")
+    }
+  }else{
+    if(Model == "MCMC"){
+      logit_fn_df <- obj$Stan_Fit$Fn_Estimates[,c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")]
+      
+    }else if(Model == "Hybrid"){
+      logit_fn_df <- obj$Hybrid_Fit$Fn_Estimates[,c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")]
+      
+    }else{
+      logit_fn_df <- obj$Fn_Estimates[,c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")]
+      
+    }
+  }
+  
+  if(log_kdeg){
+    if(!inherits(obj, "FastFit")){
+      stop("log(kdeg) PCA is curently only compatible with Fast_Fit.")
+    }
+    
+    logit_fn_df <- obj$Fn_Estimates[,c("log_kdeg", "Feature_ID", "Exp_ID", "Replicate", "sample")]
+    colnames(logit_fn_df) <- c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")
+  }else{
+    logit_fn_df <- obj$Fn_Estimates[,c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")]
+    
+  }
+  
+  ### Create sample to [MT, R] lookup table
+  
+  sample_lookup <- logit_fn_df[,c("sample", "Exp_ID", "Replicate")] %>% dplyr::distinct()
+  
+  
+  ### Create logit_fn matrix
+  
+  logit_fn_mat <- matrix(0, ncol = nrow(sample_lookup), nrow = max(logit_fn_df$Feature_ID))
+  
+  count <- 1
+  for(i in sample_lookup$sample){
+    logit_fn_mat[,count] <- logit_fn_df$logit_fn[logit_fn_df$sample == i]
+    count <- count + 1
+  }
+  
+  ## Cast to a dataframe with colnames = sample names
+  
+  logit_fn_mat <- as.data.frame(logit_fn_mat)
+  colnames(logit_fn_mat) <- sample_lookup$sample
+  
+  ### Perform PCA
+  
+  fn_pcs <- stats::prcomp(t(logit_fn_mat), center = TRUE, scale. = FALSE)
+  
+  
+  ### Extract loadings and PCs
+  
+  fn_eigenvect <- fn_pcs$x
+  
+  fn_PC1 <- fn_eigenvect[,c("PC1")]
+  fn_PC2 <- fn_eigenvect[,c("PC2")]
+  
+  Exp_ID <- as.factor(rep(1:max(sample_lookup$Exp_ID), 
+                          times = obj$Data_lists$Stan_data$nrep_vect))
+  
+  
+  fn_pca_df <- data.frame(PC1 = fn_PC1,
+                          PC2 = fn_PC2,
+                          Exp_ID = Exp_ID)
+  
+  fn_prop_var <- unclass(summary(fn_pcs))$importance[c("Proportion of Variance"),]
+  
+  ### Plot
+  
+  (g_pca <- ggplot2::ggplot(fn_pca_df, ggplot2::aes(x = PC1, y = PC2, color = Exp_ID)) +
+      ggplot2::geom_point(size = 3) +
+      ggplot2::xlab(paste0("PC1 (", fn_prop_var[1]*100, "% of Var.)")) +
+      ggplot2::ylab(paste0("PC2 (", fn_prop_var[2]*100, "% of Var.)")))
+  
+  return(g_pca)
+  
 }
 
 #' Creating L2FC(kdeg) volcano plot from fit objects
