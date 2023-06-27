@@ -223,7 +223,11 @@ abline(0, 1, col = "red")
 
 ```
 
-Looks pretty good to me!
+Looks pretty good to me! Note, a key assumption that is common to make when analyzing NR-seq data is that the population of cells you are analyzing is at steady-state. This means that RNA levels were constant during the label time, i.e., your cells were not actively responding to a perturbation during metabolic labeling. In that case, the fraction new ($\theta$) and the degradation rate constant are related as follows:
+
+$$
+k_{\text{deg}} = -\frac{\text{ln}(1 - \theta)}{\text{tl}}
+$$
 
 To run the heavier, more trustworthy models, just rerun bakRFit() on the Fit object, but with either the StanFit or HybridFit parameters set to true.
 
