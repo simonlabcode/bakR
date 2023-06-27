@@ -423,7 +423,7 @@ DissectMechanism <- function(bakRFit,
   ## Null is product of two independent normal distributions, both with unit variance and one with
   ## non-zero mean.
   
-  message("Calculating mechanism p-value")
+  message("Calculating mechanism p-value. This could take several minutes...")
   
   # Simulate from null for empirical p-value calc
   null_x <- stats::rnorm(sims, mean = zfn)
