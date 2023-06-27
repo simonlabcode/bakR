@@ -2,6 +2,9 @@
 bakR (Bayesian analysis of the kinetics of RNA) is an R package for performing differential kinetics analysis with nucleotide recoding high-throughput RNA sequencing (NR-seq) data. 
 Kinetic parameter estimation and statistical testing is compatible with mutational data from any enrichment free NR-seq method (e.g., TimeLapse-seq, SLAM-seq, TUC-seq, etc.).
 
+# Version 1.0.0 is out now! (06/27/2023)
+A lot of functionality has been added, and I highly suggest all users of bakR to update to this version. There are also many new vignettes to discuss these new features. bakR v1.0.0 is currently in the process of being submitted to CRAN, but is currently available for installation from Github, as described below.
+
 # Why use bakR?
 Differential expression analysis of RNA sequencing (RNA-seq) data can identify changes in cellular RNA levels, but cannot determine the kinetic mechanism underlying such changes. Previously, [our lab](https://simonlab.yale.edu/research/transcriptome-dynamics/timelapse-chemistry/) and others addressed this shortcoming by developing nucleotide-recoding RNA-seq methods (NR-seq; e.g., TimeLapse-seq) to quantify changes in RNA synthesis and degradation kinetics. While advanced statistical models implemented in user-friendly software (e.g., DESeq2) have ensured the statistical rigor of differential expression analyses, no such tools that facilitate differential kinetic analysis with NR-seq exist. To address this need, we developed bakR, an R package that analyzes and compares NR-seq datasets. Differential kinetics analysis with bakR relies on a Bayesian hierarchical model of NR-seq data to increase statistical power by sharing information across transcripts. bakR outperforms attempts to use single sample analysis tools (e.g., pulseR and GRAND-SLAM) for differential kinetics analysis. Check out [our manuscript in RNA](https://rnajournal.cshlp.org/content/29/7/958.abstract) to learn more about the model and its extensive validation!
 
@@ -16,15 +19,22 @@ To install the newest version of bakR from Github, you need to have a C++ compil
     devtools::install_github("simonlabcode/bakR")
 
 # Documentation
-There are currently two vignettes to help get you up to speed with using bakR:
+There are currently seven vignettes to help get you up to speed with using bakR:
 
   1. An introductory vignette (title: Differential Kinetic Analysis with bakR) that walks you through the basic bakR workflow with simulated data.
-  2. A second vignette (title: Going beyond the defaults with bakR) that dives into some specific follow-up analyses one can perform after running bakR on a dataset. Currently, this vignette discusses differential synthesis analysis (i.e., identifying differences in RNA synthesis rates by combining bakR with differential expression analysis) and performing analyses without assuming steady-state. More analyses will be added to this vignette as time goes by.
+  2. A more concise version of the introductory vignette that will get you up and running with bakR quickly (title: bakR for people in a hurry). Particularly appropriate for those who are very comfortable with adopting new bioinformatic tools.
+  3. How to use fraction new estimates (e.g., from a tool like GRAND-SLAM) as input to bakR, a new feature introduced in version 1.0.0 (title: GRAND-SLAM output/fn estimates as bakR input).
+  4. Combining bakR with differential expression analysis to perform differential synthesis rate analysis (title: Differential synthesis analysis with bakR and DESeq2).
+  5. Correcting for disproportionate loss of s<sup>4</sup>U containing RNA (title: Correcting for dropout). This phenomenon, termed dropout, is discussed in two recent preprints, one from [our lab](https://www.biorxiv.org/content/10.1101/2023.05.24.542133v1) and one from the [Erhard lab](https://www.biorxiv.org/content/10.1101/2023.04.21.537786v1.full).
+  6. Distinguishing transcriptional and post-transcriptional regulation, even when the steady-state assumption is partially violated (title: Steady-state quasi-independent mechanistic investigations). Describes a new and somewhat experimental function in bakR, `DissectMechanism`.
+  7. How to identify and deal with problems that can crop up when analyzing NR-seq data (title: Troubleshooting analyses of NR-seq data with bakR).
   
 All vignettes are available on the [bakR website](https://simonlabcode.github.io/bakR/index.html) under the Articles section. [Here](https://github.com/simonlabcode/bakR) is the link to the bakR github as well if you need help getting back to the github from the website.
 
 # Obtaining the Necessary Input
 As discussed in the introductory vignette, bakR requires data in the form of a so-called "cB", or counts binomial data frame. Each row of the cB data frame corresponds to a group of reads with identical mutational data, and the columns denote the sample from which the reads came, the feature the reads aligned to, the number of mutations of interest in the reads (e.g., T-to-C mutations), the number of mutable positions (e.g. Ts), and the number of such reads. It is reasonable to wonder "where am I supposed to get this information?" While there are a couple possibilities, perhaps the easiest and most widely applicable is [bam2bakR](https://github.com/simonlabcode/bam2bakR), a Snakemake implementation of the [TimeLapse pipeline](https://bitbucket.org/mattsimon9/timelapse_pipeline/src/master/) developed by the Simon lab. bam2bakR takes as input aligned bam files and produces, among other things, the cB file required by bakR. Extensive documentation describing how to get bam2bakR up and running is available on its GitHub repo. Snakemake greatly facilitates running this pipeline on almost any computational infrastructure and bam2bakR uses the conda/mamba package manager to make setting up the necessary dependencies a breeze.
+
+As of version 1.0.0, bakR can also take as input fraction new (sometimes referred to as new-to-total ratio, or NTR) estimates. These are obtainable via tools like [GRAND-SLAM](https://github.com/erhard-lab/gedi/wiki/GRAND-SLAM), or perhaps a custom analysis pipeline that you developed while working with NR-seq datasets!
 
 # Bug Catching and Further Questions
 Post descriptions of bugs and a simple reproducible example (if possible) in the Issues section of this repo. In fact, you should go to the Issues section with any question you have about bakR, and there are even helpful labels that you can append to your posts to make the nature of your request clear. If you email me (Isaac Vock) with a question/concern/suggestion, I will direct you to the Issues section. If you have basic use questions, I would suggest going through the vignettes linked above. If these do not answer your question, then post your question to Issues.
