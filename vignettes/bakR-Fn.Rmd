@@ -136,13 +136,3 @@ This vignette provides the minimal amount of information to get up and running w
 1. Correcting for loss of s^4^U RNA during library preparation (a.k.a. dropout correction)
 1. Troubleshooting analyses of NR-seq datasets
 1. Dissecting the mechanisms of gene expression regulation while relaxing the steady-state assumption.
-
-## Appendix
-
-### A1: Input data
-
-
-### A2: Analysis options
-
-
-### A3: Analyzing non-NR-seq data
