@@ -1,3 +1,5 @@
+# bakR 1.0.0
+
 # bakR 0.4.4
 * Small edit to configuration files that address compilation issues that can arise on some systems. Deals with "file too big" errors" during package installation from source.
 
