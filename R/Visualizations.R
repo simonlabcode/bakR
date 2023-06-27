@@ -241,8 +241,19 @@ FnPCA2 <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), log_kdeg = FALSE){
 #'
 #' }
 #' @export
-plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
+plotVolcano <- function(obj, FDR = 0.05, Exps = 2, Exp_shape = FALSE){
 
+  ## Checks
+  if(!is.numeric(FDR)){
+    stop("FDR is not numeric")
+  }else if(FDR <= 0){
+    warning("FDR is <= 0, no feature will be significant by this cutoff")
+  }
+  
+  if(!is.logical(Exp_shape)){
+    stop("Exp_shape must be logical (TRUE or FALSE)!")
+  }
+  
   # Bind variables locally to resolve devtools::check() Notes
   padj <- L2FC_kdeg <- conclusion <- Exp_ID <- NULL
 
@@ -270,12 +281,19 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
   ## Add significance ID
   L2FC_df <- L2FC_df %>% dplyr::mutate(conclusion = ifelse(padj < FDR, ifelse(L2FC_kdeg < 0, "Stabilized", "Destabilized"), "Not Sig."))
 
+  if(!all(Exps %in% unique(L2FC_df$Exp_ID))){
+    stop("You have provided Exps that do not represent Exp_IDs in your data!")
+  }
+  
   if(is.null(Exps)){
     Exps <- 2:max(as.integer(L2FC_df$Exp_ID))
+  }else{
+    L2FC_df <- L2FC_df[L2FC_df$Exp_ID %in% Exps,]
   }
 
   ## Check which results are present and plan color scheme appropriately
   conclusions <- unique(L2FC_df$conclusion)
+
 
   if(length(conclusions) == 3){
     colors <- c("#FFC20A", "gray","#0C7BDC")
@@ -300,7 +318,7 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
 
 
   if(Exp_shape){ # Plot different experimental conditions together using different shapes
-    ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = L2FC_kdeg,y = -log10(padj), color = conclusion,  shape = as.factor(Exp_ID))) +
+    ggplot2::ggplot(L2FC_df, ggplot2::aes(x = L2FC_kdeg,y = -log10(padj), color = conclusion,  shape = as.factor(Exp_ID))) +
       ggplot2::geom_point(size = 1.5) +
       ggplot2::theme_classic() +
       ggplot2::ylab(bquote(-log[10](p[adj]))) +
@@ -308,7 +326,7 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
       ggplot2::scale_color_manual(values = colors) +
       theme_mds
   }else{ # Plot a subset of experimental conditions
-    ggplot2::ggplot(L2FC_df[L2FC_df$Exp_ID %in% Exps, ], ggplot2::aes(x = L2FC_kdeg,y = -log10(padj), color = conclusion )) +
+    ggplot2::ggplot(L2FC_df, ggplot2::aes(x = L2FC_kdeg,y = -log10(padj), color = conclusion )) +
       ggplot2::geom_point(size = 1.5) +
       ggplot2::theme_classic() +
       ggplot2::ylab(bquote(-log[10](p[adj]))) +

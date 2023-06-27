@@ -8,7 +8,7 @@ CorrectDropout(
   obj,
   scale_init = 1.05,
   pdo_init = 0.3,
-  recalc_uncertainty = TRUE,
+  recalc_uncertainty = FALSE,
   ...
 )
 }
@@ -23,7 +23,7 @@ transcript) between the +s4U and -s4U samples.}
 that an s4U labeled RNA molecule is lost during library prepartion.}
 
 \item{recalc_uncertainty}{Logical; if TRUE, then fraction new uncertainty is recalculated
-using adjusted fn and a simple binomial model of estimate uncertainty. This will provided a
+using adjusted fn and a simple binomial model of estimate uncertainty. This will provide a
 slight underestimate of the fn uncertainty, but will be far less biased for low coverage features,
 or for samples with low pnews.}
 

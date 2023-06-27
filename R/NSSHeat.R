@@ -317,8 +317,8 @@ DissectMechanism <- function(bakRFit,
          names are unique and that each column is correctly labeled and try again.")
   }
 
-  if(!inherits(bakRFit, "bakRFit")){
-    stop("Input for bakRFit is not an object of class bakRFit.")
+  if(!(inherits(bakRFit, "bakRFit") | inherits(bakRFit, "bakRFnFit"))){
+    stop("Input for bakRFit is not an object of class bakRFit or bakRFnFit.")
   }
 
   if(!is.numeric(sims)){

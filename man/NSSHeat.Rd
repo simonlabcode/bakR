@@ -54,14 +54,16 @@ NF <- nrow(Fit$Fast_Fit$Effects_df)
 
 # Simulate mock differential expression data frame
 DE_df <- data.frame(XF = as.character(1:NF),
-                       log2FoldChange = stats::rnorm(NF, 0, 2))
+                       L2FC_RNA = stats::rnorm(NF, 0, 2))
 
-DE_df$stat <- DE_df$log2FoldChange/0.5
+DE_df$DE_score <- DE_df$L2FC_RNA/0.5
+DE_df$DE_se <- 0.5
 
-DE_df$padj <- 2*stats::dnorm(-abs(DE_df$stat))
+DE_df$DE_pval <- 2*stats::dnorm(-abs(DE_df$DE_score))
+DE_df$DE_padj <- 2*stats::p.adjust(DE_df$DE_pval, method = "BH")
 
-# make heatmap matrix
-Heatmap <- NSSHeat(bakRFit = Fit,
+# perform NSS analysis
+NSS_analysis <- DissectMechanism(bakRFit = Fit,
                DE_df = DE_df,
                bakRModel = "MLE")
 
