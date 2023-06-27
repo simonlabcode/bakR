@@ -4,7 +4,7 @@ Kinetic parameter estimation and statistical testing is compatible with mutation
 
 # Version 1.0.0 is out now! (06/27/2023)
 A lot of functionality has been added, and I highly suggest all users of bakR to update to this version. There are also many new vignettes to discuss these new features. bakR v1.0.0 is currently in the process of being submitted to CRAN, but is currently available for installation from Github, as described below. Two major changes/additions are:
-1. Ability to use GRAND-SLAM output (or fraction new estimates more generally) as bakR input
+1. Ability to use [GRAND-SLAM](https://github.com/erhard-lab/gedi/wiki/GRAND-SLAM) output (or fraction new estimates more generally) as bakR input
 2. Strategy for correcting metabolic label related biases in kinetic parameter estimates and read counts 
 
 # Why use bakR?
