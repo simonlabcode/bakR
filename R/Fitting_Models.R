@@ -17,6 +17,16 @@
 #' \code{fast_analysis} will not be called again unless bakRFit is rerun on the bakRData object.
 #' or if \code{FastRerun} is set to TRUE. If you want to generate model fits using different parameters for cBprocess,
 #' you will have to rerun \code{bakRFit} on the bakRData object.
+#' 
+#' If \code{bakRFit} is run on a bakRFnData object, \code{fn_process} and then \code{avg_and_regularize}
+#' will always be called. The former will generate the processed data that can be passed to the model
+#' fitting functions (\code{avg_and_regularize} and \code{TL_Stan}, the latter only with HybridFit = TRUE).
+#' 
+#' If \code{bakRFit} is run on a bakRFnFit object. \code{fn_process} will not be called again, as
+#' the output of \code{fn_process} will already be contained in the bakRFnFit object. Similary,
+#' \code{avg_and_regularize} will not be called unless \code{bakRFit} is rerun on the bakRData object,
+#' or if \code{FastRerun} is set to TRUE. If you want to generate model fits using different
+#' parameters for \code{fn_process}, you will have to rerun \code{bakRFit} on the bakRData object.
 #'
 #' See the documentation for the individual fitting functions for details regarding how they analyze nucleotide
 #' recoding data. What follows is a brief overview of how each works
@@ -42,16 +52,18 @@
 #' is performed as with the Hybrid implementation.
 #'
 #'
-#' @param obj bakRData object produced by \code{bakRData} or a bakRFit object produced by \code{bakRFit}
+#' @param obj `bakRData` object produced by \code{bakRData}, `bakRFit` object produced by \code{bakRFit}
+#' `bakRFnData` object produced by \code{bakRFnData}, or `bakRFnFit` object produced by \code{bakRFit}.
 #' @param StanFit Logical; if TRUE, then the MCMC implementation is run. Will only be used if \code{obj}
 #' is a \code{bakRFit} object
 #' @param HybridFit Logical; if TRUE, then the Hybrid implementation is run. Will only be used if \code{obj}
 #' is a \code{bakRFit} object
-#' @param high_p Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any -s4U control
+#' @param high_p Numeric; Any features with a mutation rate (number of mutations / number of Ts in reads) higher than this in any -s4U control
 #' samples (i.e., samples that were not treated with s4U) are filtered out
-#' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
-#' @param Ucut Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples
-#' @param AvgU Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples
+#' @param totcut Numeric; Any features with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out
+#' @param totcut_all Numeric; Any features with less than this number of sequencing reads in any sample are filtered out
+#' @param Ucut Numeric; All features must have a fraction of reads with 2 or less Us less than this cutoff in all samples
+#' @param AvgU Numeric; All features must have an average number of Us greater than this cutoff in all samples
 #' @param FastRerun Logical; only matters if a bakRFit object is passed to \code{bakRFit}. If TRUE, then the Stan-free
 #' model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the 'Stan' models.
 #' @param FOI Features of interest; character vector containing names of features to analyze
@@ -71,8 +83,14 @@
 #' reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment).
 #' @param BDA_model Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 #' model is used.
+#' @param multi_pold Logical; if TRUE, pold is estimated for each sample rather than use a global pold estimate.
 #' @param Long Logical; if TRUE, long read optimized fraction new estimation strategy is used.
 #' @param kmeans Logical; if TRUE, kmeans clustering on read-specific mutation rates is used to estimate pnews and pold.
+#' @param ztest Logical; if TRUE and the MLE implementation is being used, then a z-test will be used for p-value calculation
+#' rather than the more conservative moderated t-test.
+#' @param Fisher Logical; if TRUE, Fisher information is used to estimate logit(fn) uncertainty. Else, a less conservative binomial model is used, which
+#' can be preferable in instances where the Fisher information strategy often drastically overestimates uncertainty
+#' (i.e., low coverage or low pnew).
 #' @param ... Arguments passed to either \code{fast_analysis} (if a bakRData object)
 #' or \code{TL_Stan} and \code{Hybrid_fit} (if a bakRFit object)
 #' @return bakRFit object with results from statistical modeling and data processing. Objects possibly included are:
@@ -82,6 +100,7 @@
 #'  \item Stan_Fit; Only present if StanFit = TRUE. Output of \code{TL_stan}
 #'  \item Data_lists; Always will be present. Output of \code{cBprocess} with Fast and Stan == TRUE
 #' }
+#' @importFrom magrittr %>%
 #' @examples
 #' \donttest{
 #' # Simulate data for 1000 genes, 2 replicates, 2 conditions
@@ -96,6 +115,7 @@
 bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           high_p = 0.2,
                           totcut = 50,
+                          totcut_all = 10,
                           Ucut = 0.25,
                           AvgU = 4,
                           FastRerun = FALSE,
@@ -106,8 +126,8 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           low_reads = 100,
                           high_reads = 500000,
                           chains = 1, NSS = FALSE,
-                          Chase = FALSE, BDA_model = FALSE,
-                          Long = FALSE, kmeans = FALSE,
+                          Chase = FALSE, BDA_model = FALSE, multi_pold = FALSE,
+                          Long = FALSE, kmeans = FALSE, ztest = FALSE, Fisher = TRUE,
                           ...){
 
   # Bind variables locally to resolve devtools::check() Notes
@@ -135,10 +155,21 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   ## Check totcut
   if(!is.numeric(totcut)){
     stop("totcut must be numeric")
-  }else if( totcut < 0 ){
+  }else if( totcut <= 0 ){
     stop("totcut must be greater than 0")
   }else if(totcut > 5000){
     warning("totcut is abnormally high (> 5000); many features will not have this much coverage in every sample and thus get filtered out.")
+  }
+  
+  ## Check totcut
+  if(!is.numeric(totcut_all)){
+    stop("totcut_all must be numeric")
+  }else if( totcut_all <= 0 ){
+    stop("totcut_all must be greater than 0")
+  }else if(totcut_all > totcut){
+    stop("totcut_all must be less than or equal to totcut.")
+  }else if(totcut_all > 5000){
+    warning("totcut_all is abnormally high (> 5000); many features will not have this much coverage in every sample and thus get filtered out.")
   }
 
   ## Check Ucut
@@ -162,14 +193,6 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     warning("AvgU is abnormally low; you are allowing an average of less than 4 Us per read, which may model convergence issues.")
   }
 
-  ## Check FOI
-  if(!is.null(FOI)){
-    if(typeof(obj$cB$XF) != typeof(FOI)){
-      warning("FOI should be the same data type as cB$XF in the bakRData object; if it is not none of the feature of interest will be found
-            in the cB.")
-    }
-  }
-
 
   ## Check concat
   if(!is.logical(concat)){
@@ -184,6 +207,11 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   ## Check Chase
   if(!is.logical(Chase)){
     stop("Chase must be logical (TRUE or FALSE)")
+  }
+  
+  ## Check multi_pold
+  if(!is.logical(multi_pold)){
+    stop("multi_pold must be logical (TRUE or FALSE)")
   }
 
   ## Check RateEst_size
@@ -245,12 +273,22 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
   if(chains > 4){
     warning("You are running more than 4 chains. This may be more than necessary and may sacrifice computational performance.")
   }
-
+  
+  ### Check ztest
+  if(!is.logical(ztest)){
+    stop("ztest must be logical (TRUE or FALSE)")
+  }
+  
+  ## Check Fisher
+  if(!is.logical(Fisher)){
+    stop("Fisher must be logical (TRUE or FALSE")
+  }
 
   if(inherits(obj, "bakRData")){
 
     # Preprocess data
-    data_list <- bakR::cBprocess(obj, high_p = high_p, totcut = totcut, Ucut = Ucut,
+    data_list <- bakR::cBprocess(obj, high_p = high_p, totcut = totcut, totcut_all = totcut_all,
+                                       Ucut = Ucut,
                                        AvgU = AvgU,
                                        Stan = TRUE,
                                        Fast = TRUE,
@@ -282,16 +320,21 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
       mutrate_list <- bakR::cBprocess(bakRData2, FOI = XF_choose, concat = FALSE)
 
+      mutrate_list$Stan_data$nU <- sum(mutrate_list$Fast_df$nT*mutrate_list$Fast_df$n)/sum(mutrate_list$Fast_df$n)
+
+      
       # Run MLE implementation
       fast_list <- bakR::fast_analysis(data_list$Fast_df, Stan_data = mutrate_list$Stan_data, StanRate = TRUE,
-                                       BDA_model = BDA_model, Chase = Chase,
-                                       NSS = NSS, Long = Long, kmeans = kmeans, ...)
+                                       BDA_model = BDA_model, Chase = Chase, multi_pold = multi_pold,
+                                       NSS = NSS, Long = Long, kmeans = kmeans, ztest = ztest,
+                                       Fisher = Fisher, ...)
 
     }else{
       # Run MLE implementation
       fast_list <- bakR::fast_analysis(data_list$Fast_df,
-                                       BDA_model = BDA_model, Chase = Chase,
-                                       NSS = NSS, Long = Long, kmeans = kmeans, ...)
+                                       BDA_model = BDA_model, Chase = Chase, multi_pold = multi_pold,
+                                       NSS = NSS, Long = Long, kmeans = kmeans, ztest = ztest, 
+                                       Fisher = Fisher, ...)
     }
 
 
@@ -356,23 +399,25 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
                           tl = Stan_data$tl,
                           NE = length(data_df$FE),
                           NF = max(data_df$FE),
-                          sdf = Stan_data$sdf[Stan_data$sdf$fnum %in% fnum_choose,])
+                          sdf = Stan_data$sdf[Stan_data$sdf$fnum %in% fnum_choose,],
+                          nU = sum(obj$Data_lists$Fast_df$nT*obj$Data_lists$Fast_df$n)/sum(obj$Data_lists$Fast_df$n))
 
         rm(Stan_data)
 
         # Run MLE implementation
         fast_list <- bakR::fast_analysis(obj$Data_lists$Fast_df, Stan_data = mutrate_list, StanRate = TRUE,
                                          NSS = NSS,
-                                         BDA_model = BDA_model,
-                                         Chase = Chase, Long = Long, kmeans = kmeans,
+                                         BDA_model = BDA_model, multi_pold = multi_pold,
+                                         Chase = Chase, Long = Long, kmeans = kmeans, ztest = ztest,
+                                         Fisher = Fisher,
                                          ...)
 
       }else{
         # Run MLE implementation
         fast_list <- bakR::fast_analysis(obj$Data_lists$Fast_df,
                                          NSS = NSS,
-                                         BDA_model = BDA_model,
-                                         Chase = Chase, Long = Long, kmeans = kmeans,
+                                         BDA_model = BDA_model, multi_pold = multi_pold,
+                                         Chase = Chase, Long = Long, kmeans = kmeans, ztest = ztest,
                                          ...)
 
       }
@@ -387,6 +432,9 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     if(StanFit){
 
       obj$Data_lists$Stan_data$Chase <- as.integer(Chase)
+      
+      ## Can calculate # of Us
+      obj$Data_lists$Stan_data$nU <- sum(obj$Data_lists$Fast_df$nT*obj$Data_lists$Fast_df$n)/sum(obj$Data_lists$Fast_df$n)
 
       Stan_list <- TL_stan(obj$Data_lists$Stan_data, NSS = NSS, chains = chains, ...)
 
@@ -410,9 +458,9 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
     if(HybridFit){
 
       ## Get fn estimates from MLE implementation and curate data for Stan
-
+      
       Rep_Fn <- obj$Fast_Fit$Fn_Estimates
-
+      
       data_list <- list(
         NE = nrow(Rep_Fn),
         NF = max(Rep_Fn$Feature_ID),
@@ -431,27 +479,28 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
         nrep_vect = obj$Data_lists$Stan_data$nrep_vect,
         Chase = as.integer(Chase)
       )
-
-
+      
+      
       rm(Rep_Fn)
-
+      
       # Run Hybrid implementation
       Stan_list <- TL_stan(data_list, Hybrid_Fit = TRUE, NSS = NSS, chains = chains, ...)
-
+      
       ## Calculate and adjust p-values
-
+      
       Effects <- Stan_list$Effects_df
-
+      
       Effects <- Effects %>% dplyr::mutate(pval = 2*stats::pnorm(-abs(effect/se))) %>%
         dplyr::mutate(padj = stats::p.adjust(pval, method = "BH"))
-
+      
       Stan_list$Effects_df <- Effects
-
+      
       rm(Effects)
-
+      
       class(Stan_list) <- "HybridModelFit"
-
+      
       obj$Hybrid_Fit <- Stan_list
+      
     }
 
     if(!(StanFit | HybridFit)){
@@ -460,8 +509,118 @@ bakRFit <- function(obj, StanFit = FALSE, HybridFit = FALSE,
 
     return(obj)
 
+  }else if(inherits(obj, "bakRFnData")){
+    
+    data_list <- fn_process(obj, totcut = totcut, totcut_all = totcut_all,
+                            Chase = Chase, FOI = FOI, concat = concat)
+    
+    ## Necessary hacky preprocessing
+    Mut_data_est <- data_list$Fn_est
+    
+    # There is a better way to do this...
+    Mut_data_est <- Mut_data_est[,c("XF", "sample", "fn", "n",
+                                    "Feature_ID", "Replicate", "Exp_ID", "tl",
+                                    "logit_fn", "kdeg", "log_kdeg", "logit_fn_se", "log_kd_se")]
+    
+    colnames(Mut_data_est) <- c("XF", "sample", "fn", "nreads", "fnum", "reps",
+                                "mut", "tl", "logit_fn_rep", "kd_rep_est", "log_kd_rep_est", 
+                                "logit_fn_se", "log_kd_se")
+    
+    sample_lookup <- data_list$Stan_data$sample_lookup
+    feature_lookup <- data_list$Stan_data$sdf
+    
+    colnames(sample_lookup) <- c("sample", "mut", "reps")
+    
+    ngene <- max(Mut_data_est$fnum)
+    num_conds <- max(Mut_data_est$mut)
+    nMT <- num_conds
+    nreps <- rep(0, times = num_conds)
+    for(i in 1:num_conds){
+      nreps[i] <- max(Mut_data_est$reps[Mut_data_est$mut == i])
+    }
+    
+    fast_list <- avg_and_regularize(Mut_data_est, nreps, sample_lookup, 
+                                    feature_lookup, NSS = NSS, BDA_model = BDA_model,
+                                    ...)
+    
+    Fit_lists <- list(Fast_Fit = fast_list,
+                      Data_lists = data_list)
+    
+    class(Fit_lists) <- "bakRFnFit"
+    return(Fit_lists)
+    
+
+    
+  }else if(inherits(obj, "bakRFnFit")){
+    
+    if(FastRerun){
+      data_list <- obj$Data_lists
+      
+      ## Necessary hacky preprocessing
+      Mut_data_est <- data_list$Fn_est
+      
+      colnames(Mut_data_est) <- c("XF", "sample", "fn", "nreads", "fnum", "reps",
+                                  "mut", "tl", "logit_fn_rep", "kd_rep_est", "log_kd_rep_est", 
+                                  "logit_fn_se", "log_kd_se")
+      
+      sample_lookup <- data_list$Stan_data$sample_lookup
+      feature_lookup <- data_list$Stan_data$sdf
+      
+      colnames(sample_lookup) <- c("sample", "mut", "reps")
+      
+      ngene <- max(Mut_data_est$fnum)
+      num_conds <- max(Mut_data_est$mut)
+      nMT <- num_conds
+      nreps <- rep(0, times = num_conds)
+      for(i in 1:num_conds){
+        nreps[i] <- max(Mut_data_est$reps[Mut_data_est$mut == i])
+      }
+      
+      fast_list <- avg_and_regularize(Mut_data_est, nreps, sample_lookup, 
+                                      feature_lookup, NSS = NSS, BDA_model = BDA_model,
+                                      ...)
+      
+      obj$Fast_Fit <- fast_list
+      return(obj)
+    }else{
+      message("Running Hybrid implementation. Cannot run MCMC implementation with bakRFnFit input")
+      
+      Rep_Fn <- obj$Fast_Fit$Fn_Estimates
+      
+      data_list <- obj$Data_lists$Stan_data
+      
+      sample_lookup <- data_list$sample_lookup
+      colnames(sample_lookup) <- c("sample", "mut", "reps")
+      data_list$sample_lookup <- sample_lookup
+      
+      
+      rm(Rep_Fn)
+      
+      # Run Hybrid implementation
+      Stan_list <- TL_stan(data_list, Hybrid_Fit = TRUE, NSS = NSS, chains = chains, ...)
+      
+      ## Calculate and adjust p-values
+      
+      Effects <- Stan_list$Effects_df
+      
+      Effects <- Effects %>% dplyr::mutate(pval = 2*stats::pnorm(-abs(effect/se))) %>%
+        dplyr::mutate(padj = stats::p.adjust(pval, method = "BH"))
+      
+      Stan_list$Effects_df <- Effects
+      
+      rm(Effects)
+      
+      class(Stan_list) <- "HybridModelFit"
+      
+      obj$Hybrid_Fit <- Stan_list
+      
+      return(obj)
+      
+    }
+    
+    
   }else{
-    stop("obj is not of class bakRData or bakRFit")
+    stop("obj is not of class bakRData, bakRFit, bakRFnData, or bakRFnFit")
   }
 
 

@@ -15,6 +15,7 @@ data {
   real U_cont[NE]; // Feature specific log-fold difference in U content
   int nrep;
   real tl[nMT];
+  real nU;
 }
 
 // Parameter block tells model all the things it will estimate
@@ -43,8 +44,8 @@ model {
 
   for(i in 1:nMT){
     for(k in 1:nrep){
-      log_lambda_o[i,k] ~ normal(-3.5, 0.5);
-      TL_lambda_eff[i,k] ~ lognormal(-1, 0.5);
+      log_lambda_o[i,k] ~ normal(log(nU*0.001), 0.5);
+      TL_lambda_eff[i,k] ~ lognormal(1.4, 0.15);
     }
   }
 
@@ -84,6 +85,4 @@ generated quantities {
   }
 
 }
-
-
 

@@ -1,7 +1,7 @@
 #' Identify features (e.g., transcripts) with high quality data
 #'
 #' This function identifies all features (e.g., transcripts, exons, etc.) for which the mutation rate
-#' is below a set threshold in the control (no s4U) sample and which have more reads than a set threshold
+#' is below a set threshold in the control (-s4U) sample and which have more reads than a set threshold
 #' in all samples. If there is no -s4U sample, then only the read count cutoff is considered. Additional
 #' filtering options are only relevant if working with short RNA-seq read data. This includes filtering out
 #' features with extremely low empirical U-content (i.e., the average number of Us in sequencing reads from
@@ -9,7 +9,8 @@
 #'
 #' @param obj Object of class bakRData
 #' @param high_p highest mutation rate accepted in control samples
-#' @param totcut readcount cutoff
+#' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out
+#' @param totcut_all Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
 #' @param Ucut Must have a fraction of reads with 2 or less Us less than this cutoff in all samples
 #' @param AvgU Must have an average number of Us greater than this
 #' @importFrom magrittr %>%
@@ -30,112 +31,105 @@
 #' features_to_keep <- reliableFeatures(obj = bakRData)
 #' }
 #' @export
-reliableFeatures <- function(obj,
-                             high_p = 0.2,
-                             totcut = 50,
-                             Ucut = 0.25,
-                             AvgU = 4){
-
+reliableFeatures <- reliableFeatures <- function(obj,
+                                                 high_p = 0.2,
+                                                 totcut = 50,
+                                                 totcut_all = 10,
+                                                 Ucut = 0.25,
+                                                 AvgU = 4){
+  
   # Bind variables locally to resolve devtools::check() Notes
   XF <- TC <- n <- totTC <- nT <- n2U <- nmore <- totcounts <- NULL
-  tot_mut <- f2U <- avgU <- counts <- type <- NULL
+  tot_mut <- f2U <- avgU <- counts <- type <- totTs <- Exp_ID <- NULL
   `.` <- list
-
+  
   cBdt <- as.data.frame(obj$cB)
   metadf <- obj$metadf
-
+  
   nsamps <- length(unique(cBdt$sample))
-
-
+  
+  
   samp_list <- unique(cBdt$sample)
-
+  
   c_list <- rownames(metadf[metadf$tl == 0,])
-
+  
   s4U_list <- samp_list[!(samp_list %in% c_list)]
-
+  
   type_list <- ifelse(metadf[samp_list, "tl"] == 0, 0, 1)
-
+  
   # Create mut and reps dictionary
   ID_dict <- data.frame(sample = rownames(metadf),
-                        type = type_list)
-
-
-  cBdt <- dplyr::left_join(cBdt, ID_dict, by = "sample") %>%
+                        type = type_list,
+                        Exp_ID = metadf$Exp_ID)
+  
+  
+  cBdt <- dplyr::inner_join(cBdt, ID_dict, by = "sample") %>%
     dplyr::ungroup()
-
+  
 
   cBdt <- data.table::setDT(cBdt)
-
-
-  if(sum(obj$metadf$tl == 0) > 0){
-
-    cBdt <- cBdt[sample %in% unique(sample) & !grepl("__", XF)]
-
-
-    cBdt <- cBdt[, `:=`(totTC = TC * n * abs(type - 1))]
-
-
-    cBdt <- cBdt[, .(tot_mut = sum(totTC), totcounts = sum(n), totTs = sum(n*nT),
-                     avgU = sum(nT * n)/sum(n), n2U = sum(n[nT <=2]),
-                     nmore = sum(n[nT > 2])), keyby = .(sample,XF)]
-
-    cBdt <- cBdt[, `:=`(f2U = n2U/(nmore + n2U))]
-
-    cBdt <- cBdt[(totcounts >= totcut) & (tot_mut/totTs < high_p) &
-                   (f2U < Ucut) & (avgU > AvgU)]
-
-    cBdt <- cBdt[, .(counts = .N), keyby = .(XF)]
-
-    cBdt <- dplyr::as_tibble(cBdt)
-
-    cBdt <- cBdt[cBdt$counts == nsamps,]
-
-    y <- unique(unlist(cBdt$XF))
-
-
-
-  }else{
-
-    cBdt <- cBdt[sample %in% unique(sample) & !grepl("__", XF)]
-
-
-    cBdt <- cBdt[, .(totcounts = sum(n),
-                     avgU = sum(nT * n)/sum(n), n2U = sum(n[nT <=2]),
-                     nmore = sum(n[nT > 2])), keyby = .(sample,XF)]
-
-    cBdt <- cBdt[, `:=`(f2U = n2U/(nmore + n2U))]
-
-    cBdt <- cBdt[(totcounts >= totcut) &
-                   (f2U < Ucut) & (avgU > AvgU)]
-
-    cBdt <- cBdt[, .(counts = .N), keyby = .(XF)]
-
-    cBdt <- dplyr::as_tibble(cBdt)
-
-    cBdt <- cBdt[cBdt$counts == nsamps,]
-
-    y <- unique(unlist(cBdt$XF))
-
-
-  }
-
-
-  return(y)
+  
+  
+  cBdt <- cBdt[!grepl("__", XF)]
+  
+  
+  cBdt <- cBdt[, `:=`(totTC = TC * n * abs(type - 1))]
+  
+  
+  cBdt <- cBdt[, .(tot_mut = sum(totTC), totcounts = sum(n), totTs = sum(n*nT),
+                   avgU = sum(nT * n)/sum(n), n2U = sum(n[nT <=2]),
+                   nmore = sum(n[nT > 2])), keyby = .(sample,XF,Exp_ID)]
+  
+  cBdt <- cBdt[, `:=`(f2U = n2U/(nmore + n2U))]
+  
+  ### read count filtering
+  cBreps <- setDT( dplyr::as_tibble(cBdt) %>%
+                     dplyr::select(Exp_ID, sample) %>%
+                     dplyr::distinct() %>%
+                     dplyr::group_by(Exp_ID) %>%
+                     dplyr::count() )
+  
+  cBr <- cBdt[(totcounts >= totcut)]
+  cBr <- cBr[, .(counts = .N), keyby = .(XF, Exp_ID)]
+  
+  cBr <- cBr[cBreps, on = .(Exp_ID), nomatch = NULL]
+  cBr <- cBr[counts == n]
+  features_r <- unique(cBr$XF)
+  
+  ### Additional filtering
+  cBdt <- cBdt[(totcounts >= totcut_all) & (tot_mut/totTs < high_p) &
+                 (f2U < Ucut) & (avgU > AvgU)]
+  
+  cBdt <- cBdt[, .(counts = .N), keyby = .(XF)]
+  
+  cBdt <- dplyr::as_tibble(cBdt)
+  
+  cBdt <- cBdt[cBdt$counts == nsamps,]
+  
+  features_all <- unique(unlist(cBdt$XF))
+  
+  y <- intersect(features_r, features_all)
+  
+  
+  return(y[order(y)])
 }
+
 
 #' Curate data in bakRData object for statistical modeling
 #'
 #' \code{cBprocess} creates the data structures necessary to analyze nucleotide recoding RNA-seq data with any of the
 #' statistical model implementations in \code{bakRFit}. The input to \code{cBprocess} must be an object of class
-#' `bakRData`. The output can contain data passable to \code{fast_analysis} (if Fast == TRUE), \code{TL_stan} with StanFit = TRUE if
-#' Stan == TRUE, or both.
+#' `bakRData`.
 #'
 #' The 1st step executed by \code{cBprocess} is to find the names of features which are deemed "reliable". A reliable feature is one with
-#' sufficient read coverage in every single sample (i.e., > totcut reads in all samples) and limited mutation content in all -s4U
-#' control samples (i.e., < high_p mutation rate in all samples lacking s4U feeds). This is done with a call to \code{reliableFeatures}.
+#' sufficient read coverage in every single sample (i.e., > totcut_all reads in all samples), sufficient read coverage in at all replicates
+#' of at least one experimental condition (i.e., > totcut reads in all replicates for one or more experimental conditions) and limited mutation content in all -s4U
+#' control samples (i.e., < high_p mutation rate in all samples lacking s4U feeds). In addition, if analyzing short read sequencing data, two additional
+#' definitons of reliable features become pertinent: the fraction of reads that can have 2 or less Us in each sample (Ucut) and the
+#' minimum average number of Us for a feature's reads in each sample (AvgU). This is done with a call to \code{reliableFeatures}.
+#'
 #' The 2nd step is to extract only reliableFeatures from the cB dataframe in the `bakRData` object. During this process, a numerical
-#' ID is given to each reliableFeature, with the numerical ID corresponding to the order in which each feature is found in the original cB
-#' (this might typically be alphabetical order).
+#' ID is given to each reliableFeature, with the numerical ID corresponding to their order when arranged using \code{dplyr::arrange}.
 #'
 #' The 3rd step is to prepare a dataframe where each row corresponds to a set of n identical reads (that is they come from the same sample
 #' and have the same number of mutations and Us). Part of this process involves assigning an arbitrary numerical ID to each replicate in each
@@ -148,20 +142,21 @@ reliableFeatures <- function(obj,
 #' all replicates) and the other which is a sample lookup table that relates the numerical experimental and replicate IDs to the original
 #' sample name.
 #'
-#' If FOI is non-null and concat == TRUE, the features listed in FOI will be included in the list of reliable features that make it past
-#' filtering. If FOI is non-null and concat == FALSE, the features listed in FOI will be the only reliable features that make it past filtering.
-#' If FOI is null and concat == FALSE, an error will be thrown.
 #'
 #'
 #' @param obj An object of class bakRData
 #' @param high_p Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any no s4U control
 #' samples are filtered out
-#' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
+#' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out
+#' @param totcut_all Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
 #' @param Ucut Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples
 #' @param AvgU Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples
 #' @param Stan Boolean; if TRUE, then data_list that can be passed to 'Stan' is curated
 #' @param Fast Boolean; if TRUE, then dataframe that can be passed to fast_analysis() is curated
-#' @param FOI Features of interest; character vector containing names of features to analyze
+#' @param FOI Features of interest; character vector containing names of features to analyze. If \code{FOI} is non-null and \code{concat} is TRUE, then
+#' all minimally reliable FOIs will be combined with reliable features passing all set filters (\code{high_p}, \code{totcut}, \code{totcut_all},
+#' \code{Ucut}, and \code{AvgU}). If \code{concat} is FALSE, only the minimally reliable FOIs will be kept. A minimally reliable FOI is one that passes
+#' filtering with minimally stringent parameters.
 #' @param concat Boolean; If TRUE, FOI is concatenated with output of reliableFeatures
 #' @return returns list of objects that can be passed to \code{TL_stan} and/or \code{fast_analysis}. Those objects are:
 #' \itemize{
@@ -223,6 +218,7 @@ reliableFeatures <- function(obj,
 cBprocess <- function(obj,
                        high_p = 0.2,
                        totcut = 50,
+                       totcut_all = 10,
                        Ucut = 0.25,
                        AvgU = 4,
                        Stan = TRUE,
@@ -377,13 +373,22 @@ cBprocess <- function(obj,
 
   # Get reliable features:
   message("Finding reliable Features")
-  reliables <- bakR::reliableFeatures(obj, high_p = high_p, totcut = totcut, Ucut = Ucut, AvgU = AvgU)
+  reliables <- bakR::reliableFeatures(obj, high_p = high_p, totcut = totcut, totcut_all = totcut_all,
+                                      Ucut = Ucut, AvgU = AvgU)
 
-  if(concat == TRUE){
-    keep <- unique(c(intersect(FOI, reliables), reliables))
+  if(is.null(FOI)){
+    keep <- reliables
   }else{
-    keep <- intersect(FOI, reliables)
+    if(concat == TRUE){
+      # FOI still need to pass filtering to make sure bakRFit doesn't break
+      min_reliables <- bakR::reliableFeatures(obj, high_p = 1, totcut = 1, totcut_all = 1, Ucut = Ucut, AvgU = AvgU)
+      keep <- unique(c(intersect(FOI, min_reliables), reliables))
+    }else{
+      min_reliables <- bakR::reliableFeatures(obj, high_p = 1, totcut = 1, totcut_all = 1, Ucut = Ucut, AvgU = AvgU)
+      keep <- intersect(FOI, min_reliables)
+    }
   }
+
 
   if((length(keep) == 0) | (is.null(keep))){
     stop("No features made it past filtering.Try increasing the read count or -s4U background mutation rate cutoffs.")
@@ -398,8 +403,8 @@ cBprocess <- function(obj,
     dplyr::filter(XF %in% keep) %>%
     dplyr::group_by(XF) %>%
     dplyr::summarize(n = sum(n)) %>%
-    dplyr::mutate(fnum = order(XF)) %>%
-    dplyr::arrange(fnum) %>%
+    dplyr::arrange(XF) %>%
+    dplyr::mutate(fnum = 1:length(XF)) %>%
     dplyr::select(XF, fnum)
 
 
@@ -616,5 +621,473 @@ cBprocess <- function(obj,
     names(out) <- c("Stan_data", "Count_Matrix")
   }
 
+  return(out)
+}
+
+#' Curate data in bakRFnData object for statistical modeling
+#'
+#' \code{fn_process} creates the data structures necessary to analyze nucleotide recoding RNA-seq data with the
+#' MLE and Hybrid implementations in \code{bakRFit}. The input to \code{fn_process} must be an object of class
+#' `bakRFnData`. 
+#'
+#' \code{fn_process} first filters out features with less than totcut reads in any sample. It then
+#' creates the necessary data structures for analysis with \code{bakRFit} and some of the visualization
+#' functions (namely \code{plotMA}).
+#'
+#' The 1st step executed by \code{fn_process} is to find the names of features which are deemed "reliable". A reliable feature is one with
+#' sufficient read coverage in every single sample (i.e., > totcut_all reads in all samples) and sufficient read coverage in at all replicates
+#' of at least one experimental condition (i.e., > totcut reads in all replicates for one or more experimental conditions). This is done with a call to \code{reliableFeatures}.
+#'
+#' The 2nd step is to extract only reliableFeatures from the fns dataframe in the `bakRFnData` object. During this process, a numerical
+#' ID is given to each reliableFeature, with the numerical ID corresponding to their order when arranged using \code{dplyr::arrange}.
+#'
+#' The 3rd step is to prepare data structures that can be passed to \code{fast_analysis} and \code{TL_stan} (usually accessed via the 
+#' \code{bakRFit} helper function).
+#'
+#' @param obj An object of class bakRFnData
+#' @param totcut Numeric; Any transcripts with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out
+#' @param totcut_all Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out
+#' @param FOI Features of interest; character vector containing names of features to analyze. If \code{FOI} is non-null and \code{concat} is TRUE, then
+#' all minimally reliable FOIs will be combined with reliable features passing all set filters (\code{totcut} and \code{totcut_all}).
+#' If \code{concat} is FALSE, only the minimally reliable FOIs will be kept. A minimally reliable FOI is one that passes
+#' filtering with minimally stringent parameters.
+#' @param concat Boolean; If TRUE, FOI is concatenated with output of reliableFeatures
+#' @param Chase Boolean; if TRUE, pulse-chase analysis strategy is implemented
+#' @return returns list of objects that can be passed to \code{TL_stan} and/or \code{fast_analysis}. Those objects are:
+#' \itemize{
+#'  \item Stan_data; list that can be passed to \code{TL_stan} with Hybrid_Fit = TRUE. Consists of metadata as well as data that
+#'  `Stan` will analyze. Data to be analyzed consists of equal length vectors. The contents of Stan_data are:
+#'  \itemize{
+#'   \item NE; Number of datapoints for 'Stan' to analyze (NE = Number of Elements)
+#'   \item NF; Number of features in dataset
+#'   \item TP; Numerical indicator of s4U feed (0 = no s4U feed, 1 = s4U fed)
+#'   \item FE; Numerical indicator of feature
+#'   \item num_mut; Number of U-to-C mutations observed in a particular set of reads
+#'   \item MT; Numerical indicator of experimental condition (Exp_ID from metadf)
+#'   \item nMT; Number of experimental conditions
+#'   \item R; Numerical indicator of replicate
+#'   \item nrep; Number of replicates (maximum across experimental conditions)
+#'   \item nrep_vect; Vector of number of replicates in each experimental condition
+#'   \item tl; Vector of label times for each experimental condition
+#'   \item Avg_Reads; Standardized log10(average read counts) for a particular feature in a particular condition, averaged over
+#'   replicates
+#'   \item sdf; Dataframe that maps numerical feature ID to original feature name. Also has read depth information
+#'   \item sample_lookup; Lookup table relating MT and R to the original sample name
+#'  }
+#'  \item Fn_est; A data frame containing fraction new estimates for +s4U samples:
+#'  \itemize{
+#'   \item sample; Original sample name
+#'   \item XF; Original feature name
+#'   \item fn; Fraction new estimate
+#'   \item n; Number of reads
+#'   \item Feature_ID; Numerical ID for each feature
+#'   \item Replicate; Numerical ID for each replicate
+#'   \item Exp_ID; Numerical ID for each experimental condition
+#'   \item tl; s4U label time
+#'   \item logit_fn; logit of fraction new estimate
+#'   \item kdeg; degradation rate constant estimate
+#'   \item log_kdeg; log of degradation rate constant estimate
+#'   \item logit_fn_se; Uncertainty of logit(fraction new) estimate
+#'   \item log_kd_se; Uncertainty of log(kdeg) estimate
+#'  }
+#'  \item Count_Matrix; A matrix with read count information. Each column represents a sample and each row represents a feature.
+#'  Each entry is the raw number of read counts mapping to a particular feature in a particular sample. Column names are the corresponding
+#'  sample names and row names are the corresponding feature names.
+#'  \item Ctl_data; Identical content to Fn_est but for any -s4U data (and thus with fn estimates set to 0). Will be \code{NULL} if no -s4U 
+#'  data is present
+#' }
+#' @importFrom magrittr %>%
+#' @examples
+#' \donttest{
+#'
+#' # Load cB
+#' data("cB_small")
+#'
+#' # Load metadf
+#' data("metadf")
+#'
+#' # Create bakRData
+#' bakRData <- bakRData(cB_small, metadf)
+#'
+#' # Preprocess data
+#' data_for_bakR <- cBprocess(obj = bakRData)
+#' }
+#' @export
+fn_process <- function(obj, totcut = 50, totcut_all = 10, Chase = FALSE, FOI = c(), concat = TRUE){
+  
+  
+  ## Check obj
+  if(!inherits(obj, "bakRFnData")){
+    stop("obj must be of class bakRFnData")
+  }
+  
+
+  ## Check totcut
+  if(!is.numeric(totcut)){
+    stop("totcut must be numeric")
+  }else if( totcut < 0 ){
+    stop("totcut must be greater than 0")
+  }else if(totcut > 5000){
+    warning("totcut is abnormally high (> 5000); many features will not have this much coverage in every sample and thus get filtered out.")
+  }
+  
+  ## Check FOI
+  if(!is.null(FOI)){
+    if(typeof(obj$fns$XF) != typeof(FOI)){
+      warning("FOI should be the same data type as fns$XF in the bakRFnData object; if it is not none of the feature of interest will be found
+            in the fn data frame.")
+    }
+  }
+  
+  # Define helper functions:
+  logit <- function(x) log(x/(1-x))
+  inv_logit <- function(x) exp(x)/(1+exp(x))
+  
+  
+  # Bind to NULL
+  tl <- ctl <- Exp_ID <- r_id <- XF <- n <- npass <- NULL
+  Feature_ID <- fn <- var <- global_mean <- global_var <- alpha_p <- beta_p <- NULL
+  se <- count <- counts <- NULL
+  
+  metadf <- obj$metadf
+  fns <- obj$fns
+  
+  message("Mapping sample name to sample characteristics")
+  
+  samp_list <- unique(fns$sample)
+  
+  c_list <- rownames(metadf[metadf$tl == 0,])
+  
+  s4U_list <- samp_list[!(samp_list %in% c_list)]
+  
+  type_list <- ifelse(metadf[samp_list, "tl"] == 0, 0, 1)
+  mut_list <- metadf[samp_list, "Exp_ID"]
+  
+  # If number of -s4U controls > +s4U controls, wrap R_ID for -s4Us
+  # So if there are 3 -s4U replicates and 2 + s4U, -s4U R_ID should be: 1, 2, 1
+  # Let R_raw but R_ID for -s4U calculated as with +s4U samples (so 1, 2, 3 in above example)
+  # Then R_ID = ((R_raw - 1) %% nreps_+s4U) + 1, where nreps_+s4U is number of replicates in +s4U sample
+  rep_list <- metadf[samp_list,] %>% dplyr::mutate(ctl = ifelse(tl == 0, 0, 1)) %>%
+    dplyr::group_by(ctl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup()
+  
+  ### Calculate -s4U adjusted r_id
+  # 1) Determine number of +s4U replicates in each sample
+  nrep_s4U <- rep_list %>% dplyr::filter(ctl == 1) %>%
+    dplyr::group_by(Exp_ID) %>%
+    dplyr::summarise(nreps = max(r_id)) %>% dplyr::ungroup()
+  
+  nrep_s4U <- nrep_s4U$nreps
+  
+  # 2) Adjust -s4U replicate ID accordingly
+  rep_list <- rep_list %>%
+    dplyr::group_by(ctl, Exp_ID) %>%
+    dplyr::mutate(r_id = ifelse(ctl == 0, ((r_id - 1) %% nrep_s4U[Exp_ID]) + 1, r_id)) %>%
+    dplyr::ungroup()
+  
+  
+  rep_list <- rep_list$r_id
+  
+  # Create mut and reps dictionary
+  ID_dict <- data.frame(sample = rownames(metadf),
+                        Replicate = rep_list,
+                        Exp_ID = mut_list,
+                        Type = type_list)
+  
+  
+  # Add replicate ID and s4U treatment status to metadf
+  metadf <- metadf[samp_list, ] %>% dplyr::mutate(ctl = ifelse(tl == 0, 0, 1)) %>%
+    dplyr::group_by(ctl, Exp_ID) %>% dplyr::mutate(r_id = 1:length(tl)) %>% dplyr::ungroup()
+  
+  names(type_list) <- samp_list
+  names(mut_list) <- samp_list
+  names(rep_list) <- samp_list
+  
+  # Make vector of number of replicates of each condition
+  nreps <- rep(0, times = max(mut_list))
+  for(i in 1:max(mut_list)){
+    nreps[i] <- max(rep_list[mut_list == i & type_list == 1])
+  }
+  
+  
+  # Find features with above the threshold in all samples
+  nsamps <- nrow(metadf)
+  
+  message("Filtering out low coverage features")
+
+  # Read count filter (all samples)
+  keep_all <- fns %>%
+    dplyr::group_by(XF) %>%
+    dplyr::summarise(npass = sum(n >= totcut_all)) %>%
+    dplyr::filter(npass == nsamps) %>%
+    dplyr::select(XF)
+  
+  # Read count (per experimental condition)
+  fns_ids <- dplyr::inner_join(fns, ID_dict, by = "sample")
+  rep_counts <- fns_ids %>%
+    dplyr::select(sample, Exp_ID) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(count = 1) %>%
+    dplyr::group_by(Exp_ID) %>%
+    dplyr::summarise(counts = sum(count))
+  
+  fns_ids <- dplyr::inner_join(fns_ids, rep_counts, by = "Exp_ID") 
+  keep_exp <- fns_ids %>%
+    dplyr::group_by(XF, Exp_ID) %>%
+    dplyr::summarise(npass = sum(n >= totcut),
+                     counts = unique(counts)) %>%
+    dplyr::filter(npass == counts) %>%
+    dplyr::select(XF)
+  
+  rm(fns_ids)
+  
+  # Final keep
+  keep <- data.frame(XF = intersect(keep_exp$XF, keep_all$XF))
+
+  if(is.null(FOI)){
+  
+    keep <- keep$XF
+    
+  }else{
+    
+    if(concat){
+      
+      # FOI can only be kept if it has at least 1 read in all samples
+      min_keep <- fns %>%
+        dplyr::group_by(XF) %>%
+        dplyr::summarise(npass = sum(n >= 1)) %>%
+        dplyr::filter(npass == nsamps) %>%
+        dplyr::select(XF)
+
+      keep <- unique(c(intersect(FOI, min_keep$XF), keep$XF))
+
+    }else{
+      
+      # FOI can only be kept if it has at least 1 read in all samples
+      min_keep <- fns %>%
+        dplyr::group_by(XF) %>%
+        dplyr::summarise(npass = sum(n >= 1)) %>%
+        dplyr::filter(npass == nsamps) %>%
+        dplyr::select(XF)
+      
+      keep <- intersect(FOI, min_keep$XF)
+    }
+  }
+
+  
+  fns <- fns[fns$XF %in% keep,]
+  
+
+  # Map each reliable feature to a numerical feature ID (fnum)
+  ranked_features_df  <- fns %>%
+    dplyr::ungroup() %>%
+    dplyr::select(XF) %>%
+    dplyr::distinct() %>%
+    dplyr::arrange(XF) %>%
+    dplyr::mutate(Feature_ID = 1:length(XF)) %>%
+    dplyr::select(XF, Feature_ID)
+  
+  message("Processing data...")
+
+  # Make count matrix that is DESeq2 compatible
+  Cnt_mat <- matrix(0, ncol = length(samp_list), nrow = length(unique(keep)))
+  
+  # Order by XF to make sure XFs together in fns
+  fns <- fns[order(fns$XF),]
+  
+  for(s in seq_along(samp_list)){
+    Cnt_mat[,s] <- fns$n[fns$sample == samp_list[s]]
+  }
+  
+  rownames(Cnt_mat) <- fns$XF[fns$sample == samp_list[1]]
+  colnames(Cnt_mat) <- samp_list
+  
+  
+  # Add feature_ID and sample characteristics
+  fns <- dplyr::inner_join(fns, ranked_features_df, by = "XF")
+  fns <- dplyr::inner_join(fns, ID_dict, by = "sample")
+  
+  # Add label time
+  tl_df <- metadf[metadf$tl > 0,c("tl", "Exp_ID", "r_id")]
+  colnames(tl_df) <- c("tl", "Exp_ID", "Replicate")
+  
+  fns <- dplyr::inner_join(fns, tl_df, by = c("Exp_ID", "Replicate"))
+  
+  # Remove -s4U data from fns
+  
+  if(sum(fns$Type == 0) > 1){
+    fn_ctl_data <- fns[fns$Type == 0, colnames(fns) != "Type"]
+    fn_ctl_data$tl <- 0
+    
+    ctl_absent <- FALSE
+  }else{
+    ctl_absent <- TRUE
+  }
+  
+  fns <- fns[fns$Type == 1,]
+  
+  fns <- fns[,colnames(fns) != "Type"]
+  
+  # Convert fn to various reparameterizations of interest
+  fns$logit_fn <- logit(fns$fn)
+  fns$kdeg <- -log(1 - fns$fn)/fns$tl
+  fns$log_kdeg <- log(fns$kdeg)
+  
+  
+  ### Estimate uncertainty
+  if("se" %in% colnames(fns)){
+    
+    ## Estimate logit uncertainty
+    lfn_calc2 <- function(EX, VX){
+      
+      
+      totvar <- (((1/EX) + 1/(1 - EX))^2)*VX
+      
+      return(totvar)
+    }
+    
+    ## Estimate log(kdeg) uncertainty
+    lkdeg_calc2 <- function(EX, VX){
+      
+      totvar <- (( 1/(log(1-EX)*(1-EX)) )^2)*VX
+      
+      return(totvar)
+    }
+    
+    ## Estimate uncertainties
+    fns <- fns %>%
+      dplyr::mutate(logit_fn_se = sqrt(lfn_calc2(fn, se^2)),
+                    log_kd_se = sqrt(lkdeg_calc2(fn, se^2)))
+    
+    
+  }else{
+    ## Procedure:
+    # 1) Estimate beta distribution prior empirically
+    # 2) Determine beta posterior
+    # 3) Use beta sd as uncertainty
+    
+    ## Estimate beta prior
+    fn_means <- fns %>%
+      dplyr::group_by(sample) %>%
+      dplyr::summarise(global_mean = mean(fn),
+                       global_var = stats::var(fn))
+    
+    priors <- fn_means %>%
+      dplyr::mutate(alpha_p = global_mean*(((global_mean*(1-global_mean))/global_var) - 1),
+                    beta_p = alpha_p*(1 - global_mean)/global_mean)
+    
+    ## Add priors
+    fns <- dplyr::inner_join(fns, priors, by = "sample")
+    
+    ## Estimate logit uncertainty
+    lfn_calc <- function(alpha, beta){
+      
+      EX <- alpha/(alpha + beta)
+      VX <- (alpha*beta)/(((alpha + beta)^2)*(alpha + beta + 1))
+      
+      
+      totvar <- (((1/EX) + 1/(1 - EX))^2)*VX
+      
+      return(totvar)
+    }
+    
+    ## Estimate log(kdeg) uncertainty
+    lkdeg_calc <- function(alpha, beta){
+      
+      EX <- alpha/(alpha + beta)
+      VX <- (alpha*beta)/(((alpha + beta)^2)*(alpha + beta + 1))
+      
+      
+      totvar <- (( 1/(log(1-EX)*(1-EX)) )^2)*VX
+      
+      return(totvar)
+    }
+    
+    fns <- fns %>%
+      dplyr::mutate(logit_fn_se = sqrt(lfn_calc(alpha_p + n*fn, n + beta_p)),
+                    log_kd_se = sqrt(lkdeg_calc(alpha_p + n*fn, n + beta_p)))
+    
+    fns <- fns[,!(colnames(fns) %in% c("alpha_p", "beta_p", "global_mean", "global_var"))]
+    
+  }
+  
+  
+  
+  ### Average standardized reads
+  
+  # Dataset characteristics
+  nMT <- max(metadf$Exp_ID)
+  NF <- max(fns$Feature_ID)
+  
+  ## Calculate Avg. Read Counts
+  Avg_Counts <- fns %>% dplyr::ungroup() %>%
+    dplyr::group_by(Feature_ID, Exp_ID) %>%
+    dplyr::summarise(Avg_Reads = mean(n), .dplyr.summarise.inform = FALSE) %>%
+    dplyr::ungroup()
+  
+  # Calculate average read counts on log10 and natural scales
+  # log10 scale read counts used in 'Stan' model
+  # natural scale read counts used in plotting function (plotMA())
+  Avg_Counts <- Avg_Counts[order(Avg_Counts$Exp_ID, Avg_Counts$Feature_ID),]
+  
+  
+  Avg_Reads <- matrix(log10(Avg_Counts$Avg_Reads), ncol = nMT, nrow = NF)
+  Avg_Reads_natural <- matrix(Avg_Counts$Avg_Reads, ncol = nMT, nrow = NF)
+  
+  
+  # standardize
+  Avg_Reads <- scale(Avg_Reads)
+  
+  
+  ### Generate input necessary for Hybrid model
+  
+  # s4U label time in each experimental condition
+  tls <- rep(0, times = nMT)
+  for(m in 1:nMT){
+    tls[m] <- unique(metadf$tl[(metadf$Exp_ID == m) & (metadf$tl != 0)])
+  }
+  
+  # Add tl info to fast_df
+  tl_df <- data.frame(tl = tls,
+                      mut = 1:length(tls))
+  
+  # Sample lookup
+  colnames(ID_dict) <- c("sample", "Replicate", "Exp_ID", "Type")
+  sample_lookup <- ID_dict[ID_dict$Type == 1, c("sample", "Exp_ID", "Replicate")] %>% dplyr::distinct()
+  
+  # Feature number lookup
+  sdf <- ranked_features_df
+  colnames(sdf) <- c("XF", "fnum")
+  
+  data_list <- list(
+    NE = nrow(fns),
+    NF = max(fns$Feature_ID),
+    MT = fns$Exp_ID,
+    FE = fns$Feature_ID,
+    tl = tl_df$tl,
+    logit_fn_rep = fns$logit_fn,
+    fn_se = fns$logit_fn_se,
+    Avg_Reads = Avg_Reads,
+    Avg_Reads_natural = Avg_Reads_natural,
+    nMT = max(fns$Exp_ID),
+    R = fns$Replicate,
+    nrep = max(fns$Replicate),
+    sample_lookup = sample_lookup, 
+    sdf = sdf,
+    mutrates = data.frame(),
+    nrep_vect = nreps,
+    Chase = as.integer(Chase) 
+  )
+  
+  if(ctl_absent){
+    out <- list(Stan_data = data_list, Count_Matrix = Cnt_mat,
+                Fn_est = dplyr::as_tibble(fns),
+                Ctl_data = NULL)
+  }else{
+    out <- list(Stan_data = data_list, Count_Matrix = Cnt_mat,
+                Fn_est = dplyr::as_tibble(fns),
+                Ctl_data = dplyr::as_tibble(fn_ctl_data))
+  }
+  
+  
   return(out)
 }

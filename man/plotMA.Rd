@@ -8,7 +8,7 @@ plotMA(
   obj,
   Model = c("MLE", "Hybrid", "MCMC"),
   FDR = 0.05,
-  Exps = NULL,
+  Exps = 2,
   Exp_shape = FALSE
 )
 }
@@ -19,7 +19,8 @@ plotMA(
 
 \item{FDR}{False discovery rate to control at for significance assessment}
 
-\item{Exps}{Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)}
+\item{Exps}{Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs).
+If NULL, data for all Experimental IDs is plotted.}
 
 \item{Exp_shape}{Logical indicating whether to use Experimental ID as factor determining point shape in volcano plot}
 }

@@ -4,7 +4,7 @@
 \alias{plotVolcano}
 \title{Creating L2FC(kdeg) volcano plot from fit objects}
 \usage{
-plotVolcano(obj, FDR = 0.05, Exps = NULL, Exp_shape = FALSE)
+plotVolcano(obj, FDR = 0.05, Exps = 2, Exp_shape = FALSE)
 }
 \arguments{
 \item{obj}{Object contained within output of \code{bakRFit}. So, either Fast_Fit (MLE implementation fit),
@@ -12,7 +12,8 @@ Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)}
 
 \item{FDR}{False discovery rate to control at for significance assessment}
 
-\item{Exps}{Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)}
+\item{Exps}{Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs).
+If NULL, data for all Experimental IDs is plotted.}
 
 \item{Exp_shape}{Logical indicating whether to use Experimental ID as factor determining point shape in volcano plot}
 }

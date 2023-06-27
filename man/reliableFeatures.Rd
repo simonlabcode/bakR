@@ -4,14 +4,23 @@
 \alias{reliableFeatures}
 \title{Identify features (e.g., transcripts) with high quality data}
 \usage{
-reliableFeatures(obj, high_p = 0.2, totcut = 50, Ucut = 0.25, AvgU = 4)
+reliableFeatures(
+  obj,
+  high_p = 0.2,
+  totcut = 50,
+  totcut_all = 10,
+  Ucut = 0.25,
+  AvgU = 4
+)
 }
 \arguments{
 \item{obj}{Object of class bakRData}
 
 \item{high_p}{highest mutation rate accepted in control samples}
 
-\item{totcut}{readcount cutoff}
+\item{totcut}{Numeric; Any transcripts with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out}
+
+\item{totcut_all}{Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out}
 
 \item{Ucut}{Must have a fraction of reads with 2 or less Us less than this cutoff in all samples}
 
@@ -22,7 +31,7 @@ vector of gene names that passed reliability filter
 }
 \description{
 This function identifies all features (e.g., transcripts, exons, etc.) for which the mutation rate
-is below a set threshold in the control (no s4U) sample and which have more reads than a set threshold
+is below a set threshold in the control (-s4U) sample and which have more reads than a set threshold
 in all samples. If there is no -s4U sample, then only the read count cutoff is considered. Additional
 filtering options are only relevant if working with short RNA-seq read data. This includes filtering out
 features with extremely low empirical U-content (i.e., the average number of Us in sequencing reads from

@@ -10,6 +10,7 @@ bakRFit(
   HybridFit = FALSE,
   high_p = 0.2,
   totcut = 50,
+  totcut_all = 10,
   Ucut = 0.25,
   AvgU = 4,
   FastRerun = FALSE,
@@ -23,13 +24,17 @@ bakRFit(
   NSS = FALSE,
   Chase = FALSE,
   BDA_model = FALSE,
+  multi_pold = FALSE,
   Long = FALSE,
   kmeans = FALSE,
+  ztest = FALSE,
+  Fisher = TRUE,
   ...
 )
 }
 \arguments{
-\item{obj}{bakRData object produced by \code{bakRData} or a bakRFit object produced by \code{bakRFit}}
+\item{obj}{\code{bakRData} object produced by \code{bakRData}, \code{bakRFit} object produced by \code{bakRFit}
+\code{bakRFnData} object produced by \code{bakRFnData}, or \code{bakRFnFit} object produced by \code{bakRFit}.}
 
 \item{StanFit}{Logical; if TRUE, then the MCMC implementation is run. Will only be used if \code{obj}
 is a \code{bakRFit} object}
@@ -37,14 +42,16 @@ is a \code{bakRFit} object}
 \item{HybridFit}{Logical; if TRUE, then the Hybrid implementation is run. Will only be used if \code{obj}
 is a \code{bakRFit} object}
 
-\item{high_p}{Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any -s4U control
+\item{high_p}{Numeric; Any features with a mutation rate (number of mutations / number of Ts in reads) higher than this in any -s4U control
 samples (i.e., samples that were not treated with s4U) are filtered out}
 
-\item{totcut}{Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out}
+\item{totcut}{Numeric; Any features with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out}
 
-\item{Ucut}{Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples}
+\item{totcut_all}{Numeric; Any features with less than this number of sequencing reads in any sample are filtered out}
 
-\item{AvgU}{Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples}
+\item{Ucut}{Numeric; All features must have a fraction of reads with 2 or less Us less than this cutoff in all samples}
+
+\item{AvgU}{Numeric; All features must have an average number of Us greater than this cutoff in all samples}
 
 \item{FastRerun}{Logical; only matters if a bakRFit object is passed to \code{bakRFit}. If TRUE, then the Stan-free
 model implemented in \code{fast_analysis} is rerun on data, foregoing fitting of either of the 'Stan' models.}
@@ -76,9 +83,18 @@ reads that are s4U (more properly referred to as the fraction old in the context
 \item{BDA_model}{Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 model is used.}
 
+\item{multi_pold}{Logical; if TRUE, pold is estimated for each sample rather than use a global pold estimate.}
+
 \item{Long}{Logical; if TRUE, long read optimized fraction new estimation strategy is used.}
 
 \item{kmeans}{Logical; if TRUE, kmeans clustering on read-specific mutation rates is used to estimate pnews and pold.}
+
+\item{ztest}{Logical; if TRUE and the MLE implementation is being used, then a z-test will be used for p-value calculation
+rather than the more conservative moderated t-test.}
+
+\item{Fisher}{Logical; if TRUE, Fisher information is used to estimate logit(fn) uncertainty. Else, a less conservative binomial model is used, which
+can be preferable in instances where the Fisher information strategy often drastically overestimates uncertainty
+(i.e., low coverage or low pnew).}
 
 \item{...}{Arguments passed to either \code{fast_analysis} (if a bakRData object)
 or \code{TL_Stan} and \code{Hybrid_fit} (if a bakRFit object)}
@@ -111,6 +127,16 @@ as the output of \code{cBprocess} will already be contained in the bakRFit objec
 \code{fast_analysis} will not be called again unless bakRFit is rerun on the bakRData object.
 or if \code{FastRerun} is set to TRUE. If you want to generate model fits using different parameters for cBprocess,
 you will have to rerun \code{bakRFit} on the bakRData object.
+
+If \code{bakRFit} is run on a bakRFnData object, \code{fn_process} and then \code{avg_and_regularize}
+will always be called. The former will generate the processed data that can be passed to the model
+fitting functions (\code{avg_and_regularize} and \code{TL_Stan}, the latter only with HybridFit = TRUE).
+
+If \code{bakRFit} is run on a bakRFnFit object. \code{fn_process} will not be called again, as
+the output of \code{fn_process} will already be contained in the bakRFnFit object. Similary,
+\code{avg_and_regularize} will not be called unless \code{bakRFit} is rerun on the bakRData object,
+or if \code{FastRerun} is set to TRUE. If you want to generate model fits using different
+parameters for \code{fn_process}, you will have to rerun \code{bakRFit} on the bakRData object.
 
 See the documentation for the individual fitting functions for details regarding how they analyze nucleotide
 recoding data. What follows is a brief overview of how each works

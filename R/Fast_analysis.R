@@ -1,6 +1,6 @@
 #' Efficiently analyze nucleotide recoding data
 #'
-#' \code{fast_analysis} analyzes nucleotide recoding data maximum likelihood estimation with the L-BFGS-B algorithm
+#' \code{fast_analysis} analyzes nucleotide recoding data with maximum likelihood estimation
 #' implemented by \code{stats::optim} combined with analytic solutions to simple Bayesian models to perform
 #' approximate partial pooling. Output includes kinetic parameter estimates in each replicate, kinetic parameter estimates
 #' averaged across replicates, and log-2 fold changes in the degradation rate constant (L2FC(kdeg)).
@@ -8,25 +8,34 @@
 #' are regularized using analytic solutions of fully Bayesian models. The result is that kdegs are
 #' shrunk towards population means and that uncertainties are shrunk towards a mean-variance trend estimated as part of the analysis.
 #'
-#' Unless the user supplies estimates for pnew and pold, the first step of \code{fast_analysis} is to estimate the background
+#' Unless the user supplies estimates for pnew and pold, the first step of \code{fast_analysis} is to estimate the background (pold)
 #' and metabolic label (will refer to as s4U for simplicity, though bakR is compatible with other metabolic labels such as s6G)
-#' induced mutation rates. The former is best performed with a -s4U control sample, that is, a normal RNA-seq sample
-#' that lacks a -s4U feed or TimeLapse chemistry conversion of s4U to a C analog. If this sample is missing, both background and
-#' s4U induced mutation rates are estimated from the s4U fed samples. For the s4U mutation rate, features with sufficient read depth,
-#' as defined by the \code{read_cut} parameter, and the highest mutation rates are assumed to be completely labeled. Thus, the
-#' average mutation rates in these features is taken as the estimate of the s4U induced mutation rate in that sample. s4U induced mutation
-#' rates are estimated on a per-sample basis as there is often much more variability in these mutation rates than in the background
-#' mutation rates.
-#'
-#' If a -s4U control is included, the background mutation rate is estimated using all features in the control sample(s) with read depths
-#' greater than \code{read_cut}. The average mutation rate among these features is taken as the estimated background mutation rate,
-#' and that background is assumed to be constant for all samples. If a -s4U control is missing, then a strategy similar to that used
-#' to estimate s4U induced mutation rates is used. In this case, the lowest mutation rate features with sufficient read depths are used,
-#' and there average mutation rate is the background mutation rate estimate, as these features are assumed to be almost entirely unlabeled.
-#' Another slightly more computationally intensive but more accurate strategy to estimate mutation rates is to set \code{StanRate} = TRUE.
-#' This will fit a non-hierarchical mixture model to a small subset of transcripts using 'Stan'. The default in \code{bakRFit} is to use
-#' 25 transcripts. If \code{StanRate} is TRUE, then a data list must be passed to \code{Stan_data} of the form that appears in the
-#' bakRFit object's Data_list$Stan_data entry.
+#' induced (pnew) mutation rates. Several pnew and pold estimation strategies are implemented in bakR. For pnew estimation,
+#' the two strategies are likelihood maximization of a binomial mixture model (default) and sampling from the full posterior of
+#' a U-content adjusted Poisson mixture model with HMC (when \code{StanRateEst} is set to TRUE in \code{bakRFit}).
+#' 
+#' The default pnew estimation strategy involves combining the mutational data for all features into sample-wide mutational
+#' data vectors (# of T-to-C conversions, # of Ts, and # of such reads vectors). These data vectors are then
+#' downsampled (to prevent float overflow) and used to maximize the likelihood of a two-component binomial mixture model. The
+#' two components correspond to reads from old and new RNA, and the three estimated paramters are the fraction of 
+#' all reads that are new (nuisance parameter in this case), and the old and new read mutation rates.
+#' 
+#' The alternative strategy involves running a fully Bayesian implementation of a similar mixture model using Stan, a 
+#' probalistic programming language that bakR makes use of in several functions. This strategy can yield more accurate
+#' mutation rate estimates when the label times are much shorter or longer than the average half-lives of the sequenced RNA 
+#' (i.e., the fraction news are mostly close to 0 or 1, respectively). To improve the efficiency of this approach, only a small
+#' subset of RNA features are analyzed, the number of which is set by the \code{RateEst_size} parameter in \code{bakRFit}. By default,
+#' this number is set to 30, which on the average NR-seq dataset yields a several minute runtime for mutation rate estimation.
+#' 
+#' Estimation of pold can be performed with three strategies: the same two strategies discussed for pnew estimation, and a third
+#' strategy that relies on the presence of -s4U control data. If -s4U control data is present, the default pold estimation
+#' strategy is to use the average mutation rate in reads from all -s4U control datasets as the global pold estimate. Thus,
+#' a single pold estimate is used for all samples. The likelihood maximization strategy can be used by
+#' setting \code{no_ctl} to TRUE, and this strategy becomes the default strategy if no -s4U data is present.
+#' In addition, as of version 1.0.0 of bakR (released late June of 2023), users can decide to estimate
+#' pold for each +s4U sample independently by setting \code{multi_pold} to TRUE. In this case, independent -s4U datasets can no longer be used for 
+#' mutation rate estimation purposes, and thus the strategies for pold estimation are identical to the
+#' set of pnew estimation strategies.
 #'
 #' Once mutation rates are estimated, fraction news for each feature in each sample are estimated. The approach utilized is MLE
 #' using the L-BFGS-B algorithm implemented in \code{stats::optim}. The assumed likelihood function is derived from a Poisson mixture
@@ -39,7 +48,17 @@
 #' typically singular, meaning that the Fisher information matrix is not positive definite and asymptotic results for the variance
 #' do not necessarily hold. As the mutation rates are estimated a priori and fixed to be > 0, these problems are eliminated. In addition, when assessing
 #' the uncertainty of replicate fraction new estimates, the size of the dataset is the raw number of sequencing reads that map to a
-#' particular feature. This number is often large (>100) which increases the validity of invoking asymptotics.
+#' particular feature. This number is often large (>100) which increases the validity of invoking asymptotics. 
+#' As of version 1.0.0, users can opt for an alternative uncertainty estimation strategy by setting 
+#' \code{Fisher} to FALSE. This strategy makes use of the standard error for the estimator of a binomial random
+#' variables rate of success parameter. If we can uniquely identify new and old reads, then the 
+#' variance in our estimate for the fraction of reads that is new is fn*(1-fn)/n. This uncertainty 
+#' estimate will typically underestimate fraction new replicate uncertainties. We showed in the bakR
+#' paper though that the Fisher information strategy often significantly overestimates uncertainties
+#' of low coverage or extreme fraction new features. Therefore, this more bullish, underconservative 
+#' uncertainty quantification can be useful on datasets with low mutation rates, extreme label times,
+#' or low sequecning depth. We have found that false discovery rates are still well controlled when using
+#' this alternative uncertainty quantification strategy.
 #'
 #' With kdegs and their uncertainties estimated, replicate estimates are pooled and regularized. There are two key steps in this
 #' downstream analysis. 1st, the uncertainty for each feature is used to fit a linear ln(uncertainty) vs. log10(read depth) trend,
@@ -81,6 +100,7 @@
 #' @param nbin Number of bins for mean-variance relationship estimation. If NULL, max of 10 or (number of logit(fn) estimates)/100 is used
 #' @param prior_weight Determines extent to which logit(fn) variance is regularized to the mean-variance regression line
 #' @param MLE Logical; if TRUE then replicate logit(fn) is estimated using maximum likelihood; if FALSE more conservative Bayesian hypothesis testing is used
+#' @param ztest TRUE; if TRUE, then a z-test is used for p-value calculation rather than the more conservative moderated t-test. 
 #' @param lower Lower bound for MLE with L-BFGS-B algorithm
 #' @param upper Upper bound for MLE with L-BFGS-B algorithm
 #' @param se_max Uncertainty given to those transcripts with estimates at the upper or lower bound sets. This prevents downstream errors due to
@@ -98,8 +118,12 @@
 #' reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment)
 #' @param BDA_model Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
 #' model is used.
+#' @param multi_pold Logical; if TRUE, pold is estimated for each sample rather than use a global pold estimate.
 #' @param Long Logical; if TRUE, long read optimized fraction new estimation strategy is used.
 #' @param kmeans Logical; if TRUE, kmeans clustering on read-specific mutation rates is used to estimate pnews and pold.
+#' @param Fisher Logical; if TRUE, Fisher information is used to estimate logit(fn) uncertainty. Else, a less conservative binomial model is used, which
+#' can be preferable in instances where the Fisher information strategy often drastically overestimates uncertainty
+#' (i.e., low coverage or low pnew).
 #' @return List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
 #' \itemize{
 #'  \item Fn_Estimates; dataframe with estimates for the fraction new and fraction new uncertainty for each feature in each replicate.
@@ -171,7 +195,7 @@
 fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           read_cut = 50, features_cut = 50,
                           nbin = NULL, prior_weight = 2,
-                          MLE = TRUE,
+                          MLE = TRUE, ztest = FALSE,
                           lower = -7, upper = 7,
                           se_max = 2.5,
                           mut_reg = 0.1,
@@ -183,8 +207,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                           NSS = FALSE,
                           Chase = FALSE,
                           BDA_model = FALSE,
+                          multi_pold = FALSE,
                           Long = FALSE,
-                          kmeans = FALSE){
+                          kmeans = FALSE, Fisher = TRUE){
 
 
   # Bind variables locally to resolve devtools::check() Notes
@@ -196,7 +221,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   tot_n <- Fisher_kdeg <- Fisher_Logit <- Logit_fn_se <- bin_ID <- kd_sd_log <- NULL
   intercept <- slope <- log_kd_rep_est <- avg_log_kd <- sd_log_kd <- NULL
   sd_post <- sdp <- theta_o <- log_kd_post <- effect_size <- effect_std_error <- NULL
-
+  n_new <- nreads <- logit_fn_se <- log_kd_se <- NULL
+  global_mean <- global_var <- alpha_p <- beta_p <- NULL
+  
+  
 
 
   # Check input validity -------------------------------------------------------
@@ -207,8 +235,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   }
 
   ## Check pold
-  if(length(pold) > 1){
-    stop("pold must be NULL or length 1")
+  if(length(pold) > 1 & !multi_pold){
+    stop("pold must be NULL or length 1 if multi_pold is TRUE")
   }
 
   if(!is.null(pold)){
@@ -236,12 +264,24 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if(!is.null(pnew)){
     if(!all(is.numeric(pnew))){
       stop("All elements of pnew must be numeric")
-    }else if(length(pnew) != sum(nreps) ){
-      stop("pnew must be a vector of length == number of s4U fed samples in dataset")
+    }else if((length(pnew) != sum(nreps)) & (length(pnew) != 1) ){
+      stop("pnew must be a vector of length == number of s4U fed samples in dataset, or length 1.")
     }else if(!all(pnew > 0)){
       stop("All elements of pnew must be > 0")
     }else if(!all(pnew <=1)){
       stop("All elements of pnew must be <= 1")
+    }
+  }
+  
+  if(!is.null(pold)){
+    if(!all(is.numeric(pold))){
+      stop("All elements of pold must be numeric")
+    }else if(((length(pold) != sum(nreps)) & (length(pold) != 1)) & multi_pold ){
+      stop("pold must be a vector of length == number of s4U fed samples in dataset, or length 1.")
+    }else if(!all(pold >= 0)){
+      stop("All elements of pold must be >= 0")
+    }else if(!all(pold <1)){
+      stop("All elements of pold must be < 1")
     }
   }
 
@@ -249,6 +289,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if(!is.logical(no_ctl)){
     stop("no_ctl must be logical (TRUE or FALSE)")
   }
+  
 
   ## Check read_cut
   if(!is.numeric(read_cut)){
@@ -280,14 +321,20 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       stop("nbin must be > 0 and is preferably greater than or equal to 10")
     }
   }
+  
+  ### Check ztest
+  if(!is.logical(ztest)){
+    stop("ztest must be logical (TRUE or FALSE)")
+  }
 
 
   ## Check prior_weight
   if(!is.numeric(prior_weight)){
     stop("prior_weight must be numeric")
   }else if(prior_weight < 1){
-    stop("prior_weight must be >= 1. The larger the value, the more each feature's fraction new uncertainty estimate is shrunk towards the
-         log10(read counts) vs. log(uncertainty) regression line.")
+    stop("prior_weight must be >= 1. The larger the value, the more each 
+    feature's fraction new uncertainty estimate is shrunk towards the
+    log10(read counts) vs. log(uncertainty) regression line.")
   }
 
 
@@ -304,7 +351,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if(!all(is.numeric(c(lower, upper)))){
     stop("lower and upper must be numeric")
   }else if(upper < lower){
-    stop("upper must be > lower. Upper and lower represent the upper and lower bounds used by stats::optim for MLE")
+    stop("upper must be > lower. Upper and lower represent the upper and lower 
+         bounds used by stats::optim for MLE")
   }
 
   ## Check mut_reg
@@ -320,7 +368,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   if(!is.numeric(p_mean)){
     stop("p_mean must be numeric")
   }else if(abs(p_mean) > 2){
-    warning("p_mean is far from 0. This might bias estimates considerably; tread lightly.")
+    warning("p_mean is far from 0. This might bias estimates considerably; 
+            tread lightly.")
   }
 
   ## Check p_sd
@@ -329,7 +378,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   }else if(p_sd <= 0){
     stop("p_sd must be greater than 0")
   }else if(p_sd < 0.5){
-    warning("p_sd is pretty small. This might bias estimates considerably; tread lightly.")
+    warning("p_sd is pretty small. This might bias estimates considerably; 
+            tread lightly.")
   }
 
   ## Check StanRate
@@ -343,7 +393,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   }else if(null_cutoff < 0){
     stop("null_cutoff must be 0 or positive")
   }else if(null_cutoff > 2){
-    warning("You are testing against a null hypothesis |L2FC(kdeg)| greater than 2; this might be too conservative")
+    warning("You are testing against a null hypothesis |L2FC(kdeg)| greater 
+            than 2; this might be too conservative")
   }
 
 
@@ -352,6 +403,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     stop("Chase must be logical (TRUE or FALSE)")
   }
 
+  ## Check Fisher
+  if(!is.logical(Fisher)){
+    stop("Fisher must be logical (TRUE or FALSE")
+  }
 
   # ESTIMATE MUTATION RATES ----------------------------------------------------
 
@@ -361,10 +416,14 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
 
   if(Long | kmeans){
-
+    
+    message("Estimating pnew with kmeans clustering")
+    
     # Make sure package for clustering is installed
     if (!requireNamespace("Ckmeans.1d.dp", quietly = TRUE))
-      stop("To use kmeans estimation strategy requires 'Ckmeans.1d.dp' package which cannot be found. Please install 'Ckmeans.1d.dp' using 'install.packages('Ckmeans.1d.dp')'.")
+      stop("To use kmeans estimation strategy requires 'Ckmeans.1d.dp' package 
+           which cannot be found. Please install 'Ckmeans.1d.dp' using 
+           'install.packages('Ckmeans.1d.dp')'.")
 
     # Filter out -s4U data, wont' use that here
     df <- df[df$type == 1,]
@@ -389,14 +448,38 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
     }
 
-    # average out pold
-    pold <- mean(New_data_estimate$pold)
-    New_data_estimate <- New_data_estimate[,c("pnew", "mut", "reps")]
 
+    
+    
+    if(multi_pold){
+      New_data_estimate <- New_data_estimate[,c("pnew", "pold", "mut", "reps")]
+      
+      Old_data_estimate <- New_data_estimate[,c("pold", "mut", "reps")]
+      New_data_estimate <- New_data_estimate[,c("pnew", "mut", "reps")]
 
-    message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
+    }else{
+      
+      if((sum(df$type == 0) > 0) & !no_ctl & !multi_pold){
+        message("Estimating unlabeled mutation rate with -s4U data")
+        
+        #Old mutation rate estimation
+        Mut_data <- df
+        
+        Old_data <- Mut_data[Mut_data$type == 0, ]
+        
+        Old_data <- Old_data %>% dplyr::ungroup() %>%
+          dplyr::summarise(mutrate = sum(n*TC)/sum(n*nT))
+        
+        pold <- Old_data$mutrate
+      }else{
+        # average out pold
+        pold <- mean(New_data_estimate$pold)
+        New_data_estimate <- New_data_estimate[,c("pnew", "mut", "reps")]
+        
+      }
 
-    message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
+      
+    }
 
 
   }else{
@@ -404,7 +487,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     if((is.null(pnew) | is.null(pold)) & StanRate ){ # use Stan
 
 
-      mut_fit <- rstan::sampling(stanmodels$Mutrate_est2, data = Stan_data, chains = 1)
+      mut_fit <- rstan::sampling(stanmodels$Mutrate_est, data = Stan_data, chains = 1)
     }
 
     ## Make data frame of pnew estimates
@@ -412,6 +495,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
       # Get estimates from Stan fit summary
       if(StanRate){
+        
+        message("Estimating pnew with Stan output")
 
         # Even if replicates are imbalanced (more replicates of a given experimental condition
         # than another), the number of mutation rates Stan will estimate = max(nreps)*nMT
@@ -460,11 +545,11 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
         New_data_estimate <- data.frame(mut_actual, rep_actual, pnew)
         colnames(New_data_estimate) <- c("mut", "reps", "pnew")
 
-        message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
+
 
       }else{ # Use binomial mixture model to estimate new read estimate mutation rate
 
-        message("Estimating labeled mutation rate")
+        message("Estimating pnew with likelihood maximization")
 
         # Binomial mixture likelihood
         mixture_lik <- function(param, TC, nT, n){
@@ -492,7 +577,9 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                                          n = n))
 
         if(sum(!is.finite(df_check$fn)) > 0){
-          stop("The binomial log-likelihood is not computable for some of your data, meaning the default mutation rate estimation strategy won't work. Rerun bakRFit with StanRateEst set to TRUE to remedy this problem.")
+          stop("The binomial log-likelihood is not computable for some of your 
+               data, meaning the default mutation rate estimation strategy won't 
+               work. Rerun bakRFit with StanRateEst set to TRUE to remedy this problem.")
         }
 
         rm(df_check)
@@ -509,13 +596,14 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
         New_data_estimate <- df_pnew
 
-        message(paste0(c("Estimated pnews for each sample are:", utils::capture.output(df_pnew)), collapse = "\n"))
 
       }
 
 
     }else{ # Construct pmut data frame from User input
 
+      message("Using provided pnew estimates")
+      
       if(length(pnew) == 1){ # replicate the single pnew provided
 
         pnew_vect <- rep(pnew, times = sum(nreps) )
@@ -528,8 +616,6 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
         New_data_estimate <- data.frame(mut_vect, rep_vect, pnew_vect)
         colnames(New_data_estimate) <- c("mut", "reps", "pnew")
 
-      } else if( length(pnew) != sum(nreps)  ){
-        stop("User inputted pnew is not of length 1 or of length equal to number of samples")
       } else{ # use vector of pnews provided
 
         ## Compatible with unbalanced replicates
@@ -543,8 +629,24 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
     ### Estimate mutation rate in old reads
     if(is.null(pold)){
-      if(StanRate){ # Use Stan to estimate rates
+      
+      if((sum(df$type == 0) > 0) & !no_ctl & !multi_pold & !StanRate){
+        message("Estimating unlabeled mutation rate with -s4U data")
+        
+        #Old mutation rate estimation
+        Mut_data <- df
+        
+        Old_data <- Mut_data[Mut_data$type == 0, ]
+        
+        Old_data <- Old_data %>% dplyr::ungroup() %>%
+          dplyr::summarise(mutrate = sum(n*TC)/sum(n*nT))
+        
+        pold <- Old_data$mutrate
+        
+      }else if(StanRate){ # Use Stan to estimate rates
 
+        message("Estimating unlabeled mutation rate with Stan output")
+        
         ## Extract estimate of mutation rate in old reads from Stan fit
         nrep_mut <- max(df$reps)
 
@@ -578,21 +680,28 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
 
         # Filter out imputed data
         polddf <- dplyr::right_join(polddf, truedf, by = c("R", "E"))
-
-        # Final estimate of mutation rate in old reads
-        pold <- mean(polddf$pold/U_df$avg_T)
-
-
+        
+        pold <- polddf$pold/U_df$avg_T
+      
+        
         rm(mut_fit)
-
         rm(U_df)
+        
+        Old_data_estimate <- data.frame(mut_actual, rep_actual, pold)
+        colnames(Old_data_estimate) <- c("mut", "reps", "pold")
+        
+        
 
-        message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
+        if(!multi_pold){
+          # Final estimate of mutation rate in old reads
+          pold <- mean(Old_data_estimate$pold)
+          
 
+        }
+       
       }else{
-        if((sum(df$type == 0) == 0) | (no_ctl)){ # Estimate pold using binomial mixture model
 
-          message("Estimating unlabeled mutation rate")
+          message("Estimating unlabeled mutation rate with likelihood maximization")
 
           # Binomial mixture likelihood
           mixture_lik <- function(param, TC, nT, n){
@@ -621,7 +730,10 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
                                            n = n))
 
           if(sum(!is.finite(df_check$fn)) > 0){
-            stop("The binomial log-likelihood is not computable for some of your data, meaning the default mutation rate estimation strategy won't work. Rerun bakRFit with StanRateEst set to TRUE to remedy this problem.")
+            stop("The binomial log-likelihood is not computable for some of your 
+                 data, meaning the default mutation rate estimation strategy 
+                 won't work. Rerun bakRFit with StanRateEst set to TRUE to remedy 
+                 this problem.")
           }
 
           rm(df_check)
@@ -631,52 +743,84 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
           high_ps <- c(0, 0, 9)
 
 
-          # Fit mixture model to each sample
-          df_pold <- df_pold %>%
-            dplyr::group_by(mut,reps) %>%
-            dplyr::summarise(pold = inv_logit(min(stats::optim(par=c(-7, -2, 0), mixture_lik, TC = TC, nT = nT, n = n, method = "L-BFGS-B", lower = low_ps, upper = high_ps)$par[1:2])) ) %>%
-            dplyr::ungroup() %>%
-            dplyr::summarise(pold = mean(pold))
+          if(multi_pold){
+            # Fit mixture model to each sample
+            df_pold <- df_pold %>%
+              dplyr::group_by(mut,reps) %>%
+              dplyr::summarise(pold = inv_logit(min(stats::optim(par=c(-7, -2, 0), mixture_lik, TC = TC, nT = nT, n = n, method = "L-BFGS-B", lower = low_ps, upper = high_ps)$par[1:2])) )
+            
+            
+            Old_data_estimate <- df_pold
+            
+          }else{
+            # Fit mixture model to each sample
+            df_pold <- df_pold %>%
+              dplyr::group_by(mut,reps) %>%
+              dplyr::summarise(pold = inv_logit(min(stats::optim(par=c(-7, -2, 0), mixture_lik, TC = TC, nT = nT, n = n, method = "L-BFGS-B", lower = low_ps, upper = high_ps)$par[1:2])) ) %>%
+              dplyr::ungroup() %>%
+              dplyr::summarise(pold = mean(pold))
+            
+            
+            
+            pold <- df_pold$pold
 
+          }
 
-
-          pold <- df_pold$pold
-          message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
-
-
-
-        }else{ # Estimate using -s4U data
-          message("Estimating unlabeled mutation rate")
-
-          #Old mutation rate estimation
-          Mut_data <- df
-
-          Old_data <- Mut_data[Mut_data$type == 0, ]
-
-          Old_data <- Old_data %>% dplyr::ungroup() %>%
-            dplyr::summarise(mutrate = sum(n*TC)/sum(n*nT))
-
-          pold <- Old_data$mutrate
-          message(paste(c("Estimated pold is: ", round(pold, digits = 5)), collapse = " "))
 
 
         }
+    }else{
+      
+      if(multi_pold){
+        message("Using provided pold estimates")
+        
+        if(length(pold) == 1){ # replicate the single pnew provided
+          
+          pold_vect <- rep(pold, times = sum(nreps) )
+          
+          ## Compatible with unbalanced replicates
+          rep_vect <- unlist(lapply(nreps, function(x) seq(1, x)))
+          
+          mut_vect <- rep(1:nMT, times = nreps)
+          
+          Old_data_estimate <- data.frame(mut_vect, rep_vect, pold_vect)
+          colnames(Old_data_estimate) <- c("mut", "reps", "pold")
+          
+        } else{ # use vector of pnews provided
+          
+          ## Compatible with unbalanced replicates
+          rep_vect <- unlist(lapply(nreps, function(x) seq(1, x)))
+          
+          mut_vect <- rep(1:nMT, times = nreps)
+          Old_data_estimate <- data.frame(mut_vect, rep_vect, pold)
+          colnames(Old_data_estimate) <- c("mut", "reps", "pold")
+        }
+      }else{
+        message("Using provided pold estimate")
+      
       }
-
-
 
 
     }
   }
 
+  if(!multi_pold){
+    New_data_estimate$pold <- pold
+    message(paste0(c("Estimated pnews and polds for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
+
+  }else{
+    New_data_estimate <- dplyr::inner_join(New_data_estimate, Old_data_estimate, by = c("reps", "mut"))
+    message(paste0(c("Estimated pnews and polds for each sample are:", utils::capture.output(New_data_estimate)), collapse = "\n"))
+    
+  }
 
 
-  if(!all(New_data_estimate$pnew - pold > 0)){
+  if(!all(New_data_estimate$pnew - New_data_estimate$pold > 0)){
     stop("All pnew must be > pold; did you input an unusually large pold?")
   }
 
   # Mutation rate estimates
-  pmuts_list <- list(New_data_estimate, pold)
+  pmuts_list <- New_data_estimate
 
 
 
@@ -842,146 +986,111 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     Mut_data <- dplyr::left_join(Mut_data, Mut_data_est[, c("kd_rep_est" ,"logit_fn_rep", "fnum", "mut", "reps")], by = c("fnum", "mut", "reps"))
 
     ## Estimate Fisher Info and uncertainties
-    if(Chase){
-      Mut_data <- Mut_data %>% dplyr::ungroup() %>%
-        dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep, kd_rep_est) %>%
-        dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
-        dplyr::mutate(Exp_l_fn = exp(-logit_fn_rep)) %>%
-        dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
-        dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
-        dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
-        dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
-        dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
-        dplyr::ungroup() %>%
-        dplyr::group_by(fnum, mut, reps) %>%
-        dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
-                         Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
-                         tot_n = sum(n)) %>% #,
-        #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
-        dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
-                      Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
-        dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
-                      Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
-
+    if(Fisher){
+      if(Chase){
+        Mut_data <- Mut_data %>% dplyr::ungroup() %>%
+          dplyr::group_by(fnum, mut, reps, TC, pnew, pold, logit_fn_rep, kd_rep_est) %>%
+          dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
+          dplyr::mutate(Exp_l_fn = exp(-logit_fn_rep)) %>%
+          dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
+          dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
+          dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
+          dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
+          dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
+          dplyr::ungroup() %>%
+          dplyr::group_by(fnum, mut, reps) %>%
+          dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
+                           Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
+                           tot_n = sum(n)) %>% #,
+          #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
+          dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
+                        Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
+          dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
+                        Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
+        
+      }else{
+        Mut_data <- Mut_data %>% dplyr::ungroup() %>%
+          dplyr::group_by(fnum, mut, reps, TC, pnew, pold, logit_fn_rep, kd_rep_est) %>%
+          dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
+          dplyr::mutate(Exp_l_fn = exp(logit_fn_rep)) %>%
+          dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
+          dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
+          dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
+          dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
+          dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
+          dplyr::ungroup() %>%
+          dplyr::group_by(fnum, mut, reps) %>%
+          dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
+                           Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
+                           tot_n = sum(n)) %>% #,
+          #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
+          dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
+                        Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
+          dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
+                        Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
+        
+      }
+      
+      Mut_data_est$logit_fn_se <- Mut_data$Logit_fn_se
+      Mut_data_est$log_kd_se <- Mut_data$log_kd_se
+      
     }else{
-      Mut_data <- Mut_data %>% dplyr::ungroup() %>%
-        dplyr::group_by(fnum, mut, reps, TC, pnew, logit_fn_rep, kd_rep_est) %>%
-        dplyr::summarise(U_cont = sum(nT*n)/sum(n), n = sum(n), .groups = "keep") %>%
-        dplyr::mutate(Exp_l_fn = exp(logit_fn_rep)) %>%
-        dplyr::mutate(Inv_Fisher_Logit_3 = 1/(((pnew/pold)^TC)*exp(-(U_cont)*(pnew - pold)) - 1 )) %>%
-        dplyr::mutate(Inv_Fisher_Logit_1 = 1 + Exp_l_fn ) %>%
-        dplyr::mutate(Inv_Fisher_Logit_2 = ((1 + Exp_l_fn)^2)/Exp_l_fn) %>%
-        dplyr::mutate(Fisher_lkd_num = tl[mut]*kd_rep_est*( ((pnew*U_cont)^TC)*exp(-pnew*U_cont) - ( ((pold*U_cont)^TC)*exp(-pold*U_cont) ) ) ) %>%
-        dplyr::mutate(Fisher_lkd_den = (exp(kd_rep_est*tl[mut]) - 1)*((pnew*U_cont)^TC)*exp(-pnew*U_cont) + ((pold*U_cont)^TC)*exp(-pold*U_cont) ) %>%
-        dplyr::ungroup() %>%
-        dplyr::group_by(fnum, mut, reps) %>%
-        dplyr::summarise(Fisher_kdeg = sum(n*((Fisher_lkd_num/Fisher_lkd_den)^2))/sum(n),
-                         Fisher_Logit = sum(n/((Inv_Fisher_Logit_1 + Inv_Fisher_Logit_2*Inv_Fisher_Logit_3)^2))/sum(n),
-                         tot_n = sum(n)) %>% #,
-        #Fisher_fn = sum(n*((Fisher_fn_num/Fisher_fn_den)^2)), tot_n = sum(n)) %>%
-        dplyr::mutate(log_kd_se = 1/sqrt(tot_n*Fisher_kdeg),
-                      Logit_fn_se = 1/sqrt(tot_n*Fisher_Logit)) %>%
-        dplyr::mutate(log_kd_se = ifelse(log_kd_se > se_max, se_max, log_kd_se),
-                      Logit_fn_se = ifelse(Logit_fn_se > se_max, se_max, Logit_fn_se))#, Fn_se = 1/sqrt(tot_n*Fisher_fn))
-
+      ## Procedure:
+      # 1) Estimate beta distribution prior empirically
+      # 2) Determine beta posterior analytically
+      # 3) Use beta sd as uncertainty
+      
+      ## Estimate beta prior
+      fn_means <- Mut_data_est %>%
+        dplyr::group_by(mut, reps) %>%
+        dplyr::summarise(global_mean = mean(Fn_rep_est),
+                         global_var = stats::var(Fn_rep_est))
+      
+      priors <- fn_means %>%
+        dplyr::mutate(alpha_p = global_mean*(((global_mean*(1-global_mean))/global_var) - 1),
+                      beta_p = alpha_p*(1 - global_mean)/global_mean)
+      
+      ## Add priors
+      Mut_data_est <- dplyr::inner_join(Mut_data_est, priors, by = c("mut", "reps"))
+      
+      ## Estimate logit uncertainty
+      lfn_calc <- function(alpha, beta){
+        
+        EX <- alpha/(alpha + beta)
+        VX <- (alpha*beta)/(((alpha + beta)^2)*(alpha + beta + 1))
+        
+        
+        totvar <- (((1/EX) + 1/(1 - EX))^2)*VX
+        
+        return(totvar)
+      }
+      
+      ## Estimate log(kdeg) uncertainty
+      lkdeg_calc <- function(alpha, beta){
+        
+        EX <- alpha/(alpha + beta)
+        VX <- (alpha*beta)/(((alpha + beta)^2)*(alpha + beta + 1))
+        
+        
+        totvar <- (( 1/(log(1-EX)*(1-EX)) )^2)*VX
+        
+        return(totvar)
+      }
+      
+      Mut_data_est <- Mut_data_est %>%
+        dplyr::mutate(logit_fn_se = sqrt(lfn_calc(alpha_p + nreads*Fn_rep_est, nreads + beta_p)),
+                      log_kd_se = sqrt(lkdeg_calc(alpha_p + nreads*Fn_rep_est, nreads + beta_p)))
     }
+    
 
 
-
-    Mut_data_est$logit_fn_se <- Mut_data$Logit_fn_se
-    Mut_data_est$log_kd_se <- Mut_data$log_kd_se
 
     Mut_data_est <- Mut_data_est %>% dplyr::mutate(log_kd_rep_est = log(kd_rep_est))
 
 
   }
-
-
-
-
-
-  # ESTIMATE VARIANCE VS. READ COUNT TREND -------------------------------------
-
-
-  ## Now affiliate each fnum, mut with a bin Id based on read counts,
-  ## bin data by bin_ID and average log10(reads) and log(sd(logit_fn))
-
-  if(is.null(nbin)){
-    nbin <- max(c(round(ngene*sum(nreps)/100), 10))
-  }
-
-  message("Estimating read count-variance relationship")
-
-
-  if(NSS){
-    Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(logit_fn_rep)^2) +logit_fn_se^2 ) ) ) )) %>%
-      dplyr::ungroup() %>%
-      dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
-      dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
-
-    ## Estimate read count vs. replicate variability trend
-
-    lm_list <- vector("list", length = nMT)
-    lm_var <- lm_list
-
-    # One linear model for each experimental condition
-    for(i in 1:nMT){
-      heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
-      h_int <- summary(heterosked_lm)$coefficients[1,1]
-      h_slope <- summary(heterosked_lm)$coefficients[2,1]
-      lm_list[[i]] <- c(h_int, h_slope)
-
-      lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
-    }
-
-    # Put linear model fit extrapolation into convenient data frame
-    true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(logit_fn_rep)^2) + logit_fn_se^2 ) ) ) )) %>%
-      dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
-      dplyr::group_by(mut) %>%
-      dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
-
-    log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
-    logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
-
-  }else{
-    Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
-      dplyr::ungroup() %>%
-      dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
-      dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
-
-    ## Estimate read count vs. replicate variability trend
-
-    lm_list <- vector("list", length = nMT)
-    lm_var <- lm_list
-
-    # One linear model for each experimental condition
-    for(i in 1:nMT){
-      heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
-      h_int <- summary(heterosked_lm)$coefficients[1,1]
-      h_slope <- summary(heterosked_lm)$coefficients[2,1]
-      lm_list[[i]] <- c(h_int, h_slope)
-
-      lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
-    }
-
-    # Put linear model fit extrapolation into convenient data frame
-    true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
-      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
-      dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
-      dplyr::group_by(mut) %>%
-      dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ))
-
-    log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
-    logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
-
-  }
-
-
-
-  # PREP DATA FOR REGULARIZATION -----------------------------------------------
+  
+  logit_fn <- Mut_data_est$logit_fn_rep
 
   # Report numerical instabilities from maximum likelihood estimation
   if(!(all(logit_fn < upper) & all(logit_fn > lower))){
@@ -991,6 +1100,325 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     warning(paste0(num_unstable, " out of " , tot_ests, " (", prcnt_unstable,"%)", " logit(fn) estimates are at the upper or lower bounds set. These likely represent features with limited data or extremely stable/unstable features. If the number of boundary estimates is concerning, try increasing the magnitude of upper and lower."))
   }
 
+
+  # ESTIMATE VARIANCE VS. READ COUNT TREND -------------------------------------
+
+  
+  out <- avg_and_regularize(Mut_data_est, nreps, sample_lookup, feature_lookup,
+                            nbin = nbin, NSS = NSS, 
+                            BDA_model = BDA_model, null_cutoff = null_cutoff,
+                            Mutrates = pmuts_list, ztest = ztest)
+  
+  return(out)
+
+}
+
+#' Efficiently average replicates of nucleotide recoding data and regularize
+#'
+#' \code{avg_and_regularize} pools and regularizes replicate estimates of kinetic parameters. There are two key steps in this
+#' downstream analysis. 1st, the uncertainty for each feature is used to fit a linear ln(uncertainty) vs. log10(read depth) trend,
+#' and uncertainties for individual features are shrunk towards the regression line. The uncertainty for each feature is a combination of the
+#' Fisher Information asymptotic uncertainty as well as the amount of variability seen between estimates. Regularization of uncertainty
+#' estimates is performed using the analytic results of a Normal distribution likelihood with known mean and unknown variance and conjugate
+#' priors. The prior parameters are estimated from the regression and amount of variability about the regression line. The strength of
+#' regularization can be tuned by adjusting the \code{prior_weight} parameter, with larger numbers yielding stronger shrinkage towards
+#' the regression line. The 2nd step is to regularize the average kdeg estimates. This is done using the analytic results of a
+#' Normal distribution likelihood model with unknown mean and known variance and conjugate priors. The prior parameters are estimated from the
+#' population wide kdeg distribution (using its mean and standard deviation as the mean and standard deviation of the normal prior).
+#' In the 1st step, the known mean is assumed to be the average kdeg, averaged across replicates and weighted by the number of reads
+#' mapping to the feature in each replicate. In the 2nd step, the known variance is assumed to be that obtained following regularization
+#' of the uncertainty estimates.
+#'
+#' Effect sizes (changes in kdeg) are obtained as the difference in log(kdeg) means between the reference and experimental
+#' sample(s), and the log(kdeg)s are assumed to be independent so that the variance of the effect size is the sum of the
+#' log(kdeg) variances. P-values assessing the significance of the effect size are obtained using a moderated t-test with number
+#' of degrees of freedom determined from the uncertainty regression hyperparameters and are adjusted for multiple testing using the Benjamini-
+#' Hochberg procedure to control false discovery rates (FDRs).
+#'
+#' In some cases, the assumed ODE model of RNA metabolism will not accurately model the dynamics of a biological system being analyzed.
+#' In these cases, it is best to compare logit(fraction new)s directly rather than converting fraction new to log(kdeg).
+#' This analysis strategy is implemented when \code{NSS} is set to TRUE. Comparing logit(fraction new) is only valid
+#' If a single metabolic label time has been used for all samples. For example, if a label time of 1 hour was used for NR-seq
+#' data from WT cells and a 2 hour label time was used in KO cells, this comparison is no longer valid as differences in
+#' logit(fraction new) could stem from differences in kinetics or label times.
+#'
+#'
+#' @param Mut_data_est Dataframe with fraction new estimation information. Required columns are: 
+#' \itemize{
+#'  \item fnum; numerical ID of feature
+#'  \item reps; numerical ID of replicate
+#'  \item mut; numerical ID of experimental condition (Exp_ID)
+#'  \item logit_fn_rep; logit(fn) estimate
+#'  \item kd_rep_est; kdeg estimate
+#'  \item log_kd_rep_est; log(kdeg) estimate
+#'  \item logit_fn_se; logit(fn) estimate uncertainty
+#'  \item log_kd_se; log(kdeg) estimate uncertainty
+#' }
+#' @param nbin Number of bins for mean-variance relationship estimation. If NULL, max of 10 or (number of logit(fn) estimates)/100 is used
+#' @param nreps Vector of number of replicates in each experimental condition
+#' @param sample_lookup Dictionary mapping sample names to various experimental details
+#' @param feature_lookup Dictionary mapping feature IDs to original feature names
+#' @param null_cutoff bakR will test the null hypothesis of |effect size| < |null_cutoff|
+#' @param NSS Logical; if TRUE, logit(fn)s are compared rather than log(kdeg) so as to avoid steady-state assumption.
+#' @param Chase Logical; Set to TRUE if analyzing a pulse-chase experiment. If TRUE, kdeg = -ln(fn)/tl where fn is the fraction of
+#' reads that are s4U (more properly referred to as the fraction old in the context of a pulse-chase experiment)
+#' @param BDA_model Logical; if TRUE, variance is regularized with scaled inverse chi-squared model. Otherwise a log-normal
+#' model is used.
+#' @param Mutrates List containing new and old mutation rate estimates
+#' @param ztest TRUE; if TRUE, then a z-test is used for p-value calculation rather than the more conservative moderated t-test. 
+#' @return List with dataframes providing information about replicate-specific and pooled analysis results. The output includes:
+#' \itemize{
+#'  \item Fn_Estimates; dataframe with estimates for the fraction new and fraction new uncertainty for each feature in each replicate.
+#'  The columns of this dataframe are:
+#'  \itemize{
+#'   \item Feature_ID; Numerical ID of feature
+#'   \item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
+#'   \item Replicate; Numerical ID for replicate
+#'   \item logit_fn; logit(fraction new) estimate, unregularized
+#'   \item logit_fn_se; logit(fraction new) uncertainty, unregularized and obtained from Fisher Information
+#'   \item nreads; Number of reads mapping to the feature in the sample for which the estimates were obtained
+#'   \item log_kdeg; log of degradation rate constant (kdeg) estimate, unregularized
+#'   \item kdeg; degradation rate constant (kdeg) estimate
+#'   \item log_kd_se; log(kdeg) uncertainty, unregularized and obtained from Fisher Information
+#'   \item sample; Sample name
+#'   \item XF; Original feature name
+#'  }
+#'  \item Regularized_ests; dataframe with average fraction new and kdeg estimates, averaged across the replicates and regularized
+#'  using priors informed by the entire dataset. The columns of this dataframe are:
+#'  \itemize{
+#'   \item Feature_ID; Numerical ID of feature
+#'   \item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
+#'   \item avg_log_kdeg; Weighted average of log(kdeg) from each replicate, weighted by sample and feature-specific read depth
+#'   \item sd_log_kdeg; Standard deviation of the log(kdeg) estimates
+#'   \item nreads; Total number of reads mapping to the feature in that condition
+#'   \item sdp; Prior standard deviation for fraction new estimate regularization
+#'   \item theta_o; Prior mean for fraction new estimate regularization
+#'   \item sd_post; Posterior uncertainty
+#'   \item log_kdeg_post; Posterior mean for log(kdeg) estimate
+#'   \item kdeg; exp(log_kdeg_post)
+#'   \item kdeg_sd; kdeg uncertainty
+#'   \item XF; Original feature name
+#'  }
+#'  \item Effects_df; dataframe with estimates of the effect size (change in logit(fn)) comparing each experimental condition to the
+#'  reference sample for each feature. This dataframe also includes p-values obtained from a moderated t-test. The columns of this
+#'  dataframe are:
+#'  \itemize{
+#'   \item Feature_ID; Numerical ID of feature
+#'   \item Exp_ID; Numerical ID for experimental condition (Exp_ID from metadf)
+#'   \item L2FC(kdeg); Log2 fold change (L2FC) kdeg estimate or change in logit(fn) if NSS TRUE
+#'   \item effect; LFC(kdeg)
+#'   \item se; Uncertainty in L2FC_kdeg
+#'   \item pval; P-value obtained using effect_size, se, and a z-test
+#'   \item padj; pval adjusted for multiple testing using Benjamini-Hochberg procedure
+#'   \item XF; Original feature name
+#'  }
+#'  \item Mut_rates; list of two elements. The 1st element is a dataframe of s4U induced mutation rate estimates, where the mut column
+#'  represents the experimental ID and the rep column represents the replicate ID. The 2nd element is the single background mutation
+#'  rate estimate used
+#'  \item Hyper_Parameters; vector of two elements, named a and b. These are the hyperparameters estimated from the uncertainties for each
+#'  feature, and represent the two parameters of a Scaled Inverse Chi-Square distribution. Importantly, a is the number of additional
+#'  degrees of freedom provided by the sharing of uncertainty information across the dataset, to be used in the moderated t-test.
+#'  \item Mean_Variance_lms; linear model objects obtained from the uncertainty vs. read count regression model. One model is run for each Exp_ID
+#' }
+#' @importFrom magrittr %>%
+avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_lookup,
+                               nbin = NULL, NSS = FALSE, Chase = FALSE,
+                               BDA_model = FALSE, null_cutoff = 0,
+                               Mutrates = NULL, ztest = FALSE){
+
+
+  ### Check Mut_data_est
+  expected_cols <- c("nreads", "fnum", "reps",
+                              "mut", "logit_fn_rep", "kd_rep_est", "log_kd_rep_est", 
+                              "logit_fn_se", "log_kd_se")
+  
+  if(!is.data.frame(Mut_data_est)){
+    stop("Mut_data_est must be a data frame!")
+  }
+  
+  if(!all(expected_cols %in% colnames(Mut_data_est))){
+    stop("Mut_data_est is lacking some necessary columns. See documentation (?avg_and_regularize())
+         for list of necessary columns")
+  }
+  
+  ### Check nreps
+  if(!is.numeric(nreps)){
+    stop("nreps must be a numeric vector of the number of replicates in each Exp_ID!")
+  }
+
+  ### Check sample_lookup
+  expected_cols <- c("sample", "mut", "reps")
+  if(!all(expected_cols %in% colnames(sample_lookup))){
+    stop("sample_lookup is lacking necessary columns. It should contain three columns: 1) sample, which is the name of the same. 2) mut, which is the Exp_ID, and 3) reps which is the numerical replicate ID ")
+  }
+  
+  if(!is.data.frame(sample_lookup)){
+    stop("sample_lookup must be a data frame!")
+  }
+  
+  ### Check feature_lookup
+  expected_cols <- c("XF", "fnum")
+  if(!all(expected_cols %in% colnames(feature_lookup))){
+    stop("feature_lookup is lacking necessary columns. It should contain at least two columns: 1) XF, the name of each feature analyzed, and 2) fnum, the numerical ID for the corresponding feature")
+  }
+  
+  if(!is.data.frame(feature_lookup)){
+    stop("feature_lookup must be a data frame!")
+  }
+  
+  ## Check nbin
+  if(!is.null(nbin)){
+    if(!is.numeric(nbin)){
+      stop("nbin must be numeric")
+    }else if(!is.integer(nbin)){
+      nbin <- as.integer(nbin)
+    }
+    
+    if(nbin <= 0){
+      stop("nbin must be > 0 and is preferably greater than or equal to 10")
+    }
+  }
+  
+  ## Check NSS
+  if(!is.logical(NSS)){
+    stop("NSS must be logical (TRUE or FALSE)")
+  }
+  
+  ### Check Chase
+  if(!is.logical(Chase)){
+    stop("Chase must be logical (TRUE or FALSE)")
+  }
+  
+  ### Check BDA_model
+  if(!is.logical(BDA_model)){
+    stop("BDA_model must be logical (TRUE or FALSE)")
+  }
+  
+  ### Check ztest
+  if(!is.logical(ztest)){
+    stop("ztest must be logical (TRUE or FALSE)")
+  }
+  
+  ## Check null_cutoff
+  if(!is.numeric(null_cutoff)){
+    stop("null_cutoff must be numeric")
+  }else if(null_cutoff < 0){
+    stop("null_cutoff must be 0 or positive")
+  }else if(null_cutoff > 2){
+    warning("You are testing against a null hypothesis |L2FC(kdeg)| greater than 2; this might be too conservative")
+  }
+  
+  
+  # Bind variables locally to resolve devtools::check() Notes
+  fnum <- mut <- logit_fn_rep <- bin_ID <- kd_sd_log <- intercept <- NULL
+  slope <- log_kd_rep_est <- avg_log_kd <- sd_log_kd <- sd_post <- NULL
+  sdp <- theta_o <- log_kd_post <- effect_size <- effect_size_std_error <- NULL
+  effect_std_error <- NULL
+  
+  # Helper functions that I will use on multiple occasions
+  logit <- function(x) log(x/(1-x))
+  inv_logit <- function(x) exp(x)/(1+exp(x))
+  
+  
+  # ESTIMATE VARIANCE VS. READ COUNT TREND -------------------------------------
+  
+  ngene <- max(Mut_data_est$fnum)
+  nMT <- max(Mut_data_est$mut)
+  
+  ## Now affiliate each fnum, mut with a bin Id based on read counts,
+  ## bin data by bin_ID and average log10(reads) and log(sd(logit_fn))
+  
+  if(is.null(nbin)){
+    nbin <- max(c(round(ngene*sum(nreps)/100), 10))
+  }
+  
+  message("Estimating read count-variance relationship")
+  
+  
+  if(NSS){
+    Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(logit_fn_rep)^2) +logit_fn_se^2 ) ) ) )) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
+      dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
+    
+    ## Estimate read count vs. replicate variability trend
+    
+    lm_list <- vector("list", length = nMT)
+    lm_var <- lm_list
+    
+    # One linear model for each experimental condition
+    for(i in 1:nMT){
+      heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
+      h_int <- summary(heterosked_lm)$coefficients[1,1]
+      h_slope <- summary(heterosked_lm)$coefficients[2,1]
+      
+      if(h_slope > 0){
+        h_slope <- 0
+        h_int <- mean(Binned_data$avg_sd[Binned_data$mut == i])
+      }
+      
+      lm_list[[i]] <- c(h_int, h_slope)
+      
+      lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
+    }
+    
+    # Put linear model fit extrapolation into convenient data frame
+    true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(logit_fn_rep)^2) + logit_fn_se^2 ) ) ) )) %>%
+      dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
+      dplyr::group_by(mut) %>%
+      dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ),
+                       true_nat_var = stats::var(exp(kd_sd_log)^2 - exp((intercept + slope*log10(nreads) ))^2 ))
+    
+    log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
+    logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
+    
+  }else{
+    Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(bin_ID = as.numeric(Hmisc::cut2(nreads, g = nbin))) %>% dplyr::group_by(bin_ID, mut) %>%
+      dplyr::summarise(avg_reads = mean(log10(nreads)), avg_sd = mean(kd_sd_log))
+    
+    ## Estimate read count vs. replicate variability trend
+    
+    lm_list <- vector("list", length = nMT)
+    lm_var <- lm_list
+    
+    # One linear model for each experimental condition
+    for(i in 1:nMT){
+      heterosked_lm <- stats::lm(avg_sd ~ avg_reads, data = Binned_data[Binned_data$mut == i,] )
+      h_int <- summary(heterosked_lm)$coefficients[1,1]
+      h_slope <- summary(heterosked_lm)$coefficients[2,1]
+      
+      if(h_slope > 0){
+        h_slope <- 0
+        h_int <- mean(Binned_data$avg_sd[Binned_data$mut == i])
+      }
+      
+      lm_list[[i]] <- c(h_int, h_slope)
+      
+      lm_var[[i]] <- stats::var(stats::residuals(heterosked_lm))
+    }
+    
+    # Put linear model fit extrapolation into convenient data frame
+    true_vars <-  Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
+      dplyr::summarise(nreads = sum(nreads), kd_sd_log = log(sqrt(1/sum(1/((stats::sd(log_kd_rep_est)^2) + log_kd_se^2 ) ) ) )) %>%
+      dplyr::ungroup() %>% dplyr::group_by(fnum, mut) %>% dplyr::mutate(slope = lm_list[[mut]][2], intercept = lm_list[[mut]][1]) %>%
+      dplyr::group_by(mut) %>%
+      dplyr::summarise(true_var = stats::var(kd_sd_log - (intercept + slope*log10(nreads) ) ),
+                       true_nat_var = stats::var(exp(kd_sd_log)^2 - exp((intercept + slope*log10(nreads) ))^2 ))
+    
+    log_kd <- as.vector(Mut_data_est$log_kd_rep_est)
+    logit_fn <- as.vector(Mut_data_est$logit_fn_rep)
+    
+  }
+  
+  
+  
+  # PREP DATA FOR REGULARIZATION -----------------------------------------------
+  
   # Vectors of use
   kd_estimate <- as.vector(Mut_data_est$kd_rep_est)
   log_kd_se <- as.vector(Mut_data_est$log_kd_se)
@@ -999,13 +1427,13 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   Condition <- as.vector(Mut_data_est$mut)
   Gene_ID <- as.vector(Mut_data_est$fnum)
   nreads <- as.vector(Mut_data_est$nreads)
-
+  
   rm(Mut_data_est)
-
+  
   # Create new data frame with kinetic parameter estimates and uncertainties
   df_fn <- data.frame(logit_fn, logit_fn_se, Replicate, Condition, Gene_ID, nreads, log_kd, kd_estimate, log_kd_se)
-
-
+  
+  
   # Remove vectors no longer of use
   rm(logit_fn)
   rm(logit_fn_se)
@@ -1013,23 +1441,23 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   rm(Condition)
   rm(Gene_ID)
   rm(nreads)
-
+  
   df_fn <- df_fn[order(df_fn$Gene_ID, df_fn$Condition, df_fn$Replicate),]
-
-
+  
+  
   # Relabel logit(fn) as log(kdeg) for steady-state independent analysis
   if(NSS){
     colnames(df_fn) <- c("log_kd", "log_kd_se", "Replicate", "Condition", "Gene_ID", "nreads", "logit_fn", "kd_estimate", "logit_fn_se")
-
+    
     df_fn$kd_estimate <- inv_logit(df_fn$log_kd)
   }
-
-
-
+  
+  
+  
   # AVERAGE REPLICATE DATA AND REGULARIZE WITH INFORMATIVE PRIORS --------------
-
+  
   message("Averaging replicate data and regularizing estimates")
-
+  
   #Average over replicates and estimate hyperparameters
   avg_df_fn_bayes <- df_fn %>% dplyr::group_by(Gene_ID, Condition) %>%
     dplyr::summarize(avg_log_kd = stats::weighted.mean(log_kd, 1/log_kd_se),
@@ -1039,27 +1467,27 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
     dplyr::mutate(sdp = stats::sd(avg_log_kd)) %>%
     dplyr::mutate(theta_o = mean(avg_log_kd)) %>%
     dplyr::ungroup()
+  
 
-
-
+  
   #Calcualte population averages
   # sdp <- sd(avg_df_fn$avg_logit_fn) # Will be prior sd in regularization of mean
   # theta_o <- mean(avg_df_fn$avg_logit_fn) # Will be prior mean in regularization of mean
-
+  
   var_pop <- mean(avg_df_fn_bayes$sd_log_kd^2) # Will be prior mean in regularization of sd
-  var_of_var <- stats::var(avg_df_fn_bayes$sd_log_kd^2) # Will be prior variance in regularization of sd
-
-
+  var_of_var <- mean(true_vars$true_nat_var) # Will be prior variance in regularization of sd
+  
+  
   ## Regularize standard deviation estimate
-
+  
   # Estimate hyperpriors with method of moments
-
+  
   a_hyper <- 2*(var_pop^2)/var_of_var + 4
   # that serves as prior degrees of freedom
-
+  
   b_hyper <- (var_pop*(a_hyper - 2))/a_hyper
-
-
+  
+  
   if(BDA_model){ # Not yet working well; inverse chi-squared model from BDA3
     avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
       dplyr::mutate(sd_post = (sd_log_kd*nreps[Condition] + a_hyper*exp(lm_list[[Condition]][1] + lm_list[[Condition]][2]*log10(nreads)))/(a_hyper + nreps[Condition] - 2) ) %>%
@@ -1073,7 +1501,7 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       dplyr::mutate(L2FC_kdeg = effect_size*log2(exp(1))) %>%
       dplyr::mutate(pval = pmin(1, 2*stats::pnorm((abs(effect_size) - null_cutoff)/effect_std_error, lower.tail = FALSE))) %>%
       dplyr::ungroup()
-
+    
   }else{
     # Regularize estimates with Bayesian models and empirically informed priors
     avg_df_fn_bayes <- avg_df_fn_bayes %>% dplyr::group_by(Gene_ID, Condition) %>%
@@ -1085,76 +1513,102 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
       dplyr::group_by(Gene_ID) %>%
       dplyr::mutate(effect_size = log_kd_post - log_kd_post[Condition == 1]) %>%
       dplyr::mutate(effect_std_error = ifelse(Condition == 1, sd_post, sqrt(sd_post[Condition == 1]^2 + sd_post^2))) %>%
-      dplyr::mutate(L2FC_kdeg = effect_size*log2(exp(1))) %>%
-      dplyr::mutate(pval = pmin(1, 2*stats::pt((abs(effect_size) - null_cutoff)/effect_std_error, df = 2*(nreps[Condition]-1) + 2*a_hyper, lower.tail = FALSE))) %>%
-      dplyr::ungroup()
-
-
+      dplyr::mutate(L2FC_kdeg = effect_size*log2(exp(1)))
+    
+    if(ztest){
+      avg_df_fn_bayes <- avg_df_fn_bayes %>%
+        dplyr::mutate(pval = pmin(1, 2*stats::pnorm((abs(effect_size) - null_cutoff)/effect_std_error, lower.tail = FALSE))) %>%
+        dplyr::ungroup()
+      
+    }else{
+      
+      avg_df_fn_bayes <- avg_df_fn_bayes %>%
+        dplyr::mutate(pval = pmin(1, 2*stats::pt((abs(effect_size) - null_cutoff)/effect_std_error, df = 2*(nreps[Condition]-1) + 2*a_hyper, lower.tail = FALSE))) %>%
+        dplyr::ungroup()
+        
+      
+    }
+    
+    
   }
-
-
-
+  
+  
+  
   # STATISTICAL TESTING --------------------------------------------------------
-
-
+  
+  
   message("Assessing statistical significance")
-
+  
   ## Populate various data frames with important fit information
-
+  
   effects <- avg_df_fn_bayes$effect_size[avg_df_fn_bayes$Condition > 1]
   ses <- avg_df_fn_bayes$effect_std_error[avg_df_fn_bayes$Condition > 1]
-
+  
   pval <- avg_df_fn_bayes$pval[avg_df_fn_bayes$Condition > 1]
   padj <- stats::p.adjust(pval, method = "BH")
-
-
+  
+  
   # ORGANIZE OUTPUT ------------------------------------------------------------
-
+  
   Genes_effects <- avg_df_fn_bayes$Gene_ID[avg_df_fn_bayes$Condition > 1]
   Condition_effects <- avg_df_fn_bayes$Condition[avg_df_fn_bayes$Condition > 1]
-
+  
   L2FC_kdegs <- avg_df_fn_bayes$L2FC_kdeg[avg_df_fn_bayes$Condition > 1]
-
+  
   Effect_sizes_df <- data.frame(Genes_effects, Condition_effects, L2FC_kdegs, effects, ses, pval, padj)
-
+  
   colnames(Effect_sizes_df) <- c("Feature_ID", "Exp_ID", "L2FC_kdeg", "effect", "se", "pval", "padj")
-
+  
   # Add sample information to output
   df_fn <- merge(df_fn, sample_lookup, by.x = c("Condition", "Replicate"), by.y = c("mut", "reps"))
-
+  
   # Add feature name information to output
   df_fn <- merge(df_fn, feature_lookup, by.x = "Gene_ID", by.y = "fnum")
   avg_df_fn_bayes <- merge(avg_df_fn_bayes, feature_lookup, by.x = "Gene_ID", by.y = "fnum")
   Effect_sizes_df <- merge(Effect_sizes_df, feature_lookup, by.x = "Feature_ID", by.y = "fnum")
-
+  
   # Order output
   df_fn <- df_fn[order(df_fn$Gene_ID, df_fn$Condition, df_fn$Replicate),]
   avg_df_fn_bayes <- avg_df_fn_bayes[order(avg_df_fn_bayes$Gene_ID, avg_df_fn_bayes$Condition),]
   Effect_sizes_df <- Effect_sizes_df[order(Effect_sizes_df$Feature_ID, Effect_sizes_df$Exp_ID),]
-
-
+  
+  
   avg_df_fn_bayes <- avg_df_fn_bayes[,c("Gene_ID", "Condition", "avg_log_kd", "sd_log_kd", "nreads", "sdp", "theta_o", "sd_post",
                                         "log_kd_post", "kdeg", "kdeg_sd", "XF")]
-
+  
   colnames(avg_df_fn_bayes) <- c("Feature_ID", "Exp_ID", "avg_log_kdeg", "sd_log_kdeg", "nreads", "sdp", "theta_o", "sd_post",
                                  "log_kdeg_post", "kdeg", "kdeg_sd", "XF")
-
+  
   if(NSS){
     colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se", "nreads", "log_kdeg", "fn", "log_kd_se", "sample", "XF")
   }else{
     colnames(df_fn) <- c("Feature_ID", "Exp_ID", "Replicate", "logit_fn", "logit_fn_se", "nreads", "log_kdeg", "kdeg", "log_kd_se", "sample", "XF")
   }
-
-
-  # Convert to tibbles because I like tibbles better
-  fast_list <- list(dplyr::as_tibble(df_fn), dplyr::as_tibble(avg_df_fn_bayes), dplyr::as_tibble(Effect_sizes_df), pmuts_list, c(a = a_hyper, b = b_hyper), lm_list)
-
-  names(fast_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates", "Hyper_Parameters", "Mean_Variance_lms")
-
-  class(fast_list) <- "FastFit"
-
-  message("All done! Run QC_checks() on your bakRFit object to assess the quality of your data and get recommendations for next steps.")
-
+  
+  if(is.null(Mutrates)){
+    # Convert to tibbles because I like tibbles better
+    fast_list <- list(dplyr::as_tibble(df_fn), dplyr::as_tibble(avg_df_fn_bayes), dplyr::as_tibble(Effect_sizes_df), c(a = a_hyper, b = b_hyper), lm_list)
+    
+    names(fast_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Hyper_Parameters", "Mean_Variance_lms")
+    
+    class(fast_list) <- "FastFit"
+    
+    message("All done! Run QC_checks() on your bakRFit object to assess the 
+            quality of your data and get recommendations for next steps.")
+    
+  }else{
+    # Convert to tibbles because I like tibbles better
+    fast_list <- list(dplyr::as_tibble(df_fn), dplyr::as_tibble(avg_df_fn_bayes), dplyr::as_tibble(Effect_sizes_df), Mutrates, c(a = a_hyper, b = b_hyper), lm_list)
+    
+    names(fast_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates", "Hyper_Parameters", "Mean_Variance_lms")
+    
+    class(fast_list) <- "FastFit"
+    
+    message("All done! Run QC_checks() on your bakRFit object to assess the 
+            quality of your data and get recommendations for next steps.")
+    
+  }
+  
   return(fast_list)
-
+  
 }
