@@ -131,7 +131,7 @@ FnPCA2 <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), log_kdeg = FALSE){
     stop("obj must be of class bakRFit or bakRFnFit")
   }
   
-  if(!logical(log_kdeg)){
+  if(!is.logical(log_kdeg)){
     stop("log_kdeg must be logical (TRUE or FALSE)!")
   }
   
@@ -649,11 +649,11 @@ VisualizeDropout <- function(obj,
     stop("obj must be a bakRFit or bakRFnFit object!")
   }
   
-  if(!logical(keep_data)){
+  if(!is.logical(keep_data)){
     stop("keep_data must be logical (TRUE or FALSE)!")
   }
   
-  if(!logical(no_message)){
+  if(!is.logical(no_message)){
     stop("no_message must be logical (TRUE or FALSE)!")
   }
   
