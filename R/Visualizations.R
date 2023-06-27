@@ -377,6 +377,7 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = 2, Exp_shape = FALSE){
 #'
 plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = 2, Exp_shape = FALSE){
 
+
   ## Checks
   if(!is.numeric(FDR)){
     stop("FDR is not numeric")
@@ -435,17 +436,19 @@ plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = 2
     stop("You have provided Exps that do not represent Exp_IDs in your data!")
   }
   
+  ## Calc avg reads per pairs of conditions
+  Reads <- matrix(0, ncol = max(L2FC_df$Exp_ID), nrow = max(L2FC_df$Feature_ID))
+  for(i in seq_along(unique(L2FC_df$Exp_ID))){
+    Reads[,i] <- log10(rowMeans(Avg_reads_natural[,c(1,i+1)]))
+  }
+  
   if(is.null(Exps)){
     Exps <- 2:max(as.integer(L2FC_df$Exp_ID))
   }else{
     L2FC_df <- L2FC_df[L2FC_df$Exp_ID %in% Exps,]
   }
 
-  ## Calc avg reads per pairs of conditions
-  Reads <- matrix(0, ncol = max(L2FC_df$Exp_ID), nrow = max(L2FC_df$Feature_ID))
-  for(i in seq_along(unique(L2FC_df$Exp_ID))){
-    Reads[,i] <- log10(rowMeans(Avg_reads_natural[,c(1,i+1)]))
-  }
+
 
   ## Check which results are present and plan color scheme appropriately
   conclusions <- unique(L2FC_df$conclusion)
