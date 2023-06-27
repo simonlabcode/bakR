@@ -292,7 +292,20 @@ DissectMechanism <- function(bakRFit,
   mech <- stat <- DE_score <- DE_se <- Mech_score <- bakR_score <- ksyn_pval <- NULL
   mech_stat <- mech_pval <- L2FC_kdeg <- L2FC_ksyn <- bakR_se <- ksyn_score <- NULL
 
+
   ### Checks
+  if(!is.numeric(DE_cutoff)){
+    stop("DE_cutoff is not numeric!")
+  }else if(DE_cutoff <= 0){
+    stop("DE_cutoff is <= 0, nothing will pass this differential expression filter!")
+  }
+  
+  if(!is.numeric(bakR_cutoff)){
+    stop("bakR_cutoff is not numeric")
+  }else if(bakR_cutoff <= 0){
+    stop("bakR_cutoff is <= 0, nothing will pass this differential fraction new filter!")
+  }
+  
   if(sum(c("XF", "L2FC_RNA", "DE_score", "DE_se", "DE_pval", "DE_padj") %in% colnames(DE_df)) < 6){
     stop("You are missing necessary columns in DE_df. Columns named XF, L2FC_RNA,
          DE_score, DE_se, DE_pval, and DE_padj must be included. 
@@ -317,7 +330,10 @@ DissectMechanism <- function(bakRFit,
             is roughly 1/sims, meaning that a sims this low will severely limit
             your ability to interpret any mechanistic p-value as highly significant.")
   }
-
+  
+  if(!is.numeric(Exp_ID)){
+    stop("Exp_ID must be numeric")
+  }
 
   if(bakRModel == "MLE"){
     NSS_eff <- bakRFit$Fast_Fit$Effects_df
@@ -352,6 +368,12 @@ DissectMechanism <- function(bakRFit,
     NSS_eff$XF <- as.character(NSS_eff$XF)
 
   }
+  
+  if(!(Exp_ID %in% NSS_eff$Exp_ID)){
+    stop("Exp_ID is not one of the Exp_IDs in your bakRFit object!")
+  }
+  
+  NSS_eff <- NSS_eff[NSS_eff$Exp_ID == Exp_ID,]
 
 
   if(nrow(NSS_eff) != nrow(DE_df)){
@@ -435,6 +457,10 @@ DissectMechanism <- function(bakRFit,
   }
   
   ## Calculate meta analysis p value (p value that either expression or fraction new has changed)
+  test_stat <- test_stat %>%
+    dplyr::mutate(DE_pval = ifelse(is.na(DE_pval), 1, DE_pval),
+                  DE_padj = ifelse(is.na(DE_padj), 1, DE_padj))
+  
   test_stat$meta_pval <- stats::pchisq(-2*(log(test_stat$bakR_pval) + log(test_stat$DE_pval)), 
                                        df = 4,
                                        lower.tail = FALSE)
@@ -457,7 +483,7 @@ DissectMechanism <- function(bakRFit,
                                         1,
                                         -L2FC_kdeg/L2FC_RNA)))
   
-  
+
   heatmap_df <- dplyr::tibble(DE_score = test_stat$DE_score[test_stat$DE_padj < DE_cutoff],
                               Mech_score = test_stat$mech_stat[test_stat$DE_padj < DE_cutoff],
                               XF = test_stat$XF[test_stat$DE_padj < DE_cutoff],
@@ -501,9 +527,6 @@ DissectMechanism <- function(bakRFit,
   row.names(heatmap_df) <- heatmap_df$XF
   heatmap_df <- heatmap_df[,c("bakR_score", "DE_score", "Mech_score")]
   
-  # Filter out non-sig DE
-  heatmap_df <- heatmap_df[XF_keep,]
-
   heatmap_df <- heatmap_df[order(heatmap_df$Mech_score),]
 
   # Compile output
