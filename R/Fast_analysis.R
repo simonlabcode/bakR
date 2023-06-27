@@ -222,6 +222,8 @@ fast_analysis <- function(df, pnew = NULL, pold = NULL, no_ctl = FALSE,
   intercept <- slope <- log_kd_rep_est <- avg_log_kd <- sd_log_kd <- NULL
   sd_post <- sdp <- theta_o <- log_kd_post <- effect_size <- effect_std_error <- NULL
   n_new <- nreads <- logit_fn_se <- log_kd_se <- NULL
+  global_mean <- global_var <- alpha_p <- beta_p <- NULL
+  
   
 
 

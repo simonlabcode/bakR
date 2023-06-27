@@ -19,6 +19,8 @@
 #' @export
 GSprocessing <- function(GS, use_symbol = FALSE){
   
+  Gene <- Readcount <- alpha <- NULL
+  
   GS <- dplyr::as_tibble(GS)
   
   ### Make sure that the relevant columns exist

@@ -76,8 +76,9 @@ DE_df <- data.frame(XF = as.character(1:NF),
                        L2FC_RNA = stats::rnorm(NF, 0, 2))
 
 DE_df$DE_score <- DE_df$L2FC_RNA/0.5
+DE_df$DE_se <- 0.5
 
-DE_df$DE_pval <- 2*stats::dnorm(-abs(DE_df$stat))
+DE_df$DE_pval <- 2*stats::dnorm(-abs(DE_df$DE_score))
 DE_df$DE_padj <- 2*stats::p.adjust(DE_df$DE_pval, method = "BH")
 
 # perform NSS analysis

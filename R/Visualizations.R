@@ -19,10 +19,10 @@
 #' Fit <- bakRFit(sim$bakRData)
 #'
 #' # Fn PCA
-#' FnPCA(Fit$Fast_Fit)
+#' FnPCA2(Fit, Model = "MLE")
 #'
 #' # log(kdeg) PCA
-#' FnPCA(Fit$Fast_Fit, log_kdeg = TRUE)
+#' FnPCA2(Fit, Model = "MLE", log_kdeg = TRUE)
 #'
 #' }
 #' @export
@@ -118,14 +118,18 @@ FnPCA <- function(obj, log_kdeg = FALSE){
 #' Fit <- bakRFit(sim$bakRData)
 #'
 #' # Fn PCA
-#' FnPCA2(Fit$Fast_Fit)
+#' FnPCA2(Fit, Model = "MLE")
 #'
 #' # log(kdeg) PCA
-#' FnPCA2(Fit$Fast_Fit, log_kdeg = TRUE)
+#' FnPCA2(Fit, Model = "MLE", log_kdeg = TRUE)
 #'
 #' }
 #' @export
 FnPCA2 <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), log_kdeg = FALSE){
+  
+  if(!(inherits(obj, "bakRFit") | inherits(obj, "bakRFnFit"))){
+    stop("obj must be of class bakRFit or bakRFnFit")
+  }
   
   # Bind variables locally to resolve devtools::check() Notes
   PC1 <- PC2 <- NULL
@@ -156,17 +160,6 @@ FnPCA2 <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), log_kdeg = FALSE){
     }
   }
   
-  if(log_kdeg){
-    if(!inherits(obj, "FastFit")){
-      stop("log(kdeg) PCA is curently only compatible with Fast_Fit.")
-    }
-    
-    logit_fn_df <- obj$Fast_Fit$Fn_Estimates[,c("log_kdeg", "Feature_ID", "Exp_ID", "Replicate", "sample")]
-    colnames(logit_fn_df) <- c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")
-  }else{
-    logit_fn_df <- obj$Fast_Fit$Fn_Estimates[,c("logit_fn", "Feature_ID", "Exp_ID", "Replicate", "sample")]
-    
-  }
   
   ### Create sample to [MT, R] lookup table
   
@@ -596,7 +589,7 @@ Heatmap_kdeg <- function(obj, zscore = FALSE, filter_sig = FALSE, FDR = 0.05){
 #' @examples
 #' \donttest{
 #' # Simulate data for 500 genes and 2 replicates with 40% dropout
-#' sim <- Simulate_relative_bakRData(500, nreps = 2, p_do = 0.4)
+#' sim <- Simulate_relative_bakRData(500, 100000, nreps = 2, p_do = 0.4)
 #'
 #' # Fit data with fast implementation
 #' Fit <- bakRFit(sim$bakRData)
@@ -612,6 +605,7 @@ VisualizeDropout <- function(obj,
   
   # Address "no visible binding" NOTEs
   type <- mut <- reps <- fn <- dropout <- pdo <- NULL
+  Exp_ID <- Replicate <- NULL
   
   if(inherits(obj, "bakRFit")){
     

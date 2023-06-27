@@ -176,7 +176,7 @@ Function to simulate a \code{bakRData} object according to a realistic generativ
 \examples{
 \donttest{
 # 2 replicate, 2 experimental condition, 1000 gene simulation
-sim_2reps <- Simulate_bakRData(ngene = 1000, depth = 100000,
+sim_2reps <- Simulate_relative_bakRData(ngene = 1000, depth = 100000,
                                nreps = 2)
 
 # 3 replicate, 2 experimental condition, 1000 gene simulation

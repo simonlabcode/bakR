@@ -648,7 +648,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
 
     logit_bernoulli_sum <- function(n, lp_mean, lp_sd){
 
-      sum(purrr::rbinom(n = n, size = 1,
+      sum(stats::rbinom(n = n, size = 1,
                             p = inv_logit(stats::rnorm(n = n,
                                                      mean = lp_mean,
                                                      sd = lp_sd))))
@@ -931,7 +931,7 @@ Simulate_bakRData <- function(ngene, num_conds = 2L, nreps = 3L, eff_sd = 0.75, 
 #' @examples
 #' \donttest{
 #' # 2 replicate, 2 experimental condition, 1000 gene simulation
-#' sim_2reps <- Simulate_bakRData(ngene = 1000, depth = 100000,
+#' sim_2reps <- Simulate_relative_bakRData(ngene = 1000, depth = 100000,
 #'                                nreps = 2)
 #'
 #' # 3 replicate, 2 experimental condition, 1000 gene simulation

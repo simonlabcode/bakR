@@ -52,8 +52,10 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
   
   # Address "no visible binding" NOTEs
   type <- mut <- Exp_ID <- Replicate <- nreads <- fndo <- pdo <- NULL
-  fnGdo <- fn_corrected <- fnG <- tl <- n <- NULL
-
+  fnGdo <- fn_corrected <- fnG <- tl <- n <- log_kd_se <- NULL
+  Feature_ID <- logit_fn <- kdeg <- log_kdeg <- logit_fn_se <- NULL
+  
+  
   ### Checks
   # 1) Input must be a bakRFit object
   # 2) There must be -s4U controls for all experimental conditions
@@ -380,7 +382,8 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
 #' @examples
 #' \donttest{
 #' # Simulate data for 500 genes and 2 replicates with 40% dropout
-#' sim <- Simulate_relative_bakRData(500, nreps = 2, p_do = 0.4)
+#' sim <- Simulate_relative_bakRData(500, depth = 100000,
+#'                                   nreps = 2, p_do = 0.4)
 #'
 #' # Fit data with fast implementation
 #' Fit <- bakRFit(sim$bakRData)

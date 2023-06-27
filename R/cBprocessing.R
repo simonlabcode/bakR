@@ -40,7 +40,7 @@ reliableFeatures <- reliableFeatures <- function(obj,
   
   # Bind variables locally to resolve devtools::check() Notes
   XF <- TC <- n <- totTC <- nT <- n2U <- nmore <- totcounts <- NULL
-  tot_mut <- f2U <- avgU <- counts <- type <- totTs <- NULL
+  tot_mut <- f2U <- avgU <- counts <- type <- totTs <- Exp_ID <- NULL
   `.` <- list
   
   cBdt <- as.data.frame(obj$cB)
@@ -715,6 +715,7 @@ cBprocess <- function(obj,
 #' @export
 fn_process <- function(obj, totcut = 50, totcut_all = 10, Chase = FALSE, FOI = c(), concat = TRUE){
   
+  
   ## Check obj
   if(!inherits(obj, "bakRFnData")){
     stop("obj must be of class bakRFnData")
@@ -746,7 +747,7 @@ fn_process <- function(obj, totcut = 50, totcut_all = 10, Chase = FALSE, FOI = c
   # Bind to NULL
   tl <- ctl <- Exp_ID <- r_id <- XF <- n <- npass <- NULL
   Feature_ID <- fn <- var <- global_mean <- global_var <- alpha_p <- beta_p <- NULL
-  se <- NULL
+  se <- count <- counts <- NULL
   
   metadf <- obj$metadf
   fns <- obj$fns

@@ -30,10 +30,10 @@ sim <- Simulate_bakRData(500, nreps = 2)
 Fit <- bakRFit(sim$bakRData)
 
 # Fn PCA
-FnPCA(Fit$Fast_Fit)
+FnPCA2(Fit, Model = "MLE")
 
 # log(kdeg) PCA
-FnPCA(Fit$Fast_Fit, log_kdeg = TRUE)
+FnPCA2(Fit, Model = "MLE", log_kdeg = TRUE)
 
 }
 }
