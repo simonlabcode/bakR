@@ -251,7 +251,7 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
       
       # uncertainty delta approximation
       calc_fn_se <- function(lfn, lfn_se){
-        var <- (exp(-lfn)/((1 + exp(-lfn))^2))*(lfn_se^2)
+        var <- ((exp(-lfn)/((1 + exp(-lfn))^2))^2)*(lfn_se^2)
       }
       
       Fns <- Fn_bias[,c("XF", "sample", "reads_corrected", "fn_corrected")]

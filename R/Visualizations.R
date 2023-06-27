@@ -222,7 +222,8 @@ FnPCA2 <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), log_kdeg = FALSE){
 #' @param obj Object contained within output of \code{bakRFit}. So, either Fast_Fit (MLE implementation fit),
 #' Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)
 #' @param FDR False discovery rate to control at for significance assessment
-#' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
+#' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs).
+#' If NULL, data for all Experimental IDs is plotted.
 #' @param Exp_shape Logical indicating whether to use Experimental ID as factor determining point shape in volcano plot
 #' @return A ggplot object. Each point represents a transcript. The x-axis is the
 #' log-2 fold change in the degradation rate constant and the y-axis is the log-10
@@ -349,7 +350,8 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = 2, Exp_shape = FALSE){
 #' @param obj Object of class bakRFit outputted by \code{bakRFit} function
 #' @param Model String identifying implementation for which you want to generate an MA plot
 #' @param FDR False discovery rate to control at for significance assessment
-#' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)
+#' @param Exps Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs). 
+#' If NULL, data for all Experimental IDs is plotted.
 #' @param Exp_shape Logical indicating whether to use Experimental ID as factor determining point shape in volcano plot
 #' @return A ggplot object. Each point represents a transcript. The
 #' x-axis is log-10 transformed replicate average read counts,
@@ -369,8 +371,19 @@ plotVolcano <- function(obj, FDR = 0.05, Exps = 2, Exp_shape = FALSE){
 #' }
 #' @export
 #'
-plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = NULL, Exp_shape = FALSE){
+plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = 2, Exp_shape = FALSE){
 
+  ## Checks
+  if(!is.numeric(FDR)){
+    stop("FDR is not numeric")
+  }else if(FDR <= 0){
+    warning("FDR is <= 0, no feature will be significant by this cutoff")
+  }
+  
+  if(!is.logical(Exp_shape)){
+    stop("Exp_shape must be logical (TRUE or FALSE)!")
+  }
+  
   # Bind variables locally to resolve devtools::check() Notes
   padj <- L2FC_kdeg <- Feature_ID <- Exp_ID <- Read_ct <- conclusion <- NULL
 
@@ -414,8 +427,14 @@ plotMA <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), FDR = 0.05, Exps = N
   ## Add significance ID
   L2FC_df <- L2FC_df %>% dplyr::mutate(conclusion = ifelse(padj < FDR, ifelse(L2FC_kdeg < 0, "Stabilized", "Destabilized"), "Not Sig."))
 
+  if(!all(Exps %in% unique(L2FC_df$Exp_ID))){
+    stop("You have provided Exps that do not represent Exp_IDs in your data!")
+  }
+  
   if(is.null(Exps)){
     Exps <- 2:max(as.integer(L2FC_df$Exp_ID))
+  }else{
+    L2FC_df <- L2FC_df[L2FC_df$Exp_ID %in% Exps,]
   }
 
   ## Calc avg reads per pairs of conditions
