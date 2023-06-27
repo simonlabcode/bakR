@@ -255,8 +255,8 @@ CorrectDropout <- function(obj, scale_init = 1.05, pdo_init = 0.3,
       }
       
       Fns <- Fn_bias[,c("XF", "sample", "reads_corrected", "fn_corrected")]
-      scales <- Fn_bias$logit_fn_corrected/Fn_bias$logit_fn
-      Fns$se <- calc_fn_se(Fn_bias$logit_fn_corrected, Fn_bias$logit_fn_se*scales)
+      Fns$se <- sqrt(calc_fn_se(Fn_bias$logit_fn_corrected, Fn_bias$logit_fn_se))
+      
       colnames(Fns) <- c("XF", "sample", "n", "fn", "se")
       
     }else{

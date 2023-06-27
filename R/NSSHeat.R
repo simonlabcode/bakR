@@ -383,9 +383,7 @@ DissectMechanism <- function(bakRFit,
   }
 
 
-  DE_XF <- DE_df$XF
-  XF_keep <- DE_df$XF[DE_df$DE_padj < DE_cutoff]
-
+  message("Combining bakR and DE analyses")
 
   NSS_eff_DE <- NSS_eff %>%
     dplyr::mutate(score_bakR = effect/se)
@@ -397,7 +395,7 @@ DissectMechanism <- function(bakRFit,
   
   colnames(NSS_eff_DE) <- c( "XF", "bakR_score", "L2FC_kdeg", "bakR_se", "bakR_pval", "bakR_padj")
 
-  XF_both <- intersect(NSS_eff_DE$XF, DE_XF)
+  XF_both <- intersect(NSS_eff_DE$XF, DE_df$XF)
 
   NSS_eff_DE <- NSS_eff_DE[NSS_eff_DE$XF %in% XF_both,]
   DE_df <- DE_df[DE_df$XF %in% XF_both,]
@@ -425,20 +423,36 @@ DissectMechanism <- function(bakRFit,
   ## Null is product of two independent normal distributions, both with unit variance and one with
   ## non-zero mean.
   
+  message("Calculating mechanism p-value")
+  
   # Simulate from null for empirical p-value calc
   null_x <- stats::rnorm(sims, mean = zfn)
   null_y <- stats::rnorm(sims)
-  null_xy <- null_x*null_y
+  null_xy <- abs(null_x*null_y)
   
   # Calculate p value and multiple-test adjust
     # One trick to increase p-value precision is to compare test stat to the absolute
     # value of draws from the null model.
     # Any instances of 0 pvalue are set to half of what the p value would be if
     # there were a single null model draw more extreme than the test stat.
-  test_stat <- test_stat %>% dplyr::rowwise() %>%
-    dplyr::mutate(mech_pval = sum(abs(null_xy) > abs(mech_stat))/sims ) %>%
-    dplyr::mutate(mech_pval = ifelse(mech_pval == 0, 0.5/sims, mech_pval)) %>%
-    dplyr::ungroup()
+  
+  # order nulls
+  null_xy <- null_xy[order(null_xy)]
+  
+  
+  # Rewrite with purrr
+  mc_pval <- function(stat){
+    pval <- 1 - (findInterval(stat, null_xy)/sims)
+    pval <- ifelse(pval == 0, 0.5/sims, pval)
+    
+    return(pval)
+  }
+  
+  
+  test_stat$mech_pval <- purrr::map_dbl(.x = abs(test_stat$mech_stat), .f = mc_pval)
+  
+  
+  
   
   rm(null_x)
   rm(null_y)
@@ -468,6 +482,8 @@ DissectMechanism <- function(bakRFit,
   test_stat$meta_padj <- stats::p.adjust(test_stat$meta_pval, method = "BH")
   
   
+  message("Assessing differential synthesis")
+  
   ### Calculate L2FC(ksyn) and stats
   test_stat <- test_stat %>%
     dplyr::mutate(L2FC_ksyn = L2FC_RNA + L2FC_kdeg,
@@ -483,15 +499,13 @@ DissectMechanism <- function(bakRFit,
                                         1,
                                         -L2FC_kdeg/L2FC_RNA)))
   
+  message("Constructing Heatmap_df")
 
   heatmap_df <- dplyr::tibble(DE_score = test_stat$DE_score[test_stat$DE_padj < DE_cutoff],
                               Mech_score = test_stat$mech_stat[test_stat$DE_padj < DE_cutoff],
                               XF = test_stat$XF[test_stat$DE_padj < DE_cutoff],
                               bakR_score = test_stat$bakR_score[test_stat$DE_padj < DE_cutoff])
 
-  # Filter out non-sig DE
-  heatmap_df <- heatmap_df[heatmap_df$XF %in% XF_keep,]
-  
   
   # Log scale mechanism score because it is a bit crazier than others
   heatmap_df <- heatmap_df %>%
