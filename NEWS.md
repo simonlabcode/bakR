@@ -1,4 +1,12 @@
 # bakR 1.0.0
+* Functions for visualizing (`VisualizeDropout`), quantifying (`QuantifyDropout`), and correcting (`CorrectDropout`) metabolic label-induced dropout of RNA during library preparation have been added. 
+* New simulation function (`simulate_relative_bakRData`) which better captures the relative nature of RNA-seq and can accurately simulate dropout.
+* New experimental function (`DissectMechanism`) for determining how likely that any observed differential expression is driven by transcriptional or post-transcriptional regulation. `DissectMechanism` is a rewrite and extension of the previously developed `NSSHeat2` function, which itself was an improvement of the now deprecated `NSSHeat`.
+* Can now provide fraction new estimates (e.g., from a tool like GRAND-SLAM) as input to bakR. GRAND-SLAM input functionality is further supported by the new `GSprocess` function that will facilitate converting from GRAND-SLAM output to bakR input.
+* `FnPCA` has been deprecated in favor of `FnPCA2` which accepts input differently and fixes some bugs.
+* Read count filtering now includes two filters. One read count that all samples must pass, and one that only all replicates in a single Exp_ID need to pass. This facilitates identifying large increases or decreaes in expression.
+* Several new vignettes to discuss much of the new functionality discussed above.
+* Several small bug fixes
 
 # bakR 0.4.4
 * Small edit to configuration files that address compilation issues that can arise on some systems. Deals with "file too big" errors" during package installation from source.
