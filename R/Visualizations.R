@@ -131,6 +131,10 @@ FnPCA2 <- function(obj, Model = c("MLE", "Hybrid", "MCMC"), log_kdeg = FALSE){
     stop("obj must be of class bakRFit or bakRFnFit")
   }
   
+  if(!logical(log_kdeg)){
+    stop("log_kdeg must be logical (TRUE or FALSE)!")
+  }
+  
   # Bind variables locally to resolve devtools::check() Notes
   PC1 <- PC2 <- NULL
   
@@ -639,6 +643,19 @@ Heatmap_kdeg <- function(obj, zscore = FALSE, filter_sig = FALSE, FDR = 0.05){
 VisualizeDropout <- function(obj,
                              keep_data = FALSE,
                              no_message = FALSE){
+  
+  ## Checks
+  if(!(inherits(obj, "bakRFit") | inherits(obj, "bakRFnFit"))){
+    stop("obj must be a bakRFit or bakRFnFit object!")
+  }
+  
+  if(!logical(keep_data)){
+    stop("keep_data must be logical (TRUE or FALSE)!")
+  }
+  
+  if(!logical(no_message)){
+    stop("no_message must be logical (TRUE or FALSE)!")
+  }
   
   # Address "no visible binding" NOTEs
   type <- mut <- reps <- fn <- dropout <- pdo <- NULL

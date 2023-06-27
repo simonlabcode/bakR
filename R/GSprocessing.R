@@ -19,6 +19,11 @@
 #' @export
 GSprocessing <- function(GS, use_symbol = FALSE){
   
+  # Checks
+  if(!is.logical(use_symbol)){
+    stop("use_symbol must be logical (TRUE or FALSE)!")
+  }
+  
   Gene <- Readcount <- alpha <- NULL
   
   GS <- dplyr::as_tibble(GS)
