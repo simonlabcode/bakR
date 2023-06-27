@@ -120,12 +120,12 @@ estimation biases.</p></li>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pnews and polds for each sample are:</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 4</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Groups:   mut [2]</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew    pold</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.050<span style="text-decoration: underline;">1</span> 0.001<span style="text-decoration: underline;">00</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.049<span style="text-decoration: underline;">9</span> 0.001<span style="text-decoration: underline;">00</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.049<span style="text-decoration: underline;">8</span> 0.001<span style="text-decoration: underline;">00</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.049<span style="text-decoration: underline;">9</span> 0.001<span style="text-decoration: underline;">00</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew     pold</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.049<span style="text-decoration: underline;">8</span> 0.000<span style="text-decoration: underline;">995</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">0</span> 0.000<span style="text-decoration: underline;">995</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.050<span style="text-decoration: underline;">1</span> 0.000<span style="text-decoration: underline;">995</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.050<span style="text-decoration: underline;">1</span> 0.000<span style="text-decoration: underline;">995</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating fraction labeled</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating per replicate uncertainties</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating read count-variance relationship</span>
@@ -143,16 +143,16 @@ estimation biases.</p></li>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Groups:   Exp_ID [2]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   Exp_ID Replicate avg_fn</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1         1  0.501</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      1         2  0.506</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      2         1  0.499</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>      2         2  0.500</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1         1  0.499</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      1         2  0.496</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      2         1  0.496</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>      2         2  0.492</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> The average fraction news in all samples are between 0.2 and 0.8, </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>               suggesting an appropriate label time!</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> logit(fn) correlations for each pair of replicates are:</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   Exp_ID Rep_ID1 Rep_ID2 correlation</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 1      1       1       2   0.9145799</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 2      2       1       2   0.9403314</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 1      1       1       2   0.9191235</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 2      2       1       2   0.9413414</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> logit(fn) correlations are high, suggesting good reproducibility!</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> I suggest running the Hybrid implementation next. This can be done </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>               with bakRFit(Fit, HybridFit = TRUE), where Fit is your bakRFit object.</span>
