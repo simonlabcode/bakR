@@ -14,7 +14,7 @@ user, but an extensive list of additional parameters can be adjusted."><meta pro
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,7 +29,12 @@ user, but an extensive list of additional parameters can be adjusted."><meta pro
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/Getting-Started.html">Differential kinetic analysis with bakR</a>
-    <a class="dropdown-item" href="../articles/Further-Analyses.html">Going beyond the defaults with bakR</a>
+    <a class="dropdown-item" href="../articles/bakR-Quickstart.html">bakR for people in a hurry</a>
+    <a class="dropdown-item" href="../articles/Differential-Synth.html">Differential synthesis analysis with bakR and DESeq2</a>
+    <a class="dropdown-item" href="../articles/bakR-Fn.html">GRAND-SLAM output/fn estimates as bakR input</a>
+    <a class="dropdown-item" href="../articles/Dropout.html">Correcting for dropout</a>
+    <a class="dropdown-item" href="../articles/Troubleshooting.html">Troubleshooting analyses of NR-seq data with bakR</a>
+    <a class="dropdown-item" href="../articles/NSS.html">Steady-state quasi-independent mechanistic investigations</a>
   </div>
 </li>
 <li class="nav-item">
@@ -283,7 +288,7 @@ to the number of Us and probability of mutation = <code>p_new</code>; if the rea
 the number of mutations is instead drawn from a binomial distribution with the same number of trials but with the probability
 of mutation = <code>p_old</code>. <code>p_new</code> must be greater than <code>p_old</code> because mutations in new RNA
 arise from both background mutations that occur with probability <code>p_old</code> as well as metabolic label induced mutations</p>
-<p>Simulated read counts should be treated as if they are spike-in and RPKM normalized, so the same scale factor can be applied
+<p>Simulated read counts should be treated as if they are spike-in and RPKM normalized, so the same scale factor of 1 can be applied
 to each sample when comparing the sequencing reads (e.g., if you are performing differential expression analysis).</p>
 <p>Function to simulate a <code>bakRData</code> object according to a realistic generative model</p>
     </div>

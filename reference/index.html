@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,7 +25,12 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/Getting-Started.html">Differential kinetic analysis with bakR</a>
-    <a class="dropdown-item" href="../articles/Further-Analyses.html">Going beyond the defaults with bakR</a>
+    <a class="dropdown-item" href="../articles/bakR-Quickstart.html">bakR for people in a hurry</a>
+    <a class="dropdown-item" href="../articles/Differential-Synth.html">Differential synthesis analysis with bakR and DESeq2</a>
+    <a class="dropdown-item" href="../articles/bakR-Fn.html">GRAND-SLAM output/fn estimates as bakR input</a>
+    <a class="dropdown-item" href="../articles/Dropout.html">Correcting for dropout</a>
+    <a class="dropdown-item" href="../articles/Troubleshooting.html">Troubleshooting analyses of NR-seq data with bakR</a>
+    <a class="dropdown-item" href="../articles/NSS.html">Steady-state quasi-independent mechanistic investigations</a>
   </div>
 </li>
 <li class="nav-item">
@@ -63,9 +68,34 @@
 
       <dl><dt>
           
+          <code><a href="CorrectDropout.html">CorrectDropout()</a></code> 
+        </dt>
+        <dd>Correcting for metabolic labeling induced RNA dropout</dd>
+      </dl><dl><dt>
+          
+          <code><a href="DissectMechanism.html">DissectMechanism()</a></code> 
+        </dt>
+        <dd>Construct heatmap for non-steady state (NSS) analysis with improved mechanism score</dd>
+      </dl><dl><dt>
+          
           <code><a href="FnPCA.html">FnPCA()</a></code> 
         </dt>
         <dd>Creating PCA plots with logit(fn) estimates</dd>
+      </dl><dl><dt>
+          
+          <code><a href="FnPCA2.html">FnPCA2()</a></code> 
+        </dt>
+        <dd>Creating PCA plots with logit(fn) estimates</dd>
+      </dl><dl><dt>
+          
+          <code><a href="GS_table.html">GS_table</a></code> 
+        </dt>
+        <dd>Example cB data frame</dd>
+      </dl><dl><dt>
+          
+          <code><a href="GSprocessing.html">GSprocessing()</a></code> 
+        </dt>
+        <dd>Prep GRAND-SLAM output for <code>bakRFnData</code></dd>
       </dl><dl><dt>
           
           <code><a href="Heatmap_kdeg.html">Heatmap_kdeg()</a></code> 
@@ -78,14 +108,14 @@
         <dd>Construct heatmap for non-steady state (NSS) analysis</dd>
       </dl><dl><dt>
           
-          <code><a href="NSSHeat2.html">NSSHeat2()</a></code> 
-        </dt>
-        <dd>Construct heatmap for non-steady state (NSS) analysis with improved mechanism score</dd>
-      </dl><dl><dt>
-          
           <code><a href="QC_checks.html">QC_checks()</a></code> 
         </dt>
         <dd>Check data quality and make suggestions to user about what analyses to run.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="QuantifyDropout.html">QuantifyDropout()</a></code> 
+        </dt>
+        <dd>Fit dropout model to quantify dropout frequency</dd>
       </dl><dl><dt>
           
           <code><a href="Simulate_bakRData.html">Simulate_bakRData()</a></code> 
@@ -93,9 +123,24 @@
         <dd>Simulating nucleotide recoding data</dd>
       </dl><dl><dt>
           
+          <code><a href="Simulate_relative_bakRData.html">Simulate_relative_bakRData()</a></code> 
+        </dt>
+        <dd>Simulating nucleotide recoding data with relative count data</dd>
+      </dl><dl><dt>
+          
           <code><a href="TL_stan.html">TL_stan()</a></code> 
         </dt>
         <dd>Fit 'Stan' models to nucleotide recoding RNA-seq data analysis</dd>
+      </dl><dl><dt>
+          
+          <code><a href="VisualizeDropout.html">VisualizeDropout()</a></code> 
+        </dt>
+        <dd>Visualize dropout</dd>
+      </dl><dl><dt>
+          
+          <code><a href="avg_and_regularize.html">avg_and_regularize()</a></code> 
+        </dt>
+        <dd>Efficiently average replicates of nucleotide recoding data and regularize</dd>
       </dl><dl><dt>
           
           <code><a href="bakR-package.html">bakR-package</a></code> <code><a href="bakR-package.html">bakR</a></code> 
@@ -113,6 +158,11 @@
         <dd>Estimating kinetic parameters from nucleotide recoding RNA-seq data</dd>
       </dl><dl><dt>
           
+          <code><a href="bakRFnData.html">bakRFnData()</a></code> 
+        </dt>
+        <dd>bakRFnData object helper function for users</dd>
+      </dl><dl><dt>
+          
           <code><a href="cB_small.html">cB_small</a></code> 
         </dt>
         <dd>Example cB data frame</dd>
@@ -128,6 +178,16 @@
         <dd>Efficiently analyze nucleotide recoding data</dd>
       </dl><dl><dt>
           
+          <code><a href="fn_process.html">fn_process()</a></code> 
+        </dt>
+        <dd>Curate data in bakRFnData object for statistical modeling</dd>
+      </dl><dl><dt>
+          
+          <code><a href="fns.html">fns</a></code> 
+        </dt>
+        <dd>Example fraction news (fns) data frame</dd>
+      </dl><dl><dt>
+          
           <code><a href="metadf.html">metadf</a></code> 
         </dt>
         <dd>Example meatdf data frame</dd>
@@ -136,6 +196,11 @@
           <code><a href="new_bakRData.html">new_bakRData()</a></code> 
         </dt>
         <dd>bakRData object constructor for internal use</dd>
+      </dl><dl><dt>
+          
+          <code><a href="new_bakRFnData.html">new_bakRFnData()</a></code> 
+        </dt>
+        <dd>bakRFnData object constructor for internal use</dd>
       </dl><dl><dt>
           
           <code><a href="plotMA.html">plotMA()</a></code> 
@@ -156,6 +221,11 @@
           <code><a href="validate_bakRData.html">validate_bakRData()</a></code> 
         </dt>
         <dd>bakR Data object validator</dd>
+      </dl><dl><dt>
+          
+          <code><a href="validate_bakRFnData.html">validate_bakRFnData()</a></code> 
+        </dt>
+        <dd>bakRFnData object validator</dd>
       </dl></div>
   </main></div>
 

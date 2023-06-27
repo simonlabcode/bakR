@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,7 +25,12 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/Getting-Started.html">Differential kinetic analysis with bakR</a>
-    <a class="dropdown-item" href="../articles/Further-Analyses.html">Going beyond the defaults with bakR</a>
+    <a class="dropdown-item" href="../articles/bakR-Quickstart.html">bakR for people in a hurry</a>
+    <a class="dropdown-item" href="../articles/Differential-Synth.html">Differential synthesis analysis with bakR and DESeq2</a>
+    <a class="dropdown-item" href="../articles/bakR-Fn.html">GRAND-SLAM output/fn estimates as bakR input</a>
+    <a class="dropdown-item" href="../articles/Dropout.html">Correcting for dropout</a>
+    <a class="dropdown-item" href="../articles/Troubleshooting.html">Troubleshooting analyses of NR-seq data with bakR</a>
+    <a class="dropdown-item" href="../articles/NSS.html">Steady-state quasi-independent mechanistic investigations</a>
   </div>
 </li>
 <li class="active nav-item">
@@ -51,6 +56,18 @@
       <small>Source: <a href="https://github.com/simonlabcode/bakR/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.0" id="bakr-100">bakR 1.0.0<a class="anchor" aria-label="anchor" href="#bakr-100"></a></h2>
+<ul><li>Functions for visualizing (<code>VisualizeDropout</code>), quantifying (<code>QuantifyDropout</code>), and correcting (<code>CorrectDropout</code>) metabolic label-induced dropout of RNA during library preparation have been added.</li>
+<li>New simulation function (<code>simulate_relative_bakRData</code>) which better captures the relative nature of RNA-seq and can accurately simulate dropout.</li>
+<li>New experimental function (<code>DissectMechanism</code>) for determining how likely that any observed differential expression is driven by transcriptional or post-transcriptional regulation. <code>DissectMechanism</code> is a rewrite and extension of the previously developed <code>NSSHeat2</code> function, which itself was an improvement of the now deprecated <code>NSSHeat</code>.</li>
+<li>Can now provide fraction new estimates (e.g., from a tool like GRAND-SLAM) as input to bakR. GRAND-SLAM input functionality is further supported by the new <code>GSprocess</code> function that will facilitate converting from GRAND-SLAM output to bakR input.</li>
+<li>
+<code>FnPCA</code> has been deprecated in favor of <code>FnPCA2</code> which accepts input differently and fixes some bugs.</li>
+<li>Read count filtering now includes two filters. One read count that all samples must pass, and one that only all replicates in a single Exp_ID need to pass. This facilitates identifying large increases or decreaes in expression.</li>
+<li>Several new vignettes to discuss much of the new functionality discussed above.</li>
+<li>Several small bug fixes</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.4" id="bakr-044">bakR 0.4.4<a class="anchor" aria-label="anchor" href="#bakr-044"></a></h2>
 <ul><li>Small edit to configuration files that address compilation issues that can arise on some systems. Deals with “file too big” errors” during package installation from source.</li>

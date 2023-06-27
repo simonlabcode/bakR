@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,7 +49,12 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/Getting-Started.html">Differential kinetic analysis with bakR</a>
-    <a class="dropdown-item" href="../articles/Further-Analyses.html">Going beyond the defaults with bakR</a>
+    <a class="dropdown-item" href="../articles/bakR-Quickstart.html">bakR for people in a hurry</a>
+    <a class="dropdown-item" href="../articles/Differential-Synth.html">Differential synthesis analysis with bakR and DESeq2</a>
+    <a class="dropdown-item" href="../articles/bakR-Fn.html">GRAND-SLAM output/fn estimates as bakR input</a>
+    <a class="dropdown-item" href="../articles/Dropout.html">Correcting for dropout</a>
+    <a class="dropdown-item" href="../articles/Troubleshooting.html">Troubleshooting analyses of NR-seq data with bakR</a>
+    <a class="dropdown-item" href="../articles/NSS.html">Steady-state quasi-independent mechanistic investigations</a>
   </div>
 </li>
 <li class="nav-item">
@@ -92,29 +97,30 @@
       <p class="abstract">Abstract</p>
       <p>In a standard RNA-seq experiment, differential expression
       analysis is incredibly common. The idea is to compare the
-      expression of thousands of transcripts between two conditions,
-      which I’ll refer to as the reference and experimental samples.
-      Once you have compiled a list of genes whose expressions differ
-      significantly between the two conditions, a reasonable follow-up
-      question is “what caused the change in each of the genes”? The
-      three broad answers to that question are 1) Something altered the
-      RNA synthesis rates; 2) Something altered the RNA degradation
-      rates; or 3) A little bit of both 1) and 2). Unfortunately,
-      standard RNA-seq analysis cannot answer this mechanistic question,
-      as RNA-seq only tells you about changes in expression level and
-      cannot deduce the kinetic causes of those changes.</p>
+      expression of thousands of RNA features (e.g., transcripts)
+      between two conditions, which I’ll refer to as the reference and
+      experimental samples. Once you have compiled a list of genes whose
+      expressions differ significantly between the two conditions, a
+      reasonable follow-up question is “what caused the change in each
+      of the genes”? The three broad answers to that question are 1)
+      Something altered the RNA synthesis rates; 2) Something altered
+      the RNA degradation rates; or 3) A little bit of both 1) and 2).
+      Unfortunately, it is difficult to answer this question
+      unambiguously with stanard RNA-seq alone.</p>
       <p>If the kinetics is of interest to you, then a recently
       developed solution to this problem is nucleotide recoding RNA-seq,
       which exists in several fundamentally similar flavors, the primary
-      ones being TimeLapse-seq, SLAM-seq, and TUC-seq. The strategy
-      involves feeding cells with a metabolic label (typically
-      4-thiouridine, a.k.a. 4sU), extracting the RNA as you normally
-      would for RNA-seq, and then using a unique chemistry to convert
-      the metabolic label into something that a sequencer will read as a
-      different base (e.g., a cytosine analog for 4sU). Thus, labeled
-      and unlabeled reads can be separated bioinformatically upon
-      sequencing by the presence of mutations (e.g., U-to-C
-      mutations).</p>
+      ones being <a href="https://www.nature.com/articles/nmeth.4582" class="external-link">TimeLapse-seq</a>,
+      <a href="https://www.nature.com/articles/nmeth.4435" class="external-link">SLAM-seq</a>,
+      and <a href="https://onlinelibrary.wiley.com/doi/full/10.1002/anie.201707465" class="external-link">TUC-seq</a>.
+      The strategy involves feeding cells with a metabolic label
+      (typically 4-thiouridine, a.k.a. s<sup>4</sup>U), extracting the
+      RNA as you normally would for RNA-seq, and then using a unique
+      chemistry to convert the metabolic label into something that a
+      sequencer will read as a different base (e.g., a cytosine analog
+      for s<sup>4</sup>U). Thus, labeled and unlabeled reads can be
+      separated bioinformatically upon sequencing by the presence of
+      mutations (e.g., U-to-C mutations).</p>
       <p>One problem though; the metabolic label must 1st get into
       cells, and then it must compete with the normal nucleotide for
       incorporation into RNA. The result of this is that mutation rates
@@ -122,13 +128,19 @@
       metabolic labeling, meaning that each U in a sequencing read from
       these RNAs has about a 5% chance of being mutated to a C), making
       simple and definitive separation of labeled and unlabeled reads
-      impossible. The solution: advanced statistical modeling
-      implemented by bakR, an R package for analyzing nucleotide
-      recoding sequencing data. The analyses implemented in this package
-      will enable you to perform differential kinetic analysis just as
-      easily as you can perform differential expression analysis,
-      allowing you to elucidate the mechanisms of regulated gene
-      expression.</p>
+      impossible. In addition, statistical power of comparative analyses
+      of NR-seq datasets can be limited by the small number of
+      replicates typically collected, and the need for multiple-test
+      adjustment of p-values. The solution: advanced statistical
+      modeling implemented by bakR (now <a href="https://rnajournal.cshlp.org/content/29/7/958.abstract" class="external-link">published
+      in RNA</a>), an R package for analyzing nucleotide recoding RNA
+      sequencing data. bakR relies on Bayesian hierarchical mixture
+      modeling of NR-seq data to increase statistical power by sharing
+      information across transcripts and address the aforementioned
+      challenges.The analyses implemented in this package will enable
+      you to perform differential kinetic analysis just as easily as you
+      can perform differential expression analysis, allowing you to
+      elucidate the mechanisms of regulated gene expression.</p>
     </div>
     
 <div class="section level2">
@@ -146,13 +158,13 @@ reproduce those presented in the vignette.</p>
 <h2 id="step-1-creating-a-bakrdata-object">Step 1: Creating a bakRData Object<a class="anchor" aria-label="anchor" href="#step-1-creating-a-bakrdata-object"></a>
 </h2>
 <p>The 1st step to using bakR is to create a bakRData object. A bakRData
-object consists of two components: a cB dataframe and a metadf
-dataframe. cB stands for counts binomial and contains all of the
-information about mutations seen in sequencing reads in each sample
-sequenced. metadf stands for metadata data frame and contains important
-information about the experimental details of each sample (i.e., how
-long the metabolic label feed was, which samples are reference samples,
-and which are experimental samples).</p>
+object consists of two components: a cB data frame and a metadf data
+frame. cB stands for counts binomial and contains all of the information
+about mutations seen in sequencing reads in each sample sequenced.
+metadf stands for metadata data frame and contains important information
+about the experimental details of each sample (i.e., how long the
+metabolic label feed was, which samples are reference samples, and which
+are experimental samples).</p>
 <p>Lets get an idea for what a cB looks like by taking a peak at an
 example:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
@@ -224,9 +236,9 @@ go through the contents of each column:</p>
 the reads described in this row originated. Usually this will be some
 sort of character vector that you have defined.</li>
 <li>
-<strong>TC</strong>: Number of U-to-C mutations (assuming using 4sU
-as the metabolic label). Called TC because technically the data is
-T-to-C mutations in reverse-transcribed RNA</li>
+<strong>TC</strong>: Number of U-to-C mutations (assuming using
+s<sup>4</sup>U as the metabolic label). Called TC because technically
+the data is T-to-C mutations in reverse-transcribed RNA</li>
 <li>
 <strong>nT</strong>: Number of Ts (Us in the RNA) in the sequencing
 read(s)</li>
@@ -247,15 +259,13 @@ stability.</li>
 <li>
 <strong>n</strong>: Number of reads with identical data for the
 other 4 columns. For example, n = 3 in the 2nd row means that there are
-3 reads from sample WT_cntl (WT cells not treated with s4U) that mapped
-to <strong>XF</strong> ENSG00000100242 (SUN2), had 0 T to C mutations,
-and had 11 Ts.</li>
+3 reads from sample WT_cntl (WT cells not treated with s<sup>4</sup>U)
+that mapped to <strong>XF</strong> ENSG00000100242 (SUN2), had 0 T to C
+mutations, and had 11 Ts.</li>
 </ol>
 <p>The structure of the cB file most closely reflects the output of a
 pipeline for analyzing nucleotide recoding RNA-seq data developed by the
-Simon lab (available <a href="https://bitbucket.org/mattsimon9/timelapse_pipeline/src/master/" class="external-link">here</a>),
-but consists of data provided by another published pipeline, SLAMDUNK
-(see the alleyoop dump function in SLAMDUNK).</p>
+Simon lab (available as a Snakemake reimplementation <a href="https://github.com/simonlabcode/bam2bakR" class="external-link">here</a>).</p>
 <p>Now let’s look at the corresponding metadf dataframe:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Load metadf data frame; will be loaded as metadf in global environment</span></span>
@@ -313,18 +323,18 @@ to the sample names</p>
 <p>They’re the same, and they HAVE TO BE!! Each row of metadf
 corresponds to a sample, and the order in which the sample names appear
 as the row names of metadf <strong>MUST</strong> correspond to the order
-they appear in cB sample column.</p>
+they appear in cB sample column. (NOTE: in bakR version 1.0.0 this is no
+longer the case; the sample names in the cB just have to appear in the
+metadf in any order).</p>
 <p>Keeping in mind that each row represents a sample, the content of the
 columns are:</p>
 <ol style="list-style-type: decimal">
 <li>
 <strong>tl</strong>: The length of the metabolic labeling feed. This
 can be in any units (the simulated data puts it in terms of minutes),
-but <strong>if no 4sU was fed to a sample, tl must be 0 for that
-sample</strong>. -4sU controls play an important role in all of the
-statistical models, so this is crucial to remember. While not
-technically necessary to run bakR, we always highly suggest including
-these controls.</li>
+but <strong>if no s<sup>4</sup>U was fed to a sample, tl must be 0 for
+that sample</strong>. While not technically necessary to run bakR, we
+always highly suggest including -s<sup>4</sup>U controls.</li>
 <li>
 <strong>Exp_ID</strong>: Stands for “Experimental ID” and is a
 numerical ID that denotes which samples are from the reference condition
@@ -339,7 +349,7 @@ only be done with respect to one reference sample.
 <ul>
 <li>If you want to compare two experimental samples, this can be done
 with the output of the models, though it will require a bit of post-hoc
-work on your end. More on this later…</li>
+work on your end.</li>
 </ul>
 </li>
 </ol>
@@ -359,12 +369,13 @@ available. This model (implemented in the fast_analysis() function, so
 see ?fast_analysis for more details) estimates mutation rates and then
 finds the maximum likelihood estimate (MLE) for the fraction of
 sequencing reads from new RNA (new meaning RNA synthesized after the
-start of metabolic labeling) for each feature in each 4sU fed sample.
-The reason you have to run this model is that some part of its output
-will be used by every other model you can run with bakR. More on that
-later though; first, let’s create a simulated dataset and fit it with
-the efficient model. Using a simulated dataset will allow us to compare
-the results to the ground truth and validate its accuracy.</p>
+start of metabolic labeling) for each feature in each s<sup>4</sup>U fed
+sample. The reason you have to run this model is that some part of its
+output will be used by every other model you can run with bakR. More on
+that later though; first, let’s create a simulated dataset and fit
+bakR’s model with the efficient implementation. Using a simulated
+dataset will allow us to compare the results to the ground truth and
+validate its accuracy.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Simulate a nucleotide recoding dataset</span></span>
 <span><span class="va">sim_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Simulate_bakRData.html">Simulate_bakRData</a></span><span class="op">(</span><span class="fl">500</span><span class="op">)</span></span>
@@ -383,26 +394,26 @@ the results to the ground truth and validate its accuracy.</p>
 <span><span class="co">#&gt; Finding reliable Features</span></span>
 <span><span class="co">#&gt; Filtering out unwanted or unreliable features</span></span>
 <span><span class="co">#&gt; Processing data...</span></span>
-<span><span class="co">#&gt; Estimating labeled mutation rate</span></span>
-<span><span class="co">#&gt; Estimated pnews for each sample are:</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 3</span></span></span>
+<span><span class="co">#&gt; Estimating pnew with likelihood maximization</span></span>
+<span><span class="co">#&gt; Estimating unlabeled mutation rate with -s4U data</span></span>
+<span><span class="co">#&gt; Estimated pnews and polds for each sample are:</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 4</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Groups:   mut [2]</span></span></span>
-<span><span class="co">#&gt;     mut  reps   pnew</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1     1 0.050<span style="text-decoration: underline;">1</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     1     2 0.049<span style="text-decoration: underline;">9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     1     3 0.050<span style="text-decoration: underline;">0</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     2     1 0.050<span style="text-decoration: underline;">1</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     2     2 0.050<span style="text-decoration: underline;">2</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     2     3 0.050<span style="text-decoration: underline;">0</span></span></span>
-<span><span class="co">#&gt; Estimating unlabeled mutation rate</span></span>
-<span><span class="co">#&gt; Estimated pold is:  0.001</span></span>
+<span><span class="co">#&gt;     mut  reps   pnew    pold</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1     1 0.050<span style="text-decoration: underline;">2</span> 0.001<span style="text-decoration: underline;">00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">0</span> 0.001<span style="text-decoration: underline;">00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     1     3 0.050<span style="text-decoration: underline;">1</span> 0.001<span style="text-decoration: underline;">00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     2     1 0.050<span style="text-decoration: underline;">1</span> 0.001<span style="text-decoration: underline;">00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     2     2 0.050<span style="text-decoration: underline;">0</span> 0.001<span style="text-decoration: underline;">00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     2     3 0.050<span style="text-decoration: underline;">3</span> 0.001<span style="text-decoration: underline;">00</span></span></span>
 <span><span class="co">#&gt; Estimating fraction labeled</span></span>
 <span><span class="co">#&gt; Estimating per replicate uncertainties</span></span>
 <span><span class="co">#&gt; Estimating read count-variance relationship</span></span>
 <span><span class="co">#&gt; Averaging replicate data and regularizing estimates</span></span>
 <span><span class="co">#&gt; Assessing statistical significance</span></span>
-<span><span class="co">#&gt; All done! Run QC_checks() on your bakRFit object to assess the quality of your data and get recommendations for next steps.</span></span></code></pre></div>
+<span><span class="co">#&gt; All done! Run QC_checks() on your bakRFit object to assess the </span></span>
+<span><span class="co">#&gt;             quality of your data and get recommendations for next steps.</span></span></code></pre></div>
 <p>bakRFit() is used here as a wrapper for two functions in bakR:
 cBprocess() and fast_analysis(). cBprocess() will extract and properly
 format the information needed for all statistical models from the
@@ -412,14 +423,15 @@ along the way to keep you updated as to the progress of the
 analysis.</p>
 <p>One of the most important messages is that regarding the estimated
 pnews and pold. The pnews are the estimated mutation rates of reads from
-new RNAs (new meaning RNAs synthesized after the start of 4sU labeling)
-in each sample (muts = Exp_ID, and reps = a numerical replicate ID that
-corresponds to the order replicates appear in the cB), and pold is a
-global estimate of the background mutation rate used in all analyses.
-The simulated mutation rates are 0.05 for new reads and 0.001 for old
-reads in all samples this simulation, so the estimates are pretty darn
-close. You can also input mutation rate estimates from elsewhere (say a
-run of the full Stan model implemented in bakR) to bakRFit():</p>
+new RNAs (new meaning RNAs synthesized after the start of s<sup>4</sup>U
+labeling) in each sample (muts = Exp_ID, and reps = a numerical
+replicate ID that corresponds to the order replicates appear in the cB),
+and pold is a global estimate of the background mutation rate used in
+all analyses. The simulated mutation rates are 0.05 for new reads and
+0.001 for old reads in all samples this simulation, so the estimates are
+pretty darn close. You can also input mutation rate estimates from
+elsewhere (say a run of the full Stan model implemented in bakR) to
+bakRFit():</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Run efficient model with known mutation rates</span></span>
 <span><span class="co"># Pass the Fit object rather than the bakRData object and set FastRerun to TRUE</span></span>
@@ -427,12 +439,23 @@ run of the full Stan model implemented in bakR) to bakRFit():</p>
 <span>                     FastRerun <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                     pnew <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.05</span>, times <span class="op">=</span> <span class="fl">6</span><span class="op">)</span>, </span>
 <span>                     pold <span class="op">=</span> <span class="fl">0.001</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Using provided pnew estimates</span></span>
+<span><span class="co">#&gt; Using provided pold estimate</span></span>
+<span><span class="co">#&gt; Estimated pnews and polds for each sample are:</span></span>
+<span><span class="co">#&gt;   mut reps pnew  pold</span></span>
+<span><span class="co">#&gt; 1   1    1 0.05 0.001</span></span>
+<span><span class="co">#&gt; 2   1    2 0.05 0.001</span></span>
+<span><span class="co">#&gt; 3   1    3 0.05 0.001</span></span>
+<span><span class="co">#&gt; 4   2    1 0.05 0.001</span></span>
+<span><span class="co">#&gt; 5   2    2 0.05 0.001</span></span>
+<span><span class="co">#&gt; 6   2    3 0.05 0.001</span></span>
 <span><span class="co">#&gt; Estimating fraction labeled</span></span>
 <span><span class="co">#&gt; Estimating per replicate uncertainties</span></span>
 <span><span class="co">#&gt; Estimating read count-variance relationship</span></span>
 <span><span class="co">#&gt; Averaging replicate data and regularizing estimates</span></span>
 <span><span class="co">#&gt; Assessing statistical significance</span></span>
-<span><span class="co">#&gt; All done! Run QC_checks() on your bakRFit object to assess the quality of your data and get recommendations for next steps.</span></span></code></pre></div>
+<span><span class="co">#&gt; All done! Run QC_checks() on your bakRFit object to assess the </span></span>
+<span><span class="co">#&gt;             quality of your data and get recommendations for next steps.</span></span></code></pre></div>
 <p>Since we’ve already run the fast_analysis once, we can speed up the
 analysis by passing the Fit object from the first run rather than the
 bakRData object. This allows bakR to skip the time consuming
@@ -442,21 +465,18 @@ pre-processing steps. Just make sure to set FastRerun to TRUE.</p>
 slightly less efficient solution is to use MCMC implemented in Stan to
 estimate mutation rates. The idea is to fit a binomial mixture model to
 only a small subset of features with sufficient sequencing depth so that
-the model has enough data to work with. This strategy used to be my
-go-to strategy, but after I made improvements to the default mutation
-rate strategy I found myself using this approach less and less. Still,
-here is an example of its use for posterity’s sake:</p>
+the model has enough data to work with while still running in a
+reasonable amount of time:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Set StanRateEst to TRUE to use Stan to estimate rates</span></span>
 <span><span class="co"># low_reads and high_reads defines the read count cutoffs used to select features</span></span>
 <span>  <span class="co"># default = between 1000 and 5000 reads</span></span>
-<span><span class="co"># RateEst_size determines the number of features to use (default = 7)</span></span>
+<span><span class="co"># RateEst_size determines the number of features to use (default = 30)</span></span>
 <span><span class="va">Fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bakRFit.html">bakRFit</a></span><span class="op">(</span><span class="va">Fit</span>,</span>
 <span>                     FastRerun <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>                     StanRateEst <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>                     low_reads <span class="op">=</span> <span class="fl">500</span>,</span>
-<span>                     high_reads <span class="op">=</span> <span class="fl">5500</span>,</span>
-<span>                     RateEst_size <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<span>                     StanRateEst <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>The “Troubleshooting” vignette has more details about when certain
+mutation rate estimation strategies are preferable.</p>
 <p>No matter how you decide to run the fast model, you might wonder how
 well it worked. As mentioned earlier, one benefit of using simulated
 data is that you can easily answer that question by comparing the
@@ -477,7 +497,16 @@ estimates:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">true_fn</span>, <span class="va">est_fn</span>, xlab <span class="op">=</span> <span class="st">"True logit(fn)"</span>, ylab <span class="op">=</span> <span class="st">"Estimated logit(fn)"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, col <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Getting-Started_files/figure-html/unnamed-chunk-11-1.png" width="576" style="display: block; margin: auto;"></p>
-<p>Looks pretty good to me!</p>
+<p>Looks pretty good to me! Note, a key assumption that is common to
+make when analyzing NR-seq data is that the population of cells you are
+analyzing is at steady-state. This means that RNA levels were constant
+during the label time, i.e., your cells were not actively responding to
+a perturbation during metabolic labeling. In that case, the fraction new
+(<span class="math inline">\(\theta\)</span>) and the degradation rate
+constant are related as follows:</p>
+<p><span class="math display">\[
+k_{\text{deg}} = -\frac{\text{ln}(1 - \theta)}{\text{tl}}
+\]</span></p>
 <p>To run the heavier, more trustworthy models, just rerun bakRFit() on
 the Fit object, but with either the StanFit or HybridFit parameters set
 to true.</p>
@@ -508,13 +537,10 @@ of how promising your data is and what it is you want to analyze, switch
 on over to the heavier models. These will give you more peace of mind
 and allow you to comfortably dig a little deeper into your datasets as
 you prepare for stunning presentations and groundbreaking papers. The
-full Stan model (StanFit = TRUE) should be your go-to for this, but if
-you are working with an unusually large dataset, look to the hybrid
-model. A general rule of thumb for what constitutes a large dataset in
-this case is if (number of experimental conditions) x (number of
-replicates of each condition) is greater than 15. For example, 3
-replicates of 6 different conditions (3 x 6 = 18) is going to take a
-while for the full model to process, likely on the order of weeks.</p>
+Hybrid implementation (<code>HybridFit = TRUE</code>) should usually be
+your go-to for this, but particularly challenging to analyze datsets
+(e.g., those with low new read mutation rates) can benefit from the full
+MCMC implementation (<code>StanFit = TRUE</code>).</p>
 <p>The Fit objects contain lists pertaining to the fits of each of the
 models. The possible contents include:</p>
 <ol style="list-style-type: decimal">
@@ -536,8 +562,9 @@ though the models are different.</li>
 investigate your data. The visualizations are particularly aimed at
 revealing trends in RNA stabilization or destabilization. Analyzing
 changes in RNA synthesis rate will require pairing the output of bakR
-with that of a differential expression analysis tool, like DESeq2 or
-limma. More on that later.</p>
+with that of a differential expression analysis tool, like DESeq2,
+edgeR, or limma. More on that in the “Differential synthesis analysis”
+vignette.</p>
 <p>One visualization powered by bakR is a L2FC(kdeg) MA plot. Each point
 in these plots will represent a feature-condition combination. The
 x-axis is the average number of sequencing reads mapping to that
@@ -586,14 +613,14 @@ together in the 2D PCA plot produced by bakR’s FnPCA, that could
 indicate the presence of batch effects:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## 2D PCA plot with replicate fraction news</span></span>
-<span><span class="fu"><a href="../reference/FnPCA.html">FnPCA</a></span><span class="op">(</span><span class="va">Fit</span><span class="op">$</span><span class="va">Fast_Fit</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="co"># The equivalent function prior to version 1.0.0 is FnPCA, now deprecated in </span></span>
+<span>  <span class="co"># favor of FnPCA2.</span></span>
+<span><span class="fu"><a href="../reference/FnPCA2.html">FnPCA2</a></span><span class="op">(</span><span class="va">Fit</span>, Model <span class="op">=</span> <span class="st">"MLE"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Getting-Started_files/figure-html/unnamed-chunk-15-1.png" width="576" style="display: block; margin: auto;"></p>
 <p>In this case, replicates separate from each other fairly well, which
 is promising and the difference between the red point in the lower left
-and those in the upper left is not significant enough to cause concern.
-I have found that clustering is improved with the full MCMC fit, so if
-you’ve taken the time to run that model, I suggest using it for any PCA
-plots.</p>
+and those in the upper left is not significant enough to cause
+concern.</p>
 </div>
 <div class="section level2">
 <h2 id="step-4-where-to-go-from-here">Step 4: Where to go from here<a class="anchor" aria-label="anchor" href="#step-4-where-to-go-from-here"></a>
@@ -605,40 +632,40 @@ of your remaining quandaries may be challenging problems specific to
 your exciting research, the unavoidable roadblocks of doing science that
 you will eventually conquer, but with little help from any documentation
 I could dream of writing. That being said, I can still imagine many
-important implementation questions not addressed here, like:</p>
+important implementation questions not addressed here. Therefore, a
+number of additional vignettes exist to discuss:</p>
 <ol style="list-style-type: decimal">
-<li>What about estimating and comparing synthesis rates? bakR seems to
-only automatically perform degradation rate constant comparisons, but
-you keep calling it differential kinetic analysis, not differential
-stability analysis. What gives?</li>
-<li>I’m not sure this steady-state assumption we’ve been relying on
-holds in my system. What can I do about that?</li>
-<li>I’m new to Stan and have been getting weird warning messages upon
-running some of the heavier models. What are rhats and effective sample
-sizes?</li>
+<li>Performing differential synthesis rate analyses with bakR.</li>
+<li>Providing fraction new estimates as input rather than a cB data
+frame (as of version 1.0.0).</li>
+<li>Correcting for disproportionate loss of metabolic label containing
+RNA/reads.</li>
+<li>Dissecting the mechanisms of gene expression regulation while
+relaxing the steady-state assumption.</li>
+<li>General advice when troubleshooting analyses of NR-seq
+datasets.</li>
 </ol>
-<p>If the first two questions are of interest to you, head over to the
-“Going beyond the defaults” vignette!</p>
-<p>If the second question is of interest, then I would suggest heading
-over to some of the amazing documentation written by the Stan team. In
-short though, warnings from Stan are a sign that the model did not
-converge. The cause of this is likely anomalies in your data. Some
-challenges that I have come across that could lead to such warnings
-include:</p>
+<p>In addition, it’s possible that you will run into warnings about
+r_hats and n_eff while running some of the heavier Stan models. If that
+is the case, I would suggest checking out some of the <a href="https://mc-stan.org/misc/warnings.html" class="external-link">great documentation</a>
+written by the Stan team. In short though, warnings from Stan are a sign
+that the model did not converge. A possible cause of this is anomalies
+in your data. Some challenges that I have come across that could lead to
+such warnings include:</p>
 <ol style="list-style-type: decimal">
 <li>Did you analyze a mix of technical and biological replicates?
 Technical replicates will have much less replicate to replicate
 variability than biological replicates, which will confuse and crash the
 models.</li>
-<li>Is your 4sU label time abnormally long or short? If you are getting
-warnings from running the MLE implementation about logit(fn)s being at
-the lower or upper bounds, this could be the case. It means that there
-will be some extreme mutational data (e.g., 0 mutations in any
-sequencing read) that will make analysis with the MCMC implementation
-more difficult. Try filtering out these extreme transcripts and
-rerunning bakR if this is the case.</li>
-<li>Do you have any extreme batch effects. Check the FnPCA plot; extreme
-differences between replicates could also break the models.</li>
+<li>Is your s<sup>4</sup>U label time abnormally long or short? If you
+are getting warnings from running the MLE implementation about
+logit(fn)s being at the lower or upper bounds, this could be the case.
+It means that there will be some extreme mutational data (e.g., 0
+mutations in any sequencing read) that will make analysis with the MCMC
+implementation more difficult. Try filtering out these extreme
+transcripts and rerunning bakR if this is the case.</li>
+<li>Do you have any extreme batch effects. Check the FnPCA2 plot;
+extreme differences between replicates could also break the models.</li>
 <li>Are you analyzing short sequencing reads? bakR has not yet been
 fully validated on short sequencing read nucleotide recoding RNA-seq
 data (e.g., read lengths less than 50 nucleotides), so exercise caution
@@ -656,8 +683,8 @@ MLE implementation. In particular, check the correlation between the
 L2FC(kdeg) estimates. If the correlation is good, then there probably is
 nothing to worry about. If the estimates for a handful of transcripts
 differ wildly between the implementations though, that is strong
-evidence that the model didn’t converge and that one of the anomalies
-mentioned above is afflicting your data.</p>
+evidence that the convergence issues are serious and that one of the
+anomalies mentioned above is afflicting your data.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

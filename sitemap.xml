@@ -10,10 +10,25 @@
     <loc>https://simonlabcode.github.io/bakR/LICENSE.html</loc>
   </url>
   <url>
-    <loc>https://simonlabcode.github.io/bakR/articles/Further-Analyses.html</loc>
+    <loc>https://simonlabcode.github.io/bakR/articles/Differential-Synth.html</loc>
+  </url>
+  <url>
+    <loc>https://simonlabcode.github.io/bakR/articles/Dropout.html</loc>
   </url>
   <url>
     <loc>https://simonlabcode.github.io/bakR/articles/Getting-Started.html</loc>
+  </url>
+  <url>
+    <loc>https://simonlabcode.github.io/bakR/articles/NSS.html</loc>
+  </url>
+  <url>
+    <loc>https://simonlabcode.github.io/bakR/articles/Troubleshooting.html</loc>
+  </url>
+  <url>
+    <loc>https://simonlabcode.github.io/bakR/articles/bakR-Fn.html</loc>
+  </url>
+  <url>
+    <loc>https://simonlabcode.github.io/bakR/articles/bakR-Quickstart.html</loc>
   </url>
   <url>
     <loc>https://simonlabcode.github.io/bakR/articles/index.html</loc>
@@ -28,7 +43,22 @@
     <loc>https://simonlabcode.github.io/bakR/news/index.html</loc>
   </url>
   <url>
+    <loc>https://simonlabcode.github.io/bakR/reference/CorrectDropout.html</loc>
+  </url>
+  <url>
+    <loc>https://simonlabcode.github.io/bakR/reference/DissectMechanism.html</loc>
+  </url>
+  <url>
     <loc>https://simonlabcode.github.io/bakR/reference/FnPCA.html</loc>
+  </url>
+  <url>
+    <loc>https://simonlabcode.github.io/bakR/reference/FnPCA2.html</loc>
+  </url>
+  <url>
+    <loc>https://simonlabcode.github.io/bakR/reference/GS_table.html</loc>
+  </url>
+  <url>
+    <loc>https://simonlabcode.github.io/bakR/reference/GSprocessing.html</loc>
   </url>
   <url>
     <loc>https://simonlabcode.github.io/bakR/reference/Heatmap_kdeg.html</loc>
@@ -37,16 +67,25 @@
     <loc>https://simonlabcode.github.io/bakR/reference/NSSHeat.html</loc>
   </url>
   <url>
-    <loc>https://simonlabcode.github.io/bakR/reference/NSSHeat2.html</loc>
+    <loc>https://simonlabcode.github.io/bakR/reference/QC_checks.html</loc>
   </url>
   <url>
-    <loc>https://simonlabcode.github.io/bakR/reference/QC_checks.html</loc>
+    <loc>https://simonlabcode.github.io/bakR/reference/QuantifyDropout.html</loc>
   </url>
   <url>
     <loc>https://simonlabcode.github.io/bakR/reference/Simulate_bakRData.html</loc>
   </url>
   <url>
+    <loc>https://simonlabcode.github.io/bakR/reference/Simulate_relative_bakRData.html</loc>
+  </url>
+  <url>
     <loc>https://simonlabcode.github.io/bakR/reference/TL_stan.html</loc>
+  </url>
+  <url>
+    <loc>https://simonlabcode.github.io/bakR/reference/VisualizeDropout.html</loc>
+  </url>
+  <url>
+    <loc>https://simonlabcode.github.io/bakR/reference/avg_and_regularize.html</loc>
   </url>
   <url>
     <loc>https://simonlabcode.github.io/bakR/reference/bakR-package.html</loc>
@@ -58,6 +97,9 @@
     <loc>https://simonlabcode.github.io/bakR/reference/bakRFit.html</loc>
   </url>
   <url>
+    <loc>https://simonlabcode.github.io/bakR/reference/bakRFnData.html</loc>
+  </url>
+  <url>
     <loc>https://simonlabcode.github.io/bakR/reference/cB_small.html</loc>
   </url>
   <url>
@@ -67,6 +109,12 @@
     <loc>https://simonlabcode.github.io/bakR/reference/fast_analysis.html</loc>
   </url>
   <url>
+    <loc>https://simonlabcode.github.io/bakR/reference/fn_process.html</loc>
+  </url>
+  <url>
+    <loc>https://simonlabcode.github.io/bakR/reference/fns.html</loc>
+  </url>
+  <url>
     <loc>https://simonlabcode.github.io/bakR/reference/index.html</loc>
   </url>
   <url>
@@ -74,6 +122,9 @@
   </url>
   <url>
     <loc>https://simonlabcode.github.io/bakR/reference/new_bakRData.html</loc>
+  </url>
+  <url>
+    <loc>https://simonlabcode.github.io/bakR/reference/new_bakRFnData.html</loc>
   </url>
   <url>
     <loc>https://simonlabcode.github.io/bakR/reference/plotMA.html</loc>
@@ -86,5 +137,8 @@
   </url>
   <url>
     <loc>https://simonlabcode.github.io/bakR/reference/validate_bakRData.html</loc>
+  </url>
+  <url>
+    <loc>https://simonlabcode.github.io/bakR/reference/validate_bakRFnData.html</loc>
   </url>
 </urlset>

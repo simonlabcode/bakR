@@ -16,7 +16,7 @@ models of varying efficiency and accuracy can be used to fit data."><meta proper
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,7 +31,12 @@ models of varying efficiency and accuracy can be used to fit data."><meta proper
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/Getting-Started.html">Differential kinetic analysis with bakR</a>
-    <a class="dropdown-item" href="../articles/Further-Analyses.html">Going beyond the defaults with bakR</a>
+    <a class="dropdown-item" href="../articles/bakR-Quickstart.html">bakR for people in a hurry</a>
+    <a class="dropdown-item" href="../articles/Differential-Synth.html">Differential synthesis analysis with bakR and DESeq2</a>
+    <a class="dropdown-item" href="../articles/bakR-Fn.html">GRAND-SLAM output/fn estimates as bakR input</a>
+    <a class="dropdown-item" href="../articles/Dropout.html">Correcting for dropout</a>
+    <a class="dropdown-item" href="../articles/Troubleshooting.html">Troubleshooting analyses of NR-seq data with bakR</a>
+    <a class="dropdown-item" href="../articles/NSS.html">Steady-state quasi-independent mechanistic investigations</a>
   </div>
 </li>
 <li class="nav-item">
@@ -73,6 +78,7 @@ models of varying efficiency and accuracy can be used to fit data.</p>
 <span>  HybridFit <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  high_p <span class="op">=</span> <span class="fl">0.2</span>,</span>
 <span>  totcut <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>  totcut_all <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  Ucut <span class="op">=</span> <span class="fl">0.25</span>,</span>
 <span>  AvgU <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  FastRerun <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -86,8 +92,11 @@ models of varying efficiency and accuracy can be used to fit data.</p>
 <span>  NSS <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  Chase <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  BDA_model <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  multi_pold <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  Long <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  kmeans <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  ztest <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  Fisher <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -95,7 +104,8 @@ models of varying efficiency and accuracy can be used to fit data.</p>
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>obj</dt>
-<dd><p>bakRData object produced by <code>bakRData</code> or a bakRFit object produced by <code>bakRFit</code></p></dd>
+<dd><p><code>bakRData</code> object produced by <code>bakRData</code>, <code>bakRFit</code> object produced by <code>bakRFit</code>
+<code>bakRFnData</code> object produced by <code>bakRFnData</code>, or <code>bakRFnFit</code> object produced by <code>bakRFit</code>.</p></dd>
 
 
 <dt>StanFit</dt>
@@ -109,20 +119,24 @@ is a <code>bakRFit</code> object</p></dd>
 
 
 <dt>high_p</dt>
-<dd><p>Numeric; Any transcripts with a mutation rate (number of mutations / number of Ts in reads) higher than this in any -s4U control
+<dd><p>Numeric; Any features with a mutation rate (number of mutations / number of Ts in reads) higher than this in any -s4U control
 samples (i.e., samples that were not treated with s4U) are filtered out</p></dd>
 
 
 <dt>totcut</dt>
-<dd><p>Numeric; Any transcripts with less than this number of sequencing reads in any sample are filtered out</p></dd>
+<dd><p>Numeric; Any features with less than this number of sequencing reads in any replicate of all experimental conditions are filtered out</p></dd>
+
+
+<dt>totcut_all</dt>
+<dd><p>Numeric; Any features with less than this number of sequencing reads in any sample are filtered out</p></dd>
 
 
 <dt>Ucut</dt>
-<dd><p>Numeric; All transcripts must have a fraction of reads with 2 or less Us less than this cutoff in all samples</p></dd>
+<dd><p>Numeric; All features must have a fraction of reads with 2 or less Us less than this cutoff in all samples</p></dd>
 
 
 <dt>AvgU</dt>
-<dd><p>Numeric; All transcripts must have an average number of Us greater than this cutoff in all samples</p></dd>
+<dd><p>Numeric; All features must have an average number of Us greater than this cutoff in all samples</p></dd>
 
 
 <dt>FastRerun</dt>
@@ -177,12 +191,27 @@ reads that are s4U (more properly referred to as the fraction old in the context
 model is used.</p></dd>
 
 
+<dt>multi_pold</dt>
+<dd><p>Logical; if TRUE, pold is estimated for each sample rather than use a global pold estimate.</p></dd>
+
+
 <dt>Long</dt>
 <dd><p>Logical; if TRUE, long read optimized fraction new estimation strategy is used.</p></dd>
 
 
 <dt>kmeans</dt>
 <dd><p>Logical; if TRUE, kmeans clustering on read-specific mutation rates is used to estimate pnews and pold.</p></dd>
+
+
+<dt>ztest</dt>
+<dd><p>Logical; if TRUE and the MLE implementation is being used, then a z-test will be used for p-value calculation
+rather than the more conservative moderated t-test.</p></dd>
+
+
+<dt>Fisher</dt>
+<dd><p>Logical; if TRUE, Fisher information is used to estimate logit(fn) uncertainty. Else, a less conservative binomial model is used, which
+can be preferable in instances where the Fisher information strategy often drastically overestimates uncertainty
+(i.e., low coverage or low pnew).</p></dd>
 
 
 <dt>...</dt>
@@ -212,6 +241,14 @@ as the output of <code>cBprocess</code> will already be contained in the bakRFit
 <code>fast_analysis</code> will not be called again unless bakRFit is rerun on the bakRData object.
 or if <code>FastRerun</code> is set to TRUE. If you want to generate model fits using different parameters for cBprocess,
 you will have to rerun <code>bakRFit</code> on the bakRData object.</p>
+<p>If <code>bakRFit</code> is run on a bakRFnData object, <code>fn_process</code> and then <code>avg_and_regularize</code>
+will always be called. The former will generate the processed data that can be passed to the model
+fitting functions (<code>avg_and_regularize</code> and <code>TL_Stan</code>, the latter only with HybridFit = TRUE).</p>
+<p>If <code>bakRFit</code> is run on a bakRFnFit object. <code>fn_process</code> will not be called again, as
+the output of <code>fn_process</code> will already be contained in the bakRFnFit object. Similary,
+<code>avg_and_regularize</code> will not be called unless <code>bakRFit</code> is rerun on the bakRData object,
+or if <code>FastRerun</code> is set to TRUE. If you want to generate model fits using different
+parameters for <code>fn_process</code>, you will have to rerun <code>bakRFit</code> on the bakRData object.</p>
 <p>See the documentation for the individual fitting functions for details regarding how they analyze nucleotide
 recoding data. What follows is a brief overview of how each works</p>
 <p><code>fast_analysis</code> (referred to as the MLE implementation in the bakR paper)
@@ -244,24 +281,24 @@ is performed as with the Hybrid implementation.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding reliable Features</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Filtering out unwanted or unreliable features</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Processing data...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating labeled mutation rate</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pnews for each sample are:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating pnew with likelihood maximization</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating unlabeled mutation rate with -s4U data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pnews and polds for each sample are:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 4</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Groups:   mut [2]</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.049<span style="text-decoration: underline;">9</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.049<span style="text-decoration: underline;">9</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.050<span style="text-decoration: underline;">1</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.050<span style="text-decoration: underline;">0</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating unlabeled mutation rate</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pold is:  0.001</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew    pold</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.049<span style="text-decoration: underline;">9</span> 0.001<span style="text-decoration: underline;">00</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">1</span> 0.001<span style="text-decoration: underline;">00</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.049<span style="text-decoration: underline;">9</span> 0.001<span style="text-decoration: underline;">00</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.050<span style="text-decoration: underline;">0</span> 0.001<span style="text-decoration: underline;">00</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating fraction labeled</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating per replicate uncertainties</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating read count-variance relationship</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Averaging replicate data and regularizing estimates</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Assessing statistical significance</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> All done! Run QC_checks() on your bakRFit object to assess the quality of your data and get recommendations for next steps.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> All done! Run QC_checks() on your bakRFit object to assess the </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>             quality of your data and get recommendations for next steps.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

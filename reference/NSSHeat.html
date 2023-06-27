@@ -14,7 +14,7 @@ result of a steady-state quasi-independent analysis of NR-seq data."><meta prope
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,7 +29,12 @@ result of a steady-state quasi-independent analysis of NR-seq data."><meta prope
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/Getting-Started.html">Differential kinetic analysis with bakR</a>
-    <a class="dropdown-item" href="../articles/Further-Analyses.html">Going beyond the defaults with bakR</a>
+    <a class="dropdown-item" href="../articles/bakR-Quickstart.html">bakR for people in a hurry</a>
+    <a class="dropdown-item" href="../articles/Differential-Synth.html">Differential synthesis analysis with bakR and DESeq2</a>
+    <a class="dropdown-item" href="../articles/bakR-Fn.html">GRAND-SLAM output/fn estimates as bakR input</a>
+    <a class="dropdown-item" href="../articles/Dropout.html">Correcting for dropout</a>
+    <a class="dropdown-item" href="../articles/Troubleshooting.html">Troubleshooting analyses of NR-seq data with bakR</a>
+    <a class="dropdown-item" href="../articles/NSS.html">Steady-state quasi-independent mechanistic investigations</a>
   </div>
 </li>
 <li class="nav-item">
@@ -127,40 +132,46 @@ aesthetics of any heatmap generated with the output.</p></dd>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding reliable Features</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Filtering out unwanted or unreliable features</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Processing data...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating labeled mutation rate</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pnews for each sample are:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating pnew with likelihood maximization</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating unlabeled mutation rate with -s4U data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pnews and polds for each sample are:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 4</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Groups:   mut [2]</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.049<span style="text-decoration: underline;">7</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">8</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.049<span style="text-decoration: underline;">6</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.049<span style="text-decoration: underline;">1</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating unlabeled mutation rate</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pold is:  0.00099</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew     pold</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.050<span style="text-decoration: underline;">0</span> 0.000<span style="text-decoration: underline;">991</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">1</span> 0.000<span style="text-decoration: underline;">991</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.050<span style="text-decoration: underline;">4</span> 0.000<span style="text-decoration: underline;">991</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.050<span style="text-decoration: underline;">0</span> 0.000<span style="text-decoration: underline;">991</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating fraction labeled</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating per replicate uncertainties</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating read count-variance relationship</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Averaging replicate data and regularizing estimates</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Assessing statistical significance</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> All done! Run QC_checks() on your bakRFit object to assess the quality of your data and get recommendations for next steps.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> All done! Run QC_checks() on your bakRFit object to assess the </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>             quality of your data and get recommendations for next steps.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Number of features that made it past filtering</span></span></span>
 <span class="r-in"><span><span class="va">NF</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">Fit</span><span class="op">$</span><span class="va">Fast_Fit</span><span class="op">$</span><span class="va">Effects_df</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Simulate mock differential expression data frame</span></span></span>
 <span class="r-in"><span><span class="va">DE_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>XF <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">NF</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                       log2FoldChange <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">NF</span>, <span class="fl">0</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>                       L2FC_RNA <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">NF</span>, <span class="fl">0</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">DE_df</span><span class="op">$</span><span class="va">stat</span> <span class="op">&lt;-</span> <span class="va">DE_df</span><span class="op">$</span><span class="va">log2FoldChange</span><span class="op">/</span><span class="fl">0.5</span></span></span>
+<span class="r-in"><span><span class="va">DE_df</span><span class="op">$</span><span class="va">DE_score</span> <span class="op">&lt;-</span> <span class="va">DE_df</span><span class="op">$</span><span class="va">L2FC_RNA</span><span class="op">/</span><span class="fl">0.5</span></span></span>
+<span class="r-in"><span><span class="va">DE_df</span><span class="op">$</span><span class="va">DE_se</span> <span class="op">&lt;-</span> <span class="fl">0.5</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">DE_df</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;-</span> <span class="fl">2</span><span class="op">*</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">DE_df</span><span class="op">$</span><span class="va">stat</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">DE_df</span><span class="op">$</span><span class="va">DE_pval</span> <span class="op">&lt;-</span> <span class="fl">2</span><span class="op">*</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">DE_df</span><span class="op">$</span><span class="va">DE_score</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">DE_df</span><span class="op">$</span><span class="va">DE_padj</span> <span class="op">&lt;-</span> <span class="fl">2</span><span class="op">*</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">p.adjust</a></span><span class="op">(</span><span class="va">DE_df</span><span class="op">$</span><span class="va">DE_pval</span>, method <span class="op">=</span> <span class="st">"BH"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># make heatmap matrix</span></span></span>
-<span class="r-in"><span><span class="va">Heatmap</span> <span class="op">&lt;-</span> <span class="fu">NSSHeat</span><span class="op">(</span>bakRFit <span class="op">=</span> <span class="va">Fit</span>,</span></span>
+<span class="r-in"><span><span class="co"># perform NSS analysis</span></span></span>
+<span class="r-in"><span><span class="va">NSS_analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="DissectMechanism.html">DissectMechanism</a></span><span class="op">(</span>bakRFit <span class="op">=</span> <span class="va">Fit</span>,</span></span>
 <span class="r-in"><span>               DE_df <span class="op">=</span> <span class="va">DE_df</span>,</span></span>
 <span class="r-in"><span>               bakRModel <span class="op">=</span> <span class="st">"MLE"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Combining bakR and DE analyses</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating mechanism p-value. This could take several minutes...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Assessing differential synthesis</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Constructing Heatmap_df</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>

@@ -18,7 +18,7 @@ each collection of experimental samples provided."><meta property="og:image" con
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,7 +33,12 @@ each collection of experimental samples provided."><meta property="og:image" con
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/Getting-Started.html">Differential kinetic analysis with bakR</a>
-    <a class="dropdown-item" href="../articles/Further-Analyses.html">Going beyond the defaults with bakR</a>
+    <a class="dropdown-item" href="../articles/bakR-Quickstart.html">bakR for people in a hurry</a>
+    <a class="dropdown-item" href="../articles/Differential-Synth.html">Differential synthesis analysis with bakR and DESeq2</a>
+    <a class="dropdown-item" href="../articles/bakR-Fn.html">GRAND-SLAM output/fn estimates as bakR input</a>
+    <a class="dropdown-item" href="../articles/Dropout.html">Correcting for dropout</a>
+    <a class="dropdown-item" href="../articles/Troubleshooting.html">Troubleshooting analyses of NR-seq data with bakR</a>
+    <a class="dropdown-item" href="../articles/NSS.html">Steady-state quasi-independent mechanistic investigations</a>
   </div>
 </li>
 <li class="nav-item">
@@ -62,7 +67,7 @@ each collection of experimental samples provided."><meta property="og:image" con
 
     <div class="ref-description section level2">
     <p><code>TL_stan</code> is an internal function to analyze nucleotide recoding RNA-seq data with a fully
-Bayesian hierarchical model implemented in the PPL Stan. <code>TL_stan</code> estimates
+Bayesian hierarchical model implemented in the PPL <code>Stan</code>. <code>TL_stan</code> estimates
 kinetic parameters and differences in kinetic parameters between experimental
 conditions. When assessing differences, a single reference sample is compared to
 each collection of experimental samples provided.</p>
@@ -132,6 +137,8 @@ The columns of this dataframe are:</p><ul><li><p>Feature_ID; Numerical ID of fea
 <li><p>Exp_ID; Numerical ID for experimental condition</p></li>
 <li><p>kdeg; Degradation rate constant posterior mean</p></li>
 <li><p>kdeg_sd; Degradation rate constant posterior standard deviation</p></li>
+<li><p>log_kdeg; Log of degradation rate constant posterior mean (as of version 1.0.0)</p></li>
+<li><p>log_kdeg_sd; Log of degradation rate constant posterior standard deviation (as of version 1.0.0)</p></li>
 <li><p>XF; Original feature name</p></li>
 </ul></li>
 <li><p>Fn_Estimates; dataframe with estimates of the logit(fraction new) for each feature in each replicate.
@@ -179,7 +186,7 @@ U-to-C mutations are modeled as coming from a Poisson distribution
 with rate parameter adjusted by the empirical U-content of each feature analyzed. Features
 represent whatever the user defined them to be when constructing the bakR data object.
 Typical feature categories are genes, exons, etc. Hierarchical modeling is used to pool data
-across replicates, across features, and across replicates. More specifically, replicate data for the
+across replicates and across features. More specifically, replicate data for the
 same feature are partially pooled to estimate feature-specific mean fraction news and uncertainties.
 Feature means are partially pooled to estimate dataset-wide mean fraction news and standard deviations.
 The replicate variability for each feature is also partially pooled to determine a condition-wide
@@ -192,11 +199,11 @@ on only a few replicates of data per feature and thus are typically highly unsta
 inherits the hierarchical modeling structure of the complete analysis, but reduces computational
 burden by foregoing per-replicate-and-feature fraction new estimation and uncertainty quantification. Instead,
 the hybrid analysis takes as data fraction new estimates and approximate uncertainties from <code>fast_analysis</code>.
-Runtimes of the hybrid analysis are thus often an order or magnitude or more shorter than with the complete analysis, but
+Runtimes of the hybrid analysis are thus often an order of magnitude shorter than with the complete analysis, but
 loses some accuracy by relying on point estimates and uncertainty quantification that is only valid in the
 limit of large dataset sizes (where the dataset size for the per-replicate-and-feature fraction new estimate is the raw number
 of sequencing reads mapping to the feature in that replicate).</p>
-<p>Users also have the option to save or discard the 'Stan' fit object. Fit objects can be exceedingly large (&gt; 10 GB) for most
+<p>Users also have the option to save or discard the <code>Stan</code> fit object. Fit objects can be exceedingly large (&gt; 10 GB) for most
 nucleotide recoding RNA-seq datasets. Therefore, if you don't want to store such a large object, a summary object will be saved instead,
 which greatly reduces the size of the output (~ 10-50 MB) while still retaining much of the important information. In addition,
 the output of <code>TL_stan</code> provides the estimates and uncertainties for key parameters (L2FC(kdeg), kdeg, and fraction new)

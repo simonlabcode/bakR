@@ -12,7 +12,7 @@ Plots are colored according to statistical significance and sign of L2FC(kdeg)."
     
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -27,7 +27,12 @@ Plots are colored according to statistical significance and sign of L2FC(kdeg)."
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/Getting-Started.html">Differential kinetic analysis with bakR</a>
-    <a class="dropdown-item" href="../articles/Further-Analyses.html">Going beyond the defaults with bakR</a>
+    <a class="dropdown-item" href="../articles/bakR-Quickstart.html">bakR for people in a hurry</a>
+    <a class="dropdown-item" href="../articles/Differential-Synth.html">Differential synthesis analysis with bakR and DESeq2</a>
+    <a class="dropdown-item" href="../articles/bakR-Fn.html">GRAND-SLAM output/fn estimates as bakR input</a>
+    <a class="dropdown-item" href="../articles/Dropout.html">Correcting for dropout</a>
+    <a class="dropdown-item" href="../articles/Troubleshooting.html">Troubleshooting analyses of NR-seq data with bakR</a>
+    <a class="dropdown-item" href="../articles/NSS.html">Steady-state quasi-independent mechanistic investigations</a>
   </div>
 </li>
 <li class="nav-item">
@@ -61,7 +66,7 @@ Plots are colored according to statistical significance and sign of L2FC(kdeg).<
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plotVolcano</span><span class="op">(</span><span class="va">obj</span>, FDR <span class="op">=</span> <span class="fl">0.05</span>, Exps <span class="op">=</span> <span class="cn">NULL</span>, Exp_shape <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plotVolcano</span><span class="op">(</span><span class="va">obj</span>, FDR <span class="op">=</span> <span class="fl">0.05</span>, Exps <span class="op">=</span> <span class="fl">2</span>, Exp_shape <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -76,7 +81,8 @@ Stan_Fit (MCMC implementation fit), or Hybrid_Fit (Hybrid implementation fit)</p
 
 
 <dt>Exps</dt>
-<dd><p>Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs)</p></dd>
+<dd><p>Vector of Experimental IDs to include in plot; must only contain elements within 2:(# of experimental IDs).
+If NULL, data for all Experimental IDs is plotted.</p></dd>
 
 
 <dt>Exp_shape</dt>
@@ -103,24 +109,24 @@ transformed multiple test adjusted p value.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding reliable Features</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Filtering out unwanted or unreliable features</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Processing data...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating labeled mutation rate</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pnews for each sample are:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating pnew with likelihood maximization</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating unlabeled mutation rate with -s4U data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pnews and polds for each sample are:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 4</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Groups:   mut [2]</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.049<span style="text-decoration: underline;">8</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">0</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.050<span style="text-decoration: underline;">1</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.050<span style="text-decoration: underline;">2</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating unlabeled mutation rate</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pold is:  0.001</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew    pold</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.050<span style="text-decoration: underline;">1</span> 0.001<span style="text-decoration: underline;">00</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">3</span> 0.001<span style="text-decoration: underline;">00</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.050<span style="text-decoration: underline;">1</span> 0.001<span style="text-decoration: underline;">00</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.050<span style="text-decoration: underline;">1</span> 0.001<span style="text-decoration: underline;">00</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating fraction labeled</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating per replicate uncertainties</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating read count-variance relationship</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Averaging replicate data and regularizing estimates</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Assessing statistical significance</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> All done! Run QC_checks() on your bakRFit object to assess the quality of your data and get recommendations for next steps.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> All done! Run QC_checks() on your bakRFit object to assess the </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>             quality of your data and get recommendations for next steps.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Volcano plot</span></span></span>
 <span class="r-in"><span><span class="fu">plotVolcano</span><span class="op">(</span><span class="va">Fit</span><span class="op">$</span><span class="va">Fast_Fit</span><span class="op">)</span></span></span>
