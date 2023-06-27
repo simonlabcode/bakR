@@ -269,7 +269,8 @@ referred to as pdo.</li>
 <p>These assumptions lead to the following expressions for the expected
 number of sequencing reads coming from a feature (index i) in
 +s<sup>4</sup>U and -s<sup>4</sup>U NR-seq data:</p>
-<p>$$ <span class="math display">\[\begin{align}
+<p><span class="math display">\[
+\begin{align}
 \text{E[reads from feature i in +s}^{\text{4}}\text{U sample]} &amp;=
 \frac{\text{number of molecules from feature i}}{\text{total number of
 molecules in +s}^{\text{4}}\text{U
@@ -288,11 +289,11 @@ molecules in -s}^{\text{4}}\text{U
 sample}}*\text{R}_{\text{-s}^{\text{4}}\text{U}} \\
                                               &amp;=
 \frac{\text{n}_{\text{i}}}{\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}}*\text{R}_{\text{-s}^{\text{4}}\text{U}}
-\\
-                                          
-\end{align}\]</span></p>
-<p>$$ where the parameters are defined as follows:</p>
-<p>$$ <span class="math display">\[\begin{align}
+\end{align}                                  
+\]</span></p>
+<p>where the parameters are defined as follows:</p>
+<p><span class="math display">\[
+\begin{align}
 \text{n}_{\text{i}} &amp;= \text{Number of molecules from feature i} \\
 \theta_{\text{i}} &amp;= \text{True fraction new for feature i} \\
 \text{pdo} &amp;= \text{Probability that a labeled RNA molecule is
@@ -300,14 +301,13 @@ preferentially lost during library prep} \\
 \text{NF} &amp;= \text{Total number of RNA features that contribute
 sequencable molecules} \\
 \text{R} &amp;= \text{Total number of sequencing reads.}
-
-
-
-
-\end{align}\]</span> $$ Defining “dropout” to be the ratio of the RPM
-normalized expected read counts yields the following relationship
-between “dropout”, the fraction new, and the rate of dropout:</p>
-<p>$$ <span class="math display">\[\begin{align}
+\end{align}
+\]</span></p>
+<p>Defining “dropout” to be the ratio of the RPM normalized expected
+read counts yields the following relationship between “dropout”, the
+fraction new, and the rate of dropout:</p>
+<p><span class="math display">\[
+\begin{align}
 \text{Dropout} &amp;= \frac{\text{E[reads from feature i in
 +s}^{\text{4}}\text{U
 sample]/}\text{R}_{\text{+s}^{\text{4}}\text{U}}}{\text{E[reads from
@@ -323,10 +323,11 @@ sample]/}\text{R}_{\text{-s}^{\text{4}}\text{U}}} \\
                &amp;= [\theta_{\text{i}}*(1 - \text{pdo}) + (1 -
 \theta_{\text{i}})]*\text{scale} \\
                &amp;= [1 - \theta_{\text{i}}*\text{pdo}]*\text{scale}
-
-\end{align}\]</span> $$ where <span class="math inline">\(\text{scale}\)</span> is a constant scale factor
-that represents the factor difference in the number of sequencable
-molecules with and without dropout.</p>
+\end{align}
+\]</span></p>
+<p>where <span class="math inline">\(\text{scale}\)</span> is a constant
+scale factor that represents the factor difference in the number of
+sequencable molecules with and without dropout.</p>
 <p>Currently, the relationship between the quantification of dropout and
 <span class="math inline">\(\text{pdo}\)</span> includes <span class="math inline">\(\theta_{\text{i}}\)</span>, which is the true,
 unbiased fraction new. Unfortunately, the presence of dropout means that
@@ -354,18 +355,21 @@ sequencable molecules}}{\text{total number of sequencable molecules}} \\
 \frac{\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo}) +
 \theta_{\text{i}}^{\text{do}}*\text{pdo}} &amp;= \theta_{\text{i}}
 \end{align}
-\]</span> We can then use this relationship to substite <span class="math inline">\(\theta_{\text{i}}\)</span> for a function of <span class="math inline">\(\theta_{\text{i}}^{\text{do}}\)</span> and <span class="math inline">\(\text{pdo}\)</span> in our dropout quantification
+\]</span></p>
+<p>We can then use this relationship to substite <span class="math inline">\(\theta_{\text{i}}\)</span> for a function of <span class="math inline">\(\theta_{\text{i}}^{\text{do}}\)</span> and <span class="math inline">\(\text{pdo}\)</span> in our dropout quantification
 equation:</p>
-<p>$$ <span class="math display">\[\begin{align}
+<p><span class="math display">\[
+\begin{align}
 \text{Dropout} &amp;= [1 - \theta_{\text{i}}*\text{pdo}]*\text{scale}\\
 \text{Dropout} &amp;= \text{scale} -
 \frac{\text{scale}*\text{pdo}*\theta_{\text{i}}^{\text{do}}}{(1 -
 \text{pdo}) + \theta_{\text{i}}^{\text{do}}*\text{pdo}}
-
-\end{align}\]</span> $$ bakR’s <code>CorrectDropout</code> function fits
-this predicted relationship between the ratio of +s<sup>4</sup>U to
--s<sup>4</sup>U reads (<span class="math inline">\(\text{Dropout}\)</span>) and the uncorrected
-fraction new estimates (<span class="math inline">\(\theta_{\text{i}}^{\text{do}}\)</span>) to infer
+\end{align}
+\]</span></p>
+<p>bakR’s <code>CorrectDropout</code> function fits this predicted
+relationship between the ratio of +s<sup>4</sup>U to -s<sup>4</sup>U
+reads (<span class="math inline">\(\text{Dropout}\)</span>) and the
+uncorrected fraction new estimates (<span class="math inline">\(\theta_{\text{i}}^{\text{do}}\)</span>) to infer
 <span class="math inline">\(pdo\)</span>. Corrected fraction new
 estimates can then be inferred from the relationship between <span class="math inline">\(\theta_{\text{i}}^{\text{do}}\)</span>, <span class="math inline">\(\text{pdo}\)</span>, and <span class="math inline">\(\theta_{\text{i}}\)</span>. Finally, bakR
 redistributes read counts according to what the estimated relative
@@ -391,7 +395,8 @@ with dropout]}} &amp;= \text{Dropout}\\
 &amp;= \frac{\text{fraction of feature i molecules remaining after
 dropout}}{\text{fraction of total molecules remaining after dropout}} \\
 \end{align}
-\]</span> Getting from the 2nd line to the third line involved a bit of
+\]</span></p>
+<p>Getting from the 2nd line to the third line involved a bit of
 algebraic trickery (multiplying by 1) and defining the “global fraction
 new” (<span class="math inline">\(\theta_{\text{G}}\)</span>), which is
 the fraction of all sequenced molecules that are new (where <span class="math inline">\(\text{N}\)</span> is the total number of sequenced
@@ -399,14 +404,15 @@ molecules if none are lost due to dropout). <span class="math inline">\(\theta_{
 weighted average of dropout biased fraction news for each feature,
 weighted by the uncorrected number of reads each feature has, and then
 dropout correcting:</p>
-<p>$$ <span class="math display">\[\begin{align}
+<p><span class="math display">\[
+\begin{align}
 \theta_{\text{G}}^{\text{do}} &amp;=
 \frac{\sum_{\text{j=1}}^{\text{NF}}\theta_{\text{j}}^{\text{do}}*\text{nreads}_{\text{j}}
 }{\sum_{\text{j=1}}^{\text{NF}}\text{nreads}_{\text{j}}} \\
 \theta_{\text{G}} &amp;= \frac{\theta_{\text{G}}^{\text{do}}}{(1 -
 \text{pdo}) + \theta_{\text{G}}^{\text{do}}*\text{pdo}}
-
-\end{align}\]</span> $$</p>
+\end{align}
+\]</span></p>
 <p>Thus, the dropout corrected read counts can be obtained as
 follows:</p>
 <p><span class="math display">\[
@@ -414,7 +420,7 @@ follows:</p>
 \text{Corrected read count for feature i} &amp;=
 \text{nreads}_{\text{i}}*\frac{\theta_{\text{i}}*(1 - \text{pdo}) + (1 -
 \theta_{\text{i}})}{\theta_{\text{G}}*(1 - \text{pdo}) + (1 -
-\theta_{\text{G}}) }
+\theta_{\text{G}})}
 \end{align}
 \]</span></p>
 </div>
@@ -434,14 +440,17 @@ follows:</p>
 \begin{align}
 \text{pdo} &amp;= \frac{\rho}{\rho + 1}
 \end{align}
-\]</span> We note that this definition is not model derived and sets an
+\]</span></p>
+<p>We note that this definition is not model derived and sets an
 artificial upper bound on <span class="math inline">\(\text{pdo}\)</span> of 0.5. The estimated number
-of sequencing reads from new RNA is then multiplied by a factor (<span class="math inline">\(\text{f}\)</span>) defined as follows: <span class="math display">\[
+of sequencing reads from new RNA is then multiplied by a factor (<span class="math inline">\(\text{f}\)</span>) defined as follows:</p>
+<p><span class="math display">\[
 \text{f} = \frac{1}{1 - \text{pdo}}
-\]</span> and the corrected fraction new is estimated using the adjusted
-new RNA read counts. A bit of algebra shows that this relationship
-between the inferred <span class="math inline">\(\text{pdo}\)</span> and
-the corrected fraction new is identical to that derived from the model
+\]</span></p>
+<p>and the corrected fraction new is estimated using the adjusted new
+RNA read counts. A bit of algebra shows that this relationship between
+the inferred <span class="math inline">\(\text{pdo}\)</span> and the
+corrected fraction new is identical to that derived from the model
 above:</p>
 <p><span class="math display">\[
 \begin{align}
@@ -457,8 +466,9 @@ reads from old RNA})} \\
 &amp;= \frac{\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo}) +
 \theta_{\text{i}}^{\text{do}}*\text{pdo}}
 \end{align}
-\]</span> Thus, grandR is implicitly making assumptions similar to those
-laid out in the model above that is used by bakR.</p>
+\]</span></p>
+<p>Thus, grandR is implicitly making assumptions similar to those laid
+out in the model above that is used by bakR.</p>
 <p>Notable differences between bakR and grandR’s dropout correction
 approaches are:</p>
 <ol style="list-style-type: decimal">
@@ -501,16 +511,19 @@ with dropout]}} &amp;= \text{Dropout}\\
 \theta_{\text{i}})
 }{1}*\frac{\text{N}}{\text{N}*\theta_{\text{G}}*(1-\text{pdo}) +
 \text{N}*(1 - \theta_{\text{G}})} \\
-&amp;=\text{ ...}
+&amp;=\text{...}
 \end{align}
-\]</span> where: <span class="math display">\[
+\]</span></p>
+<p>where:</p>
+<p><span class="math display">\[
 \begin{align}
 \text{N} &amp;= \sum_{\text{j=1}}^{\text{NF}}{\text{n}_{\text{j}}} \\
 \theta_{\text{G}} &amp;=
 \frac{\sum_{\text{j=1}}^{\text{NF}}\text{n}_{\text{j}}*\theta_{\text{i}}}{\sum_{\text{j=1}}^{\text{NF}}\text{n}_{\text{j}}}
 \end{align}
-\]</span> The algebraic trick to get from line 2 to line 3 is to
-multiply by 1 (or rather <span class="math inline">\(\text{N}\)</span>/<span class="math inline">\(\text{N}\)</span>):</p>
+\]</span></p>
+<p>The algebraic trick to get from line 2 to line 3 is to multiply by 1
+(or rather <span class="math inline">\(\text{N}\)</span>/<span class="math inline">\(\text{N}\)</span>):</p>
 <p><span class="math display">\[
 \begin{align}
 \sum_{\text{j=1}}^{\text{NF}}\text{n}_{\text{i}}*\theta_{\text{j}}
