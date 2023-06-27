@@ -135,11 +135,10 @@ $$
                                               \\
                                               \\
 \text{E[reads from feature i in -s}^{\text{4}}\text{U sample]} &= \frac{\text{number of molecules from feature i}}{\text{total number of molecules in -s}^{\text{4}}\text{U sample}}*\text{R}_{\text{-s}^{\text{4}}\text{U}} \\
-                                              &= \frac{\text{n}_{\text{i}}}{\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}}*\text{R}_{\text{-s}^{\text{4}}\text{U}} \\
-                                          
+                                              &= \frac{\text{n}_{\text{i}}}{\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}}*\text{R}_{\text{-s}^{\text{4}}\text{U}}
 \end{align}                                  
-                                            
 $$
+
 where the parameters are defined as follows:
 
 $$
@@ -149,12 +148,9 @@ $$
 \text{pdo} &= \text{Probability that a labeled RNA molecule is preferentially lost during library prep} \\
 \text{NF} &= \text{Total number of RNA features that contribute sequencable molecules} \\
 \text{R} &= \text{Total number of sequencing reads.}
-
-
-
-
 \end{align}
 $$
+ 
  Defining "dropout" to be the ratio of the RPM normalized expected read counts yields the following relationship between "dropout", the fraction new, and the rate of dropout:
  
 $$
@@ -165,9 +161,9 @@ $$
                \\
                &= [\theta_{\text{i}}*(1 - \text{pdo}) + (1 - \theta_{\text{i}})]*\text{scale} \\
                &= [1 - \theta_{\text{i}}*\text{pdo}]*\text{scale}
-
 \end{align}
 $$
+
 where $\text{scale}$ is a constant scale factor that represents the factor difference in the number of sequencable molecules with and without dropout. 
 
 Currently, the relationship between the quantification of dropout and $\text{pdo}$ includes $\theta_{\text{i}}$, which is the true, unbiased fraction new. Unfortunately, the presence of dropout means that we do not have access to this quantify. Rather, we estimate a dropout biased fraction of sequencing reads that are new ($\theta_{\text{i}}^{\text{do}}$), which on average will represent an underestimation of $\theta_{\text{i}}$. Therefore, we need to relate the quantity we estimate ($\theta_{\text{i}}^{\text{do}}$) and the parameter we wish to estimate ($\text{pdo}$) to $\theta_{\text{i}}$. In the context of this model, such a relationship can be derived as follows:
@@ -182,15 +178,16 @@ $$
 \frac{\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo}) + \theta_{\text{i}}^{\text{do}}*\text{pdo}} &= \theta_{\text{i}}
 \end{align}
 $$
+
 We can then use this relationship to substite $\theta_{\text{i}}$ for a function of $\theta_{\text{i}}^{\text{do}}$ and $\text{pdo}$ in our dropout quantification equation:
 
 $$
 \begin{align}
 \text{Dropout} &= [1 - \theta_{\text{i}}*\text{pdo}]*\text{scale}\\
 \text{Dropout} &= \text{scale} - \frac{\text{scale}*\text{pdo}*\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo}) + \theta_{\text{i}}^{\text{do}}*\text{pdo}}
-
 \end{align}
 $$
+
 bakR's `CorrectDropout` function fits this predicted relationship between the ratio of +s^4^U to -s^4^U reads ($\text{Dropout}$) and the uncorrected fraction new estimates ($\theta_{\text{i}}^{\text{do}}$) to infer $pdo$. Corrected fraction new estimates can then be inferred from the relationship between $\theta_{\text{i}}^{\text{do}}$, $\text{pdo}$, and $\theta_{\text{i}}$. Finally, bakR redistributes read counts according to what the estimated relative proportions of each feature would have been if no dropout had existed. The key insight is that:
 
 $$
@@ -203,13 +200,13 @@ $$
 &= \frac{\text{fraction of feature i molecules remaining after dropout}}{\text{fraction of total molecules remaining after dropout}} \\
 \end{align}
 $$
+
 Getting from the 2nd line to the third line involved a bit of algebraic trickery (multiplying by 1) and defining the "global fraction new" ($\theta_{\text{G}}$), which is the fraction of all sequenced molecules that are new (where $\text{N}$ is the total number of sequenced molecules if none are lost due to dropout). $\theta_{\text{G}}$ can be calculated as a weighted average of dropout biased fraction news for each feature, weighted by the uncorrected number of reads each feature has, and then dropout correcting:
 
 $$
 \begin{align}
 \theta_{\text{G}}^{\text{do}} &= \frac{\sum_{\text{j=1}}^{\text{NF}}\theta_{\text{j}}^{\text{do}}*\text{nreads}_{\text{j}} }{\sum_{\text{j=1}}^{\text{NF}}\text{nreads}_{\text{j}}} \\
 \theta_{\text{G}} &= \frac{\theta_{\text{G}}^{\text{do}}}{(1 - \text{pdo}) + \theta_{\text{G}}^{\text{do}}*\text{pdo}}
-
 \end{align}
 $$
 
@@ -217,7 +214,7 @@ Thus, the dropout corrected read counts can be obtained as follows:
 
 $$
 \begin{align}
-\text{Corrected read count for feature i} &= \text{nreads}_{\text{i}}*\frac{\theta_{\text{i}}*(1 - \text{pdo}) + (1 - \theta_{\text{i}})}{\theta_{\text{G}}*(1 - \text{pdo}) + (1 - \theta_{\text{G}}) }
+\text{Corrected read count for feature i} &= \text{nreads}_{\text{i}}*\frac{\theta_{\text{i}}*(1 - \text{pdo}) + (1 - \theta_{\text{i}})}{\theta_{\text{G}}*(1 - \text{pdo}) + (1 - \theta_{\text{G}})}
 \end{align}
 $$
 
@@ -229,10 +226,13 @@ $$
 \text{pdo} &= \frac{\rho}{\rho + 1} 
 \end{align}
 $$
+
 We note that this definition is not model derived and sets an artificial upper bound on $\text{pdo}$ of 0.5. The estimated number of sequencing reads from new RNA is then multiplied by a factor ($\text{f}$) defined as follows:
+
 $$
 \text{f} = \frac{1}{1 - \text{pdo}}
 $$
+
 and the corrected fraction new is estimated using the adjusted new RNA read counts. A bit of algebra shows that this relationship between the inferred $\text{pdo}$ and the corrected fraction new is identical to that derived from the model above:
 
 $$
@@ -243,6 +243,7 @@ $$
 &= \frac{\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo}) + \theta_{\text{i}}^{\text{do}}*\text{pdo}}
 \end{align} 
 $$
+
 Thus, grandR is implicitly making assumptions similar to those laid out in the model above that is used by bakR.
 
 Notable differences between bakR and grandR's dropout correction approaches are:
@@ -262,16 +263,19 @@ $$
 \frac{\text{E[number of reads without dropout]}}{\text{E[number of reads with dropout]}} &= \text{Dropout}\\ 
 &= \frac{\text{n}_{\text{i}}*\theta_{\text{i}}*(1 - \text{pdo}) + \text{n}_{\text{i}}*(1 - \theta_{\text{i}}) }{\text{n}_{\text{i}}}*\frac{\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}}{ \sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}*\theta_{\text{j}}*(1 - \text{pdo}) + \text{n}_{\text{j}}*(1 - \theta_{\text{j}})  } \\
 &= \frac{\theta_{\text{i}}*(1 - \text{pdo}) + (1 - \theta_{\text{i}}) }{1}*\frac{\text{N}}{\text{N}*\theta_{\text{G}}*(1-\text{pdo}) + \text{N}*(1 - \theta_{\text{G}})} \\
-&=\text{ ...}
+&=\text{...}
 \end{align}
 $$
+
 where:
+
 $$
 \begin{align}
 \text{N} &= \sum_{\text{j=1}}^{\text{NF}}{\text{n}_{\text{j}}} \\
 \theta_{\text{G}} &= \frac{\sum_{\text{j=1}}^{\text{NF}}\text{n}_{\text{j}}*\theta_{\text{i}}}{\sum_{\text{j=1}}^{\text{NF}}\text{n}_{\text{j}}} 
 \end{align}
 $$
+
 The algebraic trick to get from line 2 to line 3 is to multiply by 1 (or rather $\text{N}$/$\text{N}$):
 
 $$
