@@ -136,12 +136,12 @@ to <code><a href="https://rdrr.io/r/stats/nls.html" class="external-link">stats:
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated pnews and polds for each sample are:</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 4</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Groups:   mut [2]</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew    pold</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.049<span style="text-decoration: underline;">9</span> 0.001<span style="text-decoration: underline;">00</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.050<span style="text-decoration: underline;">0</span> 0.001<span style="text-decoration: underline;">00</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.050<span style="text-decoration: underline;">0</span> 0.001<span style="text-decoration: underline;">00</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.049<span style="text-decoration: underline;">9</span> 0.001<span style="text-decoration: underline;">00</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     mut  reps   pnew     pold</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1     1 0.049<span style="text-decoration: underline;">8</span> 0.000<span style="text-decoration: underline;">996</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1     2 0.049<span style="text-decoration: underline;">9</span> 0.000<span style="text-decoration: underline;">996</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     2     1 0.050<span style="text-decoration: underline;">4</span> 0.000<span style="text-decoration: underline;">996</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     2     2 0.050<span style="text-decoration: underline;">6</span> 0.000<span style="text-decoration: underline;">996</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating fraction labeled</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating per replicate uncertainties</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimating read count-variance relationship</span>
@@ -153,11 +153,11 @@ to <code><a href="https://rdrr.io/r/stats/nls.html" class="external-link">stats:
 <span class="r-in"><span><span class="co"># Quantify dropout</span></span></span>
 <span class="r-in"><span><span class="va">Fit</span> <span class="op">&lt;-</span> <span class="fu">QuantifyDropout</span><span class="op">(</span><span class="va">Fit</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Estimated rates of dropout are:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   Exp_ID Replicate        pdo</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 1      1         1 0.02554335</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 2      1         2 0.26343382</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 3      2         1 0.43512479</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 4      2         2 0.33773017</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Exp_ID Replicate       pdo</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 1      1         1 0.2677990</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 2      1         2 0.1328367</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3      2         1 0.4653204</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 4      2         2 0.4952577</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
