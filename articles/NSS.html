@@ -990,15 +990,15 @@ though that nature of the mechanism score null model makes it difficult
 to calculate these p-values with great precision.</p>
 <p>Work through a bit of mathematical statistics and you’ll find that
 the null hypothesis distribution is the esoteric “doubly non-central
-scaled F-distribution”. There is the aptly named <a href="https://cran.r-project.org/web/packages/sadists/index.html" class="external-link">sadist</a>
-R package which implements functions for working with little known
-distributions, but even it only accomodates the unscaled version of this
-distribution. While one R package exists to calculate integrals of the
-doubly non-central scaled F-distribution, the precision of its estimates
-is about as good as I was able to shakily code up myself. Therefore, I
-went forward with a home brew Monte Carlo approach to p-value
-calculation. In short, I simulate from the null model a bunch of times
-(the number of which is set by the <code>sims</code> parameter in
+scaled F-distribution”. There is the aptly named <a href="https://CRAN.R-project.org/package=sadists" class="external-link">sadist</a> R package
+which implements functions for working with little known distributions,
+but even it only accomodates the unscaled version of this distribution.
+While one R package exists to calculate integrals of the doubly
+non-central scaled F-distribution, the precision of its estimates is
+about as good as I was able to shakily code up myself. Therefore, I went
+forward with a home brew Monte Carlo approach to p-value calculation. In
+short, I simulate from the null model a bunch of times (the number of
+which is set by the <code>sims</code> parameter in
 <code>DissectMechanism</code>), and calculate the p-value as the
 fraction of the time the simulated mechanism score was larger in
 magnitude than a given mechanism score.</p>
