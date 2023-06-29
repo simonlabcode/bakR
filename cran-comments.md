@@ -1,6 +1,13 @@
 ## Resubmission
 This is a resubmission. In this version I have:
 
+* Removed non-portable flags from configure.win file.
+
+## R CMD check results
+
+## Resubmission
+This is a resubmission. In this version I have:
+
 * Corrected invalid CRAN URLs in vignettes.
 
 ## R CMD check results
