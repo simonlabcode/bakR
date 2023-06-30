@@ -3,7 +3,7 @@ bakR (Bayesian analysis of the kinetics of RNA) is an R package for performing d
 Kinetic parameter estimation and statistical testing is compatible with mutational data from any enrichment free NR-seq method (e.g., TimeLapse-seq, SLAM-seq, TUC-seq, etc.).
 
 # Version 1.0.0 is out now! (06/27/2023)
-A lot of functionality has been added, and I highly suggest all users of bakR to update to this version. There are also many new vignettes to discuss these new features. bakR v1.0.0 on CRAN though the precompiled binaries for Windows and Macs are still being built for some versions of R. It is also currently available for installation from Github, as described below. Two major changes/additions are:
+A lot of functionality has been added, and I highly suggest all users of bakR to update to this version. There are also many new vignettes to discuss these new features. bakR v1.0.0 is now on CRAN, though the precompiled binaries for Windows and Macs are still being built for some versions of R. It is also currently available for installation from Github, as described below. Two major changes/additions are:
 
 1. Ability to use [GRAND-SLAM](https://github.com/erhard-lab/gedi/wiki/GRAND-SLAM) output (or fraction new estimates more generally) as bakR input
 2. Strategy for correcting metabolic label related biases in kinetic parameter estimates and read counts 
