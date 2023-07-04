@@ -24,13 +24,13 @@ To install the newest version of bakR from Github, you need to have a C++ compil
 # Documentation
 There are currently seven vignettes to help get you up to speed with using bakR:
 
-  1. An introductory vignette (title: Differential Kinetic Analysis with bakR) that walks you through the basic bakR workflow with simulated data.
-  2. A more concise version of the introductory vignette that will get you up and running with bakR quickly (title: bakR for people in a hurry). Particularly appropriate for those who are very comfortable with adopting new bioinformatic tools.
-  3. Combining bakR with differential expression analysis to perform differential synthesis rate analysis (title: Differential synthesis analysis with bakR and DESeq2).
-  4. How to use fraction new estimates (e.g., from a tool like GRAND-SLAM) as input to bakR, a new feature introduced in version 1.0.0 (title: GRAND-SLAM output/fn estimates as bakR input).
-  5. Correcting for disproportionate loss of s<sup>4</sup>U containing RNA (title: Correcting for dropout). This phenomenon, termed dropout, is discussed in two recent preprints, one from [our lab](https://www.biorxiv.org/content/10.1101/2023.05.24.542133v1) and one from the [Erhard lab](https://www.biorxiv.org/content/10.1101/2023.04.21.537786v1.full).
-  6. How to identify and deal with problems that can crop up when analyzing NR-seq data (title: Troubleshooting analyses of NR-seq data with bakR).
-  7. Distinguishing transcriptional and post-transcriptional regulation, even when the steady-state assumption is partially violated (title: Steady-state quasi-independent mechanistic investigations). Describes a new and somewhat experimental function in bakR, `DissectMechanism`.
+  1. [An introductory vignette](https://simonlabcode.github.io/bakR/articles/Getting-Started.html) (title: Differential Kinetic Analysis with bakR) that walks you through the basic bakR workflow with simulated data.
+  2. [A more concise version of the introductory vignette](https://simonlabcode.github.io/bakR/articles/bakR-Quickstart.html) that will get you up and running with bakR quickly (title: bakR for people in a hurry). Particularly appropriate for those who are very comfortable with adopting new bioinformatic tools.
+  3. [Combining bakR with differential expression analysis](https://simonlabcode.github.io/bakR/articles/Differential-Synth.html) to perform differential synthesis rate analysis (title: Differential synthesis analysis with bakR and DESeq2).
+  4. [How to use fraction new estimates (e.g., from a tool like GRAND-SLAM) as input to bakR](https://simonlabcode.github.io/bakR/articles/bakR-Fn.html), a new feature introduced in version 1.0.0 (title: GRAND-SLAM output/fn estimates as bakR input).
+  5. [Correcting for disproportionate loss of s<sup>4</sup>U containing RNA](https://simonlabcode.github.io/bakR/articles/Dropout.html) (title: Correcting for dropout). This phenomenon, termed dropout, is discussed in two recent preprints, one from [our lab](https://www.biorxiv.org/content/10.1101/2023.05.24.542133v1) and one from the [Erhard lab](https://www.biorxiv.org/content/10.1101/2023.04.21.537786v1.full).
+  6. [How to identify and deal with problems](https://simonlabcode.github.io/bakR/articles/Troubleshooting.html) that can crop up when analyzing NR-seq data (title: Troubleshooting analyses of NR-seq data with bakR).
+  7. [Distinguishing transcriptional and post-transcriptional regulation](https://simonlabcode.github.io/bakR/articles/NSS.html), even when the steady-state assumption is partially violated (title: Steady-state quasi-independent mechanistic investigations). Describes a new and somewhat experimental function in bakR, `DissectMechanism`.
   
 All vignettes are available on the [bakR website](https://simonlabcode.github.io/bakR/index.html) under the Articles section. [Here](https://github.com/simonlabcode/bakR) is the link to the bakR github as well if you need help getting back to the github from the website.
 
