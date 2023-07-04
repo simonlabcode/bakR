@@ -115,7 +115,11 @@
 <div class="section level1">
 <h1 id="version-100-is-out-now-06272023">Version 1.0.0 is out now! (06/27/2023)<a class="anchor" aria-label="anchor" href="#version-100-is-out-now-06272023"></a>
 </h1>
-<p>A lot of functionality has been added, and I highly suggest all users of bakR to update to this version. There are also many new vignettes to discuss these new features. bakR v1.0.0 is currently in the process of being submitted to CRAN, but is currently available for installation from Github, as described below. Two major changes/additions are: 1. Ability to use <a href="https://github.com/erhard-lab/gedi/wiki/GRAND-SLAM" class="external-link">GRAND-SLAM</a> output (or fraction new estimates more generally) as bakR input 2. Strategy for correcting metabolic label related biases in kinetic parameter estimates and read counts</p>
+<p>A lot of functionality has been added, and I highly suggest all users of bakR to update to this version. There are also many new vignettes to discuss these new features. bakR v1.0.0 is now on CRAN, though the precompiled binaries for Windows machines are still being built for some versions of R (this should take no more than a week or two; it was uploaded to CRAN on 06/29/2023). It is also currently available for installation from Github, as described below. Two major changes/additions are:</p>
+<ol style="list-style-type: decimal">
+<li>Ability to use <a href="https://github.com/erhard-lab/gedi/wiki/GRAND-SLAM" class="external-link">GRAND-SLAM</a> output (or fraction new estimates more generally) as bakR input</li>
+<li>Strategy for correcting metabolic label related biases in kinetic parameter estimates and read counts</li>
+</ol>
 </div>
 <div class="section level1">
 <h1 id="why-use-bakr">Why use bakR?<a class="anchor" aria-label="anchor" href="#why-use-bakr"></a>
@@ -136,13 +140,20 @@
 </h1>
 <p>There are currently seven vignettes to help get you up to speed with using bakR:</p>
 <ol style="list-style-type: decimal">
-<li>An introductory vignette (title: Differential Kinetic Analysis with bakR) that walks you through the basic bakR workflow with simulated data.</li>
-<li>A more concise version of the introductory vignette that will get you up and running with bakR quickly (title: bakR for people in a hurry). Particularly appropriate for those who are very comfortable with adopting new bioinformatic tools.</li>
-<li>Combining bakR with differential expression analysis to perform differential synthesis rate analysis (title: Differential synthesis analysis with bakR and DESeq2).</li>
-<li>How to use fraction new estimates (e.g., from a tool like GRAND-SLAM) as input to bakR, a new feature introduced in version 1.0.0 (title: GRAND-SLAM output/fn estimates as bakR input).</li>
-<li>Correcting for disproportionate loss of s<sup>4</sup>U containing RNA (title: Correcting for dropout). This phenomenon, termed dropout, is discussed in two recent preprints, one from <a href="https://www.biorxiv.org/content/10.1101/2023.05.24.542133v1" class="external-link">our lab</a> and one from the <a href="https://www.biorxiv.org/content/10.1101/2023.04.21.537786v1.full" class="external-link">Erhard lab</a>.</li>
-<li>How to identify and deal with problems that can crop up when analyzing NR-seq data (title: Troubleshooting analyses of NR-seq data with bakR).</li>
-<li>Distinguishing transcriptional and post-transcriptional regulation, even when the steady-state assumption is partially violated (title: Steady-state quasi-independent mechanistic investigations). Describes a new and somewhat experimental function in bakR, <code>DissectMechanism</code>.</li>
+<li>
+<a href="https://simonlabcode.github.io/bakR/articles/Getting-Started.html">An introductory vignette</a> (title: Differential Kinetic Analysis with bakR) that walks you through the basic bakR workflow with simulated data.</li>
+<li>
+<a href="https://simonlabcode.github.io/bakR/articles/bakR-Quickstart.html">A more concise version of the introductory vignette</a> that will get you up and running with bakR quickly (title: bakR for people in a hurry). Particularly appropriate for those who are very comfortable with adopting new bioinformatic tools.</li>
+<li>
+<a href="https://simonlabcode.github.io/bakR/articles/Differential-Synth.html">Combining bakR with differential expression analysis</a> to perform differential synthesis rate analysis (title: Differential synthesis analysis with bakR and DESeq2).</li>
+<li>
+<a href="https://simonlabcode.github.io/bakR/articles/bakR-Fn.html">How to use fraction new estimates (e.g., from a tool like GRAND-SLAM) as input to bakR</a>, a new feature introduced in version 1.0.0 (title: GRAND-SLAM output/fn estimates as bakR input).</li>
+<li>
+<a href="https://simonlabcode.github.io/bakR/articles/Dropout.html">Correcting for disproportionate loss of s<sup>4</sup>U containing RNA</a> (title: Correcting for dropout). This phenomenon, termed dropout, is discussed in two recent preprints, one from <a href="https://www.biorxiv.org/content/10.1101/2023.05.24.542133v1" class="external-link">our lab</a> and one from the <a href="https://www.biorxiv.org/content/10.1101/2023.04.21.537786v1.full" class="external-link">Erhard lab</a>.</li>
+<li>
+<a href="https://simonlabcode.github.io/bakR/articles/Troubleshooting.html">How to identify and deal with problems</a> that can crop up when analyzing NR-seq data (title: Troubleshooting analyses of NR-seq data with bakR).</li>
+<li>
+<a href="https://simonlabcode.github.io/bakR/articles/NSS.html">Distinguishing transcriptional and post-transcriptional regulation</a>, even when the steady-state assumption is partially violated (title: Steady-state quasi-independent mechanistic investigations). Describes a new and somewhat experimental function in bakR, <code>DissectMechanism</code>.</li>
 </ol>
 <p>All vignettes are available on the <a href="https://simonlabcode.github.io/bakR/index.html">bakR website</a> under the Articles section. <a href="https://github.com/simonlabcode/bakR" class="external-link">Here</a> is the link to the bakR github as well if you need help getting back to the github from the website.</p>
 </div>
