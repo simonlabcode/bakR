@@ -1330,10 +1330,12 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
   
   if(is.null(nbin)){
     nbin <- max(c(round(ngene*sum(nreps)/100), 10))
+    nbin <- min(c(nbin, 3000))
   }
   
   message("Estimating read count-variance relationship")
   
+  #browser()
   
   if(NSS){
     Binned_data <- Mut_data_est %>% dplyr::group_by(fnum, mut) %>%
@@ -1587,9 +1589,14 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
   
   if(is.null(Mutrates)){
     # Convert to tibbles because I like tibbles better
-    fast_list <- list(dplyr::as_tibble(df_fn), dplyr::as_tibble(avg_df_fn_bayes), dplyr::as_tibble(Effect_sizes_df), c(a = a_hyper, b = b_hyper), lm_list)
+    fast_list <- list(dplyr::as_tibble(df_fn), 
+                      dplyr::as_tibble(avg_df_fn_bayes), 
+                      dplyr::as_tibble(Effect_sizes_df), 
+                      c(a = a_hyper, b = b_hyper), 
+                      lm_list,
+                      dplyr::as_tibble(Binned_data))
     
-    names(fast_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Hyper_Parameters", "Mean_Variance_lms")
+    names(fast_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Hyper_Parameters", "Mean_Variance_lms", "Mean_Variance_data")
     
     class(fast_list) <- "FastFit"
     
@@ -1598,9 +1605,14 @@ avg_and_regularize <- function(Mut_data_est, nreps, sample_lookup, feature_looku
     
   }else{
     # Convert to tibbles because I like tibbles better
-    fast_list <- list(dplyr::as_tibble(df_fn), dplyr::as_tibble(avg_df_fn_bayes), dplyr::as_tibble(Effect_sizes_df), Mutrates, c(a = a_hyper, b = b_hyper), lm_list)
+    fast_list <- list(dplyr::as_tibble(df_fn), 
+                      dplyr::as_tibble(avg_df_fn_bayes),
+                      dplyr::as_tibble(Effect_sizes_df), 
+                      Mutrates, c(a = a_hyper, b = b_hyper), 
+                      lm_list,
+                      dplyr::as_tibble(Binned_data))
     
-    names(fast_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates", "Hyper_Parameters", "Mean_Variance_lms")
+    names(fast_list) <- c("Fn_Estimates", "Regularized_ests", "Effects_df", "Mut_rates", "Hyper_Parameters", "Mean_Variance_lms", "Mean_Variance_data")
     
     class(fast_list) <- "FastFit"
     
