@@ -2,42 +2,42 @@
 data {
   int NE; //num entries in data frame.
   int NF; //num features
-  int TP[NE]; // type for each entry (+s4U = 1, -s4U = 0)
-  int MT[NE]; // mutant type for each entry (WT = 1, treatment A = 2, treatment B = 3, treatment C = 4)
+  array[NE] int TP; // type for each entry (+s4U = 1, -s4U = 0)
+  array[NE] int MT; // mutant type for each entry (WT = 1, treatment A = 2, treatment B = 3, treatment C = 4)
   int nMT; // number of different mutation types
-  int FE[NE]; //  feature  for each entry
-  int num_mut[NE]; //  mutations in each entry
-  int num_obs[NE]; // number of times its observed
-  int R[NE]; //Replicate ID
-  real U_cont[NE]; // Feature specific log-fold difference in U content
+  array[NE] int FE; //  feature  for each entry
+  array[NE] int num_mut; //  mutations in each entry
+  array[NE] int num_obs; // number of times its observed
+  array[NE] int R; //Replicate ID
+  array[NE] real U_cont; // Feature specific log-fold difference in U content
   int nrep;  // Number of replicates
-  real tl[nMT];   // Label time
-  real Avg_Reads[NF, nMT]; // Average read counts in transcript i and sample j (avg. across replicates)
+  array[nMT] real tl;   // Label time
+  array[NF, nMT] real Avg_Reads; // Average read counts in transcript i and sample j (avg. across replicates)
   int<lower=0, upper=1> Chase;
   real nU;
 }
 
 parameters {
-  vector<lower=0>[nrep] TL_lambda_eff[nMT];   // s4U induced increase in mutation rate
-  vector[nrep] log_lambda_o[nMT];  // Background mutation rate
-  vector[nMT] alpha[NF];
-  real mu_fn[nMT];        // Global mean fn
-  real<lower=0> sig_fn[nMT];
-  real z_fn[NF, nMT, nrep];
+  array[nMT] vector<lower=0>[nrep] TL_lambda_eff;   // s4U induced increase in mutation rate
+  array[nMT] vector[nrep] log_lambda_o;  // Background mutation rate
+  array[NF] vector[nMT] alpha;
+  array[nMT] real mu_fn;        // Global mean fn
+  array[nMT] real<lower=0> sig_fn;
+  array[NF, nMT, nrep] real z_fn;
   //vector[nMT-1] z_e[NF];
   vector<lower=0>[nMT] a;
   vector[nMT] b;
-  vector[nMT] z_sd_r [NF];
+  array[NF] vector[nMT] z_sd_r;
   vector<lower=0>[nMT] sig_rep;
   //vector<lower=0>[nMT] sd_r_mu [NF];
 }
 
 transformed parameters {
-  real<lower=0,upper=1> frac_new[NF, nMT, nrep];   // Fraction new (fn) of obs reads on native scale.
-  real mu_rep_logit_fn[NF, nMT, nrep]; // Fn on logit scale
-  vector[nrep] log_lambda_n[nMT]; // Mutation rate of s4U labelled reads
-  vector<lower=0>[nMT] sd_r_mu[NF];
-  vector[nMT] sd_rep[NF];
+  array[NF, nMT, nrep] real<lower=0,upper=1> frac_new;   // Fraction new (fn) of obs reads on native scale.
+  array[NF, nMT, nrep] real mu_rep_logit_fn; // Fn on logit scale
+  array[nMT] vector[nrep] log_lambda_n; // Mutation rate of s4U labelled reads
+  array[NF] vector<lower=0>[nMT] sd_r_mu;
+  array[NF] vector[nMT] sd_rep;
 
       for(m in 1:nMT){
         for(r in 1:nrep){
@@ -106,9 +106,9 @@ model {
 
 generated quantities {
 
-  vector[nMT] kd[NF]; // decay rate
-  vector[nMT-1] L2FC_kd[NF]; // change in decay rate
-  vector[nMT] log_kd[NF]; //log(kdeg)
+  array[NF] vector[nMT] kd; // decay rate
+  array[NF] vector[nMT-1] L2FC_kd; // change in decay rate
+  array[NF] vector[nMT] log_kd; //log(kdeg)
 
   for (i in 1:NF) {
     for (j in 1:nMT) {
