@@ -2,37 +2,37 @@
 data {
   int NE; //num entries in data frame.
   int NF; //num features
-  int MT[NE]; // mutant type for each entry (WT = 1, treatment A = 2, treatment B = 3, treatment C = 4)
+  array[NE] int MT; // mutant type for each entry (WT = 1, treatment A = 2, treatment B = 3, treatment C = 4)
   int nMT; // number of different mutation types
-  int FE[NE]; //  feature  for each entry
-  int R[NE]; //Replicate ID
+  array[NE] int FE; //  feature  for each entry
+  array[NE] int R; //Replicate ID
   int nrep;
-  real tl[nMT];
-  real logit_fn_rep[NE]; //Replicate fn estimate
-  real fn_se[NE] ; //Standard error of replicate fn estimate
-  real Avg_Reads[NF, nMT]; // Average read counts in transcript i and sample j (avg. across replicates)
+  array[nMT] real tl;
+  array[NE] real logit_fn_rep; //Replicate fn estimate
+  array[NE] real fn_se ; //Standard error of replicate fn estimate
+  array[NF, nMT] real Avg_Reads; // Average read counts in transcript i and sample j (avg. across replicates)
   int<lower=0, upper=1> Chase;
 }
 
 parameters {
-  vector[nMT] alpha[NF];
+  array[NF] vector[nMT] alpha;
   vector[nMT] mu_fn;
   vector[nMT] log_sig_fn;
   //vector[nMT-1] z_e [NF];
   //real mu_rep_logit_fn[NF, nMT, nrep]; // Inferred fraction new of obs reads on native scale.
-  real z_fn[NF, nMT, nrep];
+  array[NF, nMT, nrep] real z_fn;
   vector<lower=0>[nMT] a;
   vector[nMT] b;
   vector<lower=0>[nMT] sd_rep;
-  vector[nMT] z_rep [NF];
+  array[NF] vector[nMT] z_rep;
   //vector<lower=0>[nMT] sd_r_mu[NF];
 }
 
 transformed parameters {
-  real mu_rep_logit_fn[NF, nMT, nrep]; // Inferred fraction new of obs reads on native scale.
+  array[NF, nMT, nrep] real mu_rep_logit_fn; // Inferred fraction new of obs reads on native scale.
   //vector[nMT-1] eff[NF]; //  Parameter for fraction new of observed reads
   vector<lower=0>[nMT] sig_fn = exp(log_sig_fn);
-  vector<lower=0>[nMT] sd_r_mu[NF];
+  array[NF] vector<lower=0>[nMT] sd_r_mu;
   //vector[nMT] sd_mean[NF];
 
     // Left here if needed for non-centered parameterization:
@@ -93,9 +93,9 @@ model {
 
  generated quantities {
 
-   vector[nMT] kd[NF]; // decay rate
-   vector[nMT-1] L2FC_kd[NF]; // change in decay rate
-   vector[nMT] log_kd[NF]; // log(kdeg)
+   array[NF] vector[nMT] kd; // decay rate
+   array[NF] vector[nMT-1] L2FC_kd; // change in decay rate
+   array[NF] vector[nMT] log_kd; // log(kdeg)
 
   for (i in 1:NF) {
     for (j in 1:nMT) {
