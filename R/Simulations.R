@@ -82,7 +82,7 @@
 #'  \item Effect_sim; Dataframe meant to mimic formatting of Effect_df that are part of \code{bakRFit(StanFit = TRUE)}, \code{bakRFit(HybridFit = TRUE)} and \code{bakRFit(bakRData object)} output.
 #'  \item Fn_mean_sim; Dataframe meant to mimic formatting of Regularized_ests that is part of \code{bakRFit(bakRData object)} output. Contains information
 #'  about the true fraction new simulated in each condition (the mean of the normal distribution from which replicate fraction news are simulated)
-#'  \item Fn_rep_sim; Dataframe meant to mimic formatting of Fn_Estimates that is part of \\code{bakRFit(bakRData object)} output. Contains information
+#'  \item Fn_rep_sim; Dataframe meant to mimic formatting of Fn_Estimates that is part of \code{bakRFit(bakRData object)} output. Contains information
 #'  about the fraction new simulated for each feature in each replicate of each condition.
 #'  \item L2FC_ks_mean; The true L2FC(ksyn) for each feature in each experimental condition. The i-th column corresponds to the L2FC(ksyn) when comparing
 #'  the i-th condition to the reference condition (defined as the 1st condition) so the 1st column is always all 0s
