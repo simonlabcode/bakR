@@ -1,3 +1,5 @@
+# bakR 1.0.1
+
 # bakR 1.0.0
 * Functions for visualizing (`VisualizeDropout`), quantifying (`QuantifyDropout`), and correcting (`CorrectDropout`) metabolic label-induced dropout of RNA during library preparation have been added. 
 * New simulation function (`simulate_relative_bakRData`) which better captures the relative nature of RNA-seq and can accurately simulate dropout.
