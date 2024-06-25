@@ -1,3 +1,7 @@
+# bakR 1.0.1
+* Updated Stan array syntax to be compatible with current rstan version
+* Hack to address Hmisc binning edge case (see https://github.com/harrelfe/Hmisc/issues/169).
+
 # bakR 1.0.0
 * Functions for visualizing (`VisualizeDropout`), quantifying (`QuantifyDropout`), and correcting (`CorrectDropout`) metabolic label-induced dropout of RNA during library preparation have been added. 
 * New simulation function (`simulate_relative_bakRData`) which better captures the relative nature of RNA-seq and can accurately simulate dropout.
