@@ -214,31 +214,33 @@ Thus, the dropout corrected read counts can be obtained as follows:
 
 $$
 \begin{align}
-\text{Corrected read count for feature i} &= \text{nreads}_{\text{i}}*\frac{\theta_{\text{i}}*(1 - \text{pdo}) + (1 - \theta_{\text{i}})}{\theta_{\text{G}}*(1 - \text{pdo}) + (1 - \theta_{\text{G}})}
+\text{Corrected read count for feature i} &= \text{nreads}_{\text{i}}*\frac{\theta_{\text{G}}*(1 - \text{pdo}) + (1 - \theta_{\text{G}})}{\theta_{\text{i}}*(1 - \text{pdo}) + (1 - \theta_{\text{i}})}
 \end{align}
 $$
 
 ## Differences between bakR and grandR's strategies
-Florian Erhard's group was the first to implement a strategy for dropout correction in an NR-seq analysis tool (their R package [grandR](https://github.com/erhard-lab/grandR)). The strategy used by grandR is discussed [here](https://www.biorxiv.org/content/10.1101/2023.04.21.537786v1). In short, the dropout rate ($\text{pdo}$) is assumed to be related to the Spearman correlation ($\rho$) between the rank of a feature's fraction new(referred to by them as the new-to-total ratio, or NTR) and the log of the dropout metric discussed above (ratio of +s^4^U to -s^4^U read counts) as follows:
+Florian Erhard's group was the first to implement a strategy for dropout correction in an NR-seq analysis tool (their R package [grandR](https://github.com/erhard-lab/grandR)). The strategy used by grandR is discussed [here](https://pubmed.ncbi.nlm.nih.gov/38381903/). In short, a factor $f$ is found such that if the number of new reads (inferred as the fraction new * total reads) is multiplied by $f$, then the Spearman correlation between the fraction new and the difference in -s4U and +s4U is 0. The dropout rate is then calculated as:
 
 $$
 \begin{align}
-\text{pdo} &= \frac{\rho}{\rho + 1} 
+\text{pdo} &= \frac{f}{f + 1} 
 \end{align}
 $$
 
-We note that this definition is not model derived and sets an artificial upper bound on $\text{pdo}$ of 0.5. The estimated number of sequencing reads from new RNA is then multiplied by a factor ($\text{f}$) defined as follows:
-
-$$
-\text{f} = \frac{1}{1 - \text{pdo}}
-$$
-
-and the corrected fraction new is estimated using the adjusted new RNA read counts. A bit of algebra shows that this relationship between the inferred $\text{pdo}$ and the corrected fraction new is identical to that derived from the model above:
+We note that this definition is not derived from an explicit model. The adjusted fraction new is then calculated as:
 
 $$
 \begin{align}
-\theta_{\text{i}} &= \frac{\text{f}*(\text{number of reads from new RNA})}{\text{f}*(\text{number of reads from new RNA}) + (\text{number of reads from old RNA})} \\
-&= \frac{\text{f}*\theta_{\text{i}}^{\text{do}}*\text{nreads}_{\text{i}}}{\text{f}*\theta_{\text{i}}^{\text{do}}*\text{nreads}_{\text{i}} + (1 - \theta_{\text{i}}^{\text{do}})*\text{nreads}_{\text{i}}} \\
+\text{corrected fn} = \frac{f*(\text{number of reads from new RNA})}{f*(\text{number of reads from new RNA}) + (\text{number of reads from old RNA})}
+\end{align}
+$$
+
+**NOTE: previous versions of this vignette included some inaccuracies about the Erhard lab's method. These have been corrected and we apologize for the mistakes. While the explanation of their method here is not identical to that provided in the methods section of their paper, our explanation follows from grandR's source code.** A bit of algebra shows that this relationship between the inferred $\text{pdo}$ and the corrected fraction new is identical to that derived from the model above:
+
+$$
+\begin{align}
+\theta_{\text{i}} &= \frac{f*(\text{number of reads from new RNA})}{f*(\text{number of reads from new RNA}) + (\text{number of reads from old RNA})} \\
+&= \frac{f*\theta_{\text{i}}^{\text{do}}*\text{nreads}_{\text{i}}}{f*\theta_{\text{i}}^{\text{do}}*\text{nreads}_{\text{i}} + (1 - \theta_{\text{i}}^{\text{do}})*\text{nreads}_{\text{i}}} \\
 &= \frac{\frac{\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo})}}{\frac{\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo})} + (1 - \theta_{\text{i}}^{\text{do}})} \\
 &= \frac{\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo}) + \theta_{\text{i}}^{\text{do}}*\text{pdo}}
 \end{align} 
@@ -249,7 +251,7 @@ Thus, grandR is implicitly making assumptions similar to those laid out in the m
 Notable differences between bakR and grandR's dropout correction approaches are:
 
 1. bakR defines an explicit model of dropout and derives a strategy to estimate the dropout rate from data. grandR defines an ad hoc relationship between a fraction new vs. dropout correlation coefficient and the dropout rate.
-1. When correcting for read counts, grandR seems to use a different correction strategy than is derived from the model above. The details are a bit scant, but it appears that reads are added to all features in proportion to their fraction new, with higher fraction new features being given more extra reads to account for their dropout-induced underrepresentation. bakR on the other hand redistributes read counts, thus preserving the total library size.
+1. When correcting for read counts, grandR seems to use a different correction strategy than is derived from the model above. New read counts are multiplied by the inferred factor $f$ discussed earlier. bakR on the other hand redistributes read counts, thus preserving the total library size.
 1. bakR fits an explicit parametric model derived from assumptions made either explicitly or implicitly by both grandR and bakR. This allows users to assess the quality of the model fit and thus the likelihood that these assumptions are valid on any given dataset.
 
 ## Appendix
