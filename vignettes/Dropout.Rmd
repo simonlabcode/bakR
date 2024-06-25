@@ -219,7 +219,7 @@ $$
 $$
 
 ## Differences between bakR and grandR's strategies
-Florian Erhard's group was the first to implement a strategy for dropout correction in an NR-seq analysis tool (their R package [grandR](https://github.com/erhard-lab/grandR)). The strategy used by grandR is discussed [here](https://www.biorxiv.org/content/10.1101/2023.04.21.537786v1). In short, a factor $f$ is found such that if the number of new reads (inferred as the fraction new * total reads) is multiplied by $f$, then the Spearman correlation between the fraction new and the difference in -s4U and +s4U is 0. The dropout rate is then calculated as:
+Florian Erhard's group was the first to implement a strategy for dropout correction in an NR-seq analysis tool (their R package [grandR](https://github.com/erhard-lab/grandR)). The strategy used by grandR is discussed [here](https://pubmed.ncbi.nlm.nih.gov/38381903/). In short, a factor $f$ is found such that if the number of new reads (inferred as the fraction new * total reads) is multiplied by $f$, then the Spearman correlation between the fraction new and the difference in -s4U and +s4U is 0. The dropout rate is then calculated as:
 
 $$
 \begin{align}
@@ -227,7 +227,7 @@ $$
 \end{align}
 $$
 
-We note that this definition is not model derived. The adjusted fraction new is then calculated as:
+We note that this definition is not derived from an explicit model. The adjusted fraction new is then calculated as:
 
 $$
 \begin{align}
@@ -235,7 +235,7 @@ $$
 \end{align}
 $$
 
-**NOTE: previous versions of this vignette included some inaccuracies about the Erhard lab's method. These have been corrected and we apologize for any confusion we caused. While the explanation of their method here is not identical to that provided in the methods section of their paper, our explanation follows from grandR's source code.** A bit of algebra shows that this relationship between the inferred $\text{pdo}$ and the corrected fraction new is identical to that derived from the model above:
+**NOTE: previous versions of this vignette included some inaccuracies about the Erhard lab's method. These have been corrected and we apologize for the mistakes. While the explanation of their method here is not identical to that provided in the methods section of their paper, our explanation follows from grandR's source code.** A bit of algebra shows that this relationship between the inferred $\text{pdo}$ and the corrected fraction new is identical to that derived from the model above:
 
 $$
 \begin{align}
