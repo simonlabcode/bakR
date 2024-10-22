@@ -5,77 +5,54 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="bakR">
 <title>Troubleshooting analyses of NR-seq data with bakR • bakR</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
-<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
-<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
-<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
-<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js" integrity="sha512-7O5pXpc0oCRrxk8RUfDYFgn0nO1t+jLuIOQdOMRp4APB7uZ4vSjspzp5y6YDtDs4VzUSTbWzBFZ/LKJhnyFOKw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Troubleshooting analyses of NR-seq data with bakR">
-<meta property="og:description" content="bakR">
-<meta property="og:image" content="https://simonlabcode.github.io/bakR/logo.png">
-<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Troubleshooting analyses of NR-seq data with bakR">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
-    
 
-    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light" data-bs-theme="light"><div class="container">
-    
+
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
     <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1</small>
 
-    
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item">
-  <a class="nav-link" href="../reference/index.html">Reference</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
-  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
-  <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/Getting-Started.html">Differential kinetic analysis with bakR</a>
-    <a class="dropdown-item" href="../articles/bakR-Quickstart.html">bakR for people in a hurry</a>
-    <a class="dropdown-item" href="../articles/Differential-Synth.html">Differential synthesis analysis with bakR and DESeq2</a>
-    <a class="dropdown-item" href="../articles/bakR-Fn.html">GRAND-SLAM output/fn estimates as bakR input</a>
-    <a class="dropdown-item" href="../articles/Dropout.html">Correcting for dropout</a>
-    <a class="dropdown-item" href="../articles/Troubleshooting.html">Troubleshooting analyses of NR-seq data with bakR</a>
-    <a class="dropdown-item" href="../articles/NSS.html">Steady-state quasi-independent mechanistic investigations</a>
-  </div>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/Getting-Started.html">Differential kinetic analysis with bakR</a></li>
+    <li><a class="dropdown-item" href="../articles/bakR-Quickstart.html">bakR for people in a hurry</a></li>
+    <li><a class="dropdown-item" href="../articles/Differential-Synth.html">Differential synthesis analysis with bakR and DESeq2</a></li>
+    <li><a class="dropdown-item" href="../articles/bakR-Fn.html">GRAND-SLAM output/fn estimates as bakR input</a></li>
+    <li><a class="dropdown-item" href="../articles/Dropout.html">Correcting for dropout</a></li>
+    <li><a class="dropdown-item" href="../articles/Troubleshooting.html">Troubleshooting analyses of NR-seq data with bakR</a></li>
+    <li><a class="dropdown-item" href="../articles/NSS.html">Steady-state quasi-independent mechanistic investigations</a></li>
+  </ul>
 </li>
-<li class="nav-item">
-  <a class="nav-link" href="../news/index.html">Changelog</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
-<form class="form-inline my-2 my-lg-0" role="search">
-        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off">
-</form>
-
-      <ul class="navbar-nav">
-<li class="nav-item">
-  <a class="external-link nav-link" href="https://github.com/simonlabcode/bakR/" aria-label="github">
-    <span class="fab fa fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
+<ul class="navbar-nav">
+<li class="nav-item"><form class="form-inline" role="search">
+ <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
+</form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/simonlabcode/bakR/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
-    
+
   </div>
 </nav><div class="container template-article">
 
@@ -88,7 +65,7 @@
                         <h4 data-toc-skip class="author">Isaac Vock</h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/simonlabcode/bakR/blob/HEAD/vignettes/Troubleshooting.Rmd" class="external-link"><code>vignettes/Troubleshooting.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/simonlabcode/bakR/blob/master/vignettes/Troubleshooting.Rmd" class="external-link"><code>vignettes/Troubleshooting.Rmd</code></a></small>
       <div class="d-none name"><code>Troubleshooting.Rmd</code></div>
     </div>
 
@@ -118,9 +95,8 @@ will also be used for some figures shown here.</p>
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://simonlabcode.github.io/bakR/">bakR</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/taiyun/corrplot" class="external-link">corrplot</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; corrplot 0.92 loaded</span></span></code></pre></div>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co">#&gt; corrplot 0.95 loaded</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="the-qc_checks-function">The QC_checks() function<a class="anchor" aria-label="anchor" href="#the-qc_checks-function"></a>
@@ -128,7 +104,7 @@ will also be used for some figures shown here.</p>
 <p>Version 0.4.0 of bakR introduced a function that takes as input a
 bakRFit object and assesses a number of aspects of the model fit and raw
 data:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Simulate a nucleotide recoding dataset</span></span>
 <span><span class="va">sim_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Simulate_relative_bakRData.html">Simulate_relative_bakRData</a></span><span class="op">(</span><span class="fl">1000</span>, depth <span class="op">=</span> <span class="fl">1000000</span>,</span>
 <span>                                       nreps <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
@@ -158,9 +134,8 @@ data:</p>
 <span><span class="co">#&gt; Averaging replicate data and regularizing estimates</span></span>
 <span><span class="co">#&gt; Assessing statistical significance</span></span>
 <span><span class="co">#&gt; All done! Run QC_checks() on your bakRFit object to assess the </span></span>
-<span><span class="co">#&gt;             quality of your data and get recommendations for next steps.</span></span></code></pre></div>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
+<span><span class="co">#&gt;             quality of your data and get recommendations for next steps.</span></span>
+<span></span>
 <span><span class="co"># Quality control checks</span></span>
 <span><span class="va">QC</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/QC_checks.html">QC_checks</a></span><span class="op">(</span><span class="va">Fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Mutation rates in new reads looks good!</span></span>
@@ -203,7 +178,7 @@ in +s<sup>4</sup>U samples and the lower the mutation rates in
 -s<sup>4</sup>U samples, the better. One output of QC_checks is a
 convenient plot of raw mutation rates to see what these look like for
 your data:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Barplots of raw mutation rates</span></span>
 <span><span class="va">QC</span><span class="op">$</span><span class="va">raw_mutrates</span></span></code></pre></div>
 <p><img src="Troubleshooting_files/figure-html/unnamed-chunk-3-1.png" width="576" style="display: block; margin: auto;"></p>
@@ -232,7 +207,7 @@ sequencing reads are new and what fraction are old.</p>
 <p>Like with the raw mutation rates, higher new read mutation rates and
 lower old read mutation rates are better. <code><a href="../reference/QC_checks.html">QC_checks()</a></code>
 outputs a helpful visualization of these mutation rates:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Barplots of inferred mutation rates</span></span>
 <span><span class="va">QC</span><span class="op">$</span><span class="va">conversion_rates</span></span></code></pre></div>
 <p><img src="Troubleshooting_files/figure-html/unnamed-chunk-4-1.png" width="576" style="display: block; margin: auto;"></p>
@@ -258,7 +233,7 @@ exact fraction new estimate. This means that fraction news close to 0 or
 <p>QC_checks() will output a message about the average estimated
 fraction new in each +s<sup>4</sup>U sample. You can also visualize the
 distribution of fraction new estimates as follows:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Barplots of inferred mutation rates</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">Fit</span><span class="op">$</span><span class="va">Fast_Fit</span><span class="op">$</span><span class="va">Fn_Estimates</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">logit_fn</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="va">sample</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html" class="external-link">geom_density</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
@@ -285,7 +260,7 @@ which means it will be easier to identify differences in kinetic
 parameters between experimental conditions. <code>QC_checks</code> will
 output a message regarding each replicate-to-replicate correlation, and
 also provides a number of correlation plots that you can inspect:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Barplots of inferred mutation rates</span></span>
 <span>  <span class="co"># Numerical indices are ordered as they appear in QC_checks() output message</span></span>
 <span>  <span class="co"># So this is for replicate 1 and 2 of experimental ID 1</span></span>
@@ -294,7 +269,7 @@ also provides a number of correlation plots that you can inspect:</p>
 <p>In addition, <code>QC_checks</code> outputs a correlation matrix to
 allow for convenient visualization of all sample-to-sample
 correlations:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Using function from corrplot package</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/corrplot/man/corrplot.mixed.html" class="external-link">corrplot.mixed</a></span><span class="op">(</span><span class="va">QC</span><span class="op">$</span><span class="va">correlation_matrix</span>, </span>
 <span>               upper <span class="op">=</span> <span class="st">"square"</span>, lower <span class="op">=</span> <span class="st">"number"</span>, </span>
@@ -318,7 +293,7 @@ are either new or old. Intuitively, if there are very few new (old)
 reads, it is very difficult for a model to infer what the mutation rate
 in new (old) reads is. For example, here is an analysis of simulated
 data where over 98% of reads are old:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Seed for reproducibility</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">321</span><span class="op">)</span></span>
 <span></span>
@@ -356,7 +331,7 @@ data where over 98% of reads are old:</p>
 alright, the estimates for the other condition are both massive
 underestimates. Running <code>QC_checks</code> provides a suggestion
 though</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Run QC_checks and read messages</span></span>
 <span><span class="va">QC</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/QC_checks.html">QC_checks</a></span><span class="op">(</span><span class="va">Fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning in QC_checks(Fit): Mutation rates in new reads are below 0.7% in one or more samples. </span></span>
@@ -395,15 +370,15 @@ TRUE causes bakR to resort to using a fully Bayesian approach with the
 probabilistic programming language <code>Stan</code> working on the back
 end to fit a mixture model. This approach will take a bit longer to run,
 but can provide more accurate pnew and pold estimates:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Rerun with Stan-based pnew estimation</span></span>
 <span>  <span class="co"># This will take a couple minutes to run</span></span>
 <span><span class="va">Fit_s</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bakRFit.html">bakRFit</a></span><span class="op">(</span><span class="va">Fit</span>, FastRerun <span class="op">=</span> <span class="cn">TRUE</span>, StanRateEst <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'Mutrate_est' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.000448 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 4.48 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.00044 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 4.4 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -420,9 +395,9 @@ but can provide more accurate pnew and pold estimates:</p>
 <span><span class="co">#&gt; Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 11.63 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                6.302 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                17.932 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 11.127 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                6.067 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                17.194 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="co">#&gt; Estimating pnew with Stan output</span></span>
 <span><span class="co">#&gt; Estimating unlabeled mutation rate with Stan output</span></span>
@@ -442,7 +417,7 @@ but can provide more accurate pnew and pold estimates:</p>
 <p>It’s incredibly difficult to get perfect pnew estimates on this
 dataset, but this strategy certainly does a lot better! You can compare
 the resulting fraction new estimates in the troublesome samples:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Simulated ground truth</span></span>
 <span><span class="va">sim_truth</span> <span class="op">&lt;-</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">sim_list</span></span>
@@ -464,7 +439,7 @@ the resulting fraction new estimates in the troublesome samples:</p>
 <span>     ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">8</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, col <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Troubleshooting_files/figure-html/unnamed-chunk-11-1.png" width="576" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Estimated logit(fraction news)</span></span>
 <span><span class="va">est_fn</span> <span class="op">&lt;-</span> <span class="va">Fit_s</span><span class="op">$</span><span class="va">Fast_Fit</span><span class="op">$</span><span class="va">Fn_Estimates</span><span class="op">$</span><span class="va">logit_fn</span><span class="op">[</span><span class="va">Fit_s</span><span class="op">$</span><span class="va">Fast_Fit</span><span class="op">$</span><span class="va">Fn_Estimates</span><span class="op">$</span><span class="va">Exp_ID</span> <span class="op">==</span> <span class="fl">2</span><span class="op">]</span></span>
@@ -483,7 +458,7 @@ questions asked. You can either pass a vector of pnews for each sample
 (ordered as they appear in the bakRFit pnew/pold estimate message, so
 ordered by Experimental ID then Replicate ID), or just a single pnew if
 you think it is the same in all samples:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Rerun with Stan-based pnew estimation</span></span>
 <span>  <span class="co"># This will take a couple minutes to run</span></span>
 <span><span class="va">Fit_u</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bakRFit.html">bakRFit</a></span><span class="op">(</span><span class="va">Fit</span>, FastRerun <span class="op">=</span> <span class="cn">TRUE</span>, pnew <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
@@ -504,7 +479,7 @@ you think it is the same in all samples:</p>
 <span><span class="co">#&gt;             quality of your data and get recommendations for next steps.</span></span></code></pre></div>
 <p>As expected, this improves estimate accuracy, though not much more
 than setting <code>StanRateEst = TRUE</code> did:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Estimated logit(fraction news)</span></span>
 <span><span class="va">est_fn</span> <span class="op">&lt;-</span> <span class="va">Fit_u</span><span class="op">$</span><span class="va">Fast_Fit</span><span class="op">$</span><span class="va">Fn_Estimates</span><span class="op">$</span><span class="va">logit_fn</span><span class="op">[</span><span class="va">Fit_u</span><span class="op">$</span><span class="va">Fast_Fit</span><span class="op">$</span><span class="va">Fn_Estimates</span><span class="op">$</span><span class="va">Exp_ID</span> <span class="op">==</span> <span class="fl">2</span><span class="op">]</span></span>
@@ -637,7 +612,7 @@ created for this purpose you can check out.</li>
 </li>
 </ol>
 </div>
-  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>
 
@@ -648,15 +623,15 @@ created for this purpose you can check out.</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>
 </div>
 
-  
 
-  
+
+
 
   </body>
 </html>

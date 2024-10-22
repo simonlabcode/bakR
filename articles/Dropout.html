@@ -5,77 +5,54 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="bakR">
 <title>Correcting for dropout • bakR</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
-<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
-<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
-<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
-<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js" integrity="sha512-7O5pXpc0oCRrxk8RUfDYFgn0nO1t+jLuIOQdOMRp4APB7uZ4vSjspzp5y6YDtDs4VzUSTbWzBFZ/LKJhnyFOKw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Correcting for dropout">
-<meta property="og:description" content="bakR">
-<meta property="og:image" content="https://simonlabcode.github.io/bakR/logo.png">
-<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Correcting for dropout">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
-    
 
-    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light" data-bs-theme="light"><div class="container">
-    
+
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+
     <a class="navbar-brand me-2" href="../index.html">bakR</a>
 
     <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1</small>
 
-    
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item">
-  <a class="nav-link" href="../reference/index.html">Reference</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
-  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
-  <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/Getting-Started.html">Differential kinetic analysis with bakR</a>
-    <a class="dropdown-item" href="../articles/bakR-Quickstart.html">bakR for people in a hurry</a>
-    <a class="dropdown-item" href="../articles/Differential-Synth.html">Differential synthesis analysis with bakR and DESeq2</a>
-    <a class="dropdown-item" href="../articles/bakR-Fn.html">GRAND-SLAM output/fn estimates as bakR input</a>
-    <a class="dropdown-item" href="../articles/Dropout.html">Correcting for dropout</a>
-    <a class="dropdown-item" href="../articles/Troubleshooting.html">Troubleshooting analyses of NR-seq data with bakR</a>
-    <a class="dropdown-item" href="../articles/NSS.html">Steady-state quasi-independent mechanistic investigations</a>
-  </div>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/Getting-Started.html">Differential kinetic analysis with bakR</a></li>
+    <li><a class="dropdown-item" href="../articles/bakR-Quickstart.html">bakR for people in a hurry</a></li>
+    <li><a class="dropdown-item" href="../articles/Differential-Synth.html">Differential synthesis analysis with bakR and DESeq2</a></li>
+    <li><a class="dropdown-item" href="../articles/bakR-Fn.html">GRAND-SLAM output/fn estimates as bakR input</a></li>
+    <li><a class="dropdown-item" href="../articles/Dropout.html">Correcting for dropout</a></li>
+    <li><a class="dropdown-item" href="../articles/Troubleshooting.html">Troubleshooting analyses of NR-seq data with bakR</a></li>
+    <li><a class="dropdown-item" href="../articles/NSS.html">Steady-state quasi-independent mechanistic investigations</a></li>
+  </ul>
 </li>
-<li class="nav-item">
-  <a class="nav-link" href="../news/index.html">Changelog</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
-<form class="form-inline my-2 my-lg-0" role="search">
-        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off">
-</form>
-
-      <ul class="navbar-nav">
-<li class="nav-item">
-  <a class="external-link nav-link" href="https://github.com/simonlabcode/bakR/" aria-label="github">
-    <span class="fab fa fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
+<ul class="navbar-nav">
+<li class="nav-item"><form class="form-inline" role="search">
+ <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
+</form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/simonlabcode/bakR/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
-    
+
   </div>
 </nav><div class="container template-article">
 
@@ -88,7 +65,7 @@
                         <h4 data-toc-skip class="author">Isaac Vock</h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/simonlabcode/bakR/blob/HEAD/vignettes/Dropout.Rmd" class="external-link"><code>vignettes/Dropout.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/simonlabcode/bakR/blob/master/vignettes/Dropout.Rmd" class="external-link"><code>vignettes/Dropout.Rmd</code></a></small>
       <div class="d-none name"><code>Dropout.Rmd</code></div>
     </div>
 
@@ -185,14 +162,13 @@ single line of code:</p>
 <span><span class="co">#&gt; Averaging replicate data and regularizing estimates</span></span>
 <span><span class="co">#&gt; Assessing statistical significance</span></span>
 <span><span class="co">#&gt; All done! Run QC_checks() on your bakRFit object to assess the </span></span>
-<span><span class="co">#&gt;             quality of your data and get recommendations for next steps.</span></span></code></pre></div>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span>  <span class="co"># You can also overwite the existing bakRFit object.</span></span>
+<span><span class="co">#&gt;             quality of your data and get recommendations for next steps.</span></span>
+<span>  <span class="co"># You can also overwite the existing bakRFit object.</span></span>
 <span>  <span class="co"># I am creating a separate bakRFit object to make comparisons later in this vignette.</span></span></code></pre></div>
 <p>Dropout will lead to a correlation between the fraction new and the
 difference between +s<sup>4</sup>U and -s<sup>4</sup>U read counts. This
 trend and the model fit can be visualized as follows:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Correct dropout-induced biases</span></span>
 <span><span class="va">Vis_DO</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/VisualizeDropout.html">VisualizeDropout</a></span><span class="op">(</span><span class="va">Fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Estimated rates of dropout are:</span></span>
@@ -200,9 +176,8 @@ trend and the model fit can be visualized as follows:</p>
 <span><span class="co">#&gt; 1      1         1 0.4013715</span></span>
 <span><span class="co">#&gt; 2      1         2 0.3841179</span></span>
 <span><span class="co">#&gt; 3      2         1 0.2627656</span></span>
-<span><span class="co">#&gt; 4      2         2 0.3242958</span></span></code></pre></div>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
+<span><span class="co">#&gt; 4      2         2 0.3242958</span></span>
+<span></span>
 <span><span class="co"># Visualize dropout for 1st replicate of reference condition</span></span>
 <span><span class="va">Vis_DO</span><span class="op">$</span><span class="va">ExpID_1_Rep_1</span></span></code></pre></div>
 <p><img src="Dropout_files/figure-html/unnamed-chunk-4-1.png" width="576" style="display: block; margin: auto;"></p>
@@ -210,7 +185,7 @@ trend and the model fit can be visualized as follows:</p>
 simulated truth to the fraction new estimates, before and after dropout
 correction.</p>
 <p>Before correction:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Extract simualted ground truths</span></span>
 <span><span class="va">sim_truth</span> <span class="op">&lt;-</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">sim_list</span></span>
@@ -229,7 +204,7 @@ correction.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, col <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Dropout_files/figure-html/unnamed-chunk-5-1.png" width="576" style="display: block; margin: auto;"></p>
 <p>After correction:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Features that made it past filtering</span></span>
 <span><span class="va">XFs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">Fit_c</span><span class="op">$</span><span class="va">Fast_Fit</span><span class="op">$</span><span class="va">Effects_df</span><span class="op">$</span><span class="va">XF</span><span class="op">)</span></span>
@@ -271,160 +246,136 @@ referred to as pdo.</li>
 <p>These assumptions lead to the following expressions for the expected
 number of sequencing reads coming from a feature (index i) in
 +s<sup>4</sup>U and -s<sup>4</sup>U NR-seq data:</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msup><mtext mathvariant="normal">E[reads from feature i in +s</mtext><mtext mathvariant="normal">4</mtext></msup><mtext mathvariant="normal">U sample]</mtext></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mtext mathvariant="normal">number of molecules from feature i</mtext><mrow><msup><mtext mathvariant="normal">total number of molecules in +s</mtext><mtext mathvariant="normal">4</mtext></msup><mtext mathvariant="normal">U sample</mtext></mrow></mfrac><mo>*</mo><msub><mtext mathvariant="normal">R</mtext><mrow><msup><mtext mathvariant="normal">+s</mtext><mtext mathvariant="normal">4</mtext></msup><mtext mathvariant="normal">U</mtext></mrow></msub></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mrow><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><munderover><mo>∑</mo><mrow><mtext mathvariant="normal">j</mtext><mo>=</mo><mn>1</mn></mrow><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">j</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">j</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac><mo>*</mo><msub><mtext mathvariant="normal">R</mtext><mrow><msup><mtext mathvariant="normal">+s</mtext><mtext mathvariant="normal">4</mtext></msup><mtext mathvariant="normal">U</mtext></mrow></msub></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msup><mtext mathvariant="normal">E[reads from feature i in -s</mtext><mtext mathvariant="normal">4</mtext></msup><mtext mathvariant="normal">U sample]</mtext></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mtext mathvariant="normal">number of molecules from feature i</mtext><mrow><msup><mtext mathvariant="normal">total number of molecules in -s</mtext><mtext mathvariant="normal">4</mtext></msup><mtext mathvariant="normal">U sample</mtext></mrow></mfrac><mo>*</mo><msub><mtext mathvariant="normal">R</mtext><mrow><msup><mtext mathvariant="normal">-s</mtext><mtext mathvariant="normal">4</mtext></msup><mtext mathvariant="normal">U</mtext></mrow></msub></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub><mrow><munderover><mo>∑</mo><mrow><mtext mathvariant="normal">j</mtext><mo>=</mo><mn>1</mn></mrow><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub></mrow></mfrac><mo>*</mo><msub><mtext mathvariant="normal">R</mtext><mrow><msup><mtext mathvariant="normal">-s</mtext><mtext mathvariant="normal">4</mtext></msup><mtext mathvariant="normal">U</mtext></mrow></msub></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{align}
-\text{E[reads from feature i in +s}^{\text{4}}\text{U sample]} &amp;=
-\frac{\text{number of molecules from feature i}}{\text{total number of
-molecules in +s}^{\text{4}}\text{U
-sample}}*\text{R}_{\text{+s}^{\text{4}}\text{U}} \\
-                                              &amp;=
-\frac{\text{n}_{\text{i}}*\theta_{\text{i}}*(1 - \text{pdo}) +
-\text{n}_{\text{i}}*(1 - \theta_{\text{i}})
-}{\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}*\theta_{\text{j}}*(1
-- \text{pdo}) + \text{n}_{\text{j}}*(1 - \theta_{\text{j}})
-}*\text{R}_{\text{+s}^{\text{4}}\text{U}} \\
+\text{E[reads from feature i in +s}^{\text{4}}\text{U sample]} &amp;= \frac{\text{number of molecules from feature i}}{\text{total number of molecules in +s}^{\text{4}}\text{U sample}}*\text{R}_{\text{+s}^{\text{4}}\text{U}} \\
+                                              &amp;= \frac{\text{n}_{\text{i}}*\theta_{\text{i}}*(1 - \text{pdo}) + \text{n}_{\text{i}}*(1 - \theta_{\text{i}}) }{\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}*\theta_{\text{j}}*(1 - \text{pdo}) + \text{n}_{\text{j}}*(1 - \theta_{\text{j}}) }*\text{R}_{\text{+s}^{\text{4}}\text{U}} \\
                                               \\
                                               \\
-\text{E[reads from feature i in -s}^{\text{4}}\text{U sample]} &amp;=
-\frac{\text{number of molecules from feature i}}{\text{total number of
-molecules in -s}^{\text{4}}\text{U
-sample}}*\text{R}_{\text{-s}^{\text{4}}\text{U}} \\
-                                              &amp;=
-\frac{\text{n}_{\text{i}}}{\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}}*\text{R}_{\text{-s}^{\text{4}}\text{U}}
+\text{E[reads from feature i in -s}^{\text{4}}\text{U sample]} &amp;= \frac{\text{number of molecules from feature i}}{\text{total number of molecules in -s}^{\text{4}}\text{U sample}}*\text{R}_{\text{-s}^{\text{4}}\text{U}} \\
+                                              &amp;= \frac{\text{n}_{\text{i}}}{\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}}*\text{R}_{\text{-s}^{\text{4}}\text{U}}
 \end{align}                                  
-\]</span></p>
+</annotation></semantics></math></p>
 <p>where the parameters are defined as follows:</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mtext mathvariant="normal">Number of molecules from feature i</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mtext mathvariant="normal">True fraction new for feature i</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mtext mathvariant="normal">pdo</mtext></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mtext mathvariant="normal">Probability that a labeled RNA molecule is preferentially lost during library prep</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mtext mathvariant="normal">NF</mtext></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mtext mathvariant="normal">Total number of RNA features that contribute sequencable molecules</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mtext mathvariant="normal">R</mtext></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mtext mathvariant="normal">Total number of sequencing reads.</mtext></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{align}
 \text{n}_{\text{i}} &amp;= \text{Number of molecules from feature i} \\
 \theta_{\text{i}} &amp;= \text{True fraction new for feature i} \\
-\text{pdo} &amp;= \text{Probability that a labeled RNA molecule is
-preferentially lost during library prep} \\
-\text{NF} &amp;= \text{Total number of RNA features that contribute
-sequencable molecules} \\
+\text{pdo} &amp;= \text{Probability that a labeled RNA molecule is preferentially lost during library prep} \\
+\text{NF} &amp;= \text{Total number of RNA features that contribute sequencable molecules} \\
 \text{R} &amp;= \text{Total number of sequencing reads.}
 \end{align}
-\]</span></p>
+</annotation></semantics></math></p>
 <p>Defining “dropout” to be the ratio of the RPM normalized expected
 read counts yields the following relationship between “dropout”, the
 fraction new, and the rate of dropout:</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mtext mathvariant="normal">Dropout</mtext></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mrow><msup><mtext mathvariant="normal">E[reads from feature i in +s</mtext><mtext mathvariant="normal">4</mtext></msup><mtext mathvariant="normal">U sample]/</mtext><msub><mtext mathvariant="normal">R</mtext><mrow><msup><mtext mathvariant="normal">+s</mtext><mtext mathvariant="normal">4</mtext></msup><mtext mathvariant="normal">U</mtext></mrow></msub></mrow><mrow><msup><mtext mathvariant="normal">E[reads from feature i in -s</mtext><mtext mathvariant="normal">4</mtext></msup><mtext mathvariant="normal">U sample]/</mtext><msub><mtext mathvariant="normal">R</mtext><mrow><msup><mtext mathvariant="normal">-s</mtext><mtext mathvariant="normal">4</mtext></msup><mtext mathvariant="normal">U</mtext></mrow></msub></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mrow><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub></mfrac><mo>*</mo><mfrac><mrow><munderover><mo>∑</mo><mrow><mtext mathvariant="normal">j</mtext><mo>=</mo><mn>1</mn></mrow><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub></mrow><mrow><munderover><mo>∑</mo><mrow><mtext mathvariant="normal">j</mtext><mo>=</mo><mn>1</mn></mrow><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">j</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">j</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">]</mo></mrow><mo>*</mo><mtext mathvariant="normal">scale</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">]</mo></mrow><mo>*</mo><mtext mathvariant="normal">scale</mtext></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{align}
-\text{Dropout} &amp;= \frac{\text{E[reads from feature i in
-+s}^{\text{4}}\text{U
-sample]/}\text{R}_{\text{+s}^{\text{4}}\text{U}}}{\text{E[reads from
-feature i in -s}^{\text{4}}\text{U
-sample]/}\text{R}_{\text{-s}^{\text{4}}\text{U}}} \\
+\text{Dropout} &amp;= \frac{\text{E[reads from feature i in +s}^{\text{4}}\text{U sample]/}\text{R}_{\text{+s}^{\text{4}}\text{U}}}{\text{E[reads from feature i in -s}^{\text{4}}\text{U sample]/}\text{R}_{\text{-s}^{\text{4}}\text{U}}} \\
 \\
-               &amp;= \frac{\text{n}_{\text{i}}*\theta_{\text{i}}*(1 -
-\text{pdo}) + \text{n}_{\text{i}}*(1 - \theta_{\text{i}})
-}{\text{n}_{\text{i}}}*\frac{\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}}{
-\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}*\theta_{\text{j}}*(1 -
-\text{pdo}) + \text{n}_{\text{j}}*(1 - \theta_{\text{j}})  } \\
+               &amp;= \frac{\text{n}_{\text{i}}*\theta_{\text{i}}*(1 - \text{pdo}) + \text{n}_{\text{i}}*(1 - \theta_{\text{i}}) }{\text{n}_{\text{i}}}*\frac{\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}}{ \sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}*\theta_{\text{j}}*(1 - \text{pdo}) + \text{n}_{\text{j}}*(1 - \theta_{\text{j}})  } \\
                \\
-               &amp;= [\theta_{\text{i}}*(1 - \text{pdo}) + (1 -
-\theta_{\text{i}})]*\text{scale} \\
+               &amp;= [\theta_{\text{i}}*(1 - \text{pdo}) + (1 - \theta_{\text{i}})]*\text{scale} \\
                &amp;= [1 - \theta_{\text{i}}*\text{pdo}]*\text{scale}
 \end{align}
-\]</span></p>
-<p>where <span class="math inline">\(\text{scale}\)</span> is a constant
-scale factor that represents the factor difference in the number of
-sequencable molecules with and without dropout.</p>
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">scale</mtext><annotation encoding="application/x-tex">\text{scale}</annotation></semantics></math>
+is a constant scale factor that represents the factor difference in the
+number of sequencable molecules with and without dropout.</p>
 <p>Currently, the relationship between the quantification of dropout and
-<span class="math inline">\(\text{pdo}\)</span> includes <span class="math inline">\(\theta_{\text{i}}\)</span>, which is the true,
-unbiased fraction new. Unfortunately, the presence of dropout means that
-we do not have access to this quantify. Rather, we estimate a dropout
-biased fraction of sequencing reads that are new (<span class="math inline">\(\theta_{\text{i}}^{\text{do}}\)</span>), which on
-average will represent an underestimation of <span class="math inline">\(\theta_{\text{i}}\)</span>. Therefore, we need to
-relate the quantity we estimate (<span class="math inline">\(\theta_{\text{i}}^{\text{do}}\)</span>) and the
-parameter we wish to estimate (<span class="math inline">\(\text{pdo}\)</span>) to <span class="math inline">\(\theta_{\text{i}}\)</span>. In the context of this
-model, such a relationship can be derived as follows:</p>
-<p><span class="math display">\[
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">pdo</mtext><annotation encoding="application/x-tex">\text{pdo}</annotation></semantics></math>
+includes
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><annotation encoding="application/x-tex">\theta_{\text{i}}</annotation></semantics></math>,
+which is the true, unbiased fraction new. Unfortunately, the presence of
+dropout means that we do not have access to this quantify. Rather, we
+estimate a dropout biased fraction of sequencing reads that are new
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><annotation encoding="application/x-tex">\theta_{\text{i}}^{\text{do}}</annotation></semantics></math>),
+which on average will represent an underestimation of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><annotation encoding="application/x-tex">\theta_{\text{i}}</annotation></semantics></math>.
+Therefore, we need to relate the quantity we estimate
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><annotation encoding="application/x-tex">\theta_{\text{i}}^{\text{do}}</annotation></semantics></math>)
+and the parameter we wish to estimate
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">pdo</mtext><annotation encoding="application/x-tex">\text{pdo}</annotation></semantics></math>)
+to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><annotation encoding="application/x-tex">\theta_{\text{i}}</annotation></semantics></math>.
+In the context of this model, such a relationship can be derived as
+follows:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mtext mathvariant="normal">number of new sequencable molecules</mtext><mtext mathvariant="normal">total number of sequencable molecules</mtext></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mrow><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mrow><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><mo>*</mo><mrow><mo stretchy="true" form="prefix">[</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">]</mo></mrow></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><mo>*</mo><mtext mathvariant="normal">pdo</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mfrac><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><mo>*</mo><mtext mathvariant="normal">pdo</mtext></mrow></mfrac></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{align}
-\theta_{\text{i}}^{\text{do}} &amp;= \frac{\text{number of new
-sequencable molecules}}{\text{total number of sequencable molecules}} \\
-\theta_{\text{i}}^{\text{do}}                               &amp;=
-\frac{\text{n}_{\text{i}}*\theta_{\text{i}}*(1 - \text{pdo})
-}{\text{n}_{\text{i}}*\theta_{\text{i}}*(1 - \text{pdo}) +
-\text{n}_{\text{i}}*(1-\theta_{\text{i}})} \\
-\theta_{\text{i}}^{\text{do}}                              &amp;=
-\frac{\theta_{\text{i}}*(1 - \text{pdo}) }{\theta_{\text{i}}*(1 -
-\text{pdo}) + (1-\theta_{\text{i}})} \\
-\theta_{\text{i}}^{\text{do}}*[1 - \theta_{\text{i}}*\text{pdo}] &amp;=
-\theta_{\text{i}}*(1 - \text{pdo}) \\
-\theta_{\text{i}}^{\text{do}} &amp;= \theta_{\text{i}}*(1 - \text{pdo})
-+ \theta_{\text{i}}*\theta_{\text{i}}^{\text{do}}*\text{pdo} \\
-\frac{\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo}) +
-\theta_{\text{i}}^{\text{do}}*\text{pdo}} &amp;= \theta_{\text{i}}
+\theta_{\text{i}}^{\text{do}} &amp;= \frac{\text{number of new sequencable molecules}}{\text{total number of sequencable molecules}} \\
+\theta_{\text{i}}^{\text{do}}                               &amp;= \frac{\text{n}_{\text{i}}*\theta_{\text{i}}*(1 - \text{pdo}) }{\text{n}_{\text{i}}*\theta_{\text{i}}*(1 - \text{pdo}) + \text{n}_{\text{i}}*(1-\theta_{\text{i}})} \\
+ \theta_{\text{i}}^{\text{do}}                              &amp;= \frac{\theta_{\text{i}}*(1 - \text{pdo}) }{\theta_{\text{i}}*(1 - \text{pdo}) + (1-\theta_{\text{i}})} \\
+ \theta_{\text{i}}^{\text{do}}*[1 - \theta_{\text{i}}*\text{pdo}] &amp;= \theta_{\text{i}}*(1 - \text{pdo}) \\
+\theta_{\text{i}}^{\text{do}} &amp;= \theta_{\text{i}}*(1 - \text{pdo}) + \theta_{\text{i}}*\theta_{\text{i}}^{\text{do}}*\text{pdo} \\
+\frac{\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo}) + \theta_{\text{i}}^{\text{do}}*\text{pdo}} &amp;= \theta_{\text{i}}
 \end{align}
-\]</span></p>
-<p>We can then use this relationship to substite <span class="math inline">\(\theta_{\text{i}}\)</span> for a function of <span class="math inline">\(\theta_{\text{i}}^{\text{do}}\)</span> and <span class="math inline">\(\text{pdo}\)</span> in our dropout quantification
-equation:</p>
-<p><span class="math display">\[
+</annotation></semantics></math></p>
+<p>We can then use this relationship to substite
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><annotation encoding="application/x-tex">\theta_{\text{i}}</annotation></semantics></math>
+for a function of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><annotation encoding="application/x-tex">\theta_{\text{i}}^{\text{do}}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">pdo</mtext><annotation encoding="application/x-tex">\text{pdo}</annotation></semantics></math>
+in our dropout quantification equation:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mtext mathvariant="normal">Dropout</mtext></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">]</mo></mrow><mo>*</mo><mtext mathvariant="normal">scale</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mtext mathvariant="normal">Dropout</mtext></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mtext mathvariant="normal">scale</mtext><mo>−</mo><mfrac><mrow><mtext mathvariant="normal">scale</mtext><mo>*</mo><mtext mathvariant="normal">pdo</mtext><mo>*</mo><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup></mrow><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><mo>*</mo><mtext mathvariant="normal">pdo</mtext></mrow></mfrac></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{align}
 \text{Dropout} &amp;= [1 - \theta_{\text{i}}*\text{pdo}]*\text{scale}\\
-\text{Dropout} &amp;= \text{scale} -
-\frac{\text{scale}*\text{pdo}*\theta_{\text{i}}^{\text{do}}}{(1 -
-\text{pdo}) + \theta_{\text{i}}^{\text{do}}*\text{pdo}}
+\text{Dropout} &amp;= \text{scale} - \frac{\text{scale}*\text{pdo}*\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo}) + \theta_{\text{i}}^{\text{do}}*\text{pdo}}
 \end{align}
-\]</span></p>
+</annotation></semantics></math></p>
 <p>bakR’s <code>CorrectDropout</code> function fits this predicted
 relationship between the ratio of +s<sup>4</sup>U to -s<sup>4</sup>U
-reads (<span class="math inline">\(\text{Dropout}\)</span>) and the
-uncorrected fraction new estimates (<span class="math inline">\(\theta_{\text{i}}^{\text{do}}\)</span>) to infer
-<span class="math inline">\(pdo\)</span>. Corrected fraction new
-estimates can then be inferred from the relationship between <span class="math inline">\(\theta_{\text{i}}^{\text{do}}\)</span>, <span class="math inline">\(\text{pdo}\)</span>, and <span class="math inline">\(\theta_{\text{i}}\)</span>. Finally, bakR
-redistributes read counts according to what the estimated relative
-proportions of each feature would have been if no dropout had existed.
-The key insight is that:</p>
-<p><span class="math display">\[
+reads
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">Dropout</mtext><annotation encoding="application/x-tex">\text{Dropout}</annotation></semantics></math>)
+and the uncorrected fraction new estimates
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><annotation encoding="application/x-tex">\theta_{\text{i}}^{\text{do}}</annotation></semantics></math>)
+to infer
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mi>d</mi><mi>o</mi></mrow><annotation encoding="application/x-tex">pdo</annotation></semantics></math>.
+Corrected fraction new estimates can then be inferred from the
+relationship between
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><annotation encoding="application/x-tex">\theta_{\text{i}}^{\text{do}}</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">pdo</mtext><annotation encoding="application/x-tex">\text{pdo}</annotation></semantics></math>,
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><annotation encoding="application/x-tex">\theta_{\text{i}}</annotation></semantics></math>.
+Finally, bakR redistributes read counts according to what the estimated
+relative proportions of each feature would have been if no dropout had
+existed. The key insight is that:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mfrac><mtext mathvariant="normal">E[number of reads without dropout]</mtext><mtext mathvariant="normal">E[number of reads with dropout]</mtext></mfrac></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mtext mathvariant="normal">Dropout</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mrow><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub></mfrac><mo>*</mo><mfrac><mrow><munderover><mo>∑</mo><mrow><mtext mathvariant="normal">j</mtext><mo>=</mo><mn>1</mn></mrow><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub></mrow><mrow><munderover><mo>∑</mo><mrow><mtext mathvariant="normal">j</mtext><mo>=</mo><mn>1</mn></mrow><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">j</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">j</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mrow><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mn>1</mn></mfrac><mo>*</mo><mfrac><mtext mathvariant="normal">N</mtext><mrow><mtext mathvariant="normal">N</mtext><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">G</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mtext mathvariant="normal">N</mtext><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">G</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mrow><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mn>1</mn></mfrac><mo>*</mo><mfrac><mn>1</mn><mrow><msub><mi>θ</mi><mtext mathvariant="normal">G</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">G</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mtext mathvariant="normal">fraction of feature i molecules remaining after dropout</mtext><mtext mathvariant="normal">fraction of total molecules remaining after dropout</mtext></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{align}
-\frac{\text{E[number of reads without dropout]}}{\text{E[number of reads
-with dropout]}} &amp;= \text{Dropout}\\
-&amp;= \frac{\text{n}_{\text{i}}*\theta_{\text{i}}*(1 - \text{pdo}) +
-\text{n}_{\text{i}}*(1 - \theta_{\text{i}})
-}{\text{n}_{\text{i}}}*\frac{\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}}{
-\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}*\theta_{\text{j}}*(1 -
-\text{pdo}) + \text{n}_{\text{j}}*(1 - \theta_{\text{j}})  } \\
-&amp;= \frac{\theta_{\text{i}}*(1 - \text{pdo}) + (1 -
-\theta_{\text{i}})
-}{1}*\frac{\text{N}}{\text{N}*\theta_{\text{G}}*(1-\text{pdo}) +
-\text{N}*(1 - \theta_{\text{G}})}\\
-&amp;= \frac{\theta_{\text{i}}*(1 - \text{pdo}) + (1 -
-\theta_{\text{i}}) }{1}*\frac{1}{\theta_{\text{G}}*(1 - \text{pdo}) + (1
-- \theta_{\text{G}}) } \\
+\frac{\text{E[number of reads without dropout]}}{\text{E[number of reads with dropout]}} &amp;= \text{Dropout}\\ 
+&amp;= \frac{\text{n}_{\text{i}}*\theta_{\text{i}}*(1 - \text{pdo}) + \text{n}_{\text{i}}*(1 - \theta_{\text{i}}) }{\text{n}_{\text{i}}}*\frac{\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}}{ \sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}*\theta_{\text{j}}*(1 - \text{pdo}) + \text{n}_{\text{j}}*(1 - \theta_{\text{j}})  } \\
+&amp;= \frac{\theta_{\text{i}}*(1 - \text{pdo}) + (1 - \theta_{\text{i}}) }{1}*\frac{\text{N}}{\text{N}*\theta_{\text{G}}*(1-\text{pdo}) + \text{N}*(1 - \theta_{\text{G}})}\\
+&amp;= \frac{\theta_{\text{i}}*(1 - \text{pdo}) + (1 - \theta_{\text{i}}) }{1}*\frac{1}{\theta_{\text{G}}*(1 - \text{pdo}) + (1 - \theta_{\text{G}}) } \\ 
 \\
-&amp;= \frac{\text{fraction of feature i molecules remaining after
-dropout}}{\text{fraction of total molecules remaining after dropout}} \\
+&amp;= \frac{\text{fraction of feature i molecules remaining after dropout}}{\text{fraction of total molecules remaining after dropout}} \\
 \end{align}
-\]</span></p>
+</annotation></semantics></math></p>
 <p>Getting from the 2nd line to the third line involved a bit of
 algebraic trickery (multiplying by 1) and defining the “global fraction
-new” (<span class="math inline">\(\theta_{\text{G}}\)</span>), which is
-the fraction of all sequenced molecules that are new (where <span class="math inline">\(\text{N}\)</span> is the total number of sequenced
-molecules if none are lost due to dropout). <span class="math inline">\(\theta_{\text{G}}\)</span> can be calculated as a
-weighted average of dropout biased fraction news for each feature,
-weighted by the uncorrected number of reads each feature has, and then
-dropout correcting:</p>
-<p><span class="math display">\[
+new”
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>θ</mi><mtext mathvariant="normal">G</mtext></msub><annotation encoding="application/x-tex">\theta_{\text{G}}</annotation></semantics></math>),
+which is the fraction of all sequenced molecules that are new (where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">N</mtext><annotation encoding="application/x-tex">\text{N}</annotation></semantics></math>
+is the total number of sequenced molecules if none are lost due to
+dropout).
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>θ</mi><mtext mathvariant="normal">G</mtext></msub><annotation encoding="application/x-tex">\theta_{\text{G}}</annotation></semantics></math>
+can be calculated as a weighted average of dropout biased fraction news
+for each feature, weighted by the uncorrected number of reads each
+feature has, and then dropout correcting:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msubsup><mi>θ</mi><mtext mathvariant="normal">G</mtext><mtext mathvariant="normal">do</mtext></msubsup></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mrow><munderover><mo>∑</mo><mtext mathvariant="normal">j=1</mtext><mtext mathvariant="normal">NF</mtext></munderover><msubsup><mi>θ</mi><mtext mathvariant="normal">j</mtext><mtext mathvariant="normal">do</mtext></msubsup><mo>*</mo><msub><mtext mathvariant="normal">nreads</mtext><mtext mathvariant="normal">j</mtext></msub></mrow><mrow><munderover><mo>∑</mo><mtext mathvariant="normal">j=1</mtext><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">nreads</mtext><mtext mathvariant="normal">j</mtext></msub></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>θ</mi><mtext mathvariant="normal">G</mtext></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><msubsup><mi>θ</mi><mtext mathvariant="normal">G</mtext><mtext mathvariant="normal">do</mtext></msubsup><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msubsup><mi>θ</mi><mtext mathvariant="normal">G</mtext><mtext mathvariant="normal">do</mtext></msubsup><mo>*</mo><mtext mathvariant="normal">pdo</mtext></mrow></mfrac></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{align}
-\theta_{\text{G}}^{\text{do}} &amp;=
-\frac{\sum_{\text{j=1}}^{\text{NF}}\theta_{\text{j}}^{\text{do}}*\text{nreads}_{\text{j}}
-}{\sum_{\text{j=1}}^{\text{NF}}\text{nreads}_{\text{j}}} \\
-\theta_{\text{G}} &amp;= \frac{\theta_{\text{G}}^{\text{do}}}{(1 -
-\text{pdo}) + \theta_{\text{G}}^{\text{do}}*\text{pdo}}
+\theta_{\text{G}}^{\text{do}} &amp;= \frac{\sum_{\text{j=1}}^{\text{NF}}\theta_{\text{j}}^{\text{do}}*\text{nreads}_{\text{j}} }{\sum_{\text{j=1}}^{\text{NF}}\text{nreads}_{\text{j}}} \\
+\theta_{\text{G}} &amp;= \frac{\theta_{\text{G}}^{\text{do}}}{(1 - \text{pdo}) + \theta_{\text{G}}^{\text{do}}*\text{pdo}}
 \end{align}
-\]</span></p>
+</annotation></semantics></math></p>
 <p>Thus, the dropout corrected read counts can be obtained as
 follows:</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mtext mathvariant="normal">Corrected read count for feature i</mtext></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msub><mtext mathvariant="normal">nreads</mtext><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mfrac><mrow><msub><mi>θ</mi><mtext mathvariant="normal">G</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">G</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{align}
-\text{Corrected read count for feature i} &amp;=
-\text{nreads}_{\text{i}}*\frac{\theta_{\text{G}}*(1 - \text{pdo}) + (1 -
-\theta_{\text{G}})}{\theta_{\text{i}}*(1 - \text{pdo}) + (1 -
-\theta_{\text{i}})}
+\text{Corrected read count for feature i} &amp;= \text{nreads}_{\text{i}}*\frac{\theta_{\text{G}}*(1 - \text{pdo}) + (1 - \theta_{\text{G}})}{\theta_{\text{i}}*(1 - \text{pdo}) + (1 - \theta_{\text{i}})}
 \end{align}
-\]</span></p>
+</annotation></semantics></math></p>
 </div>
 <div class="section level2">
 <h2 id="differences-between-bakr-and-grandrs-strategies">Differences between bakR and grandR’s strategies<a class="anchor" aria-label="anchor" href="#differences-between-bakr-and-grandrs-strategies"></a>
@@ -432,47 +383,43 @@ follows:</p>
 <p>Florian Erhard’s group was the first to implement a strategy for
 dropout correction in an NR-seq analysis tool (their R package <a href="https://github.com/erhard-lab/grandR" class="external-link">grandR</a>). The strategy
 used by grandR is discussed <a href="https://pubmed.ncbi.nlm.nih.gov/38381903/" class="external-link">here</a>. In short, a
-factor <span class="math inline">\(f\)</span> is found such that if the
-number of new reads (inferred as the fraction new * total reads) is
-multiplied by <span class="math inline">\(f\)</span>, then the Spearman
-correlation between the fraction new and the difference in -s4U and +s4U
-is 0. The dropout rate is then calculated as:</p>
-<p><span class="math display">\[
+factor
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>f</mi><annotation encoding="application/x-tex">f</annotation></semantics></math>
+is found such that if the number of new reads (inferred as the fraction
+new * total reads) is multiplied by
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>f</mi><annotation encoding="application/x-tex">f</annotation></semantics></math>,
+then the Spearman correlation between the fraction new and the
+difference in -s4U and +s4U is 0. The dropout rate is then calculated
+as:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mtext mathvariant="normal">pdo</mtext></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mi>f</mi><mrow><mi>f</mi><mo>+</mo><mn>1</mn></mrow></mfrac></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{align}
-\text{pdo} &amp;= \frac{f}{f + 1}
+\text{pdo} &amp;= \frac{f}{f + 1} 
 \end{align}
-\]</span></p>
+</annotation></semantics></math></p>
 <p>We note that this definition is not derived from an explicit model.
 The adjusted fraction new is then calculated as:</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mtext mathvariant="normal">corrected fn</mtext><mo>=</mo><mfrac><mrow><mi>f</mi><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">number of reads from new RNA</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><mi>f</mi><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">number of reads from new RNA</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">number of reads from old RNA</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{align}
-\text{corrected fn} = \frac{f*(\text{number of reads from new
-RNA})}{f*(\text{number of reads from new RNA}) + (\text{number of reads
-from old RNA})}
+\text{corrected fn} = \frac{f*(\text{number of reads from new RNA})}{f*(\text{number of reads from new RNA}) + (\text{number of reads from old RNA})}
 \end{align}
-\]</span></p>
+</annotation></semantics></math></p>
 <p><strong>NOTE: previous versions of this vignette included some
 inaccuracies about the Erhard lab’s method. These have been corrected
 and we apologize for the mistakes. While the explanation of their method
 here is not identical to that provided in the methods section of their
 paper, our explanation follows from grandR’s source code.</strong> A bit
-of algebra shows that this relationship between the inferred <span class="math inline">\(\text{pdo}\)</span> and the corrected fraction new
-is identical to that derived from the model above:</p>
-<p><span class="math display">\[
+of algebra shows that this relationship between the inferred
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">pdo</mtext><annotation encoding="application/x-tex">\text{pdo}</annotation></semantics></math>
+and the corrected fraction new is identical to that derived from the
+model above:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mrow><mi>f</mi><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">number of reads from new RNA</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><mi>f</mi><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">number of reads from new RNA</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">number of reads from old RNA</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mrow><mi>f</mi><mo>*</mo><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><mo>*</mo><msub><mtext mathvariant="normal">nreads</mtext><mtext mathvariant="normal">i</mtext></msub></mrow><mrow><mi>f</mi><mo>*</mo><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><mo>*</mo><msub><mtext mathvariant="normal">nreads</mtext><mtext mathvariant="normal">i</mtext></msub><mo>+</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mo>*</mo><msub><mtext mathvariant="normal">nreads</mtext><mtext mathvariant="normal">i</mtext></msub></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mfrac><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mfrac><mrow><mfrac><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mfrac><mo>+</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msubsup><mi>θ</mi><mtext mathvariant="normal">i</mtext><mtext mathvariant="normal">do</mtext></msubsup><mo>*</mo><mtext mathvariant="normal">pdo</mtext></mrow></mfrac></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{align}
-\theta_{\text{i}} &amp;= \frac{f*(\text{number of reads from new
-RNA})}{f*(\text{number of reads from new RNA}) + (\text{number of reads
-from old RNA})} \\
-&amp;=
-\frac{f*\theta_{\text{i}}^{\text{do}}*\text{nreads}_{\text{i}}}{f*\theta_{\text{i}}^{\text{do}}*\text{nreads}_{\text{i}}
-+ (1 - \theta_{\text{i}}^{\text{do}})*\text{nreads}_{\text{i}}} \\
-&amp;= \frac{\frac{\theta_{\text{i}}^{\text{do}}}{(1 -
-\text{pdo})}}{\frac{\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo})} +
-(1 - \theta_{\text{i}}^{\text{do}})} \\
-&amp;= \frac{\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo}) +
-\theta_{\text{i}}^{\text{do}}*\text{pdo}}
-\end{align}
-\]</span></p>
+\theta_{\text{i}} &amp;= \frac{f*(\text{number of reads from new RNA})}{f*(\text{number of reads from new RNA}) + (\text{number of reads from old RNA})} \\
+&amp;= \frac{f*\theta_{\text{i}}^{\text{do}}*\text{nreads}_{\text{i}}}{f*\theta_{\text{i}}^{\text{do}}*\text{nreads}_{\text{i}} + (1 - \theta_{\text{i}}^{\text{do}})*\text{nreads}_{\text{i}}} \\
+&amp;= \frac{\frac{\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo})}}{\frac{\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo})} + (1 - \theta_{\text{i}}^{\text{do}})} \\
+&amp;= \frac{\theta_{\text{i}}^{\text{do}}}{(1 - \text{pdo}) + \theta_{\text{i}}^{\text{do}}*\text{pdo}}
+\end{align} 
+</annotation></semantics></math></p>
 <p>Thus, grandR is implicitly making assumptions similar to those laid
 out in the model above that is used by bakR.</p>
 <p>Notable differences between bakR and grandR’s dropout correction
@@ -484,9 +431,10 @@ relationship between a fraction new vs. dropout correlation coefficient
 and the dropout rate.</li>
 <li>When correcting for read counts, grandR seems to use a different
 correction strategy than is derived from the model above. New read
-counts are multiplied by the inferred factor <span class="math inline">\(f\)</span> discussed earlier. bakR on the other
-hand redistributes read counts, thus preserving the total library
-size.</li>
+counts are multiplied by the inferred factor
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>f</mi><annotation encoding="application/x-tex">f</annotation></semantics></math>
+discussed earlier. bakR on the other hand redistributes read counts,
+thus preserving the total library size.</li>
 <li>bakR fits an explicit parametric model derived from assumptions made
 either explicitly or implicitly by both grandR and bakR. This allows
 users to assess the quality of the model fit and thus the likelihood
@@ -502,41 +450,30 @@ that these assumptions are valid on any given dataset.</li>
 <p>One potentially non-obvious step in the derivations above is when
 determining how to correct read counts. In that section, I had the
 following set of relationships:</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mfrac><mtext mathvariant="normal">E[number of reads without dropout]</mtext><mtext mathvariant="normal">E[number of reads with dropout]</mtext></mfrac></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mtext mathvariant="normal">Dropout</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mrow><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub></mfrac><mo>*</mo><mfrac><mrow><munderover><mo>∑</mo><mrow><mtext mathvariant="normal">j</mtext><mo>=</mo><mn>1</mn></mrow><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub></mrow><mrow><munderover><mo>∑</mo><mrow><mtext mathvariant="normal">j</mtext><mo>=</mo><mn>1</mn></mrow><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">j</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">j</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mrow><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mn>1</mn></mfrac><mo>*</mo><mfrac><mtext mathvariant="normal">N</mtext><mrow><mtext mathvariant="normal">N</mtext><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">G</mtext></msub><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">pdo</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mtext mathvariant="normal">N</mtext><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>θ</mi><mtext mathvariant="normal">G</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mtext mathvariant="normal">...</mtext></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{align}
-\frac{\text{E[number of reads without dropout]}}{\text{E[number of reads
-with dropout]}} &amp;= \text{Dropout}\\
-&amp;= \frac{\text{n}_{\text{i}}*\theta_{\text{i}}*(1 - \text{pdo}) +
-\text{n}_{\text{i}}*(1 - \theta_{\text{i}})
-}{\text{n}_{\text{i}}}*\frac{\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}}{
-\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}*\theta_{\text{j}}*(1 -
-\text{pdo}) + \text{n}_{\text{j}}*(1 - \theta_{\text{j}})  } \\
-&amp;= \frac{\theta_{\text{i}}*(1 - \text{pdo}) + (1 -
-\theta_{\text{i}})
-}{1}*\frac{\text{N}}{\text{N}*\theta_{\text{G}}*(1-\text{pdo}) +
-\text{N}*(1 - \theta_{\text{G}})} \\
+\frac{\text{E[number of reads without dropout]}}{\text{E[number of reads with dropout]}} &amp;= \text{Dropout}\\ 
+&amp;= \frac{\text{n}_{\text{i}}*\theta_{\text{i}}*(1 - \text{pdo}) + \text{n}_{\text{i}}*(1 - \theta_{\text{i}}) }{\text{n}_{\text{i}}}*\frac{\sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}}{ \sum_{\text{j}=1}^{\text{NF}}\text{n}_{\text{j}}*\theta_{\text{j}}*(1 - \text{pdo}) + \text{n}_{\text{j}}*(1 - \theta_{\text{j}})  } \\
+&amp;= \frac{\theta_{\text{i}}*(1 - \text{pdo}) + (1 - \theta_{\text{i}}) }{1}*\frac{\text{N}}{\text{N}*\theta_{\text{G}}*(1-\text{pdo}) + \text{N}*(1 - \theta_{\text{G}})} \\
 &amp;=\text{...}
 \end{align}
-\]</span></p>
+</annotation></semantics></math></p>
 <p>where:</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mtext mathvariant="normal">N</mtext></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><munderover><mo>∑</mo><mtext mathvariant="normal">j=1</mtext><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>θ</mi><mtext mathvariant="normal">G</mtext></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mfrac><mrow><munderover><mo>∑</mo><mtext mathvariant="normal">j=1</mtext><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">i</mtext></msub></mrow><mrow><munderover><mo>∑</mo><mtext mathvariant="normal">j=1</mtext><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub></mrow></mfrac></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{align}
 \text{N} &amp;= \sum_{\text{j=1}}^{\text{NF}}{\text{n}_{\text{j}}} \\
-\theta_{\text{G}} &amp;=
-\frac{\sum_{\text{j=1}}^{\text{NF}}\text{n}_{\text{j}}*\theta_{\text{i}}}{\sum_{\text{j=1}}^{\text{NF}}\text{n}_{\text{j}}}
+\theta_{\text{G}} &amp;= \frac{\sum_{\text{j=1}}^{\text{NF}}\text{n}_{\text{j}}*\theta_{\text{i}}}{\sum_{\text{j=1}}^{\text{NF}}\text{n}_{\text{j}}} 
 \end{align}
-\]</span></p>
+</annotation></semantics></math></p>
 <p>The algebraic trick to get from line 2 to line 3 is to multiply by 1
-(or rather <span class="math inline">\(\text{N}\)</span>/<span class="math inline">\(\text{N}\)</span>):</p>
-<p><span class="math display">\[
+(or rather
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">N</mtext><annotation encoding="application/x-tex">\text{N}</annotation></semantics></math>/<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="normal">N</mtext><annotation encoding="application/x-tex">\text{N}</annotation></semantics></math>):</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><munderover><mo>∑</mo><mtext mathvariant="normal">j=1</mtext><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">j</mtext></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><munderover><mo>∑</mo><mtext mathvariant="normal">j=1</mtext><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub><mo>*</mo><mfrac><mrow><munderover><mo>∑</mo><mtext mathvariant="normal">j=1</mtext><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">i</mtext></msub><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">j</mtext></msub></mrow><mrow><munderover><mo>∑</mo><mtext mathvariant="normal">j=1</mtext><mtext mathvariant="normal">NF</mtext></munderover><msub><mtext mathvariant="normal">n</mtext><mtext mathvariant="normal">j</mtext></msub></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mtext mathvariant="normal">N</mtext><mo>*</mo><msub><mi>θ</mi><mtext mathvariant="normal">G</mtext></msub></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{align}
-\sum_{\text{j=1}}^{\text{NF}}\text{n}_{\text{i}}*\theta_{\text{j}}
-&amp;=
-\sum_{\text{j=1}}^{\text{NF}}{\text{n}_{\text{j}}}*\frac{\sum_{\text{j=1}}^{\text{NF}}\text{n}_{\text{i}}*\theta_{\text{j}}}{\sum_{\text{j=1}}^{\text{NF}}{\text{n}_{\text{j}}}}
-\\
+\sum_{\text{j=1}}^{\text{NF}}\text{n}_{\text{i}}*\theta_{\text{j}} &amp;= \sum_{\text{j=1}}^{\text{NF}}{\text{n}_{\text{j}}}*\frac{\sum_{\text{j=1}}^{\text{NF}}\text{n}_{\text{i}}*\theta_{\text{j}}}{\sum_{\text{j=1}}^{\text{NF}}{\text{n}_{\text{j}}}} \\
 &amp;= \text{N}*\theta_{\text{G}}
 \end{align}
-\]</span></p>
+</annotation></semantics></math></p>
 </div>
 <div class="section level3">
 <h3 id="a2-u-content-dependence">A2: U-content dependence<a class="anchor" aria-label="anchor" href="#a2-u-content-dependence"></a>
@@ -558,7 +495,7 @@ minimal impact on dropout rate estimation.</li>
 </ol>
 </div>
 </div>
-  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>
 
@@ -569,15 +506,15 @@ minimal impact on dropout rate estimation.</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>
 </div>
 
-  
 
-  
+
+
 
   </body>
 </html>
