@@ -2,6 +2,10 @@
 bakR (Bayesian analysis of the kinetics of RNA) is an R package for performing differential kinetics analysis with nucleotide recoding high-throughput RNA sequencing (NR-seq) data. 
 Kinetic parameter estimation and statistical testing is compatible with mutational data from any enrichment free NR-seq method (e.g., TimeLapse-seq, SLAM-seq, TUC-seq, etc.).
 
+# Update: EZbakR, a complete rewrite of bakR, it out now! (10/14/2024)
+
+If you are currently using bakR, we highly suggest checking out [EZbakR](https://github.com/isaacvock/EZbakR), a far more flexible alternative. EZbakR can do everything bakR can, and a lot more! EZbakR is accompanied by a similar improvement/extension of bam2bakR, called [fastq2EZbakR](https://github.com/isaacvock/fastq2EZbakR). Check out [our preprint](https://www.biorxiv.org/content/10.1101/2024.10.14.617411v1) for more details. While we will continue to maintain bakR, all future development will occur on EZbakR.
+
 # Version 1.0.0 is out now! (06/27/2023)
 A lot of functionality has been added, and I highly suggest all users of bakR to update to this version. There are also many new vignettes to discuss these new features. bakR v1.0.0 is now available for installation on CRAN! It is also currently available for installation from Github, as described below. Two major new additions are:
 
